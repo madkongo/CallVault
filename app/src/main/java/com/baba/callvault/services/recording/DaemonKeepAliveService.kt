@@ -695,6 +695,12 @@ class DaemonKeepAliveService : Service() {
             )
         }.onFailure { AppLogger.e(TAG, "keep-alive startForeground failed", it) }.isSuccess
         if (!startedForeground) {
+            // Nothing else would start it again (review R3): queue a bounded retry before giving up.
+            KeepAliveRetry.schedule(
+                applicationContext,
+                (intent?.getIntExtra(EXTRA_RETRY_ATTEMPT, 0) ?: 0) + 1,
+                "startForeground failed",
+            )
             stopSelf()
             return START_NOT_STICKY
         }
@@ -745,13 +751,13 @@ class DaemonKeepAliveService : Service() {
         RecorderConnection.onDeath = { onDaemonDiedImmediate() }
         // And say "ready" the moment any recorder connects, whoever started it.
         RecorderConnection.onConnected = {
+            deathBudget.onConnected(SystemClock.elapsedRealtime())
             // The phone's log around a USB-debugging-off event can only be read once the recorder is back.
             Thread {
                 runCatching { UsbDebuggingRestorer.captureLogsIfPending(applicationContext) }
                     .onFailure { AppLogger.w(TAG, "Could not capture the USB-debugging log window: ${it.message}") }
             }.apply { isDaemon = true; name = "cv-usb-off-log" }.start()
             watchdogHandler.post {
-            deathBudget.onConnected(SystemClock.elapsedRealtime())
                 val alive = isDaemonAlive()
                 if (alive != (lastReady == true)) {
                     lastReady = alive
@@ -788,12 +794,6 @@ class DaemonKeepAliveService : Service() {
             lastReady = false
             updateNotification(false)
             downStreak = DOWN_STREAK_THRESHOLD // death confirmed — no debounce needed
-            // Confirmed death (linkToDeath) is authoritative — relaunch NOW, bypassing the throttle.
-            // The throttle exists to avoid HAMMERING a failed relaunch, NOT to delay a genuine recovery:
-            // on OnePlus the daemon dies on every screen transition, so a death shortly after a prior
-            // relaunch was being throttled — the cause of a long "starting up" window a call would race.
-            maybeRewarm(force = true)
-        }
             // A recorder that keeps dying seconds after it starts: after a few, the next relaunch goes through the normal
             // once-a-minute tick, and the death counts as a failed attempt so the "stuck" notice can show (review R7).
             // Never during a call or a ring: then the relaunch is as immediate as ever.
@@ -809,6 +809,12 @@ class DaemonKeepAliveService : Service() {
                 updateNotification(false)
                 return@post
             }
+            // Confirmed death (linkToDeath) is authoritative — relaunch NOW, bypassing the throttle.
+            // The throttle exists to avoid HAMMERING a failed relaunch, NOT to delay a genuine recovery:
+            // on OnePlus the daemon dies on every screen transition, so a death shortly after a prior
+            // relaunch was being throttled — the cause of a long "starting up" window a call would race.
+            maybeRewarm(force = true)
+        }
     }
 
     /**
@@ -839,6 +845,11 @@ class DaemonKeepAliveService : Service() {
             rebindShizuku(force)
             return
         }
+        // A recording on the local ADB fallback rides the very connection a relaunch drops or reconfigures (review C89).
+        if (LocalFallbackLease.shared.active) {
+            timelineSkip("a recording on the local fallback is using the ADB connection")
+            return
+        }
         val offline = runCatching { AppPreferences(this).isOfflineRecordingEnabled() }.getOrDefault(false)
         // Every network, not the default one: a Wi-Fi without internet while mobile data is up is still Wi-Fi (review C34).
         if (!RewarmDecisions.wifiAllowsRelaunch(offline, WifiState.of(this))) {
@@ -849,6 +860,8 @@ class DaemonKeepAliveService : Service() {
         // USB debugging is off with no Wi-Fi. Seen on the emulator: the launcher retried every 12 s, logging a
         // refusal each time, for as long as the switch stayed off. The switch observer comes back here the
         // moment either switch changes, and the watchdog still ticks for Wi-Fi returning.
+        // Lost pairing and "no debugging, no grant" are the same kind of dead end (reviews C130, R8): tried when they
+        // appear, on a change, and every few minutes as a safety net, not every minute.
         val known = ReadinessNoticeText.current(this, ready = false)
         if (rewarmStandDown.check(known, force, SystemClock.elapsedRealtime()) == RewarmStandDown.Verdict.STAND_DOWN) {
             timelineSkip("recovery impossible: $known")
@@ -1028,7 +1041,14 @@ class DaemonKeepAliveService : Service() {
         // controls during a call, with "Ready to record calls". The release puts this back afterwards.
         if (SharedStatusNotice.isHeldByRecording) return
         runCatching {
-            getSystemService(NotificationManager::class.java).notify(NOTIF_ID, buildNotification(ready))
+            val manager = getSystemService(NotificationManager::class.java)
+            val next = buildNotification(ready)
+            // The same notice, still posted exactly as it would be: posting again only wakes system UI and every
+            // notification listener (review R11). Anything else under the id (a recording's, a stale one, none because
+            // the user swiped it) is posted over. A read that fails posts, as before.
+            val posted = runCatching { manager.activeNotifications.firstOrNull { it.id == NOTIF_ID }?.notification }.getOrNull()
+            if (!NoticeKey.shouldPost(posted, next)) return@runCatching
+            manager.notify(NOTIF_ID, next)
         }
     }
 
@@ -1247,37 +1267,47 @@ class DaemonKeepAliveService : Service() {
             }.onFailure { AppLogger.w(TAG, "Could not log the keep-alive decision: ${it.message}") }
         }
 
+        /** Which retry started this run (review R3); absent on a normal start. */
+        internal const val EXTRA_RETRY_ATTEMPT = "keep_alive_retry_attempt"
+
         /** Start (or no-op if already running) the persistent keep-alive anchor. Safe to call repeatedly. */
         fun start(context: Context) {
-            // The user turned recording off — honour it here so EVERY caller (boot, app launch,
-            // post-update, Settings) respects it without each having to check. STOPPED survives a reboot:
-            // the recorder stays down until the user turns it back on.
-            if (AppPreferences(context).getRecordingState() == RecordingState.STOPPED) {
-                AppLogger.i(TAG, "Recording is STOPPED by the user: not starting the keep-alive")
-                stop(context)
-                return
-            }
-            // Runs in every mode (P1a): in Shizuku mode it is the process anchor + status notice (and the app-call
-            // detector when those are on), never our ADB daemon — see [KeepAlivePolicy].
-            logDecisionIfChanged(context)
-            val outcome = ForegroundStartGuard.attempt {
-                ContextCompat.startForegroundService(context, Intent(context, DaemonKeepAliveService::class.java))
-            }
-            if (outcome is ForegroundStartGuard.Outcome.Refused) {
-                ForegroundStartGuard.keepAliveStartRefused = true
-                AppLogger.w(TAG, "Failed to start keep-alive service: ${outcome.cause.message}")
-                UsbDebuggingEvents.record(context, ForegroundStartGuard.describe("keep-alive start", outcome.cause, batteryExempt = false))
-            }
-        }
-
-        /** Stop the keep-alive anchor (e.g. if the user disables persistence). */
-        fun stop(context: Context) {
             // A refused start used to leave the keep-alive down with nothing to try again (review R3).
             if (!startOnce(context, retryAttempt = 0)) KeepAliveRetry.schedule(context, 1, "start refused")
         }
 
         /** One start attempt. False only when Android refused the foreground start; a switched-off recorder counts as done. */
         internal fun startOnce(context: Context, retryAttempt: Int): Boolean {
+            // The user turned recording off — honour it here so EVERY caller (boot, app launch,
+            // post-update, Settings) respects it without each having to check. STOPPED survives a reboot:
+            // the recorder stays down until the user turns it back on.
+            if (AppPreferences(context).getRecordingState() == RecordingState.STOPPED) {
+                AppLogger.i(TAG, "Recording is STOPPED by the user: not starting the keep-alive")
+                stop(context)
+                return true
+            }
+            // Runs in every mode (P1a): in Shizuku mode it is the process anchor + status notice (and the app-call
+            // detector when those are on), never our ADB daemon — see [KeepAlivePolicy].
+            logDecisionIfChanged(context)
+            val outcome = ForegroundStartGuard.attempt {
+                ContextCompat.startForegroundService(
+                    context,
+                    Intent(context, DaemonKeepAliveService::class.java).apply {
+                        if (retryAttempt > 0) putExtra(EXTRA_RETRY_ATTEMPT, retryAttempt)
+                    },
+                )
+            }
+            if (outcome is ForegroundStartGuard.Outcome.Refused) {
+                ForegroundStartGuard.keepAliveStartRefused = true
+                AppLogger.w(TAG, "Failed to start keep-alive service: ${outcome.cause.message}")
+                UsbDebuggingEvents.record(context, ForegroundStartGuard.describe("keep-alive start", outcome.cause, batteryExempt = false))
+                return false
+            }
+            return true
+        }
+
+        /** Stop the keep-alive anchor (e.g. if the user disables persistence). */
+        fun stop(context: Context) {
             // Clear the relaunch hook FIRST, and synchronously.
             //
             // `stopService` only *asks*; the service keeps running until the framework delivers
