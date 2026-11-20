@@ -101,12 +101,6 @@ class DaemonKeepAliveService : Service() {
     /** Serialises and throttles relaunch attempts, and expires one that never came back. */
     private val rewarmGate = RewarmGate(stuckAfterMs = REWARM_STUCK_MS, throttleMs = REWARM_THROTTLE_MS)
 
-    /** Which named causes hold a relaunch back, and when one still gets a safety-net attempt (reviews C130, R8). */
-    private val rewarmStandDown = RewarmStandDown(RewarmStandDown.SAFETY_NET_MS)
-
-    /** How long each recorder lived, so a recorder that keeps dying seconds after it starts is not relaunched back to back (R7). */
-    private val deathBudget = RecorderDeathBudget()
-
     /**
      * Decides how to recover, and notices when recovery itself has stopped working.
      *
@@ -751,7 +745,6 @@ class DaemonKeepAliveService : Service() {
         RecorderConnection.onDeath = { onDaemonDiedImmediate() }
         // And say "ready" the moment any recorder connects, whoever started it.
         RecorderConnection.onConnected = {
-            deathBudget.onConnected(SystemClock.elapsedRealtime())
             // The phone's log around a USB-debugging-off event can only be read once the recorder is back.
             Thread {
                 runCatching { UsbDebuggingRestorer.captureLogsIfPending(applicationContext) }
@@ -794,21 +787,6 @@ class DaemonKeepAliveService : Service() {
             lastReady = false
             updateNotification(false)
             downStreak = DOWN_STREAK_THRESHOLD // death confirmed — no debounce needed
-            // A recorder that keeps dying seconds after it starts: after a few, the next relaunch goes through the normal
-            // once-a-minute tick, and the death counts as a failed attempt so the "stuck" notice can show (review R7).
-            // Never during a call or a ring: then the relaunch is as immediate as ever.
-            val verdict = deathBudget.onDeath(SystemClock.elapsedRealtime())
-            if (verdict.tripped && !CallActivity.isActive(applicationContext)) {
-                if (verdict.firstOfRun) {
-                    val line = "keep-alive: the recorder died ${verdict.shortDeathsInWindow} times within " +
-                        "${RecorderDeathBudget.WINDOW_MS / 60_000} min of starting; relaunching at the once-a-minute pace until it stays up"
-                    AppLogger.w(TAG, line)
-                    runCatching { UsbDebuggingEvents.record(applicationContext, line) }
-                }
-                recoveryPolicy.onAttemptFailed()
-                updateNotification(false)
-                return@post
-            }
             // Confirmed death (linkToDeath) is authoritative — relaunch NOW, bypassing the throttle.
             // The throttle exists to avoid HAMMERING a failed relaunch, NOT to delay a genuine recovery:
             // on OnePlus the daemon dies on every screen transition, so a death shortly after a prior
@@ -846,6 +824,11 @@ class DaemonKeepAliveService : Service() {
             return
         }
         // A recording on the local ADB fallback rides the very connection a relaunch drops or reconfigures (review C89).
+        if (LocalFallbackLease.shared.expireIfStale()) {
+            val line = "keep-alive: the local-fallback lease was held over ${LocalFallbackLease.MAX_HOLD_MS / 60_000} min; treating it as a missed release"
+            AppLogger.w(TAG, line)
+            runCatching { UsbDebuggingEvents.record(applicationContext, line) }
+        }
         if (LocalFallbackLease.shared.active) {
             timelineSkip("a recording on the local fallback is using the ADB connection")
             return
@@ -860,10 +843,8 @@ class DaemonKeepAliveService : Service() {
         // USB debugging is off with no Wi-Fi. Seen on the emulator: the launcher retried every 12 s, logging a
         // refusal each time, for as long as the switch stayed off. The switch observer comes back here the
         // moment either switch changes, and the watchdog still ticks for Wi-Fi returning.
-        // Lost pairing and "no debugging, no grant" are the same kind of dead end (reviews C130, R8): tried when they
-        // appear, on a change, and every few minutes as a safety net, not every minute.
         val known = ReadinessNoticeText.current(this, ready = false)
-        if (rewarmStandDown.check(known, force, SystemClock.elapsedRealtime()) == RewarmStandDown.Verdict.STAND_DOWN) {
+        if (known == ReadinessNotice.WD_OFF_BY_USER || known == ReadinessNotice.NEEDS_WIFI) {
             timelineSkip("recovery impossible: $known")
             updateNotification(false)
             return
@@ -1321,6 +1302,8 @@ class DaemonKeepAliveService : Service() {
             // started. The phone settled in Shizuku mode being served by our own ADB daemon — a wrong
             // host, silently, with every layer reporting success.
             RecorderConnection.onDeath = null
+            // A retry queued earlier must not bring back a keep-alive that was stopped on purpose (review R3).
+            runCatching { KeepAliveRetry.cancel(context) }
             runCatching { context.stopService(Intent(context, DaemonKeepAliveService::class.java)) }
         }
     }

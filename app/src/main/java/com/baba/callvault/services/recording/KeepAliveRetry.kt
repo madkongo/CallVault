@@ -61,6 +61,12 @@ object KeepAliveRetry {
         }.onFailure { log(context, "keep-alive: could not queue the start retry ($why): ${it.javaClass.simpleName}: ${it.message}") }
     }
 
+    /** Drops a queued retry (the keep-alive was stopped on purpose). */
+    fun cancel(context: Context) {
+        runCatching { WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME) }
+            .onFailure { AppLogger.w(TAG, "Could not cancel the start retry: ${it.message}") }
+    }
+
     private fun log(context: Context, line: String) {
         AppLogger.i(TAG, line)
         runCatching { UsbDebuggingEvents.record(context, line) }

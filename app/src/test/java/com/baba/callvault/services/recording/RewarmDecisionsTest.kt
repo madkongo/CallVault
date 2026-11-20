@@ -9,7 +9,6 @@
 package com.baba.callvault.services.recording
 
 import com.baba.callvault.integrations.adb.WifiState
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -39,72 +38,15 @@ class RewarmDecisionsTest {
         assertTrue(RewarmDecisions.wifiAllowsRelaunch(offlineRecording = true, wifi = WifiState.NOT_CONNECTED))
     }
 
-    // --- C130 / R8: stand-down ---
-
-    private fun standDown() = RewarmStandDown(safetyNetMs = 10 * 60_000L)
-
-    @Test
-    fun `the two hard causes always stand down, even for a forced relaunch`() {
-        val s = standDown()
-        for (n in listOf(ReadinessNotice.WD_OFF_BY_USER, ReadinessNotice.NEEDS_WIFI)) {
-            assertEquals(RewarmStandDown.Verdict.STAND_DOWN, s.check(n, force = false, now = 0L))
-            assertEquals(RewarmStandDown.Verdict.STAND_DOWN, s.check(n, force = true, now = 0L))
-        }
-    }
-
-    @Test
-    fun `an ordinary notice never stands down`() {
-        val s = standDown()
-        for (n in listOf(ReadinessNotice.STARTING, ReadinessNotice.STUCK, ReadinessNotice.READY)) {
-            assertEquals(RewarmStandDown.Verdict.PROCEED, s.check(n, force = false, now = 0L))
-        }
-    }
-
-    @Test
-    fun `lost pairing is tried once when it appears, then stands down`() {
-        val s = standDown()
-        assertEquals(RewarmStandDown.Verdict.PROCEED, s.check(ReadinessNotice.PAIRING_LOST, force = false, now = 0L))
-        assertEquals(RewarmStandDown.Verdict.STAND_DOWN, s.check(ReadinessNotice.PAIRING_LOST, force = false, now = 60_000L))
-        assertEquals(RewarmStandDown.Verdict.STAND_DOWN, s.check(ReadinessNotice.PAIRING_LOST, force = false, now = 9 * 60_000L))
-    }
-
-    @Test
-    fun `lost pairing gets one safety-net attempt every few minutes so a false alarm cannot stick`() {
-        val s = standDown()
-        s.check(ReadinessNotice.PAIRING_LOST, force = false, now = 0L)
-        assertEquals(RewarmStandDown.Verdict.PROCEED, s.check(ReadinessNotice.PAIRING_LOST, force = false, now = 10 * 60_000L))
-        assertEquals(RewarmStandDown.Verdict.STAND_DOWN, s.check(ReadinessNotice.PAIRING_LOST, force = false, now = 11 * 60_000L))
-    }
-
-    @Test
-    fun `a change of cause is acted on at once`() {
-        val s = standDown()
-        s.check(ReadinessNotice.PAIRING_LOST, force = false, now = 0L)
-        // The user re-paired: the notice moves on, and the very next minute tries.
-        assertEquals(RewarmStandDown.Verdict.PROCEED, s.check(ReadinessNotice.STARTING, force = false, now = 60_000L))
-        // And if the same cause comes back it is a new appearance, tried once again.
-        assertEquals(RewarmStandDown.Verdict.PROCEED, s.check(ReadinessNotice.PAIRING_LOST, force = false, now = 120_000L))
-    }
-
-    @Test
-    fun `a forced relaunch after a confirmed binder death is never held back by a soft cause`() {
-        val s = standDown()
-        s.check(ReadinessNotice.PAIRING_LOST, force = false, now = 0L)
-        assertEquals(RewarmStandDown.Verdict.PROCEED, s.check(ReadinessNotice.PAIRING_LOST, force = true, now = 1_000L))
-    }
-
-    @Test
-    fun `no debugging and no grant stands down like lost pairing`() {
-        val s = standDown()
-        s.check(ReadinessNotice.NO_DEBUGGING, force = false, now = 0L)
-        assertEquals(RewarmStandDown.Verdict.STAND_DOWN, s.check(ReadinessNotice.NO_DEBUGGING, force = false, now = 60_000L))
-    }
-
     // --- C89: a recording on the local fallback owns the ADB connection ---
+
+    private class Clock(var now: Long = 0L)
+
+    private fun lease(c: Clock) = LocalFallbackLease(maxHoldMs = 1_000L, clock = { c.now })
 
     @Test
     fun `the lease is held while a local-fallback recording runs and released after`() {
-        val lease = LocalFallbackLease()
+        val lease = lease(Clock())
         assertFalse(lease.active)
         lease.enter()
         assertTrue(lease.active)
@@ -114,7 +56,7 @@ class RewarmDecisionsTest {
 
     @Test
     fun `two overlapping local recordings keep the lease until both end`() {
-        val lease = LocalFallbackLease()
+        val lease = lease(Clock())
         lease.enter(); lease.enter()
         lease.exit()
         assertTrue(lease.active)
@@ -124,8 +66,32 @@ class RewarmDecisionsTest {
 
     @Test
     fun `an extra exit never makes the lease negative`() {
-        val lease = LocalFallbackLease()
+        val lease = lease(Clock())
         lease.exit()
+        lease.enter()
+        assertTrue(lease.active)
+    }
+
+    @Test
+    fun `a lease that is never released stops blocking after its limit`() {
+        val c = Clock()
+        val lease = lease(c)
+        lease.enter()
+        c.now = 999L
+        assertTrue(lease.active)
+        c.now = 1_000L
+        assertFalse(lease.active)
+    }
+
+    @Test
+    fun `a stale lease is reported dropped exactly once`() {
+        val c = Clock()
+        val lease = lease(c)
+        lease.enter()
+        assertFalse(lease.expireIfStale())
+        c.now = 5_000L
+        assertTrue(lease.expireIfStale())
+        assertFalse(lease.expireIfStale())
         lease.enter()
         assertTrue(lease.active)
     }
