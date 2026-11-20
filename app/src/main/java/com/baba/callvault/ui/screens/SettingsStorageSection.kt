@@ -36,6 +36,7 @@ import com.baba.callvault.ui.common.OptionItem
 import com.baba.callvault.ui.viewmodels.SettingsActions
 import androidx.compose.material.icons.filled.Folder
 import com.baba.callvault.system.storage.MinDurationPolicy
+import com.baba.callvault.system.storage.RetentionPolicy
 import com.baba.callvault.system.storage.StorageCapPolicy
 
 /** Where recordings are saved: this device, Drive, or both. */
@@ -317,9 +318,18 @@ internal fun RetentionPolicyRows(preferences: AppPreferences, updateTrigger: Int
         label = stringResource(R.string.retention_linked_label),
         checked = linked,
         onCheckedChange = { nowLinked ->
-            actions.setRetentionLinked(nowLinked)
-            // When linking, unify the Drive period to the device one so they match.
-            if (nowLinked) actions.setRetentionDriveDays(localDays)
+            if (nowLinked && RetentionPolicy.linkingShortensDrive(localDays, driveDays)) {
+                // Linking would shorten (or switch on) what Drive deletes: confirmed first, and the switch stays off on
+                // cancel because nothing is applied until then (review C51).
+                pendingConfirm = PendingDestructiveChange(R.string.retention_link_confirm_message) {
+                    actions.setRetentionLinked(true)
+                    actions.setRetentionDriveDays(localDays)
+                }
+            } else {
+                actions.setRetentionLinked(nowLinked)
+                // When linking, unify the Drive period to the device one so they match.
+                if (nowLinked) actions.setRetentionDriveDays(localDays)
+            }
         }
     )
 

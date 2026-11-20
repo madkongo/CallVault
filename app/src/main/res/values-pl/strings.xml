@@ -957,4 +957,6 @@
         <item quantity="other">Stare nagrania zostają na telefonie: Drive jeszcze ich nie zapisał (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Ustawienia czyszczenia usunęłyby je z tego telefonu, ale Google Drive nie ma jeszcze ich potwierdzonej kopii, więc zostają tutaj. Otwórz CallVault, aby sprawdzić ustawienia Drive.</string>
+    <!-- batch B10 -->
+    <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
 </resources>

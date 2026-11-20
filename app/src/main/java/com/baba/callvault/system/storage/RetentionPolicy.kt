@@ -29,6 +29,14 @@ object RetentionPolicy {
      * The instant before which a copy has outlived [days], or null when [days] means keep-forever (0 or
      * less). A null cutoff deletes nothing, which is how "keep forever" is enforced everywhere.
      */
+    /**
+     * Whether turning "same period for device and Drive" on would make Drive delete more than it does now (review C51):
+     * Drive kept forever becoming N days, or a longer Drive period shortened to the device's. Linking copies the device
+     * period onto Drive, and the nightly sweep then removes Drive copies that may be the only ones.
+     */
+    fun linkingShortensDrive(localDays: Int, driveDays: Int): Boolean =
+        localDays > 0 && (driveDays == 0 || localDays < driveDays)
+
     fun cutoffFor(days: Int, now: Long): Long? = if (days > 0) now - days * DAY_MS else null
 
     /**

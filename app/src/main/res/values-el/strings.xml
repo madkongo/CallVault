@@ -1105,4 +1105,6 @@
         <item quantity="other">Παλιές ηχογραφήσεις κρατήθηκαν στο τηλέφωνο: το Drive δεν τις έχει αντιγράψει ακόμη (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Οι ρυθμίσεις καθαρισμού θα τις διέγραφαν από αυτό το τηλέφωνο, αλλά το Google Drive δεν έχει ακόμη επιβεβαιωμένο αντίγραφο, γι\' αυτό μένουν εδώ. Ανοίξτε το CallVault για να ελέγξετε τις ρυθμίσεις του Drive.</string>
+    <!-- batch B10 -->
+    <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
 </resources>

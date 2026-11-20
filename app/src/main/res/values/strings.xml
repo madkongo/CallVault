@@ -1166,4 +1166,6 @@
         <item quantity="other">Old recordings kept on the phone: Drive hasn\'t backed them up yet (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Your clean-up settings would remove these from this phone, but Google Drive has no confirmed copy of them yet, so they stay here. Open CallVault to check your Drive settings.</string>
+    <!-- batch B10 -->
+    <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
 </resources>
