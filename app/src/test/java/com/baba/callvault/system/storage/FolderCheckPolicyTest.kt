@@ -192,4 +192,67 @@ class FolderCheckPolicyTest {
         assertNull(limit.take(4L))
         assertEquals(2, limit.take(60_001L))
     }
+
+    // --- OnePlus 9 Pro, 2026-11-20: a deleted folder on the phone's own storage answered with a null cursor ---
+
+    private val mounted = "mounted"
+    private fun evidence(
+        providerFailed: Boolean = true,
+        path: PathLook = PathLook.NOT_LOOKED,
+        localPrimary: Boolean = true,
+        grantHeld: Boolean? = true,
+        volume: String? = mounted,
+        unlocked: Boolean? = true,
+    ) = FolderCheckPolicy.NotUsableEvidence(unlocked, grantHeld, volume, providerFailed, localPrimary, path)
+
+    @Test
+    fun `no provider answer and the path proven absent on local storage is missing`() {
+        val e = evidence(path = PathLook.ABSENT)
+        assertTrue(FolderCheckPolicy.shouldLookAtPath(e))
+        assertEquals(Kind.MISSING, FolderCheckPolicy.classify(e))
+    }
+
+    @Test
+    fun `no provider answer with the path seen or unreadable stays transient`() {
+        assertEquals(Kind.TRANSIENT, FolderCheckPolicy.classify(evidence(path = PathLook.EXISTS)))
+        assertEquals(Kind.TRANSIENT, FolderCheckPolicy.classify(evidence(path = PathLook.CANNOT_TELL)))
+        assertEquals(Kind.TRANSIENT, FolderCheckPolicy.classify(evidence(path = PathLook.NOT_LOOKED)))
+    }
+
+    @Test
+    fun `the path is looked at only on the phone's own mounted storage with the grant held and no provider answer`() {
+        assertFalse("cloud and SD-card folders keep their old rules", FolderCheckPolicy.shouldLookAtPath(evidence(localPrimary = false)))
+        assertFalse(FolderCheckPolicy.shouldLookAtPath(evidence(grantHeld = null)))
+        assertFalse(FolderCheckPolicy.shouldLookAtPath(evidence(volume = "unmounted")))
+        assertFalse(FolderCheckPolicy.shouldLookAtPath(evidence(volume = null)))
+        assertFalse(FolderCheckPolicy.shouldLookAtPath(evidence(unlocked = false)))
+        assertFalse("a definite provider answer needs no second opinion", FolderCheckPolicy.shouldLookAtPath(evidence(providerFailed = false)))
+    }
+
+    @Test
+    fun `an absent path found where it should not have been looked at proves nothing`() {
+        assertEquals(Kind.TRANSIENT, FolderCheckPolicy.classify(evidence(localPrimary = false, path = PathLook.ABSENT)))
+        assertEquals(Kind.TRANSIENT, FolderCheckPolicy.classify(evidence(grantHeld = null, path = PathLook.ABSENT)))
+    }
+
+    @Test
+    fun `the earlier rules are unchanged`() {
+        assertEquals(Kind.TRANSIENT, FolderCheckPolicy.classify(evidence(unlocked = false, path = PathLook.ABSENT)))
+        assertEquals(Kind.GRANT_MISSING, FolderCheckPolicy.classify(evidence(grantHeld = false)))
+        assertEquals(Kind.TRANSIENT, FolderCheckPolicy.classify(evidence(volume = "unmounted", providerFailed = false)))
+        assertEquals("a definite 'no such folder' is missing", Kind.MISSING, FolderCheckPolicy.classify(evidence(providerFailed = false)))
+        assertEquals("cloud: a definite answer is still reported missing", Kind.MISSING,
+            FolderCheckPolicy.classify(evidence(providerFailed = false, localPrimary = false, volume = null)))
+        assertEquals(Kind.TRANSIENT, FolderCheckPolicy.classify(evidence(localPrimary = false, volume = null)))
+    }
+
+    @Test
+    fun `a missing reading found by the path look is confirmed by the usual second reading`() {
+        val first = FolderCheckPolicy.next(null, reading(Kind.MISSING), now = 1_000L)
+        assertEquals(FolderCheckPolicy.CONFIRM_DELAY_MS, first.recheckInMs)
+        assertFalse(first.alert)
+        val second = FolderCheckPolicy.next(first.state, reading(Kind.MISSING), now = 1_000L + FolderCheckPolicy.CONFIRM_DELAY_MS)
+        assertTrue(second.alert)
+    }
+
 }

@@ -44,8 +44,6 @@ import com.baba.callvault.services.recording.RecordingSwitch
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.data.health.Prerequisite
 import com.baba.callvault.data.health.SetupPrerequisites
-import com.baba.callvault.system.storage.FolderWatchPlan
-import com.baba.callvault.system.storage.RecordingFolderCheck
 import com.baba.callvault.system.storage.WaitingRecordings
 import com.baba.callvault.data.recordings.AudioImport
 import com.baba.callvault.data.recordings.ImportedRecording
@@ -938,14 +936,26 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Home came into view (back to the front, or back from Settings or a section): look at the recording folder if
+     * the stored answer is stale. OnePlus 9 Pro, 2026-11-20: an open Home brought back did not look again. Going back
+     * to Home inside the app resumes nothing, so only a list pass ever looked, and on a resume the look waited behind
+     * any list pass already running; this needs neither.
+     */
+    fun onHomeVisible() = lookAtFolderIfStale()
+
+    private fun lookAtFolderIfStale() {
+        HomeFolderLook.onVisible(appContext) {
+            viewModelScope.launch { _uiState.update { it.copy(status = computeStatus()) } }
+        }
+    }
+
     private fun startListPass(status: HomeStatus) {
         listJob = viewModelScope.launch {
             // Look at the recording folder itself (review C98), without holding the list up (review 2026-11-20): the
             // status above came from the stored answer; a stale one is measured on the check's own thread and the
             // status is re-read when it is done.
-            RecordingFolderCheck.checkIfStale(appContext, "Home", FolderWatchPlan.HOME_MAX_AGE_MS) { step ->
-                if (step != null) viewModelScope.launch { _uiState.update { it.copy(status = computeStatus()) } }
-            }
+            lookAtFolderIfStale()
             val current = status
             val (waiting, waitingBytes) = withContext(Dispatchers.IO) {
                 WaitingRecordings.count(appContext) to WaitingRecordings.totalBytes(appContext)

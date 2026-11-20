@@ -101,18 +101,21 @@ object RecordingFolderCheck {
     /**
      * Looks, on a background thread, only when the stored answer is stale ([FolderWatchPlan.isStale]: older than
      * [maxAgeMs] when good, backing off when bad) and no call is up. No timer of its own: it rides whatever called it. [then] runs on that thread with the result (null: skipped
-     * or failed). Cheap to call often: a preference read when nothing is due.
+     * during a call, failed, or another check measured first so the stored answer is fresh already). Cheap to call
+     * often: a preference read when nothing is due. Returns whether a look was queued.
      */
-    fun checkIfStale(context: Context, trigger: String, maxAgeMs: Long, then: ((FolderCheckPolicy.Step?) -> Unit)? = null) {
+    fun checkIfStale(context: Context, trigger: String, maxAgeMs: Long, then: ((FolderCheckPolicy.Step?) -> Unit)? = null): Boolean {
         val app = context.applicationContext
-        if (!FolderWatchPlan.isStale(cached(app), System.currentTimeMillis(), goodMaxAgeMs = maxAgeMs)) return
-        runCatching {
+        fun stale() = FolderWatchPlan.isStale(cached(app), System.currentTimeMillis(), goodMaxAgeMs = maxAgeMs)
+        if (!stale()) return false
+        return runCatching {
             worker.execute {
-                // Never a provider query while a call is up (review 2026-11-20).
-                val step = if (CallGuard.shouldSkip(app, trigger)) null else checkNow(app, trigger)
+                // Two callers close together (Home coming into view and its list pass) measure once: the second
+                // finds the first one's fresh answer here. Never a provider query while a call is up (review 2026-11-20).
+                val step = if (!stale() || CallGuard.shouldSkip(app, trigger)) null else checkNow(app, trigger)
                 runCatching { then?.invoke(step) }
             }
-        }.onFailure { AppLogger.w(TAG, "Could not start the folder check ($trigger): ${it.message}") }
+        }.onFailure { AppLogger.w(TAG, "Could not start the folder check ($trigger): ${it.message}") }.isSuccess
     }
 
     /**
@@ -190,18 +193,39 @@ object RecordingFolderCheck {
         val grantHeld = runCatching {
             context.contentResolver.persistedUriPermissions.any { it.uri == uri && it.isWritePermission }
         }.getOrNull()
-        if (grantHeld == false) {
-            return reading(FolderReading.Kind.GRANT_MISSING, "CallVault no longer holds write access to the folder; provider: $detail")
-        }
         val volume = volumeState(context, uri)
-        if (volume != null && volume != Environment.MEDIA_MOUNTED) {
-            return reading(FolderReading.Kind.TRANSIENT, "the folder's storage is $volume; provider: $detail")
+        val relativePath = primaryRelativePath(uri)
+        val base = FolderCheckPolicy.NotUsableEvidence(
+            unlocked = unlocked,
+            grantHeld = grantHeld,
+            volume = volume,
+            providerFailed = detail.startsWith(PROVIDER_FAILED),
+            localPrimary = !cloud && relativePath != null,
+        )
+        // A provider that gave no answer about a folder on the phone's own storage gets a second opinion from the
+        // path itself (OnePlus 9 Pro, 2026-11-20: a deleted folder there answers with a null cursor).
+        val pathResult = if (FolderCheckPolicy.shouldLookAtPath(base) && relativePath != null) {
+            FolderPathLook.look(Environment.getExternalStorageDirectory(), relativePath)
+        } else {
+            null
         }
-        if (detail.startsWith(PROVIDER_FAILED)) {
-            return reading(FolderReading.Kind.TRANSIENT, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail")
+        val evidence = base.copy(path = pathResult?.look ?: PathLook.NOT_LOOKED)
+        val pathNote = pathResult?.let { "; path: ${it.look} (${it.evidence})" }.orEmpty()
+        val kind = FolderCheckPolicy.classify(evidence)
+        return when {
+            kind == FolderReading.Kind.GRANT_MISSING ->
+                reading(kind, "CallVault no longer holds write access to the folder; provider: $detail")
+            volume != null && volume != Environment.MEDIA_MOUNTED ->
+                reading(kind, "the folder's storage is $volume; provider: $detail")
+            else -> reading(kind, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail$pathNote")
         }
-        return reading(FolderReading.Kind.MISSING, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail")
     }
+
+    /** The folder's path below the primary storage root, when it is on the phone's own storage provider; else null. */
+    private fun primaryRelativePath(treeUri: Uri): String? = runCatching {
+        if (treeUri.authority != EXTERNAL_STORAGE_AUTHORITY) return@runCatching null
+        FolderPathLook.relativePathOnPrimary(DocumentsContract.getTreeDocumentId(treeUri))
+    }.getOrNull()
 
     private const val PROVIDER_FAILED = "failed:"
 
@@ -286,6 +310,19 @@ object RecordingFolderCheck {
     }
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    /**
+     * Waits until the check's thread has run everything queued so far (the app's own "app start" check among it): for
+     * tests, so that check cannot overwrite what a test arranges.
+     */
+    internal fun awaitIdleForTest(timeoutMs: Long = 10_000L) {
+        worker.submit {}.get(timeoutMs, TimeUnit.MILLISECONDS)
+    }
+
+    /** Stores a result as if measured: for tests. */
+    internal fun storeForTest(context: Context, state: FolderCheckState) {
+        prefs(context).edit().putString(KEY_STATE, state.encode()).commit()
+    }
 
     /** Forgets the stored result: for tests. */
     internal fun clearForTest(context: Context) {

@@ -27,7 +27,11 @@ data class FolderReading(val uri: String?, val kind: Kind, val evidence: String,
         /** The folder is not usable and CallVault no longer holds its write grant: definite at once. */
         GRANT_MISSING,
 
-        /** The grant is held, the storage is mounted and unlocked, and the provider says the folder is gone. */
+        /**
+         * The grant is held, the storage is mounted and unlocked, and the provider says the folder is gone; or, on the
+         * phone's own storage, the provider gave no answer and the path itself proved the folder is not there
+         * ([FolderPathLook]).
+         */
         MISSING,
 
         /**
@@ -109,6 +113,49 @@ object FolderCheckPolicy {
 
     /** Longer than this between two checks, and a run of bad readings starts again. */
     const val MAX_CHECK_GAP_MS = 30 * 60_000L
+
+    /** The storage-state string for a mounted volume ([android.os.Environment.MEDIA_MOUNTED]). */
+    private const val MEDIA_MOUNTED = "mounted"
+
+    /**
+     * What [RecordingFolderCheck] found out about a folder that failed the usability test.
+     *
+     * @param unlocked       the user's storage is unlocked (null: unknown).
+     * @param grantHeld      CallVault still holds the folder's write grant (null: unknown).
+     * @param volume         the mount state of the folder's volume on the phone's own storage provider, or null for
+     *                       any other provider.
+     * @param providerFailed the provider gave no definite answer about the folder (null cursor, or it threw something
+     *                       other than "no such file").
+     * @param localPrimary   the folder is on the phone's own primary storage (not an SD card, not a cloud provider),
+     *                       where a path look can settle a provider that gave no answer ([FolderPathLook]).
+     * @param path           what that path look said.
+     */
+    data class NotUsableEvidence(
+        val unlocked: Boolean?,
+        val grantHeld: Boolean?,
+        val volume: String?,
+        val providerFailed: Boolean,
+        val localPrimary: Boolean,
+        val path: PathLook = PathLook.NOT_LOOKED,
+    )
+
+    /**
+     * Whether a provider that gave no answer should get a second opinion from a path look: only on the phone's own
+     * mounted storage, unlocked, with the grant known to be held (OnePlus 9 Pro, 2026-11-20: a deleted folder there
+     * answers with a null cursor). Cloud and SD-card folders keep their rules.
+     */
+    fun shouldLookAtPath(e: NotUsableEvidence): Boolean =
+        e.providerFailed && e.localPrimary && e.unlocked != false && e.grantHeld == true && e.volume == MEDIA_MOUNTED
+
+    /** What a folder that failed the usability test is, from what was found out about it. */
+    fun classify(e: NotUsableEvidence): FolderReading.Kind = when {
+        e.unlocked == false -> FolderReading.Kind.TRANSIENT
+        e.grantHeld == false -> FolderReading.Kind.GRANT_MISSING
+        e.volume != null && e.volume != MEDIA_MOUNTED -> FolderReading.Kind.TRANSIENT
+        // No answer from the provider: gone only when a trustworthy path look proved the folder is not there.
+        e.providerFailed -> if (shouldLookAtPath(e) && e.path == PathLook.ABSENT) FolderReading.Kind.MISSING else FolderReading.Kind.TRANSIENT
+        else -> FolderReading.Kind.MISSING
+    }
 
     /**
      * @param recheckInMs when to look again to settle an unconfirmed bad reading, or null.
