@@ -102,10 +102,18 @@ object SystemLogCollector {
         val gaps = mutableListOf<String>()
         if (RecorderConnection.service == null) gaps += "recorder not connected (system dumps came over the app's ADB link, if at all)"
 
-        val raw = dump(context, "logcat_dump", "logcat -b main -b system -d -v threadtime")
-        if (raw.isNullOrBlank()) {
+        // Cut down to what is about us IN THE RECORDER, bounded under the binder's limit: the whole log no longer
+        // fits through it, and the ADB fallback is refused in Shizuku mode (vivo, 2026-11-20: no main or system
+        // log at all). A plain dump over the app's ADB shell — an older recorder, or none — is cut the same way here.
+        val ours = ours(context)
+        val log = dump(context, "logcat_ours", "logcat -b main -b system -d -v threadtime", arg = SystemLogFilter.encodeOurs(ours))
+            ?.takeIf { it.isNotBlank() }
+            ?.let { SystemLogFilter.parsePrefiltered(it) ?: SystemLogFilter.parsePrefiltered(SystemLogFilter.prefilter(it.lineSequence(), ours, Int.MAX_VALUE)) }
+        if (log == null || log.read == 0) {
             AppLogger.w(TAG, "No logcat output; the system report will carry no main/system log")
             gaps += "main and system log (logcat gave nothing)"
+        } else if (log.truncated > 0) {
+            gaps += "${log.truncated} older log lines about CallVault (cut on the phone to fit the recorder link; newest kept)"
         }
         // Read separately and bounded on the device: the crash buffer, the event log and every system line naming
         // us. It is what says WHY Android stopped us, and it still arrives when the whole-log dump above is too big
@@ -114,21 +122,20 @@ object SystemLogCollector {
         if (lifecycle == null) gaps += "crash and event log (logcat gave nothing)"
 
         val merged = SystemLogFilter.mergeByTime(
-            raw.orEmpty().lines().filter { it.isNotBlank() },
+            log?.lines.orEmpty(),
             lifecycle.orEmpty().lines().filter { it.isNotBlank() },
         )
-        val kept = SystemLogFilter.select(merged, ours(context))
+        val kept = SystemLogFilter.select(merged, ours)
         if (kept.isEmpty()) AppLogger.w(TAG, "Logcat held nothing about CallVault")
         val capped = SystemLogFilter.capToNewest(kept, MAX_LINES, MAX_BYTES)
-        val rawText = raw.orEmpty()
 
         // Whether this phone's log is current at all. On the Honor BVL-N59 (2026-11-04) the dump held 121k lines and
         // every kept line was from the last boot, three days earlier — a log that stopped, or one that only keeps
         // what is not ours? This says which, without anyone reading 121k lines.
-        val health = LogcatHealth.render(rawText, dump(context, "logcat_size", "logcat -g"))
+        val health = LogcatHealth.render(log?.read ?: 0, log?.oldest, log?.newest, dump(context, "logcat_size", "logcat -g"))
         // Every debugging/USB line in the whole log, not only the window around an event: what switched USB
         // debugging off is the open question on Honor. Keyword lines only, as in UsbOffLogWindow.
-        val usbLines = LogcatHealth.debuggingLines(rawText)
+        val usbLines = LogcatHealth.debuggingLines(log?.lines.orEmpty().joinToString("\n"))
 
         // Android's own record of who is holding a microphone. Collected separately from logcat
         // because it answers a question logcat cannot: a capture leaked by a process that has since
@@ -169,7 +176,7 @@ object SystemLogCollector {
         val out = File(dir, REPORT_NAME)
         runCatching {
             out.writeText(buildString {
-                appendLine(header(rawLines = merged.size, kept = kept.size, attached = capped.size, gaps = gaps))
+                appendLine(header(rawLines = log?.read ?: 0, kept = kept.size, attached = capped.size, gaps = gaps))
                 appendLine(micActivity)
                 appendLine(micOps)
                 appendLine(recorders)

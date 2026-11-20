@@ -33,7 +33,7 @@ class DiagnosticDumpsTest {
             "processes_times", "logcat_grow_host",
             "setting_adb_enabled", "setting_dev_options", "call_state", "audio_latency",
             "voip_policy", "voip_players", "voip_tracks", "voip_audio_log", "vivo_audio_props",
-            "audio_record_state", "voip_owners", "logcat_lifecycle",
+            "audio_record_state", "voip_owners", "logcat_lifecycle", "logcat_ours",
         )
             .forEach { key ->
                 assertTrue("$key must be runnable", DiagnosticDumps.commandFor(key, null) != null)
@@ -167,5 +167,15 @@ class DiagnosticDumpsTest {
         assertTrue(script.contains("-b events"))
         assertTrue(script.contains("tail -n"))
         assertTrue("the argument must never reach the shell", !script.contains("rm -rf"))
+    }
+
+    @Test
+    fun `the cut log runs only with a valid identity, and the identity never reaches a shell`() {
+        // The command is fixed: logcat itself, no shell. The argument is parsed in-process as digits.
+        val command = DiagnosticDumps.commandFor("logcat_ours", "10024")!!
+        assertEquals("/system/bin/logcat", command.first())
+        assertTrue(command.none { it.contains("10024") })
+        assertNull(DiagnosticDumps.run("logcat_ours", "10024; rm -rf /"))
+        assertNull(DiagnosticDumps.run("logcat_ours", null))
     }
 }

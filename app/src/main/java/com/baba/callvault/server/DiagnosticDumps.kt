@@ -8,6 +8,7 @@
 
 package com.baba.callvault.server
 
+import com.baba.callvault.system.diagnostics.SystemLogFilter
 import com.baba.callvault.utils.AppLogger
 import java.io.BufferedReader
 import java.util.concurrent.TimeUnit
@@ -73,6 +74,9 @@ object DiagnosticDumps {
         "logcat_grow" -> arrayOf(LOGCAT, "-b", "main", "-G", "8M")
         "logcat_restore" -> arg?.takeIf { SIZE.matches(it) }?.let { arrayOf(LOGCAT, "-b", "main", "-G", it) }
         "logcat_dump" -> arrayOf(LOGCAT, "-b", "main", "-b", "system", "-d", "-v", "threadtime")
+        // The same log, cut down in this process to what is about the app (see runLogcatOurs). Plain logcat, no
+        // shell: the caller's argument says who the app is and is parsed here as digits, never put on a command line.
+        LOGCAT_OURS -> arrayOf(LOGCAT, "-b", "main", "-b", "system", "-d", "-v", "threadtime")
         // The debugging/USB lines of the log from a given moment on, for USB debugging going off
         // (UsbDebuggingRestorer). Filtered and capped here: everything since the moment ran past the binder's
         // 1 MB limit on the OP9 ("Transaction failed on small parcel"). The argument only reaches the shell after
@@ -222,6 +226,7 @@ object DiagnosticDumps {
 
     /** Runs [key] and returns its output, or null if it is not allowed, fails, or times out. */
     fun run(key: String, arg: String?): String? {
+        if (key == LOGCAT_OURS) return runLogcatOurs(arg)
         val command = commandFor(key, arg) ?: run {
             AppLogger.w(TAG, "refused unknown diagnostic dump '$key'")
             return null
@@ -236,5 +241,35 @@ object DiagnosticDumps {
             }
             output
         }.onFailure { AppLogger.w(TAG, "diagnostic dump '$key' failed: ${it.message}") }.getOrNull()
+    }
+
+    private const val LOGCAT_OURS = "logcat_ours"
+
+    /**
+     * The main+system log cut down to what is about the app, bounded under the binder's limit, with a summary
+     * line saying how much was read and how much had to be left out ([SystemLogFilter.prefilter]).
+     *
+     * Why (vivo, Shizuku mode, 2026-11-20): `logcat_dump` sent the whole log, which with the 16 MB ring is far
+     * past the binder's 1 MB; the call failed, the app fell back to its ADB shell, Shizuku mode refuses that, and
+     * the report had no main or system log at all. Streamed, so this process holds only what it keeps.
+     */
+    private fun runLogcatOurs(arg: String?): String? {
+        val ours = SystemLogFilter.decodeOurs(arg, com.baba.callvault.BuildConfig.APPLICATION_ID) ?: run {
+            AppLogger.w(TAG, "refused '$LOGCAT_OURS': the identity argument is not digits in the expected shape")
+            return null
+        }
+        val command = commandFor(LOGCAT_OURS, null) ?: return null
+        return runCatching {
+            val process = ProcessBuilder(*command).redirectErrorStream(true).start()
+            val out = process.inputStream.bufferedReader().useLines {
+                SystemLogFilter.prefilter(it, ours, SystemLogFilter.PREFILTER_MAX_CHARS)
+            }
+            if (!process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+                AppLogger.w(TAG, "diagnostic dump '$LOGCAT_OURS' timed out after ${TIMEOUT_SECONDS}s")
+                return null
+            }
+            out
+        }.onFailure { AppLogger.w(TAG, "diagnostic dump '$LOGCAT_OURS' failed: ${it.message}") }.getOrNull()
     }
 }

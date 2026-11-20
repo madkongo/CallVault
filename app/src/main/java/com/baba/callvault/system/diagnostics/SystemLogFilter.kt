@@ -306,6 +306,114 @@ object SystemLogFilter {
         return groups
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Cutting the log down on the phone
+    //
+    // The recorder used to send the whole main+system log over the binder. With the 16 MB ring the
+    // host sets, that is tens of megabytes against a 1 MB binder limit; the call failed, the app fell
+    // back to its own ADB shell, and Shizuku mode refuses that — so the vivo report of 2026-11-20 had
+    // no main or system log at all. [prefilter] runs IN THE RECORDER over the streamed log and keeps a
+    // superset of what [select] can keep, newest first, within a budget well under the limit, with a
+    // one-line summary on top saying how much it read and how much it had to leave out.
+    // ---------------------------------------------------------------------------------------------
+
+    /** What [prefilter] sends: the summary of the whole log, and the lines it kept, oldest first. */
+    data class Prefiltered(
+        val read: Int,
+        val oldest: String?,
+        val newest: String?,
+        val truncated: Int,
+        val lines: List<String>,
+    )
+
+    /** Characters the recorder may send: ~600 KB as the binder's UTF-16, well under its 1 MB limit. */
+    const val PREFILTER_MAX_CHARS = 300_000
+
+    private const val PREFILTER_MARK = "#cv-logcat"
+
+    /** `MM-DD HH:MM:SS`, the part of a timestamp the "is the log current" section prints. */
+    private const val SECOND_STAMP_LENGTH = 14
+
+    /**
+     * [lines] cut down to the ones [select] could keep, plus the debugging lines the report lists, newest
+     * kept when they exceed [maxChars]. Streams: holds only what it keeps, so a 60 MB log costs no more
+     * than the budget. Pids are not windowed here (a superset); [select] windows them in the app.
+     */
+    fun prefilter(lines: Sequence<String>, ours: Ours, maxChars: Int): String {
+        val namesUs = namesUsMatcher(ours)
+        val ownPids = ours.pidWindows.mapTo(HashSet()) { it.pid }
+        val kept = ArrayDeque<String>()
+        var chars = 0
+        var read = 0
+        var candidates = 0
+        var oldest: String? = null
+        var newest: String? = null
+        var group: Parsed? = null
+        var groupSize = 0
+        for (line in lines) {
+            val p = parse(line) ?: continue
+            read++
+            val stamp = line.take(SECOND_STAMP_LENGTH)
+            if (oldest == null) oldest = stamp
+            newest = stamp
+            if (p.tag.startsWith(OWN_TAG_PREFIX)) ownPids += p.pid
+            val startsGroup = p.tag in SYSTEM_TAGS && NOTICE_FAILURE.containsMatchIn(line)
+            val inGroup = !startsGroup && group?.let {
+                it.pid == p.pid && it.tid == p.tid && it.tag == p.tag && groupSize < MAX_GROUP_LINES
+            } == true
+            when {
+                startsGroup -> { group = p; groupSize = 1 }
+                inGroup -> groupSize++
+                else -> group = null
+            }
+            val candidate = startsGroup || inGroup || keep(line) || p.pid in ownPids ||
+                (isSystemTag(p.tag) && namesUs(line)) || LogcatHealth.isDebuggingLine(line)
+            if (!candidate) continue
+            candidates++
+            kept.addLast(line)
+            chars += line.length + 1
+            while (chars > maxChars && kept.size > 1) chars -= kept.removeFirst().length + 1
+        }
+        val summary = "$PREFILTER_MARK|read=$read|oldest=${oldest.orEmpty()}|newest=${newest.orEmpty()}" +
+            "|truncated=${candidates - kept.size}"
+        return summary + "\n" + kept.joinToString("\n")
+    }
+
+    /** The parts of a [prefilter] answer, or null when [text] is something else — a plain logcat dump. */
+    fun parsePrefiltered(text: String): Prefiltered? {
+        val first = text.substringBefore('\n')
+        if (!first.startsWith("$PREFILTER_MARK|")) return null
+        val fields = first.split('|').drop(1).associate { it.substringBefore('=') to it.substringAfter('=', "") }
+        return Prefiltered(
+            read = fields["read"]?.toIntOrNull() ?: 0,
+            oldest = fields["oldest"]?.ifEmpty { null },
+            newest = fields["newest"]?.ifEmpty { null },
+            truncated = fields["truncated"]?.toIntOrNull() ?: 0,
+            lines = text.substringAfter('\n', "").split('\n').filter { it.isNotBlank() },
+        )
+    }
+
+    /**
+     * [ours] as it crosses the binder to the recorder: digits and separators only (`uid;pid@from-to,…`).
+     * The package is not sent; the recorder runs from the same APK and knows it.
+     */
+    fun encodeOurs(ours: Ours): String =
+        ours.uid.toString() + ours.pidWindows.takeIf { it.isNotEmpty() }
+            ?.joinToString(",", prefix = ";") { "${it.pid}@${it.fromMs}-${it.toMs}" }.orEmpty()
+
+    /** [encodeOurs] read back, or null for anything that is not exactly that shape. */
+    fun decodeOurs(arg: String?, packageName: String): Ours? {
+        val m = arg?.let { OURS_ARG.matchEntire(it) } ?: return null
+        val windows = m.groupValues[2].takeIf { it.isNotEmpty() }?.split(',')?.map { w ->
+            val (pid, range) = w.split('@')
+            PidWindow(pid.toInt(), range.substringBefore('-').toLong(), range.substringAfter('-').toLong())
+        }.orEmpty()
+        return Ours(packageName, m.groupValues[1].toInt(), windows)
+    }
+
+    private val OURS_ARG =
+        Regex("""^(\d{1,9})(?:;(\d{1,7}@\d{1,13}-\d{1,13}(?:,\d{1,7}@\d{1,13}-\d{1,13}){0,63}))?$""")
+
     private const val PER_USER_RANGE = 100_000
     private const val FIRST_APPLICATION_UID = 10_000
     private const val STAMP_LENGTH = 18

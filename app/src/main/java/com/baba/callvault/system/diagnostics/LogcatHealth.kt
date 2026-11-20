@@ -22,10 +22,15 @@ object LogcatHealth {
     // Same rule as UsbOffLogWindow: capitalised forms inside identifiers, lower-case ones only at a word start.
     private val DEBUGGING = Regex("Adb|ADB|Usb|USB|(?<![A-Za-z])(adb|usb)|[Dd]ebugg|[Dd]evelop")
 
-    fun render(raw: String, ringSizes: String?): String = buildString {
+    fun render(raw: String, ringSizes: String?): String {
         val stamps = raw.lineSequence().mapNotNull { STAMP.find(it)?.groupValues?.get(1) }.toList()
+        return render(stamps.size, stamps.firstOrNull(), stamps.lastOrNull(), ringSizes)
+    }
+
+    /** The same, from counts the recorder made while cutting the log down on the phone. */
+    fun render(read: Int, oldest: String?, newest: String?, ringSizes: String?): String = buildString {
         appendLine("--- Is the phone's log current? ---")
-        appendLine("Lines read: ${stamps.size}. Oldest: ${stamps.firstOrNull() ?: "?"}. Newest: ${stamps.lastOrNull() ?: "?"}.")
+        appendLine("Lines read: $read. Oldest: ${oldest ?: "?"}. Newest: ${newest ?: "?"}.")
         val sizes = ringSizes?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList().orEmpty()
         if (sizes.isNotEmpty()) {
             appendLine("Log buffers:")
@@ -34,7 +39,10 @@ object LogcatHealth {
     }
 
     fun debuggingLines(raw: String): List<String> =
-        raw.lineSequence().filter { STAMP.containsMatchIn(it) && DEBUGGING.containsMatchIn(it) }.toList().takeLast(MAX_DEBUG_LINES)
+        raw.lineSequence().filter(::isDebuggingLine).toList().takeLast(MAX_DEBUG_LINES)
+
+    /** Whether [line] is one [debuggingLines] lists. */
+    fun isDebuggingLine(line: String): Boolean = STAMP.containsMatchIn(line) && DEBUGGING.containsMatchIn(line)
 
     private const val MAX_SIZE_LINES = 8
 }
