@@ -84,7 +84,7 @@ class CallVaultApplication : Application() {
         // import, a wizard re-pick, a user deleting the marker by hand. Re-checking is one folder lookup.
         com.baba.callvault.system.storage.HideRecordings.applyAsync(applicationContext)
 
-        // Shizuku mode has no keep-alive, so nothing else would notice Shizuku dying while the app runs.
+        // The keep-alive does not watch Shizuku itself (it only asks again while Shizuku runs), so nothing else would notice Shizuku dying while the app runs.
         com.baba.callvault.server.ShizukuLifecycleWatcher.install(applicationContext)
 
         // Reclaim model files no version of the app will ever use again.
@@ -257,8 +257,7 @@ class CallVaultApplication : Application() {
         runCatching {
             if (AppPreferences(applicationContext).getPrivilegedMode().needsShizuku) {
                 // Also on every start, not only on a switch: a keep-alive can outlive the process that
-                // started it. In Shizuku mode it is only wanted as the app-call detector; start() stops
-                // it when app calls are off, and starts it when they are on.
+                // started it, and the foreground service is what keeps Android from hibernating the app. It runs in Shizuku mode too (process anchor, P1a); start() logs the decision once per change.
                 DaemonKeepAliveService.start(applicationContext)
             } else {
                 ShizukuBackend.stop(remove = true)

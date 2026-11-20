@@ -329,8 +329,8 @@ object RecorderBackend {
         val connected = ensureRunning(context)
 
         run {
-            // Safe to call unconditionally: start() applies KeepAlivePolicy (in Shizuku mode it runs only
-            // as the app-call detector), and starting one that is already running is a no-op.
+            // Safe to call unconditionally: start() applies KeepAlivePolicy (it runs in every mode; in Shizuku
+            // mode it is the process anchor and never touches our ADB), and starting one that is already running is a no-op.
             runCatching { DaemonKeepAliveService.start(context) }
                 .onFailure { AppLogger.w(TAG, "Could not restart the keep-alive after the switch: ${it.message}") }
         }
