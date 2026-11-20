@@ -10,11 +10,10 @@ package com.baba.callvault.services.recording
 
 import android.content.Context
 import android.media.AudioManager
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.WifiState
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.ShizukuStatus
@@ -253,16 +252,11 @@ object MicOpAutoHeal {
         loopback = AdbShell.isLoopbackArmed(context),
         writeSecure = AdbShell.hasWriteSecureSettings(context),
         offline = prefs.isOfflineRecordingEnabled(),
-        wifi = isWifiConnected(context),
+        // Every network, not the default one: a Wi-Fi without internet while mobile data is up is still Wi-Fi (review C34).
+        wifi = WifiState.of(context) != WifiState.NOT_CONNECTED,
         // Read when the heal decides, on loopback: works with no network.
         tcpPortOpen = runCatching { AdbShell.isAdbdTcpPortReachable(context) }.getOrDefault(false),
     )
-
-    private fun isWifiConnected(context: Context): Boolean = runCatching {
-        val cm = context.getSystemService(ConnectivityManager::class.java) ?: return false
-        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
-        caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-    }.getOrDefault(false)
 
     private fun waitFor(timeoutMs: Long, condition: () -> Boolean): Boolean {
         val deadline = SystemClock.elapsedRealtime() + timeoutMs

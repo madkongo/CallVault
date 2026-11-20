@@ -818,7 +818,8 @@ class DaemonKeepAliveService : Service() {
             return
         }
         val offline = runCatching { AppPreferences(this).isOfflineRecordingEnabled() }.getOrDefault(false)
-        if (!offline && !isWifiConnected()) {
+        // Every network, not the default one: a Wi-Fi without internet while mobile data is up is still Wi-Fi (review C34).
+        if (!RewarmDecisions.wifiAllowsRelaunch(offline, WifiState.of(this))) {
             timelineSkip("no Wi-Fi and off-Wi-Fi recording is off")
             return // the WD relaunch path needs Wi-Fi; loopback doesn't
         }
@@ -991,12 +992,6 @@ class DaemonKeepAliveService : Service() {
 
     /** How a bounded relaunch ended. A timeout also needs its ADB connection dropped. */
     private enum class LaunchOutcome { CONNECTED, FAILED, TIMED_OUT }
-
-    private fun isWifiConnected(): Boolean = runCatching {
-        val cm = getSystemService(ConnectivityManager::class.java) ?: return false
-        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
-        caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-    }.getOrDefault(false)
 
     /** Tells the user CallVault undid their Wireless-debugging change, and why. Dismissible, silent. */
 
