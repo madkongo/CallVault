@@ -106,4 +106,29 @@ class ForegroundStartNoticeTest {
 
         assertSame(held, ForegroundNoticeChannel.noticeForStart(app, notice("own_channel")) {})
     }
+
+    // --- posting another service's notice as the foreground notice (the app-call notice, a remaining held notice) ---
+
+    @Test
+    fun `a notice on a missing channel is never handed to startForeground`() {
+        var posted = false
+        val ok = ForegroundNoticeChannel.postAsForeground(app, notice("no_such_channel")) { posted = true }
+        assertFalse(ok)
+        assertFalse(posted)
+    }
+
+    @Test
+    fun `a notice on an existing channel is handed to startForeground`() {
+        RecordingNotificationHelper.ensureChannels(app, force = true)
+        val n = notice(RecordingNotificationHelper.CHANNEL_ID_SERVICE)
+        var posted: Any? = null
+        assertTrue(ForegroundNoticeChannel.postAsForeground(app, n) { posted = it })
+        assertSame(n, posted)
+    }
+
+    @Test
+    fun `a startForeground that throws reports failure so the caller can fall back`() {
+        RecordingNotificationHelper.ensureChannels(app, force = true)
+        assertFalse(ForegroundNoticeChannel.postAsForeground(app, notice(RecordingNotificationHelper.CHANNEL_ID_SERVICE)) { error("not allowed") })
+    }
 }

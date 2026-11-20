@@ -34,46 +34,35 @@ class ForegroundNoticeChannelTest {
         assertEquals(ForegroundNoticeChannel.Verdict.MISSING_CHANNEL, ForegroundNoticeChannel.verdict("x") { error("binder") })
     }
 
+    // --- Light source guards, only where no seam exists. The decisions themselves are behaviour-tested in
+    // ForegroundStartNoticeTest, CallMonitorForegroundNoticeTest, RecordingChannelsEnsureTest and
+    // VoipRecordingNotificationTest. ---
+
     private fun source(path: String): String {
         val root = listOf(File("src/main/java"), File("app/src/main/java")).first { it.isDirectory }
         return File(root, path).readText()
     }
 
+    /** Application.onCreate runs once per test process under Robolectric, before any test can reset the cache. */
     @Test
     fun `the recording channels are created at app start, not only by the phone-call service`() {
         assertTrue(source("com/baba/callvault/CallVaultApplication.kt").contains("RecordingNotificationHelper.ensureChannels("))
     }
 
+    /** The keep-alive cannot be started under Robolectric (ADB, daemon, observers), so its wiring is read. */
     @Test
-    fun `the app-call notice makes sure its channel exists before it is posted`() {
-        val text = source("com/baba/callvault/services/recording/VoipRecordingNotification.kt")
-        val ensure = text.indexOf("RecordingNotificationHelper.ensureChannels(")
-        val post = text.indexOf("foregroundPoster")
-        assertTrue("ensureChannels must come before the foreground post", ensure in 0 until post)
-    }
-
-    @Test
-    fun `the keep-alive checks the channel before every foreground post of another service's notice`() {
-        val text = source("com/baba/callvault/services/recording/DaemonKeepAliveService.kt")
-        assertTrue(text.contains("ForegroundNoticeChannel.usable("))
-        val poster = text.substring(text.indexOf("SharedStatusNotice.foregroundPoster = {"))
-        assertTrue(poster.substring(0, 600).contains("ForegroundNoticeChannel.usable("))
-        val repost = text.substring(text.indexOf("private fun repostHeldAsForeground"))
-        assertTrue(repost.substring(0, 600).contains("ForegroundNoticeChannel.usable("))
-    }
-
-    /**
-     * Light guard: the keep-alive cannot be started under Robolectric (ADB, daemon, observers), so its use of the
-     * tested [ForegroundNoticeChannel.noticeForStart] is checked in the source. CallMonitorForegroundNoticeTest covers
-     * the same choice behaviourally in the call monitor.
-     */
-    @Test
-    fun `the keep-alive starts with a notice whose channel exists, and makes sure of its own before re-posting Ready`() {
+    fun `every startForeground in the keep-alive goes through a channel check or its own ensured channel`() {
         val text = source("com/baba/callvault/services/recording/DaemonKeepAliveService.kt")
         assertTrue("never the held notice unchecked", !text.contains("contentForKeepAlive("))
         assertTrue(text.contains("ForegroundNoticeChannel.noticeForStart("))
+        val poster = text.substring(text.indexOf("SharedStatusNotice.foregroundPoster = {"))
+        assertTrue(poster.substring(0, 300).contains("ForegroundNoticeChannel.postAsForeground("))
+        val repostHeld = text.substring(text.indexOf("private fun repostHeldAsForeground"))
+        assertTrue(repostHeld.substring(0, 300).contains("ForegroundNoticeChannel.postAsForeground("))
         val ready = text.substring(text.indexOf("private fun repostAsForeground"))
         val ensure = ready.indexOf("ensureOwnChannel()")
         assertTrue("ensureOwnChannel must come before the startForeground of Ready", ensure in 0 until ready.indexOf("startForeground("))
+        // Exactly the three sites above plus the checked helper: a new raw startForeground must be routed too.
+        assertTrue(Regex("""\bstartForeground\(""").findAll(text).count() == 3)
     }
 }

@@ -56,6 +56,18 @@ object ForegroundNoticeChannel {
     }
 
     /**
+     * Hands another service's [notification] to [post] (the keep-alive's startForeground) only when its channel exists.
+     * Returns whether it was posted; false when the channel is missing or [post] threw, both logged, so the caller can
+     * fall back to notify(), which only drops a notice on a missing channel.
+     */
+    fun postAsForeground(context: Context, notification: Notification, post: (Notification) -> Unit): Boolean {
+        if (!usable(context, notification)) return false
+        return runCatching { post(notification) }
+            .onFailure { AppLogger.w(TAG, "startForeground refused the notice on channel '${notification.channelId}': ${it.javaClass.simpleName}: ${it.message}") }
+            .isSuccess
+    }
+
+    /**
      * Pure decision for a foreground service that starts while a recorded call may hold the shared id: the call's
      * notice ([held]) only when [heldUsable] says its channel exists, otherwise the service's [own]. A failing lookup
      * counts as unusable. Never "nothing": startForeground must still be called in time.

@@ -177,15 +177,16 @@ class DaemonKeepAliveService : Service() {
      * notify() on a foreground service's id does not replace what is shown).
      */
     private fun repostHeldAsForeground(held: Notification) {
-        runCatching {
-            // Never hand startForeground a notice on a missing channel (review N22): it crashes the app later.
-            check(ForegroundNoticeChannel.usable(applicationContext, held)) { "its notification channel does not exist" }
-            startForeground(NOTIF_ID, held, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        }.onFailure {
-            AppLogger.w(TAG, "Could not re-post the remaining recording notice as the foreground notice (${it.message}); trying notify")
-            runCatching { getSystemService(NotificationManager::class.java).notify(NOTIF_ID, held) }
-                .onFailure { e -> AppLogger.w(TAG, "Could not re-post the remaining recording notice: ${e.message}") }
-        }
+        // Never hand startForeground a notice on a missing channel (review N22): it crashes the app later.
+        if (ForegroundNoticeChannel.postAsForeground(applicationContext, held, ::startOwnForeground)) return
+        AppLogger.w(TAG, "Could not re-post the remaining recording notice as the foreground notice; trying notify")
+        runCatching { getSystemService(NotificationManager::class.java).notify(NOTIF_ID, held) }
+            .onFailure { e -> AppLogger.w(TAG, "Could not re-post the remaining recording notice: ${e.message}") }
+    }
+
+    /** startForeground under the shared id, for a notice [ForegroundNoticeChannel] has checked. */
+    private fun startOwnForeground(notification: Notification) {
+        startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
     }
 
     /**
@@ -609,12 +610,9 @@ class DaemonKeepAliveService : Service() {
         // put "Ready" back. The second, delayed look catches a recording post that system_server delivers
         // after this one (LAVA LXX508) — see [healSharedNotice].
         // The app-call recording notice is posted through this service's startForeground, not notify() (C23, Q49).
+        // A notice on a missing channel would crash the app later, uncatchably (review N22); false → notify().
         SharedStatusNotice.foregroundPoster = { notification ->
-            // A notice on a missing channel would crash the app later, uncatchably (review N22); false → notify().
-            ForegroundNoticeChannel.usable(applicationContext, notification) &&
-            runCatching { startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE) }
-                .onFailure { AppLogger.w(TAG, "Could not post the recording notice as the foreground notice: ${it.message}") }
-                .isSuccess
+            ForegroundNoticeChannel.postAsForeground(applicationContext, notification, ::startOwnForeground)
         }
         SharedStatusNotice.onReleased = {
             watchdogHandler.post {
