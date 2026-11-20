@@ -42,6 +42,8 @@ class BatteryUseReportTest {
         assertTrue(text, text.contains("CallVault app (uid 10234): CPU 2m10s, wake locks 12 (40s), alarms 3, jobs 12 (40s), foreground service 5h58m"))
         assertTrue(text, text.contains("Android System / shell uid 2000 (the recorder, adbd, and any other adb or Shizuku tool): CPU 14m02s, wake locks 3 (1m12s)"))
         assertTrue(text, text.contains("est. 40.1 mAh"))
+        // The shell's process rows are com.android.shell, not the recorder: not shown.
+        assertFalse(text, lines.first { it.startsWith("Android System") }.contains("process starts"))
         assertTrue(text, text.contains("From CallVault's own log since then: 3 recorder launch attempts, 2 keep-alive relaunches, 0 ADB connection rebuilds."))
         assertTrue(text, lines.last().startsWith("Verdict: "))
     }

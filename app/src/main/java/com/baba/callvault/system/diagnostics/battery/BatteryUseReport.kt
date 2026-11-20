@@ -44,6 +44,7 @@ object BatteryUseReport {
 
     const val NORMAL = "looks normal by these numbers"
 
+    private const val APP_LABEL = "CallVault app"
     private const val HOUR_MS = 3_600_000L
     private const val MINUTE_MS = 60_000L
     private const val SECOND_MS = 1_000L
@@ -55,7 +56,7 @@ object BatteryUseReport {
     /** The section's lines, without its heading. [counts] is null when debug logging is off. */
     fun lines(use: BatteryUse, counts: LogCounts?, zone: TimeZone = TimeZone.getDefault()): List<String> = buildList {
         add(period(use, zone))
-        add(uidLine("CallVault app", use.app))
+        add(uidLine(APP_LABEL, use.app))
         add(uidLine("Android System / shell uid ${BatteryCheckin.SHELL_UID} (the recorder, adbd, and any other adb or Shizuku tool)", use.shell))
         use.root?.let { add(uidLine("Root uid 0 (the recorder runs as root; also every other root daemon)", it)) }
         use.app?.topWakeLocks?.takeIf { it.isNotEmpty() }?.let { top ->
@@ -131,6 +132,7 @@ object BatteryUseReport {
     }
 
     private fun uidLine(label: String, use: UidUse?): String {
+        val isApp = label == APP_LABEL
         if (use == null) return "$label: no row in batterystats (nothing measurable, or the uid was not found)."
         val parts = buildList {
             add("CPU ${duration(use.cpuMs)}")
@@ -141,11 +143,13 @@ object BatteryUseReport {
             add("data mobile ${bytes(use.mobileRxBytes + use.mobileTxBytes)} / Wi-Fi ${bytes(use.wifiRxBytes + use.wifiTxBytes)}")
             if (use.mobileRadioActiveMs > 0) add("mobile radio active ${duration(use.mobileRadioActiveMs)}")
             use.powerMah?.let { add("est. ${"%.1f".format(Locale.US, it)} mAh") }
-            if (use.processStarts > 0) add("process starts ${use.processStarts}")
-            if (use.processCrashes > 0) add("crashes ${use.processCrashes}")
-            if (use.processAnrs > 0) add("ANRs ${use.processAnrs}")
+            // Process rows are Android's app processes only: under the shell uid they are com.android.shell, never the
+            // recorder (app_process started over ADB), so they would mislead there.
+            if (isApp && use.processStarts > 0) add("process starts ${use.processStarts}")
+            if (isApp && use.processCrashes > 0) add("crashes ${use.processCrashes}")
+            if (isApp && use.processAnrs > 0) add("ANRs ${use.processAnrs}")
         }
-        val name = if (label.startsWith("CallVault app")) "$label (uid ${use.uid})" else label
+        val name = if (isApp) "$label (uid ${use.uid})" else label
         return "$name: " + parts.joinToString(", ")
     }
 
