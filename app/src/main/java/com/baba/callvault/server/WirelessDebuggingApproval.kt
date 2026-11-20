@@ -56,7 +56,15 @@ object WirelessDebuggingApproval {
      * ICU regex rejects a bare `}` that the desktop JVM accepts (rf5, 2026-11-20; RegexIcuBraceGuardTest).
      */
     private val FIELD_END by lazy { Regex("(?m)^[ \\t]*(?:\\}|[A-Za-z_]+=)") }
-    private val BSSID by lazy { Regex("""(?<![0-9A-Fa-f:])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![0-9A-Fa-f:])""") }
+    /**
+     * A run of colon-joined hex pairs, taken whole so a longer run is never read from inside. The keystore is binary
+     * XML on real phones: an address sits between a length byte (or a printable character) and the next token's type
+     * byte ('3'), so hex may touch it on either side and only a colon marks it as part of something longer (review
+     * N15, OnePlus 9 Pro, Android 14, 2026-11-20). [isBssidRun] keeps the runs that are exactly one address.
+     */
+    private val COLON_HEX_RUN by lazy { Regex("""[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2})+""") }
+    /** `aa:bb:cc:dd:ee:ff`: six pairs and five colons. */
+    private const val BSSID_LENGTH = 17
     private const val WD_SETTING = "adb_wifi_enabled"
     private const val TIMEOUT_MS = 10_000L
     private const val READER_GRACE_MS = 1_000L
@@ -137,8 +145,17 @@ object WirelessDebuggingApproval {
         val start = KEYSTORE_FIELD.find(dump) ?: return emptySet()
         val rest = dump.substring(start.range.last + 1)
         val section = FIELD_END.find(rest)?.let { rest.substring(0, it.range.first) } ?: rest
-        return BSSID.findAll(section).map { it.value.lowercase() }.toSet()
+        return COLON_HEX_RUN.findAll(section).filter { isBssidRun(section, it.range) }.map { it.value.lowercase() }.toSet()
     }
+
+    /**
+     * Exactly six groups, and no colon on either side: `11:22:33:44:55:66:77` or `1:22:33:44:55:66:77` is not an
+     * access point. Reading one that is not trusted as trusted would skip its approval and leave Android's prompt.
+     */
+    private fun isBssidRun(text: String, range: IntRange): Boolean =
+        range.last - range.first + 1 == BSSID_LENGTH &&
+            text.getOrNull(range.first - 1) != ':' &&
+            text.getOrNull(range.last + 1) != ':'
 
     /**
      * Whether adbd listens on a tcp port: `service.adb.tcp.port` (set when adbd binds, e.g. after `adb tcpip`, which
