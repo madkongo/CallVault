@@ -260,14 +260,38 @@ object SystemLogFilter {
         return Parsed(m.groupValues[3].trim(), m.groupValues[1].toInt(), m.groupValues[2].toInt(), at)
     }
 
-    /** Every pid that wrote one of our own `CV:` lines, for the stretch it was writing them. */
+    /**
+     * Every pid that wrote one of our own `CV:` lines, for each stretch it was writing them. A stretch ends after
+     * [PID_GAP_MS] without an own line: pids wrap, and one window from a pid's first own line to its last would
+     * let in whatever other app held the number in between. A crash after a long quiet spell is still ours by
+     * Android's exit record ([Ours.pidWindows]).
+     */
     private fun ownPidWindows(parsed: List<Parsed?>): List<PidWindow> =
         parsed.filterNotNull()
             .filter { it.tag.startsWith(OWN_TAG_PREFIX) }
             .groupBy { it.pid }
-            .map { (pid, own) ->
-                PidWindow(pid, own.minOf { it.atMs } - PID_LEAD_MS, own.maxOf { it.atMs } + PID_TRAIL_MS)
+            .flatMap { (pid, own) -> stretches(own.map { it.atMs }.sorted()).map { (from, to) ->
+                PidWindow(pid, from - PID_LEAD_MS, to + PID_TRAIL_MS)
+            } }
+
+    /** [times] (sorted) split wherever two neighbours are more than [PID_GAP_MS] apart, as first-to-last pairs. */
+    private fun stretches(times: List<Long>): List<Pair<Long, Long>> {
+        val out = mutableListOf<Pair<Long, Long>>()
+        var start = times.first()
+        var last = start
+        for (t in times.drop(1)) {
+            if (t - last > PID_GAP_MS) {
+                out += start to last
+                start = t
             }
+            last = t
+        }
+        out += start to last
+        return out
+    }
+
+    /** How long a pid of ours may go without an own line before its window ends. */
+    private const val PID_GAP_MS = 10 * 60_000L
 
     private fun isSystemTag(tag: String): Boolean =
         tag in SYSTEM_TAGS || EVENT_TAG_PREFIXES.any { tag.startsWith(it) } || OEM_KILLER_TAG.containsMatchIn(tag)

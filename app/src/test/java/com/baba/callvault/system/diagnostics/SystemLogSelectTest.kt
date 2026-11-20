@@ -170,4 +170,15 @@ class SystemLogSelectTest {
             SystemLogFilter.mergeByTime(a, b),
         )
     }
+
+    @Test
+    fun `a pid that was ours twice, with someone else's process in between, lets nothing in from between`() {
+        // Pids wrap: 13572 was ours at 17:00, another app's at 17:30, ours again at 18:00. One window from the first
+        // own line to the last would have let the other app's lines in.
+        val first = "11-20 17:00:00.000 13572 13600 I CV:VoipRec: first life"
+        val between = "11-20 17:30:00.000 13572 13572 I Chat    : message from +972 50-123-4567"
+        val second = "11-20 18:00:00.000 13572 13600 I CV:VoipRec: second life"
+        val runtime = "11-20 18:00:01.000 13572 13572 E AndroidRuntime: FATAL EXCEPTION: main"
+        assertEquals(listOf(first, second, runtime), select(first, between, second, runtime))
+    }
 }
