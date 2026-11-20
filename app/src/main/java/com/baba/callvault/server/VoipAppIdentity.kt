@@ -60,7 +60,7 @@ internal object VoipAppIdentity {
     internal fun isAppUid(uid: Int): Boolean = uid >= APP_UID_START
 
     /** A wedge ceiling, not a speed target: the old read never bounded anything, so a slow healthy phone always got its answer. */
-    private const val DUMP_TIMEOUT_MS = 10_000L
+    private const val DUMP_TIMEOUT_MS = 30_000L
 
     /** Total time to keep looking before giving up, and the gap between attempts. */
     private const val RESOLVE_BUDGET_MS = 1_200L

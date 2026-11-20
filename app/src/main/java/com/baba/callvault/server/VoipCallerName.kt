@@ -35,9 +35,9 @@ internal object VoipCallerName {
     /**
      * How long one dump may take. 1.5 s was the intent, but the old read never honoured it, so a slow healthy phone
      * (the whole-dump fallback is megabytes) always got its answer eventually; a bound that bites at 1.5 s would turn
-     * those into "no notification". This is a wedge ceiling, not a speed target.
+     * those into "no notification". 30 s: pure wedge protection, close to the old unbounded read; a cut dump is never parsed.
      */
-    private const val DUMP_TIMEOUT_MS = 10_000L
+    private const val DUMP_TIMEOUT_MS = 30_000L
     private const val MAX_NAME_LENGTH = 40
 
     /** Characters unsafe or annoying in a filename, plus anything non-printable. */
