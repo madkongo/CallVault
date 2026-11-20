@@ -18,6 +18,10 @@ import android.provider.DocumentsContract
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.UsbDebuggingEvents
 import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledFuture
@@ -70,6 +74,18 @@ object RecordingFolderCheck {
 
     /** Called after every check with its result; set once by the app (the alert lives outside this file). */
     @Volatile var onChecked: ((Context, FolderCheckPolicy.Step) -> Unit)? = null
+
+    private val _changes = MutableStateFlow(0L)
+
+    /**
+     * Counts every stored result, whatever stored it (a re-check, the keep-alive tick, the periodic job, a call's end,
+     * a folder picked). Home collects it while shown and reads [cached] again on each change, so its status follows
+     * the stored answer without a pull-to-refresh (OnePlus 9 Pro, 2026-11-20: the 20 s re-check confirmed the folder
+     * gone and alerted, and Home still said "Ready to record"). Its current value is not a change.
+     */
+    val changes: StateFlow<Long> = _changes.asStateFlow()
+
+    private fun stored() = _changes.update { it + 1 }
 
     /** The last stored result, or null. A SharedPreferences read: no provider I/O. */
     fun cached(context: Context): FolderCheckState? = runCatching {
@@ -135,6 +151,7 @@ object RecordingFolderCheck {
                 return@runCatching step
             }
             prefs(app).edit().putString(KEY_STATE, step.state.encode()).apply()
+            stored()
             log(app, trigger, previous, reading, step)
             scheduleRecheck(app, step.recheckInMs)
             step
@@ -323,10 +340,12 @@ object RecordingFolderCheck {
     /** Stores a result as if measured: for tests. */
     internal fun storeForTest(context: Context, state: FolderCheckState) {
         prefs(context).edit().putString(KEY_STATE, state.encode()).commit()
+        stored()
     }
 
     /** Forgets the stored result: for tests. */
     internal fun clearForTest(context: Context) {
         prefs(context).edit().clear().commit()
+        stored()
     }
 }
