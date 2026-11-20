@@ -19,31 +19,57 @@ import com.baba.callvault.server.RecorderConnection
  * read said `adb_enabled as shell: 0`. [UsbDebuggingPolicy] now takes this as the answer when it is fresh.
  *
  * Refreshed off the main thread (it starts `settings get` in the recorder — a fork+exec charged to "Android System"),
- * on every change of the switch, on Wireless debugging turning on, and on keep-alive ticks only while
- * [UsbDebuggingPolicy.needsShellRead] says it can change the answer. Forgotten on a change until re-read, and forgotten
- * when it stops being needed, so a stale value never outlives the switches it was read under.
+ * on every change of the switch, on Wireless debugging changing, and on keep-alive ticks only where
+ * [UsbDebuggingPolicy.shellReadNeed] says nothing cheaper answers. Where R1 answers (adbd up, Wireless debugging off)
+ * the tick records that proof instead ([noteProvenOnByR1]), with the same freshness, so a brief adbd stop reads ON as
+ * the last per-tick shell read did. Forgotten only on a switch change; otherwise it simply expires after [FRESH_MS].
  */
 object UsbDebuggingShellRead {
 
     private const val FRESH_MS = 2 * 60_000L
 
-    @Volatile private var value: Boolean? = null
-    @Volatile private var readAtMs = 0L
+    /** Where a value came from: the recorder's read, or R1's proof (adbd up with Wireless debugging off). */
+    enum class Source { SHELL, R1 }
 
-    /** The last shell read if recent, else null (unknown). */
-    fun current(now: Long = System.currentTimeMillis()): Boolean? = value.takeIf { now - readAtMs <= FRESH_MS }
+    private class Reading(val on: Boolean, val atMs: Long, val source: Source)
 
+    @Volatile private var reading: Reading? = null
+
+    /** Bumped by every [forget], i.e. every switch change. A proof or read begun before one is dropped. */
+    @Volatile private var generation = 0L
+
+    /** The last value if recent, else null (unknown). */
+    fun current(now: Long = System.currentTimeMillis()): Boolean? = reading?.takeIf { now - it.atMs <= FRESH_MS }?.on
+
+    fun generation(): Long = generation
+
+    /** A switch changed: what was read or proven described the old switches. */
+    @Synchronized
     fun forget() {
-        value = null
+        reading = null
+        generation++
+    }
+
+    /**
+     * R1 proved USB debugging on (setting 0, adbd up, Wireless debugging off). Kept as a shell read would be, so a brief
+     * adbd stop before it expires still answers ON. Dropped if a switch changed since [startedIn].
+     */
+    @Synchronized
+    fun noteProvenOnByR1(startedIn: Long, now: Long = System.currentTimeMillis()) {
+        if (startedIn != generation) return
+        reading = Reading(true, now, Source.R1)
     }
 
     /** Reads it again through the recorder. Blocking; never on the main thread. Null when it cannot be read. */
     fun refresh(now: Long = System.currentTimeMillis()): Boolean? {
         val service = RecorderConnection.service ?: return null
-        val read = runCatching { service.diagnosticDump("setting_adb_enabled", null)?.trim() }.getOrNull()
-        val on = parse(read) ?: return null
-        value = on
-        readAtMs = now
+        return refreshWith(now) { service.diagnosticDump("setting_adb_enabled", null) }
+    }
+
+    /** [refresh] with the read itself passed in, so the bookkeeping is testable without a recorder. */
+    internal fun refreshWith(now: Long, read: () -> String?): Boolean? {
+        val on = parse(runCatching(read).getOrNull()?.trim()) ?: return null
+        synchronized(this) { reading = Reading(on, now, Source.SHELL) }
         return on
     }
 

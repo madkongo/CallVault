@@ -34,6 +34,7 @@ import com.baba.callvault.data.RecordingState
 import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.UsbDebuggingRestorer
+import com.baba.callvault.integrations.adb.ShellReadNeed
 import com.baba.callvault.integrations.adb.UsbDebuggingShellRead
 import com.baba.callvault.integrations.adb.TransportTimeline
 import com.baba.callvault.integrations.adb.WifiState
@@ -316,16 +317,20 @@ class DaemonKeepAliveService : Service() {
     }
 
     /**
-     * The keep-alive tick's (and a Wireless debugging change's) version of [refreshShellUsbRead]: asks the recorder
-     * only while that can change the answer ([ShellUsbReadGate]), and forgets the last read otherwise. Each read is a
-     * fork+exec in the recorder, which used to run every awake minute.
+     * The keep-alive tick's (and a Wireless debugging change's) version of [refreshShellUsbRead]: asks the recorder only
+     * where nothing cheaper answers ([ShellReadNeed.READ]); where R1 answers it records that proof instead, with a shell
+     * read's freshness. Each read is a fork+exec in the recorder, which used to run every awake minute.
      */
     private fun syncShellUsbRead() {
         Thread {
-            val step = shellUsbReadGate.decide(AdbShell.usbDebuggingShellReadNeeded(applicationContext))
+            val startedIn = UsbDebuggingShellRead.generation()
+            val step = shellUsbReadGate.decide(AdbShell.usbDebuggingShellReadNeed(applicationContext))
             step.log?.let { AppLogger.i(TAG, it) }
-            if (step.forget) UsbDebuggingShellRead.forget()
-            if (step.read) readShellUsb()
+            when (step.need) {
+                ShellReadNeed.READ -> readShellUsb()
+                ShellReadNeed.R1_DECIDES -> UsbDebuggingShellRead.noteProvenOnByR1(startedIn)
+                ShellReadNeed.SETTING_DECIDES -> Unit
+            }
         }.apply { isDaemon = true; name = "cv-usb-shell-read" }.start()
     }
 
@@ -391,8 +396,9 @@ class DaemonKeepAliveService : Service() {
             com.baba.callvault.integrations.adb.ConnectPortFinder.onWirelessDebuggingChanged()
             val on = AdbShell.isWirelessDebuggingEnabled(applicationContext)
             TransportTimeline.event(applicationContext, "Wireless debugging switch changed → ${if (on) "on" else "off"}")
-            // On: the app's own read can no longer tell USB debugging, so the recorder's must be fresh now, not at the
-            // next tick. Off: R1/R2 decide again, and the last read is dropped.
+            // A switch change: what was read or proven described the old switches. On, the app's own read can no longer
+            // tell USB debugging, so the recorder's must be fresh now, not at the next tick.
+            UsbDebuggingShellRead.forget()
             if (usesAdb()) syncShellUsbRead()
             val prefs = AppPreferences(applicationContext)
             if (on) {

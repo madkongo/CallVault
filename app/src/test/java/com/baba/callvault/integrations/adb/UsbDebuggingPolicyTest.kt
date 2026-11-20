@@ -55,29 +55,33 @@ class UsbDebuggingPolicyTest {
     // ---- When the shell read is worth its fork: only where it can change the answer (battery) ----
 
     @Test
-    fun `the shell read is needed only when the setting reads 0 and Wireless debugging or adbd leaves it open`() {
+    fun `the shell read is skipped only where the setting or R1 already proves the answer`() {
+        val setting = ShellReadNeed.SETTING_DECIDES
+        val r1 = ShellReadNeed.R1_DECIDES
+        val read = ShellReadNeed.READ
         val table = listOf(
-            // setting, adbd, wd -> needed
-            Triple(true, AdbdState.RUNNING, true) to false,
-            Triple(true, AdbdState.RUNNING, false) to false,
-            Triple(true, AdbdState.STOPPED, true) to false,
-            Triple(true, AdbdState.STOPPED, false) to false,
-            Triple(true, AdbdState.UNKNOWN, true) to false,
-            Triple(true, AdbdState.UNKNOWN, false) to false,
+            // setting, adbd, wd -> need
+            Triple(true, AdbdState.RUNNING, true) to setting,
+            Triple(true, AdbdState.RUNNING, false) to setting,
+            Triple(true, AdbdState.STOPPED, true) to setting,
+            Triple(true, AdbdState.STOPPED, false) to setting,
+            Triple(true, AdbdState.UNKNOWN, true) to setting,
+            Triple(true, AdbdState.UNKNOWN, false) to setting,
             // Honor 2026-11-04: Wireless debugging holds adbd up, so only the shell can tell.
-            Triple(false, AdbdState.RUNNING, true) to true,
-            Triple(false, AdbdState.STOPPED, true) to true,
-            Triple(false, AdbdState.UNKNOWN, true) to true,
+            Triple(false, AdbdState.RUNNING, true) to read,
+            Triple(false, AdbdState.STOPPED, true) to read,
+            Triple(false, AdbdState.UNKNOWN, true) to read,
             // R1 decides: adbd up with Wireless debugging off is USB debugging on. The everyday Android 17 state.
-            Triple(false, AdbdState.RUNNING, false) to false,
-            // R1/R2 decide: nothing holds adbd up.
-            Triple(false, AdbdState.STOPPED, false) to false,
+            Triple(false, AdbdState.RUNNING, false) to r1,
+            // adbd stopped: R2 says off, but a screen-off adbd restart (OnePlus/Xiaomi/Samsung) looks the same for a
+            // moment, and only the shell (or a recent R1 proof) tells them apart. Rare and cheap, so read.
+            Triple(false, AdbdState.STOPPED, false) to read,
             // adbd unreadable or restarting: no evidence without the shell.
-            Triple(false, AdbdState.UNKNOWN, false) to true,
+            Triple(false, AdbdState.UNKNOWN, false) to read,
         )
-        for ((state, needed) in table) {
-            val (setting, adbd, wd) = state
-            assertEquals("setting=$setting adbd=$adbd wd=$wd", needed, UsbDebuggingPolicy.needsShellRead(setting, adbd, wd))
+        for ((state, need) in table) {
+            val (on, adbd, wd) = state
+            assertEquals("setting=$on adbd=$adbd wd=$wd", need, UsbDebuggingPolicy.shellReadNeed(on, adbd, wd))
         }
     }
 
@@ -86,7 +90,7 @@ class UsbDebuggingPolicyTest {
         for (setting in listOf(true, false)) for (adbd in AdbdState.values()) for (wd in listOf(true, false)) {
             val label = "setting=$setting adbd=$adbd wd=$wd"
             val without = of(setting, adbd, wd, shellSaysOn = null)
-            if (UsbDebuggingPolicy.needsShellRead(setting, adbd, wd)) {
+            if (UsbDebuggingPolicy.shellReadNeed(setting, adbd, wd) == ShellReadNeed.READ) {
                 // The read is what decides here: on and off give different answers.
                 assertEquals(label, false, of(setting, adbd, wd, true) == of(setting, adbd, wd, false))
             } else {

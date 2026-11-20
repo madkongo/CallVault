@@ -8,31 +8,33 @@
 
 package com.baba.callvault.services.recording
 
+import com.baba.callvault.integrations.adb.ShellReadNeed
+
 /**
- * Decides, on each keep-alive tick and on a Wireless debugging change, whether to ask the recorder for USB debugging.
+ * Carries the keep-alive's per-tick [ShellReadNeed] and says when to log it: once per change, never every tick.
  *
- * Every read is a fork+exec of `settings get` in the shell-uid recorder, charged to "Android System". It used to run
- * every 60 s tick while the recorder was up; now only while [com.baba.callvault.integrations.adb.UsbDebuggingPolicy.needsShellRead]
- * says it can change the answer. When it stops being needed the last read is forgotten, so a value read under
- * different switches never passes as fresh later. Logs once per change of need, never per tick.
+ * Every shell read is a fork+exec of `settings get` in the shell-uid recorder, charged to "Android System". It used to
+ * run every 60 s tick while the recorder was up; now only for [ShellReadNeed.READ]. Nothing is forgotten here — only a
+ * switch change forgets ([com.baba.callvault.integrations.adb.UsbDebuggingShellRead.forget]).
  */
 internal class ShellUsbReadGate {
 
-    data class Step(val read: Boolean, val forget: Boolean, val log: String?)
+    data class Step(val need: ShellReadNeed, val log: String?)
 
-    private var wasNeeded: Boolean? = null
+    private var last: ShellReadNeed? = null
 
     @Synchronized
-    fun decide(needed: Boolean): Step {
-        val log = if (needed == wasNeeded) {
-            null
-        } else if (needed) {
-            "USB debugging is hidden from the app and Wireless debugging (or an unreadable adbd) leaves it open; " +
-                "asking the recorder each keep-alive tick"
-        } else {
-            "USB debugging is decided without the recorder's read (setting or adbd); not asking it on keep-alive ticks"
+    fun decide(need: ShellReadNeed): Step {
+        val log = if (need == last) null else when (need) {
+            ShellReadNeed.READ ->
+                "USB debugging: only the recorder's read can tell (Wireless debugging on, or adbd stopped/unreadable); " +
+                    "asking it each keep-alive tick"
+            ShellReadNeed.R1_DECIDES ->
+                "USB debugging: adbd up with Wireless debugging off proves it on (R1); not asking the recorder"
+            ShellReadNeed.SETTING_DECIDES ->
+                "USB debugging: the setting reads on; not asking the recorder"
         }
-        wasNeeded = needed
-        return Step(read = needed, forget = !needed, log = log)
+        last = need
+        return Step(need, log)
     }
 }

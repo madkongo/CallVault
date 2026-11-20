@@ -9,66 +9,51 @@
 package com.baba.callvault.services.recording
 
 import com.baba.callvault.integrations.adb.AdbdState
+import com.baba.callvault.integrations.adb.ShellReadNeed
 import com.baba.callvault.integrations.adb.UsbDebuggingPolicy
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * The keep-alive asked the recorder for `settings get global adb_enabled` on every 60 s tick — a fork+exec in the
- * shell-uid process each awake minute, charged to "Android System". It only answers anything when the app's own read
- * is 0 and Wireless debugging (or an unreadable adbd) leaves USB debugging open.
+ * shell-uid process each awake minute, charged to "Android System". It now asks only where the read can change the
+ * answer; in the everyday Android 17 state R1 answers instead, and nothing is forgotten on a tick.
  */
 class ShellUsbReadGateTest {
 
     /** The everyday Android 17 state: setting redacted to 0, USB debugging holds adbd up, Wireless debugging off. */
-    private val usbOnWdOff = UsbDebuggingPolicy.needsShellRead(false, AdbdState.RUNNING, wirelessDebuggingOn = false)
+    private val usbOnWdOff = UsbDebuggingPolicy.shellReadNeed(false, AdbdState.RUNNING, wirelessDebuggingOn = false)
 
     /** The Honor 2026-11-04 state: Wireless debugging on, so only the shell can say whether USB debugging is. */
-    private val wdOn = UsbDebuggingPolicy.needsShellRead(false, AdbdState.RUNNING, wirelessDebuggingOn = true)
+    private val wdOn = UsbDebuggingPolicy.shellReadNeed(false, AdbdState.RUNNING, wirelessDebuggingOn = true)
 
     @Test
-    fun `a tick does not ask the recorder when the read cannot change the answer`() {
+    fun `a tick does not ask the recorder when R1 already proves the answer`() {
         val gate = ShellUsbReadGate()
-        repeat(5) {
-            val step = gate.decide(usbOnWdOff)
-            assertFalse(step.read)
-            assertTrue(step.forget) // a value left over from a needed state must not read as fresh
-        }
+        repeat(5) { assertEquals(ShellReadNeed.R1_DECIDES, gate.decide(usbOnWdOff).need) }
     }
 
     @Test
     fun `a tick does not ask when the setting itself reads on`() {
         val gate = ShellUsbReadGate()
-        assertFalse(gate.decide(UsbDebuggingPolicy.needsShellRead(true, AdbdState.RUNNING, true)).read)
+        val need = UsbDebuggingPolicy.shellReadNeed(true, AdbdState.RUNNING, true)
+        assertEquals(ShellReadNeed.SETTING_DECIDES, gate.decide(need).need)
     }
 
     @Test
     fun `turning Wireless debugging on starts a read at once`() {
         val gate = ShellUsbReadGate()
-        assertFalse(gate.decide(usbOnWdOff).read)
+        assertEquals(ShellReadNeed.R1_DECIDES, gate.decide(usbOnWdOff).need)
         // The Wireless debugging observer runs the same decision the moment the switch flips.
-        val step = gate.decide(wdOn)
-        assertTrue(step.read)
-        assertFalse(step.forget)
+        assertEquals(ShellReadNeed.READ, gate.decide(wdOn).need)
     }
 
     @Test
     fun `while it is needed every tick reads, so the value stays fresh`() {
         val gate = ShellUsbReadGate()
-        repeat(3) { assertTrue(gate.decide(wdOn).read) }
-    }
-
-    @Test
-    fun `turning Wireless debugging off again forgets the read`() {
-        val gate = ShellUsbReadGate()
-        gate.decide(wdOn)
-        val step = gate.decide(usbOnWdOff)
-        assertFalse(step.read)
-        assertTrue(step.forget)
+        repeat(3) { assertEquals(ShellReadNeed.READ, gate.decide(wdOn).need) }
     }
 
     @Test

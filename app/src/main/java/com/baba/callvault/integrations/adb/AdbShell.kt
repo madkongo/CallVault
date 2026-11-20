@@ -307,8 +307,8 @@ object AdbShell {
         shellSaysOn = UsbDebuggingShellRead.current(),
     )
 
-    /** Whether asking the recorder for USB debugging can change [usbDebuggingState] now. See [UsbDebuggingPolicy.needsShellRead]. */
-    fun usbDebuggingShellReadNeeded(context: Context): Boolean = UsbDebuggingPolicy.needsShellRead(
+    /** What decides [usbDebuggingState] now, and so whether to ask the recorder. See [UsbDebuggingPolicy.shellReadNeed]. */
+    fun usbDebuggingShellReadNeed(context: Context): ShellReadNeed = UsbDebuggingPolicy.shellReadNeed(
         settingSaysOn = usbDebuggingSettingSaysOn(context),
         adbd = adbdState(),
         wirelessDebuggingOn = isWirelessDebuggingEnabled(context),

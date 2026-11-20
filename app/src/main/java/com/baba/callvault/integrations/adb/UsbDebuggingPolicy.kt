@@ -95,16 +95,35 @@ object UsbDebuggingPolicy {
     }
 
     /**
-     * Whether a shell read ([UsbDebuggingShellRead]) can change what [of] answers — the only states worth its
-     * fork+exec in the recorder. Everywhere else [of] is already decided without it:
+     * What answers USB debugging in this state, so the keep-alive pays for a shell read ([UsbDebuggingShellRead]) —
+     * a fork+exec in the recorder — only where nothing cheaper does:
      *
-     * - the setting reads 1: always ON;
-     * - adbd RUNNING with Wireless debugging off: R1 proves ON (the everyday Android 17 state with USB debugging on);
-     * - adbd STOPPED with Wireless debugging off: R1/R2 prove OFF.
+     * - the setting reads 1: [ShellReadNeed.SETTING_DECIDES], always ON;
+     * - adbd RUNNING with Wireless debugging off: [ShellReadNeed.R1_DECIDES], ON. The keep-alive records that proof
+     *   with a shell read's freshness, so a brief adbd stop (screen-off restarts on OnePlus/Xiaomi/Samsung) still
+     *   answers ON, exactly as the last per-tick shell read did.
+     * - otherwise [ShellReadNeed.READ]: Wireless debugging on (it alone can keep adbd up — the Honor 2026-11-04 "off for
+     *   two hours" case), adbd STOPPED (R2's off and a restart look alike), or adbd unreadable.
      *
-     * It is needed with Wireless debugging on (it alone can keep adbd up, so the Honor 2026-11-04 "off for two hours"
-     * case is invisible without the shell), and with adbd unreadable or restarting (no evidence at all).
+     * UNVERIFIED: R1 with the setting at 0 assumes nothing but USB debugging keeps adbd up while Wireless debugging is
+     * off. Measured on the emulator and the OP9 only; not on Samsung, and not with another app's tcpip or Shizuku TCP
+     * listener holding adbd up. If one does, the shell read (0) would have said OFF where R1 now says ON.
      */
-    fun needsShellRead(settingSaysOn: Boolean, adbd: AdbdState, wirelessDebuggingOn: Boolean): Boolean =
-        !settingSaysOn && (wirelessDebuggingOn || adbd == AdbdState.UNKNOWN)
+    fun shellReadNeed(settingSaysOn: Boolean, adbd: AdbdState, wirelessDebuggingOn: Boolean): ShellReadNeed = when {
+        settingSaysOn -> ShellReadNeed.SETTING_DECIDES
+        adbd == AdbdState.RUNNING && !wirelessDebuggingOn -> ShellReadNeed.R1_DECIDES
+        else -> ShellReadNeed.READ
+    }
+}
+
+/** What decides USB debugging in a state, from [UsbDebuggingPolicy.shellReadNeed]. */
+enum class ShellReadNeed {
+    /** The app's own setting reads 1: the truth, no read needed. */
+    SETTING_DECIDES,
+
+    /** adbd up with Wireless debugging off: R1 proves ON, no read needed. */
+    R1_DECIDES,
+
+    /** Only the recorder's (shell uid) read can tell. */
+    READ,
 }
