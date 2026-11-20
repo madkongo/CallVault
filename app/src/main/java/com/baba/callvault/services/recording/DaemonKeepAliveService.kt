@@ -1272,6 +1272,12 @@ class DaemonKeepAliveService : Service() {
 
         /** Stop the keep-alive anchor (e.g. if the user disables persistence). */
         fun stop(context: Context) {
+            // A refused start used to leave the keep-alive down with nothing to try again (review R3).
+            if (!startOnce(context, retryAttempt = 0)) KeepAliveRetry.schedule(context, 1, "start refused")
+        }
+
+        /** One start attempt. False only when Android refused the foreground start; a switched-off recorder counts as done. */
+        internal fun startOnce(context: Context, retryAttempt: Int): Boolean {
             // Clear the relaunch hook FIRST, and synchronously.
             //
             // `stopService` only *asks*; the service keeps running until the framework delivers
