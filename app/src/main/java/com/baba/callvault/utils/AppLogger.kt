@@ -31,6 +31,7 @@ import com.baba.callvault.integrations.scrcpy.ScrcpyConfig
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.system.diagnostics.battery.BatteryUseCollector
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.server.RecorderBackend
@@ -338,9 +339,14 @@ object AppLogger {
      * mid-rotation file (the logger's IO coroutine writes under the same lock).
      *
      * @param context Application context.
+     * @param batteryUse the "Battery use" section, given the debug log's entries when logging is on (else null);
+     *   replaceable for tests. Read here, at export time, so it is there with logging off too.
      * @return The report [File], or `null` if no log file exists yet (nothing to share).
      */
-    suspend fun buildShareableReport(context: Context): File? {
+    suspend fun buildShareableReport(
+        context: Context,
+        batteryUse: suspend (List<String>?) -> BatteryUseCollector.Section = { BatteryUseCollector.collect(context, it) },
+    ): File? {
         val source = logFile
         // No precondition at all. The report is worth sharing even with both logs empty, because the
         // configuration header alone answers the first questions of every bug report — mode, transport,
@@ -359,6 +365,14 @@ object AppLogger {
             // to log while we wait on a process that may be wedged.
             val daemonEntries = drainDaemonDiagnostics()
 
+            // Snapshot the live log under the writer's lock so the copy is consistent. Taken before the battery
+            // read, which counts recorder launches in it.
+            val appEntries = fileMutex.withLock {
+                if (source?.exists() == true) entriesOf(source.readLines()) else emptyList()
+            }
+            // Bounded (BatteryUseCollector.BUDGET_MS) and outside the file lock: a blocking binder or ADB read.
+            val battery = batteryUse(appEntries.takeIf { prefs?.isLoggingEnabled() == true })
+
             report.outputStream().use { out ->
                 val writer = PrintWriter(OutputStreamWriter(out, Charsets.UTF_8))
                 writeReportHeader(writer, context)
@@ -367,7 +381,12 @@ object AppLogger {
                 } else {
                     writer.println("Recorder host lines: ${daemonEntries.size}, merged in below by timestamp")
                 }
-                writer.println(com.baba.callvault.system.diagnostics.ReportGaps.line(reportGaps(daemonEntries)))
+                writer.println(com.baba.callvault.system.diagnostics.ReportGaps.line(reportGaps(daemonEntries) + listOfNotNull(battery.gap)))
+                writer.println("===========================================")
+                writer.println()
+
+                // First of the always-on sections: a drain report is read for this, and Settings cannot show it.
+                battery.lines.forEach { writer.println(redactForReport(it)) }
                 writer.println("===========================================")
                 writer.println()
 
@@ -403,11 +422,6 @@ object AppLogger {
                     writer.println(copies.trimEnd())
                     writer.println("===========================================")
                     writer.println()
-                }
-
-                // Snapshot the live log under the writer's lock so the copy is consistent.
-                val appEntries = fileMutex.withLock {
-                    if (source?.exists() == true) entriesOf(source.readLines()) else emptyList()
                 }
 
                 // Interleaved rather than appended in a block. The whole point is to read one sequence

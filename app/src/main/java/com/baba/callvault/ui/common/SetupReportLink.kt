@@ -68,9 +68,11 @@ object DebugReportBuilder {
      * interrupt. A hang there must never throw away the app report that is already built.
      */
     suspend fun build(context: Context): Pair<File?, File?> {
-        val report = withContext(Dispatchers.IO) { AppLogger.buildShareableReport(context) }
+        // Started first so it runs alongside the app report, whose battery read can take up to
+        // BatteryUseCollector.BUDGET_MS: the user waits for the slower of the two, not their sum.
         val collector = CoroutineScope(Dispatchers.IO)
         val pending = collector.async { SystemLogCollector.buildReport(context) }
+        val report = withContext(Dispatchers.IO) { AppLogger.buildShareableReport(context) }
         val systemReport = withTimeoutOrNull(SYSTEM_REPORT_BUDGET_MS) { pending.await() }
         if (systemReport == null) {
             collector.cancel()
