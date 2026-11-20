@@ -43,6 +43,7 @@ class RecordingNotificationHelper(base: Context) {
 
         const val SERVICE_NOTIFICATION_ID = 1
         const val ERROR_NOTIFICATION_ID = 2
+        const val BATTERY_EXEMPTION_NOTIFICATION_ID = 4733
 
         private val channelsEnsured = EnsureOnce()
 
@@ -337,16 +338,12 @@ class RecordingNotificationHelper(base: Context) {
         }
     }
 
-    /**
-     * Posts an error notification visible.
-     *
-     * @param message Human-readable error description to show in the notification body.
-     */
+    /** N26: a call was not recorded because Android refused the start; one tap opens the battery setting. */
     fun showBatteryExemptionNotification() {
         val message = context.getString(R.string.recording_error_start_refused)
         val open = PendingIntent.getActivity(
             context, ERROR_NOTIFICATION_ID,
-            com.baba.callvault.services.call.ForegroundStartGuard.batteryExemptionIntent(context),
+            com.baba.callvault.services.call.ForegroundStartGuard.bestBatteryIntent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_ERROR)
@@ -359,10 +356,15 @@ class RecordingNotificationHelper(base: Context) {
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_ERROR)
             .build()
-        context.getSystemService(NotificationManager::class.java).notify(ERROR_NOTIFICATION_ID, notification)
+        context.getSystemService(NotificationManager::class.java).notify(BATTERY_EXEMPTION_NOTIFICATION_ID, notification)
         vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
     }
 
+    /**
+     * Posts an error notification visible.
+     *
+     * @param message Human-readable error description to show in the notification body.
+     */
     fun showErrorNotification(message: String) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_ERROR)
             .setSmallIcon(R.drawable.ic_mic)

@@ -32,6 +32,8 @@ import androidx.core.content.ContextCompat
 import com.baba.callvault.R
 import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.integrations.adb.UsbDebuggingEvents
+import com.baba.callvault.services.call.ForegroundStartGuard
 import com.baba.callvault.data.RecordingState
 import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.integrations.adb.AdbShell
@@ -590,6 +592,7 @@ class DaemonKeepAliveService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        isRunning = true
         AppPauseWatch.start(applicationContext)
         ensureOwnChannel()
 
@@ -1020,6 +1023,7 @@ class DaemonKeepAliveService : Service() {
     }
 
     override fun onDestroy() {
+        isRunning = false
         // Nobody else clears the alert once this service is gone (review R1 follow-up).
         runCatching { downAlert.onServiceStopping("service destroyed") }
         AppPauseWatch.stop()
@@ -1102,6 +1106,11 @@ class DaemonKeepAliveService : Service() {
          */
         val isRecoveryStuck: Boolean get() = stuckRecovery.isStuck
 
+        /** True between onCreate and onDestroy of the live keep-alive service (a probe, for review N26 / Q53). */
+        @Volatile
+        var isRunning: Boolean = false
+            private set
+
         /** Low-importance channel for one-off explanations, kept apart from the permanent status note. */
         private const val NOTIF_ID = SharedStatusNotice.ID
 
@@ -1174,9 +1183,13 @@ class DaemonKeepAliveService : Service() {
                 stop(context)
                 return
             }
-            runCatching {
+            val outcome = ForegroundStartGuard.attempt {
                 ContextCompat.startForegroundService(context, Intent(context, DaemonKeepAliveService::class.java))
-            }.onFailure { AppLogger.w(TAG, "Failed to start keep-alive service: ${it.message}") }
+            }
+            if (outcome is ForegroundStartGuard.Outcome.Refused) {
+                AppLogger.w(TAG, "Failed to start keep-alive service: ${outcome.cause.message}")
+                UsbDebuggingEvents.record(context, ForegroundStartGuard.describe("keep-alive start", outcome.cause, batteryExempt = false))
+            }
         }
 
         /** Stop the keep-alive anchor (e.g. if the user disables persistence). */

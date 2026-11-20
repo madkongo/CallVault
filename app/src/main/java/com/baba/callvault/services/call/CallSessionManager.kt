@@ -27,12 +27,10 @@ import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.services.recording.OrphanRecorderSession
 import com.baba.callvault.services.recording.OrphanSessionPolicy
 import com.baba.callvault.services.recording.RecordingForegroundService
-import com.baba.callvault.services.recording.RecordingNotificationHelper
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.services.recording.VoipRecordingCoordinator
 import com.baba.callvault.services.recording.VoipTelephonyGate
 import com.baba.callvault.server.RecorderConnection
-import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.PhoneNumberManager
@@ -512,41 +510,8 @@ class CallSessionManager private constructor(context: Context) {
         }
     }
 
-    private fun sendServiceCommand(action: String, metadata: RecordingMetadata? = null) {
-        val intent = Intent(appContext, RecordingForegroundService::class.java).apply {
-            this.action = action
-            if (metadata != null) {
-                putExtra(RecordingMetadata.EXTRA_METADATA, metadata)
-            }
-        }
-        val isStop = action == RecordingForegroundService.ACTION_STOP_RECORDING
-        val outcome = ForegroundStartGuard.attempt {
-            if (isStop) {
-                // When Stopping, we use StartService as we assume the service is already running from startForegroundService. We only send it a new Intent that trigger cleanup.
-                // we don't use stopService as it would give us a very short time to do any cleanup before the OS kill the service and prevent cleanup finalization.
-                appContext.startService(intent)
-            } else {
-                appContext.startForegroundService(intent)
-            }
-        }
-        if (outcome is ForegroundStartGuard.Outcome.Refused) onServiceStartRefused(action, outcome.cause, isStop)
-    }
-
-    /**
-     * Android refused the start (N26): the call path must never crash, and the user must be told. The cause goes to
-     * the always-on log; the PHONE_STATE broadcast is no foreground-start exemption, and the one the user can grant
-     * is the battery-optimisation exemption, so that is what the notification and Home ask for. Not a recording
-     * fallback: nothing is rescued with a one-sided capture.
-     */
-    private fun onServiceStartRefused(action: String, cause: Throwable, isStop: Boolean) {
-        val exempt = runCatching { PermissionChecks.hasBatteryExemption(appContext) }.getOrDefault(false)
-        CallEndLog.record(appContext, ForegroundStartGuard.describe(action, cause, exempt))
-        if (isStop) return
-        ForegroundStartGuard.markRefused(appContext)
-        runCatching {
-            RecordingNotificationHelper(appContext).showBatteryExemptionNotification()
-        }.onFailure { CallEndLog.record(appContext, "could not post the start-refused notice: ${it.message}") }
-    }
+    private fun sendServiceCommand(action: String, metadata: RecordingMetadata? = null) =
+        RecordingServiceCommander(appContext).send(action, metadata)
 
     /**
      * Determines whether the current call session should be automatically recorded based on user preferences.

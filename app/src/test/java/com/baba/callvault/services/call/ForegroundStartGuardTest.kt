@@ -10,7 +10,6 @@ package com.baba.callvault.services.call
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -61,7 +60,6 @@ class ForegroundStartGuardTest {
 
     @Test
     fun `describe tolerates a null message`() {
-        assertNull(null)
         val line = ForegroundStartGuard.describe("STANDBY", RuntimeException(), batteryExempt = true)
         assertTrue(line, line.contains("RuntimeException"))
     }
@@ -69,17 +67,16 @@ class ForegroundStartGuardTest {
 
 class BatteryExemptionNeedTest {
     private fun need(
-        mode: com.baba.callvault.data.PrivilegedMode = com.baba.callvault.data.PrivilegedMode.SHIZUKU,
-        voip: Boolean = false, recording: Boolean = true, exempt: Boolean = false, sdk: Int = 34,
-    ) = ForegroundStartGuard.setupNeedsBatteryExemption(mode, voip, recording, exempt, sdk)
+        running: Boolean = false, recording: Boolean = true, exempt: Boolean = false, sdk: Int = 34,
+    ) = ForegroundStartGuard.setupNeedsBatteryExemption(running, recording, exempt, sdk)
 
-    @Test fun `shizuku without app calls and no exemption needs it`() = assertTrue(need())
+    @Test fun `no keep-alive running and no exemption needs it`() = assertTrue(need())
     @Test fun `exempt does not`() = assertFalse(need(exempt = true))
-    @Test fun `app calls on means the keep-alive runs`() = assertFalse(need(voip = true))
-    @Test fun `built-in mode keeps the keep-alive`() =
-        assertFalse(need(mode = com.baba.callvault.data.PrivilegedMode.values().first { !it.needsShizuku }))
+    @Test fun `a running keep-alive means the app is allowed to start the recorder`() = assertFalse(need(running = true))
     @Test fun `recording off does not ask`() = assertFalse(need(recording = false))
     @Test fun `before Android 12 there is no limit`() = assertFalse(need(sdk = 30))
-    @Test fun `the log line carries the quirk id`() =
-        assertTrue(ForegroundStartGuard.describeSetup(com.baba.callvault.data.PrivilegedMode.SHIZUKU, false, 34).contains(ForegroundStartGuard.QUIRK_ID))
+    @Test fun `the log line carries the quirk id`() {
+        assertEquals("Q53", ForegroundStartGuard.QUIRK_ID)
+        assertTrue(ForegroundStartGuard.describeSetup(34).contains("Q53"))
+    }
 }

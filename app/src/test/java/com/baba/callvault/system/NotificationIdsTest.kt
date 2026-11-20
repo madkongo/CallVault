@@ -35,6 +35,7 @@ class NotificationIdsTest {
             "SharedStatusNotice" to SharedStatusNotice.ID,
             "TranscriptNotifier.READY" to TranscriptNotifier.ID_READY,
             "TranscriptNotifier.FAILED" to TranscriptNotifier.ID_FAILED,
+            "RecordingNotificationHelper.BATTERY_EXEMPTION" to RecordingNotificationHelper.BATTERY_EXEMPTION_NOTIFICATION_ID,
             "FolderNotice" to FolderNotice.NOTIFICATION_ID,
         )
         val all = named.entries.map { it.key to it.value } +

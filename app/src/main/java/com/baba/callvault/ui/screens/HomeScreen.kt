@@ -1162,9 +1162,9 @@ fun HomeScreen(
                             // "Keep recording off Wi-Fi" lives in Settings; open the panel (BabApps item 115).
                             HomeViewModel.HomeStatus.NEEDS_WIFI -> onOpenSettings
                             // The exemption is asked for on the system's own screen (the same intent setup uses).
-                            HomeViewModel.HomeStatus.BATTERY_EXEMPTION_NEEDED -> {
+                            HomeViewModel.HomeStatus.BATTERY_EXEMPTION_NEEDED, HomeViewModel.HomeStatus.BATTERY_EXEMPTION_ADVISED -> {
                                 {
-                                    runCatching { context.startActivity(ForegroundStartGuard.batteryExemptionIntent(context)) }
+                                    runCatching { context.startActivity(ForegroundStartGuard.bestBatteryIntent(context)) }
                                         .onFailure {
                                             runCatching { context.startActivity(ForegroundStartGuard.appSettingsIntent(context)) }
                                         }
@@ -2781,6 +2781,8 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.NEEDS_WIFI -> CvTone.Error
         // Error: the next call will not be recorded until the exemption is granted.
         HomeViewModel.HomeStatus.BATTERY_EXEMPTION_NEEDED -> CvTone.Error
+        // Warning: nothing has failed yet; the next call may not be recorded.
+        HomeViewModel.HomeStatus.BATTERY_EXEMPTION_ADVISED -> CvTone.Warning
         // Error for the same reason: with Shizuku stopped nothing can record, and it stops on every
         // reboot — this is the state a Shizuku user will meet most often and must not read as cosmetic.
         HomeViewModel.HomeStatus.SHIZUKU_NOT_READY -> CvTone.Error
@@ -2800,6 +2802,7 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.RECOVERY_STUCK -> stringResource(R.string.home_hero_pill_recovery_stuck)
         HomeViewModel.HomeStatus.NEEDS_WIFI -> stringResource(R.string.home_hero_pill_recovery_stuck)
         HomeViewModel.HomeStatus.BATTERY_EXEMPTION_NEEDED -> stringResource(R.string.home_hero_pill_recovery_stuck)
+        HomeViewModel.HomeStatus.BATTERY_EXEMPTION_ADVISED -> stringResource(R.string.home_hero_pill_battery_setting)
         HomeViewModel.HomeStatus.SHIZUKU_NOT_READY -> stringResource(R.string.home_hero_pill_shizuku)
         HomeViewModel.HomeStatus.STOPPED -> stringResource(R.string.home_hero_pill_stopped)
         HomeViewModel.HomeStatus.STARTING -> stringResource(R.string.home_hero_pill_starting)

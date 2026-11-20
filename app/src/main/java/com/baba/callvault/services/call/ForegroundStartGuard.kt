@@ -13,8 +13,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import com.baba.callvault.data.PrivilegedMode
-import com.baba.callvault.services.recording.KeepAlivePolicy
 
 /**
  * Starting the recording service from the call path, without ever throwing into it (review N26).
@@ -51,39 +49,40 @@ object ForegroundStartGuard {
     fun shouldWarnAboutBattery(refusedAtMs: Long, batteryExempt: Boolean): Boolean =
         refusedAtMs > 0L && !batteryExempt
 
-    /**
-     * Provisional quirk id for the registry (Q51 is the last in device-quirks.md): a set-up with no keep-alive and no
-     * battery exemption cannot start the recorder from the background on Android 12+.
-     */
-    const val QUIRK_ID = "Q53-fgs-start-needs-battery-exemption"
+    /** Quirk Q53 in the design catalogue: no foreground-start allow-list entry and no battery exemption (Android 12+). */
+    const val QUIRK_ID = "Q53"
 
     private const val SDK_FGS_BACKGROUND_LIMIT = Build.VERSION_CODES.S
 
     /**
-     * The one place that decides whether THIS set-up needs the battery exemption for calls to be recorded: the
-     * background start limit exists (Android 12+), recording is on, nothing keeps the app in the foreground-start
-     * allow-list ([KeepAlivePolicy] says the keep-alive does not run: Shizuku mode with app calls off) and the user
-     * has not exempted the app. Pure, so it can move into a quirk registry unchanged.
+     * The one place that decides whether this phone, right now, is exposed to the background start limit (Q53):
+     * Android 12+, recording on, the user has not exempted the app, and NOTHING that keeps the app on the foreground
+     * start allow-list is actually running ([keepAliveRunning]: a probe of the live service, not the mode setting, so
+     * a killed keep-alive counts too). Pure, so it can move into a quirk registry unchanged.
      */
     fun setupNeedsBatteryExemption(
-        mode: PrivilegedMode,
-        voipEnabled: Boolean,
+        keepAliveRunning: Boolean,
         recordingAllowed: Boolean,
         batteryExempt: Boolean,
         sdkInt: Int,
-    ): Boolean = sdkInt >= SDK_FGS_BACKGROUND_LIMIT && recordingAllowed && !batteryExempt &&
-        !KeepAlivePolicy.shouldRun(mode, voipEnabled)
+    ): Boolean = sdkInt >= SDK_FGS_BACKGROUND_LIMIT && recordingAllowed && !batteryExempt && !keepAliveRunning
 
     /** The always-on line for a positive [setupNeedsBatteryExemption], so a report shows why Home asked. */
-    fun describeSetup(mode: PrivilegedMode, voipEnabled: Boolean, sdkInt: Int): String =
-        "$QUIRK_ID: mode=$mode appCalls=$voipEnabled keepAlive=not-running batteryExempt=false sdk=$sdkInt: " +
-            "Home asks for the battery exemption"
+    fun describeSetup(sdkInt: Int): String =
+        "$QUIRK_ID: keepAlive=not-running batteryExempt=false sdk=$sdkInt: Home asks for the battery exemption"
 
     /** Opens the system's own "allow unrestricted battery use" prompt for this app (permission is in the manifest). */
     fun batteryExemptionIntent(context: Context): Intent =
         Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
             .setData(Uri.parse("package:${context.packageName}"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    /** The prompt when some activity handles it, else the app's own settings page. */
+    fun bestBatteryIntent(context: Context): Intent {
+        val prompt = batteryExemptionIntent(context)
+        val handled = runCatching { prompt.resolveActivity(context.packageManager) != null }.getOrDefault(false)
+        return if (handled) prompt else appSettingsIntent(context)
+    }
 
     /** The app's own settings page, for a phone that has no handler for [batteryExemptionIntent]. */
     fun appSettingsIntent(context: Context): Intent =
@@ -93,6 +92,10 @@ object ForegroundStartGuard {
 
     private const val PREFS = "cv_fgs_start_refusal"
     private const val KEY_REFUSED_AT = "refused_at_ms"
+
+    fun clearRefused(context: Context) {
+        runCatching { if (refusedAt(context) != 0L) prefs(context).edit().remove(KEY_REFUSED_AT).apply() }
+    }
 
     fun markRefused(context: Context, atMs: Long = System.currentTimeMillis()) {
         runCatching { prefs(context).edit().putLong(KEY_REFUSED_AT, atMs).apply() }
