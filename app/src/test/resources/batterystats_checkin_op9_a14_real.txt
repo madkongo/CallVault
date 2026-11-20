@@ -1,0 +1,28 @@
+# callvault batterystats cut v1 recorder_uid=2000 app_uid=10311
+9,0,i,vers,36,212,UKQ1.230924.001,UKQ1.230924.001
+9,0,i,uid,10311,com.baba.callvault
+9,0,l,bt,0,7213367,7213367,7213450,7213450,1795179037655,7212884,7212884,4500,944000,944000,29349
+9,0,l,m,483,0,0,379228,0,0,0,0,19,3605700,2,3635819,1,0,0,3278801,5,3310045,1,890660,3600014
+9,0,l,dc,0,0,0,0,0,0,0,0,0,0
+9,0,l,pws,944,0,0,0
+9,2000,l,pwi,uid,0.0104,1,0,0
+9,10311,l,pwi,uid,0.0693,0,0,0
+9,2000,l,cpu,230,385,0
+9,2000,l,pr,"com.baba.callvault:recorder",10,30,0,0,0,0
+9,2000,l,pr,"other",30,50,0,0,0,0
+9,2000,l,pr,"other",20,40,0,0,0,0
+9,10311,l,nt,0,0,7397,1842,0,0,15,18,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+9,10311,l,awl,5602,0
+9,10311,l,wl,*alarm*,0,f,0,0,0,0,1,p,1,0,3,3,0,bp,0,0,0,0,0,w,0,0,0,0
+9,10311,l,wl,WorkManager: ProcessorForegroundLck,0,f,0,0,0,0,1060,p,1,0,3035,3035,0,bp,0,0,0,0,0,w,0,0,0,0
+9,10311,l,wl,*job*/@androidx.work.systemjobscheduler@com.baba.callvault/androidx.work.impl.background.systemjob.SystemJobService#6628,0,f,0,0,0,0,14,p,1,0,14,14,0,bp,0,0,0,0,0,w,0,0,0,0
+9,10311,l,wl,*job*/@androidx.work.systemjobscheduler@com.baba.callvault/androidx.work.impl.background.systemjob.SystemJobService#6627,0,f,0,0,0,0,23,p,1,0,23,23,0,bp,0,0,0,0,0,w,0,0,0,0
+9,10311,l,wl,*job*/@androidx.work.systemjobscheduler@com.baba.callvault/androidx.work.impl.background.systemjob.SystemJobService#6626,0,f,0,0,0,0,20,p,1,0,20,20,0,bp,0,0,0,0,0,w,0,0,0,0
+9,10311,l,wl,*job*/@androidx.work.systemjobscheduler@com.baba.callvault/androidx.work.impl.background.systemjob.SystemJobService#6625,0,f,0,0,0,0,26,p,1,0,26,26,0,bp,0,0,0,0,0,w,0,0,0,0
+9,10311,l,wl,*job*/@androidx.work.systemjobscheduler@com.baba.callvault/androidx.work.impl.background.systemjob.SystemJobService#6624,0,f,0,0,0,0,57,p,1,0,57,57,0,bp,0,0,0,0,0,w,0,0,0,0
+9,10311,l,wl,*job*/@androidx.work.systemjobscheduler@com.baba.callvault/androidx.work.impl.background.systemjob.SystemJobService#6442,0,f,0,0,0,0,3255,p,1,0,5459,5459,0,bp,0,0,0,0,0,w,0,0,0,0
+9,10311,l,jb,"@androidx.work.systemjobscheduler@com.baba.callvault/androidx.work.impl.background.systemjob.SystemJobService",5567,6,0,0
+9,10311,l,fgs,7212731,1
+9,10311,l,cpu,6076,2323,0
+9,10311,l,pr,"com.baba.callvault:drive",0,0,0,1,0,0
+9,10311,l,pr,"com.baba.callvault",6010,2290,7360,0,0,0

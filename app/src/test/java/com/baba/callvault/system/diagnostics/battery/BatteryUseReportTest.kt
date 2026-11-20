@@ -134,6 +134,7 @@ class BatteryUseReportTest {
     @Test
     fun `durations and sizes`() {
         assertEquals("0s", BatteryUseReport.duration(0))
+        assertEquals("<1s", BatteryUseReport.duration(615))
         assertEquals("59s", BatteryUseReport.duration(59_999))
         assertEquals("2m10s", BatteryUseReport.duration(130_000))
         assertEquals("6h00m", BatteryUseReport.duration(21_600_000))

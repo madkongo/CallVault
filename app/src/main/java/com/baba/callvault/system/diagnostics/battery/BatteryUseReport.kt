@@ -127,7 +127,8 @@ object BatteryUseReport {
             append('%')
         }
         use.sinceMillis?.let { append(", since ").append(clock(it, zone)) }
-        use.computedDrainMah?.let { append("; Android's estimate of all drain: ").append("%.0f".format(Locale.US, it)).append(" mAh") }
+        // Zero is "not computed" (seen with the battery reported as unplugged), not a measurement: left out.
+        use.computedDrainMah?.takeIf { it > 0 }?.let { append("; Android's estimate of all drain: ").append("%.0f".format(Locale.US, it)).append(" mAh") }
         append('.')
     }
 
@@ -165,12 +166,13 @@ object BatteryUseReport {
     private fun clock(millis: Long, zone: TimeZone): String =
         SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).apply { timeZone = zone }.format(Date(millis))
 
-    /** `0s`, `59s`, `2m10s`, `6h00m`. */
+    /** `0s`, `<1s`, `59s`, `2m10s`, `6h00m`. */
     fun duration(ms: Long): String {
         val h = ms / HOUR_MS
         val m = ms % HOUR_MS / MINUTE_MS
         val s = ms % MINUTE_MS / SECOND_MS
         return when {
+            ms in 1 until SECOND_MS -> "<1s"
             h > 0 -> "%dh%02dm".format(Locale.US, h, m)
             m > 0 -> "%dm%02ds".format(Locale.US, m, s)
             else -> "${s}s"
