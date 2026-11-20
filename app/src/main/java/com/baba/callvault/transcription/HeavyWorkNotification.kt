@@ -38,7 +38,7 @@ object HeavyWorkNotification {
     private const val CHANNEL_ID = "heavy_work"
 
     /** Distinct from the recording notifications, which must never be crowded out by this. */
-    private const val NOTIFICATION_ID = 42
+    internal const val NOTIFICATION_ID = 42
 
     /**
      * A [ForegroundInfo] describing the running job, for `setForeground`.
@@ -72,7 +72,7 @@ object HeavyWorkNotification {
     }
 
     /** Its own id, so a Drive copy and a transcription running together each keep their notification. */
-    private const val DRIVE_COPY_NOTIFICATION_ID = 43
+    internal const val DRIVE_COPY_NOTIFICATION_ID = 43
 
     /**
      * The scheduled Drive copy, with a counter, a bar and "Stop for now" (chosen 2026-11-03, option C).

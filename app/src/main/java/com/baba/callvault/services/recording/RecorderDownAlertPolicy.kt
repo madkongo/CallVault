@@ -27,9 +27,10 @@ package com.baba.callvault.services.recording
 object RecorderDownAlertPolicy {
 
     /**
-     * Three minutes of continuous downtime. The relaunch is tried on the second down read (about a minute in) and a
-     * launch is bounded at ~24 s, so by three minutes at least one full relaunch has failed: the recorder is not
-     * merely starting. Longer would leave minutes of calls unrecorded before the user hears of it.
+     * Three minutes of continuous downtime. When ticks run on schedule the relaunch is tried on the second down read
+     * (about a minute in) and a launch is bounded at ~24 s, so by three minutes a full relaunch has normally failed:
+     * the recorder is not merely starting. (After a Doze gap that is not guaranteed; the alert then still says only
+     * that the recorder is down, which is true.) Longer would leave minutes of calls unrecorded before the user hears.
      */
     const val GRACE_MS = 3 * 60_000L
 
