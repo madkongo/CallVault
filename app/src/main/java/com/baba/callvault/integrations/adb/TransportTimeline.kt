@@ -46,11 +46,7 @@ object TransportTimeline {
             null -> "?"
         }
         val locked = runCatching { keyguard?.isKeyguardLocked }.getOrNull()
-        val usbShell = when (UsbDebuggingShellRead.current()) {
-            true -> "on"
-            false -> "off"
-            null -> "?"
-        }
+        val usbShell = UsbDebuggingShellRead.describe(recorderAlive = alive)
         return buildString {
             append("recorder=").append(if (alive) "alive" else "DOWN")
             append(" adbd=").append(AdbShell.adbdState())
