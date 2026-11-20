@@ -86,7 +86,7 @@ object FolderProtection {
         WaitingRecordingsWorker.applyWatch(context)
         if (WaitingRecordings.count(context) == 0) {
             val shown = FolderNotice.showSaved(context, count)
-            RecordingFolderCheck.recordAlwaysOn(context, "notice: $count waiting call(s) saved${if (shown) "" else " (notice NOT shown)"}")
+            RecordingFolderCheck.recordAlwaysOn(context, "notice: $count waiting call(s) saved${if (shown) "" else " (notice NOT shown)"}", important = true)
         } else {
             notify(context, "some calls still waiting", folderGone = RecordingFolderCheck.cached(context)?.confirmedUnusable == true)
         }
@@ -102,6 +102,7 @@ object FolderProtection {
             context,
             "alert ($why): waiting $count calls, $bytes bytes -> " +
                 if (notice is FolderNotice.Post) (if (shown) "shown" else "NOT shown (no notification permission, or posting failed)") else "cleared",
+            important = true,
         )
     }
 

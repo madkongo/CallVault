@@ -61,4 +61,13 @@ class RecordingFolderCheckTest {
         assertTrue(RecordingFolderCheck.isKnownUnusable(context, folder))
         assertFalse(RecordingFolderCheck.isKnownUnusable(context, "content://x/tree/other".toUri()))
     }
+
+    @Test
+    fun `the folder-gone and alert lines are never dropped by the rate limit`() {
+        repeat(20) { RecordingFolderCheck.recordAlwaysOn(context, "flap $it") }
+        RecordingFolderCheck.recordAlwaysOn(context, "GONE (confirmed now) marker-line", important = true)
+        val text = com.baba.callvault.integrations.adb.UsbDebuggingEvents.readForReport(context).orEmpty()
+        assertTrue(text.contains("marker-line"))
+        assertFalse(text.contains("flap 19"))
+    }
 }

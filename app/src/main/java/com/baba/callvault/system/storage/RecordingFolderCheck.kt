@@ -260,13 +260,15 @@ object RecordingFolderCheck {
             return
         }
         AppLogger.i(TAG, line)
-        if (changed || step.alert) recordAlwaysOn(context, line)
+        if (changed || step.alert) recordAlwaysOn(context, line, important = step.alert || step.cleared || step.state.confirmedUnusable)
     }
 
     /** A line in the always-on events file (kept with debug logging off), redacted like every other one there. */
-    fun recordAlwaysOn(context: Context, line: String) {
+    fun recordAlwaysOn(context: Context, line: String, important: Boolean = false) {
         runCatching {
-            val dropped = synchronized(alwaysOnLimit) { alwaysOnLimit.take(SystemClock.elapsedRealtime()) } ?: return
+            // A confirmed loss, a cleared one and every alert are never dropped (second review 2026-11-20, N1); the limit
+            // is for a provider that flaps.
+            val dropped = if (important) 0 else synchronized(alwaysOnLimit) { alwaysOnLimit.take(SystemClock.elapsedRealtime()) } ?: return
             val note = if (dropped > 0) " ($dropped earlier folder lines dropped by the rate limit)" else ""
             UsbDebuggingEvents.record(context, "folder: " + AppLogger.redactForReport(line.replace(Regex("[\\r\\n]+"), " ")) + note)
         }
