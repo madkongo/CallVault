@@ -22,8 +22,7 @@ import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
 import com.baba.callvault.system.diagnostics.CallEndLog
-import com.baba.callvault.system.interop.MetadataSidecar
-import com.baba.callvault.system.interop.TranscriptSidecar
+import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.FileNameStamp
@@ -394,25 +393,13 @@ object RecordingsRepository {
             AppLogger.w(TAG, "Failed to delete ${item.uri}: ${e.message}")
         }
 
-        // 2. Delete any same-named copy in the configured folders.
+        // 2. Delete any same-named copy in the configured folders: the audio copy, the transcript/notes sidecar AND
+        // the .json details file beside it, so neither the text nor the details outlive the recording they belong to
+        // (the .json used to be missed here, orphaning it on delete, issue #49).
         val prefs = AppPreferences(context)
-        val folders = listOfNotNull(prefs.getRecordingFolderUri(), prefs.getDriveFolderUri())
-        for (folderUri in folders) {
-            runCatching {
-                val tree = DocumentFile.fromTreeUri(context, folderUri) ?: return@runCatching
-                val transcriptSidecar = TranscriptSidecar.sidecarNameFor(item.displayName)
-                val detailsSidecar = MetadataSidecar.sidecarNameFor(item.displayName)
-                for (doc in tree.listFiles()) {
-                    // The audio copy, the transcript/notes sidecar, AND the .json details file beside it,
-                    // so neither the text nor the details outlive the recording they belong to. The .json
-                    // used to be missed here, orphaning it on delete (issue #49).
-                    if (doc.isFile && (doc.name == item.displayName || doc.name == transcriptSidecar || doc.name == detailsSidecar)) {
-                        if (doc.delete()) deletedAny = true
-                    }
-                }
-            }.onFailure { e ->
-                AppLogger.w(TAG, "Failed to delete copy of ${item.displayName} in $folderUri: ${e.message}")
-            }
+        val names = RecordingSidecars.namesToDelete(listOf(item.displayName))
+        for (folderUri in listOfNotNull(prefs.getRecordingFolderUri(), prefs.getDriveFolderUri())) {
+            if (deleteNamedIn(context, folderUri, names)) deletedAny = true
         }
 
         // Drop the recording from the catalog (all copies are gone) so Home reflects the deletion. Not cancellable: the
@@ -451,16 +438,8 @@ object RecordingsRepository {
             // The audio, the .md and the .json of each (C41: the .json holds the number and contact name).
             val names = RecordingSidecars.namesToDelete(items.map { it.displayName })
             val prefs = AppPreferences(context)
-            val folders = listOfNotNull(prefs.getRecordingFolderUri(), prefs.getDriveFolderUri())
-            for (folderUri in folders) {
-                runCatching {
-                    val tree = DocumentFile.fromTreeUri(context, folderUri) ?: return@runCatching
-                    for (doc in tree.listFiles()) {
-                        if (doc.isFile && doc.name in names) doc.delete()
-                    }
-                }.onFailure { e ->
-                    AppLogger.w(TAG, "Failed to delete copies in $folderUri: ${e.message}")
-                }
+            for (folderUri in listOfNotNull(prefs.getRecordingFolderUri(), prefs.getDriveFolderUri())) {
+                deleteNamedIn(context, folderUri, names)
             }
 
             // Drop every one from the catalog by name, so Home reflects the deletion even for a row
@@ -469,6 +448,37 @@ object RecordingsRepository {
                 for (item in items) RecordingCatalog.removeName(context, item.displayName)
             }
         }
+
+    /**
+     * Deletes every FILE in [folderUri] whose name is in [names], and says whether any went (R44).
+     *
+     * The folder is read in ONE provider query ([SafHelper.listChildren]) and each match is deleted by its own document,
+     * where `DocumentFile.listFiles()` plus a name and a type read per child cost several queries per file. A match is
+     * still checked to be a file before it is deleted. If the one-query listing is not available the old walk runs, so a
+     * provider that cannot be listed this way deletes exactly as before. Logs the reason for any failure; never throws.
+     */
+    private fun deleteNamedIn(context: Context, folderUri: Uri, names: Set<String>): Boolean {
+        var deletedAny = false
+        val listing = runCatching { SafHelper.listChildren(context, folderUri) }.getOrNull()
+        if (listing != null) {
+            listing.names.forEachIndexed { i, name ->
+                if (name !in names) return@forEachIndexed
+                runCatching {
+                    val doc = DocumentFile.fromSingleUri(context, listing.uris[i])
+                    if (doc != null && doc.isFile && doc.delete()) deletedAny = true
+                }.onFailure { e -> AppLogger.w(TAG, "Failed to delete '$name' in $folderUri: ${e.message}") }
+            }
+            return deletedAny
+        }
+        AppLogger.i(TAG, "Folder $folderUri not listed in one query; walking it the slow way to delete ${names.size} name(s)")
+        runCatching {
+            val tree = DocumentFile.fromTreeUri(context, folderUri) ?: return@runCatching
+            for (doc in tree.listFiles()) {
+                if (doc.isFile && doc.name in names && doc.delete()) deletedAny = true
+            }
+        }.onFailure { e -> AppLogger.w(TAG, "Failed to delete copies in $folderUri: ${e.message}") }
+        return deletedAny
+    }
 
     /**
      * Deletes ONLY the single file at [uri] (one physical copy), via
