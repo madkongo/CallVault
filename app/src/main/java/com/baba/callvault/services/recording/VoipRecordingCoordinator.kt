@@ -30,6 +30,7 @@ import com.baba.callvault.server.CaptureRecoveryLog
 import com.baba.callvault.server.DaemonSessionOwnership
 import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.IRecorderService
+import com.baba.callvault.server.MicYield
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.VoipCallFacts
 import com.baba.callvault.server.VoipStartFailure
@@ -1138,6 +1139,19 @@ object VoipRecordingCoordinator {
                 if (startedViaNormalMode) CallEndLog.record(context, "normal-mode app call capture health: $it")
             }
         startedViaNormalMode = false
+        // Review N30: the call app's own capture was found silenced right after our mic re-take. Always-on, with the
+        // evidence (which client, when, how long the check took, and whether we yielded). Only the default-off yield
+        // also tells the user, in the specific words below.
+        val micContention = MicYield.evidenceIn(captureHealth)
+        if (micContention != null) {
+            CallEndLog.record(context, "app call mic contention: $micContention")
+            if (MicYield.wasYielded(micContention)) {
+                runCatching {
+                    RecordingNotificationHelper(context)
+                        .showErrorNotification(LocalizedContext.of(context).getString(R.string.voip_mic_yielded_warning))
+                }.onFailure { AppLogger.w(TAG, "Could not tell the user the recording stopped to keep them audible: ${it.message}") }
+            }
+        }
 
         // A recording where the far party was never audible is one-sided. Say so now rather than let it
         // be discovered weeks later — the app may have opted out of capture, or this OEM build may not
@@ -1192,7 +1206,8 @@ object VoipRecordingCoordinator {
                 DeviceInfo.isVivoWithoutInAppRecording() -> R.string.voip_one_sided_warning_vivo_overseas
                 else -> R.string.voip_one_sided_warning_vivo
             }
-            runCatching {
+            // After a yield (N30) the user was already told the specific reason; two warnings would contradict.
+            if (micContention?.let(MicYield::wasYielded) != true) runCatching {
                 RecordingNotificationHelper(context)
                     .showErrorNotification(LocalizedContext.of(context).getString(warning))
             }.onFailure { AppLogger.w(TAG, "Could not warn about the one-sided recording: ${it.message}") }
