@@ -58,11 +58,18 @@ object RecordingRiskReasons {
         val notificationsOff: Boolean?,
     )
 
+    /**
+     * "Pause app activity if unused" is PARKED (owner, 2026-11-21): it is on by default on almost every phone, and the
+     * always-running keep-alive service is what stops Android pausing CallVault (see KeepAlivePolicy), so counting it
+     * turned nearly every card amber for nothing. Still read and logged; flip this to bring it back.
+     */
+    internal const val COUNT_HIBERNATION = false
+
     /** The reasons that hold, in priority order. An unreadable value does not hold. */
     fun fromReading(reading: Reading): List<RiskReason> = listOfNotNull(
         RiskReason.BATTERY_LIMITS.takeIf { reading.batteryLimited == true },
         RiskReason.BACKGROUND_RESTRICTED.takeIf { reading.backgroundRestricted == true },
-        RiskReason.APP_HIBERNATION.takeIf { reading.hibernation == true },
+        RiskReason.APP_HIBERNATION.takeIf { COUNT_HIBERNATION && reading.hibernation == true },
         RiskReason.NOTIFICATIONS_OFF.takeIf { reading.notificationsOff == true },
     )
 

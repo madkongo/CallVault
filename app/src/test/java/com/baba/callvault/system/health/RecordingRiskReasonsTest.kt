@@ -23,14 +23,15 @@ class RecordingRiskReasonsTest {
     fun `every reason alone gives just that reason`() {
         assertEquals(listOf(BATTERY_LIMITS), RecordingRiskReasons.fromReading(Reading(true, false, false, false)))
         assertEquals(listOf(BACKGROUND_RESTRICTED), RecordingRiskReasons.fromReading(Reading(false, true, false, false)))
-        assertEquals(listOf(APP_HIBERNATION), RecordingRiskReasons.fromReading(Reading(false, false, true, false)))
+        // Parked by the owner 2026-11-21: the keep-alive already prevents the pause; counting it made almost every phone amber.
+        assertEquals(emptyList<RiskReason>(), RecordingRiskReasons.fromReading(Reading(false, false, true, false)))
         assertEquals(listOf(NOTIFICATIONS_OFF), RecordingRiskReasons.fromReading(Reading(false, false, false, true)))
     }
 
     @Test
     fun `all four combinations come out in priority order`() {
         assertEquals(
-            listOf(BATTERY_LIMITS, BACKGROUND_RESTRICTED, APP_HIBERNATION, NOTIFICATIONS_OFF),
+            listOf(BATTERY_LIMITS, BACKGROUND_RESTRICTED, NOTIFICATIONS_OFF),
             RecordingRiskReasons.fromReading(allHold),
         )
     }
@@ -42,7 +43,6 @@ class RecordingRiskReasonsTest {
             val expected = listOfNotNull(
                 BATTERY_LIMITS.takeIf { r.batteryLimited == true },
                 BACKGROUND_RESTRICTED.takeIf { r.backgroundRestricted == true },
-                APP_HIBERNATION.takeIf { r.hibernation == true },
                 NOTIFICATIONS_OFF.takeIf { r.notificationsOff == true },
             )
             assertEquals("mask $mask", expected, RecordingRiskReasons.fromReading(r))
@@ -53,13 +53,13 @@ class RecordingRiskReasonsTest {
     fun `a read that failed is not a reason`() {
         val unreadable = Reading(null, null, null, null)
         assertEquals(emptyList<RiskReason>(), RecordingRiskReasons.fromReading(unreadable))
-        assertEquals(listOf(APP_HIBERNATION), RecordingRiskReasons.fromReading(unreadable.copy(hibernation = true)))
+        assertEquals(emptyList<RiskReason>(), RecordingRiskReasons.fromReading(unreadable.copy(hibernation = true)))
     }
 
     @Test
     fun `the notice never lists notifications being off`() {
         val notice = RecordingRiskReasons.forNotice(RecordingRiskReasons.fromReading(allHold))
-        assertEquals(listOf(BATTERY_LIMITS, BACKGROUND_RESTRICTED, APP_HIBERNATION), notice)
+        assertEquals(listOf(BATTERY_LIMITS, BACKGROUND_RESTRICTED), notice)
         assertEquals(emptyList<RiskReason>(), RecordingRiskReasons.forNotice(listOf(NOTIFICATIONS_OFF)))
     }
 
