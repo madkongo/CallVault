@@ -310,6 +310,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val showWhatsNew: Boolean = false,
         /** True when the USB default is a data mode → locking the screen mid-call can stop recording. */
         val usbScreenLockRisk: Boolean = false,
+        /** What the phone can do to stop calls being recorded, in priority order (R5); shown on the status card only when it would say ready. */
+        val riskReasons: List<com.baba.callvault.system.health.RiskReason> = emptyList(),
         /** True while the one-tap "set USB to Charging only" fix is running. */
         val usbFixInProgress: Boolean = false,
         /** The one-tap USB fix was declined because a recording is live — see [setUsbChargingOnly]. */
@@ -914,7 +916,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 // Shown only after an update, and only once for a given version.
                 showWhatsNew = pendingWhatsNew(updatedTo),
                 // Advisory when the USB default is a data mode (cheap cached read; never blocks/forces ADB).
-                usbScreenLockRisk = UsbDefaultConfig.isScreenLockRisk(appContext)
+                usbScreenLockRisk = UsbDefaultConfig.isScreenLockRisk(appContext),
+                riskReasons = com.baba.callvault.system.health.RecordingRiskReasons.read(appContext),
             )
         }
         // An install-over can drop WRITE_SECURE_SETTINGS while the daemon stays warm (recording still

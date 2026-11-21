@@ -987,4 +987,23 @@
     <string name="recording_notification_recording">This call is being recorded</string>
     <!-- batch B30 (pending translation: English fallback) -->
     <string name="notif_cut_off_saved_text_public">Open CallVault to see what was saved.</string>
+    <!-- R5 home risk card + notice (pending translation: English fallback) -->
+    <string name="risk_card_title">Ready, but at risk</string>
+    <string name="risk_pill">At risk</string>
+    <string name="risk_short_battery">Battery limits are on</string>
+    <string name="risk_short_restricted">Android set CallVault to \"Restricted\"</string>
+    <string name="risk_short_hibernation">Android may pause CallVault when unused</string>
+    <string name="risk_short_notifications">Notifications are off</string>
+    <string name="risk_line_battery">Battery limits are on, so Android may stop CallVault in the background.</string>
+    <string name="risk_line_restricted">Android set CallVault to \"Restricted\", so it cannot run in the background.</string>
+    <string name="risk_line_hibernation">Android may pause CallVault when you do not open it for a while.</string>
+    <string name="risk_line_notifications">Notifications are off, so CallVault cannot tell you about problems.</string>
+    <string name="risk_fix_battery">Allow unrestricted battery use</string>
+    <string name="risk_fix_restricted">Open app settings</string>
+    <string name="risk_fix_hibernation">Stop pausing CallVault</string>
+    <string name="risk_fix_notifications">Turn on notifications</string>
+    <string name="risk_more_one">1 more: %1$s</string>
+    <string name="risk_more_many">%1$d more: %2$s and others</string>
+    <string name="risk_show">Show</string>
+    <string name="risk_hide">Hide</string>
 </resources>
