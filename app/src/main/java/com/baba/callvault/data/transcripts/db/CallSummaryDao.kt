@@ -10,6 +10,7 @@ package com.baba.callvault.data.transcripts.db
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -37,6 +38,27 @@ interface CallSummaryDao {
      */
     @Upsert
     suspend fun upsert(entry: CallSummaryEntry)
+
+    /** When the transcript row for [displayName] last changed, or null when there is none (it was deleted). */
+    @Query("SELECT updatedAt FROM transcripts WHERE displayName = :displayName")
+    suspend fun transcriptUpdatedAt(displayName: String): Long?
+
+    /**
+     * Stores [entry] only if the transcript it was written from is still the one that exists.
+     *
+     * A summary takes minutes, and nothing stops the recording from being deleted, or its transcript
+     * deleted or redone, meanwhile. Storing unconditionally left an orphan summary that was listed,
+     * counted and searchable for a call the user had removed (review C53). The check and the write are
+     * one transaction (summaries and transcripts share a database), so nothing can slip between them.
+     *
+     * @return whether it was stored.
+     */
+    @Transaction
+    suspend fun upsertIfTranscriptUnchanged(entry: CallSummaryEntry, transcriptUpdatedAt: Long): Boolean {
+        if (transcriptUpdatedAt(entry.displayName) != transcriptUpdatedAt) return false
+        upsert(entry)
+        return true
+    }
 
     @Query("DELETE FROM call_summaries WHERE displayName = :displayName")
     suspend fun deleteFor(displayName: String)

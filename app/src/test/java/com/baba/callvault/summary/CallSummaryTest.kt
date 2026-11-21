@@ -200,4 +200,18 @@ class CallSummaryTest {
 
         assertEquals(listOf("He said \"pay it, or else\"", "line one\nline two"), restored.keyFacts)
     }
+
+    @Test
+    fun `parseComplete refuses a document that was cut off, where parse repairs it`() {
+        val cut = """{"intent":"a","summary":"The caller rang about invoice 4021.","keyPoints":["Invoice 4021 is overdue"],"decisions":[],"actionItems":[],"keyFacts":["Invoice 4021","£1,2"""
+        assertNull(CallSummary.parseComplete(cut))
+        assertEquals("a", CallSummary.parse(cut)?.intent)
+    }
+
+    @Test
+    fun `parseComplete reads a whole document like parse does`() {
+        val whole = """{"intent":"a","summary":"s","keyPoints":[],"decisions":[],"actionItems":[],"keyFacts":[]}"""
+        assertEquals(CallSummary.parse(whole), CallSummary.parseComplete(whole))
+        assertNull(CallSummary.parseComplete("no json here"))
+    }
 }
