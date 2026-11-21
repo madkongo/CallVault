@@ -39,7 +39,9 @@ internal object MicYield {
      * `dumpsys audio` flips to true right after our re-take and back to false when we hold off (the evidence lines in
      * reports, with the "kept re-taking" action, show the flag really is read), and (2) the far party then did not hear
      * the user (a report or a test), and (3) no phone shows the flag silenced while the call is fine (a false yield would
-     * end a good recording). The S24 FE case, where the re-take rescued near audio, must be re-measured with it.
+     * end a good recording). Also before enabling: the dump ring keeps only 50 events, so an evicted `stop` can leave a
+     * dead capture reading "silenced" (a stale yes), and `voip_mic_yielded_warning` must first be translated (it is English
+     * in every locale now). The S24 FE case, where the re-take rescued near audio, must be re-measured with it.
      */
     const val YIELD_ENABLED = false
 

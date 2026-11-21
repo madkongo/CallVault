@@ -101,7 +101,7 @@ internal class VoipCaptureSession(
 
     /** Set when the (default-off) yield took effect: the near mic is released and the capture loop ends. */
     private val yielded = AtomicBoolean(false)
-    private val contentionCheckRunning = AtomicBoolean(false)
+    private val contentionBudget = MicContentionBudget()
     @Volatile private var callAppUid = VoipAppIdentity.UID_UNKNOWN
 
     private val ledger = VoipSyncLedger(SAMPLE_RATE, CHUNK_FRAMES)
@@ -593,26 +593,32 @@ internal class VoipCaptureSession(
      * is logged and leaves the re-take behaviour as it was.
      */
     private fun checkCallAppAfterRetake(retakeNumber: Int) {
-        if (!contentionCheckRunning.compareAndSet(false, true)) return
-        Thread {
+        if (!contentionBudget.tryBegin(System.nanoTime() / 1_000_000L)) return
+        val worker = Thread {
             try {
                 val begun = System.nanoTime()
                 Thread.sleep(CONTENTION_SETTLE_MS)
-                if (callAppUid == VoipAppIdentity.UID_UNKNOWN) callAppUid = VoipAppIdentity.currentVoiceCommUid()
+                if (callAppUid == VoipAppIdentity.UID_UNKNOWN && contentionBudget.mayResolveUid()) {
+                    callAppUid = VoipAppIdentity.currentVoiceCommUid()
+                    contentionBudget.uidResolved(callAppUid != VoipAppIdentity.UID_UNKNOWN)
+                }
                 val uid = callAppUid
                 val dump = if (uid == VoipAppIdentity.UID_UNKNOWN) null else VoipAppIdentity.readAudioDump()
                 val state = dump?.let { MicYield.callAppState(it, uid) }
                 val checkMs = (System.nanoTime() - begun) / 1_000_000L
                 if (state == null) {
-                    AppLogger.i(TAG, "VoIP mic contention check after re-take #$retakeNumber: call app state unknown (uid known=${uid != VoipAppIdentity.UID_UNKNOWN}, dump=${dump != null}), ${checkMs}ms")
+                    val key = "unknown uid=${uid != VoipAppIdentity.UID_UNKNOWN} dump=${dump != null}"
+                    if (contentionBudget.stateChanged(key)) AppLogger.i(TAG, "VoIP mic contention check after re-take #$retakeNumber: call app state unknown ($key), ${checkMs}ms")
                     return@Thread
                 }
-                AppLogger.i(TAG, "VoIP mic contention check after re-take #$retakeNumber: ${state.pack} src=${state.source} silenced=${state.silenced}, ${checkMs}ms")
+                val key = "${state.pack} src=${state.source} silenced=${state.silenced}"
+                if (contentionBudget.stateChanged(key)) AppLogger.i(TAG, "VoIP mic contention check after re-take #$retakeNumber: $key, ${checkMs}ms")
                 val action = MicYield.decide(state.silenced)
                 if (state.silenced && (contentionEvidence.isEmpty() || action == MicYield.Action.YIELD)) {
                     val at = (System.nanoTime() - startedNanos) / 1_000_000L
                     contentionEvidence = MicYield.evidenceLine(state, at, retakeNumber, checkMs, action)
                     AppLogger.w(TAG, contentionEvidence)
+                    contentionBudget.evidenceRecorded()
                 }
                 if (action == MicYield.Action.YIELD) yieldMic()
             } catch (e: InterruptedException) {
@@ -620,9 +626,14 @@ internal class VoipCaptureSession(
             } catch (t: Throwable) {
                 AppLogger.w(TAG, "VoIP mic contention check failed: ${t.message}")
             } finally {
-                contentionCheckRunning.set(false)
+                contentionBudget.end()
             }
-        }.apply { isDaemon = true; name = "voip-contention" }.start()
+        }.apply { isDaemon = true; name = "voip-contention" }
+        // Never let a diagnostic cost the capture thread (N30): a refused thread start is logged and the re-take goes on.
+        runCatching { worker.start() }.onFailure {
+            contentionBudget.end()
+            AppLogger.w(TAG, "VoIP mic contention check could not start: ${it.message}")
+        }
     }
 
     /** The default-off yield: give our mic back for the rest of the call and end the capture loop (stop() still finalises). */
