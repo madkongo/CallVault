@@ -468,13 +468,13 @@ class DaemonKeepAliveService : Service() {
      */
     private val wirelessDebuggingObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
-            // Noted before the mode check, so a value seen while another mode ran is never left stale.
+            if (!usesAdb()) return // Shizuku mode: the switches are not ours to act on
+            // What the observer saw before this change; the history starts afresh whenever the observer is registered.
             val nowOn = AdbShell.isWirelessDebuggingEnabled(applicationContext)
             val previouslySeenOn = lastSeenWirelessDebuggingOn
             val msSinceLastOn = lastWirelessDebuggingOnAtMs.takeIf { it != 0L }?.let { SystemClock.elapsedRealtime() - it }
             lastSeenWirelessDebuggingOn = nowOn
             if (nowOn) lastWirelessDebuggingOnAtMs = SystemClock.elapsedRealtime()
-            if (!usesAdb()) return // Shizuku mode: the switches are not ours to act on
             // Any switch of Wireless debugging gives adbd a new port, so a port search that failed may run again (#65).
             com.baba.callvault.integrations.adb.ConnectPortFinder.onWirelessDebuggingChanged()
             val on = AdbShell.isWirelessDebuggingEnabled(applicationContext)
@@ -675,6 +675,9 @@ class DaemonKeepAliveService : Service() {
     private fun registerAdbWatchers() {
         // Per successful registration, so a failed one is retried at the next reconcile (the flag stays false until
         // all three have worked; registering an observer twice is harmless, and unregister tolerates a missing one).
+        // No history carries over from before this registration: a value missed while unregistered is not "seen".
+        lastSeenWirelessDebuggingOn = null
+        lastWirelessDebuggingOnAtMs = 0L
         val observers = runCatching {
             contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_enabled"), false, usbDebuggingObserver)
             contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_wifi_enabled"), false, wirelessDebuggingObserver)
