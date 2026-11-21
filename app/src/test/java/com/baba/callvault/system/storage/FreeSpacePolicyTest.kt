@@ -145,4 +145,19 @@ class FreeSpacePolicyTest {
         assertFalse(FreeSpacePolicy.startFailureIsStorageFull(-1L, true))
         assertFalse(FreeSpacePolicy.startFailureIsStorageFull(5 * mb, false))
     }
+
+    @Test
+    fun `a warned low episode refreshes the notice when the figure it shows is out of date (4732)`() {
+        assertEquals(FreeSpacePolicy.Action.REFRESH, FreeSpacePolicy.decide(0L, 100 * mb, alreadyWarned = true, shownMb = 5L))
+    }
+
+    @Test
+    fun `a warned low episode leaves the notice alone when the figure has not changed`() {
+        assertEquals(FreeSpacePolicy.Action.NONE, FreeSpacePolicy.decide(5 * mb + 1, 100 * mb, alreadyWarned = true, shownMb = 5L))
+    }
+
+    @Test
+    fun `without a remembered figure a warned episode is not refreshed`() {
+        assertEquals(FreeSpacePolicy.Action.NONE, FreeSpacePolicy.decide(5 * mb, 100 * mb, alreadyWarned = true))
+    }
 }

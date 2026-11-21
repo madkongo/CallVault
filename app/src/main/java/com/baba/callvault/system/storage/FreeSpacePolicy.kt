@@ -39,7 +39,7 @@ object FreeSpacePolicy {
     private const val REARM_NUM = 3L
     private const val REARM_DEN = 2L
 
-    enum class Action { NONE, WARN, REARM }
+    enum class Action { NONE, WARN, REARM, REFRESH }
 
     /**
      * Free space worth [WARN_HOURS] hours of calls at [codec], [bitRate] (the user's mono rate) and [stereo], and
@@ -52,10 +52,18 @@ object FreeSpacePolicy {
         return maxOf(WARN_FLOOR_BYTES, bytes)
     }
 
-    /** Warn once per low episode: [alreadyWarned] holds until free space is clearly back. Unknown (-1) does nothing. */
-    fun decide(freeBytes: Long, thresholdBytes: Long, alreadyWarned: Boolean): Action = when {
+    /**
+     * Warn once per low episode: [alreadyWarned] holds until free space is clearly back. Unknown (-1) does nothing.
+     * Within an episode the notice is posted again, silently, when the whole-MB figure it shows ([shownMb], -1 when
+     * not remembered) is no longer the true one, so it never keeps saying "5 MB" at 0 MB (review R2, 4732).
+     */
+    fun decide(freeBytes: Long, thresholdBytes: Long, alreadyWarned: Boolean, shownMb: Long = -1L): Action = when {
         freeBytes < 0L -> Action.NONE
-        freeBytes < thresholdBytes -> if (alreadyWarned) Action.NONE else Action.WARN
+        freeBytes < thresholdBytes -> when {
+            !alreadyWarned -> Action.WARN
+            shownMb >= 0L && shownMb != freeBytes / MB -> Action.REFRESH
+            else -> Action.NONE
+        }
         alreadyWarned && freeBytes >= thresholdBytes * REARM_NUM / REARM_DEN -> Action.REARM
         else -> Action.NONE
     }

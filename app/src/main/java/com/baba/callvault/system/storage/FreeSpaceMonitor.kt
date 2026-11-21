@@ -33,6 +33,7 @@ object FreeSpaceMonitor {
     private const val TAG = "CV:FreeSpace"
     private const val PREFS = "free_space_notice"
     private const val KEY_WARNED = "warned_low"
+    private const val KEY_SHOWN_MB = "shown_mb"
 
     /** Not used elsewhere (4712-4728 are; 4729-4731 belong to the updater). */
     const val NOTIFICATION_ID = 4732
@@ -99,15 +100,22 @@ object FreeSpaceMonitor {
                 CallEndLog.record(context, FreeSpacePolicy.callStartLine(free, limit) + " " + volumeNote(context))
             }
             val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            when (FreeSpacePolicy.decide(free, limit, prefs.getBoolean(KEY_WARNED, false))) {
+            val freeMb = free / (1024 * 1024)
+            val shownMb = prefs.getLong(KEY_SHOWN_MB, -1L)
+            when (FreeSpacePolicy.decide(free, limit, prefs.getBoolean(KEY_WARNED, false), shownMb)) {
+                FreeSpacePolicy.Action.REFRESH -> {
+                    // Same notice, new figure; it only alerts once, so this is silent.
+                    if (postLowNotice(context, freeMb)) prefs.edit().putLong(KEY_SHOWN_MB, freeMb).apply()
+                }
                 FreeSpacePolicy.Action.WARN -> {
-                    val shown = postLowNotice(context, free / (1024 * 1024))
+                    val shown = postLowNotice(context, freeMb)
+                    if (shown) prefs.edit().putLong(KEY_SHOWN_MB, freeMb).apply()
                     CallEndLog.record(context, "free space low: ${free / (1024 * 1024)} MB left, warning " +
                         if (shown) "shown" else "NOT shown (no notification permission, or posting failed)")
                     prefs.edit().putBoolean(KEY_WARNED, true).apply()
                 }
                 FreeSpacePolicy.Action.REARM -> {
-                    prefs.edit().putBoolean(KEY_WARNED, false).apply()
+                    prefs.edit().putBoolean(KEY_WARNED, false).putLong(KEY_SHOWN_MB, -1L).apply()
                     runCatching { NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID) }
                 }
                 FreeSpacePolicy.Action.NONE -> Unit
@@ -153,6 +161,7 @@ object FreeSpaceMonitor {
 
     private fun postLowNotice(context: Context, freeMb: Long): Boolean {
         val localized = LocalizedContext.of(context)
-        return postStorageNotice(context, R.string.storage_low_title, localized.getString(R.string.storage_low_text, freeMb))
+        val text = if (freeMb <= 0L) localized.getString(R.string.storage_low_none_text) else localized.getString(R.string.storage_low_text, freeMb)
+        return postStorageNotice(context, R.string.storage_low_title, text)
     }
 }
