@@ -8,7 +8,9 @@
 
 package com.baba.callvault.integrations.adb
 
+import android.app.ActivityManager
 import android.app.KeyguardManager
+import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.PowerManager
 
@@ -26,18 +28,63 @@ object TransportTimeline {
 
     @Volatile private var last: String? = null
 
+    /** Everything one line says. Plain values so the wording and the change rule are testable without a phone. */
+    data class Facts(
+        val recorderAlive: Boolean,
+        val adbd: String,
+        val usb: String,
+        val usbShell: String,
+        val wirelessDebugging: Boolean,
+        val wifi: String,
+        val offlinePortArmed: Boolean,
+        val screen: String,
+        val locked: Boolean,
+        val chargeOnlyAdb: String,
+        /** Battery Saver or an OEM extreme saver (review R52). */
+        val powerSave: Boolean,
+        /** On the battery-optimisation whitelist (review R5). */
+        val batteryExempt: Boolean,
+        /** "Restricted" background use (review R5). */
+        val backgroundRestricted: Boolean,
+        /** App standby bucket is RESTRICTED (review R5). */
+        val bucketRestricted: Boolean,
+    )
+
     /** Writes the current state if it differs from the last one written. [why] says what prompted the look. */
     fun snapshot(context: Context, recorderAlive: Boolean, why: String) {
-        val state = stateOf(context, recorderAlive)
-        if (state == last) return
-        last = state
-        UsbDebuggingEvents.record(context, "state ($why): $state")
+        val facts = factsOf(context, recorderAlive)
+        val key = changeKey(facts)
+        if (key == last) return
+        last = key
+        UsbDebuggingEvents.record(context, "state ($why): ${render(facts)}")
     }
 
     /** A one-off event: a death, a relaunch and its outcome, a decision not to try. */
     fun event(context: Context, text: String) = UsbDebuggingEvents.record(context, "event: $text")
 
-    private fun stateOf(context: Context, alive: Boolean): String {
+    /**
+     * What decides whether a new line is written. The screen is left out (review R51): each lock or unlock used to add
+     * about six lines and pushed older history out of the 128 KB file in a day or two. Screen changes still have their
+     * own event line, and the line that IS written carries the screen as it was then.
+     */
+    internal fun changeKey(f: Facts): String = render(f.copy(screen = "", locked = false))
+
+    internal fun render(f: Facts): String = buildString {
+        append("recorder=").append(if (f.recorderAlive) "alive" else "DOWN")
+        append(" adbd=").append(f.adbd)
+        append(" usb=").append(f.usb).append("(shell:").append(f.usbShell).append(')')
+        append(" wd=").append(if (f.wirelessDebugging) "on" else "off")
+        append(" wifi=").append(f.wifi)
+        append(" offlinePort=").append(if (f.offlinePortArmed) "armed" else "none")
+        if (f.screen.isNotEmpty()) append(" screen=").append(f.screen).append(if (f.locked) "+locked" else "")
+        append(" chargeOnlyAdb=").append(f.chargeOnlyAdb)
+        append(" batterySaver=").append(if (f.powerSave) "ON" else "off")
+        append(" batteryOpt=").append(if (f.batteryExempt) "exempt" else "ON")
+        append(" bgRestricted=").append(if (f.backgroundRestricted) "YES" else "no")
+        append(" bucket=").append(if (f.bucketRestricted) "RESTRICTED" else "ok")
+    }
+
+    private fun factsOf(context: Context, alive: Boolean): Facts {
         val power = runCatching { context.getSystemService(PowerManager::class.java) }.getOrNull()
         val keyguard = runCatching { context.getSystemService(KeyguardManager::class.java) }.getOrNull()
         val screen = when (runCatching { power?.isInteractive }.getOrNull()) {
@@ -45,17 +92,26 @@ object TransportTimeline {
             false -> "off"
             null -> "?"
         }
-        val locked = runCatching { keyguard?.isKeyguardLocked }.getOrNull()
-        val usbShell = UsbDebuggingShellRead.describe(recorderAlive = alive)
-        return buildString {
-            append("recorder=").append(if (alive) "alive" else "DOWN")
-            append(" adbd=").append(AdbShell.adbdState())
-            append(" usb=").append(AdbShell.usbDebuggingState(context)).append("(shell:").append(usbShell).append(')')
-            append(" wd=").append(if (AdbShell.isWirelessDebuggingEnabled(context)) "on" else "off")
-            append(" wifi=").append(WifiState.of(context))
-            append(" offlinePort=").append(if (runCatching { AdbShell.isLoopbackArmed(context) }.getOrDefault(false)) "armed" else "none")
-            append(" screen=").append(screen).append(if (locked == true) "+locked" else "")
-            append(" chargeOnlyAdb=").append(UsbOffSnapshot.chargingAdb(context) ?: "absent")
-        }
+        return Facts(
+            recorderAlive = alive,
+            adbd = AdbShell.adbdState().toString(),
+            usb = AdbShell.usbDebuggingState(context).toString(),
+            usbShell = UsbDebuggingShellRead.describe(recorderAlive = alive),
+            wirelessDebugging = AdbShell.isWirelessDebuggingEnabled(context),
+            wifi = WifiState.of(context).toString(),
+            offlinePortArmed = runCatching { AdbShell.isLoopbackArmed(context) }.getOrDefault(false),
+            screen = screen,
+            locked = runCatching { keyguard?.isKeyguardLocked }.getOrNull() == true,
+            chargeOnlyAdb = (UsbOffSnapshot.chargingAdb(context) ?: "absent").toString(),
+            powerSave = runCatching { power?.isPowerSaveMode }.getOrNull() == true,
+            // A failed read must not look like a loss: assume fine, since this only feeds a log line.
+            batteryExempt = runCatching { power?.isIgnoringBatteryOptimizations(context.packageName) }.getOrNull() != false,
+            backgroundRestricted = runCatching {
+                context.getSystemService(ActivityManager::class.java)?.isBackgroundRestricted
+            }.getOrNull() == true,
+            bucketRestricted = runCatching {
+                context.getSystemService(UsageStatsManager::class.java)?.appStandbyBucket
+            }.getOrNull() == UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
+        )
     }
 }
