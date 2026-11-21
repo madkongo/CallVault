@@ -48,6 +48,7 @@ import com.baba.callvault.integrations.adb.AdbPairingService
 import com.baba.callvault.system.openWirelessDebugging
 import com.baba.callvault.data.merge.MergeCandidates
 import com.baba.callvault.data.recordings.AudioImport
+import com.baba.callvault.data.recordings.ContactsChanges
 import com.baba.callvault.data.recordings.DeleteScope
 import com.baba.callvault.data.recordings.RecordingSelection
 import com.baba.callvault.system.openKofi
@@ -3936,8 +3937,10 @@ private fun RecordingRow(
     val number = item.number
     // Cached and off the main thread: ContactPhotos asks the contacts provider at most twice at a
     // time and remembers every answer, and this effect is cancelled when the row scrolls away.
+    // Keyed on the contacts version too (C149): when the address book changes, a row looks its contact up again.
+    val contactsVersion by ContactsChanges.version.collectAsState()
     val contact by produceState<ContactPhotos.Info?>(
-        initialValue = number?.let { ContactPhotos.peek(it) }, number
+        initialValue = number?.let { ContactPhotos.peek(it) }, number, contactsVersion, item.contactName
     ) {
         value = number?.let { ContactPhotos.load(context, it) }
     }
