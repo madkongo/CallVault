@@ -388,5 +388,5 @@
     <string name="share_import_kept_body">Kayıtlarınızda. Yazıya dökümü istediğiniz zaman oradan başlatabilirsiniz.</string>
     <string name="share_import_kept_only_body">Yazıya Dökümler altında bekliyor. İstediğiniz zaman oradan başlatın veya aynı yerden silin.</string>
     <string name="share_import_no_model">Henüz yüklü bir yazıya döküm modeli yok, bu yüzden CallVault bunu okuyamıyor. Ses kaydedildi — Ayarlar’dan bir model yükleyin, sonra Yazıya Dökümler’den başlatın.</string>
-    <string name="home_health_failed_no_sound">Your last call was recorded as pure silence: neither side was heard. The file is kept.</string>
+    <string name="home_health_failed_no_sound">No sound was captured on your last call. The file is kept.</string>
 </resources>

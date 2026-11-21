@@ -108,10 +108,23 @@ object CaptureSilence {
         UNKNOWN,
     }
 
-    fun judge(levels: CaptureLevels?): Verdict = when {
+    /**
+     * Whether the call had connected by the time its recording began. A carrier recording starts at off-hook, so an
+     * outgoing call that only rang out or was rejected holds zeros and must not be called silent. An incoming call is
+     * recorded from the answer; an outgoing one only when "record from answer" is on. Unknown direction: not connected.
+     */
+    fun connectedWhenRecorded(isOutgoing: Boolean?, recordedFromAnswer: Boolean): Boolean = when (isOutgoing) {
+        null -> false
+        false -> true
+        true -> recordedFromAnswer
+    }
+
+    /** Silence is only [Verdict.NOTHING_HEARD] on a call that [callConnected]; sound is sound either way. */
+    fun judge(levels: CaptureLevels?, callConnected: Boolean = true): Verdict = when {
         levels == null -> Verdict.UNKNOWN
         levels.millis < MIN_JUDGED_MILLIS -> Verdict.UNKNOWN
         levels.loudest > SILENCE_PEAK -> Verdict.SOUND
+        !callConnected -> Verdict.UNKNOWN
         else -> Verdict.NOTHING_HEARD
     }
 }

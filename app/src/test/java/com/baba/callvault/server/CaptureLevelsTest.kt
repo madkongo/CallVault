@@ -114,4 +114,33 @@ class CaptureLevelsTest {
         assertNull(CaptureLevels.parse("overrunMs=5"))
         assertNull(CaptureLevels.parse("capture levels: ch=x ms=1"))
     }
+
+    // Review: a call recording starts at off-hook, so an outgoing call that rang out holds zeros and must not be judged.
+    @Test
+    fun `an incoming call is connected when its recording starts`() {
+        assertEquals(true, CaptureSilence.connectedWhenRecorded(isOutgoing = false, recordedFromAnswer = false))
+    }
+
+    @Test
+    fun `an outgoing call recorded from dial may only have rung out, so it is not judged`() {
+        assertEquals(false, CaptureSilence.connectedWhenRecorded(isOutgoing = true, recordedFromAnswer = false))
+    }
+
+    @Test
+    fun `an outgoing call recorded from answer is connected`() {
+        assertEquals(true, CaptureSilence.connectedWhenRecorded(isOutgoing = true, recordedFromAnswer = true))
+    }
+
+    @Test
+    fun `an unknown direction is not judged`() {
+        assertEquals(false, CaptureSilence.connectedWhenRecorded(isOutgoing = null, recordedFromAnswer = true))
+    }
+
+    @Test
+    fun `silence on a call that never connected is unknown, silence on a connected one is nothing heard`() {
+        val silent = measure(2, pcm(10, 0, 0))
+        assertEquals(Verdict.UNKNOWN, CaptureSilence.judge(silent, callConnected = false))
+        assertEquals(Verdict.NOTHING_HEARD, CaptureSilence.judge(silent, callConnected = true))
+        assertEquals(Verdict.SOUND, CaptureSilence.judge(measure(2, pcm(10, 0, 500)), callConnected = false))
+    }
 }

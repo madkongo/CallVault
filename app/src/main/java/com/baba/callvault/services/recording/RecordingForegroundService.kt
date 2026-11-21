@@ -876,7 +876,11 @@ class RecordingForegroundService : Service() {
         if (appCallMix || switchedToMix) {
             AppLogger.i(WifiCallRoute.TAG, "end appCallMix=$appCallMix farHeard=$farHeard bytes=${activeSession.lastCapturedByteCount}")
         }
-        val mix = MixResult(appCallMix, farHeard, levels)
+        val connected = CaptureSilence.connectedWhenRecorded(
+            isOutgoing = originalMetadata?.direction?.let { it == RecordingDirection.OUTGOING },
+            recordedFromAnswer = appPreferences.isRecordFromAnswerEnabled(),
+        )
+        val mix = MixResult(appCallMix, farHeard, levels, connected)
 
         // Read the URI AFTER release, never before. The destination document does not exist while the
         // call is in progress — the recording is staged to app-private storage and published by
@@ -1361,7 +1365,7 @@ class RecordingForegroundService : Service() {
         CallEndLog.record(
             applicationContext,
             "carrier capture levels for ${CallEndLog.safeName(name)}: ${levels.line().removePrefix(CaptureLevels.PREFIX).trim()} " +
-                "silence_peak=${CaptureSilence.SILENCE_PEAK} judged_from_ms=${CaptureSilence.MIN_JUDGED_MILLIS} verdict=$verdict",
+                "silence_peak=${CaptureSilence.SILENCE_PEAK} judged_from_ms=${CaptureSilence.MIN_JUDGED_MILLIS} connected=${mix.callConnected} verdict=$verdict",
         )
         if (verdict == CaptureSilence.Verdict.NOTHING_HEARD && !daemonLossNotified) {
             notificationHelper.showErrorNotification(getString(R.string.carrier_call_silent))
@@ -1479,12 +1483,18 @@ class RecordingForegroundService : Service() {
 }
 
 /** How a finished carrier recording was captured, for the end-of-call checks (#45). */
-private data class MixResult(val appCallMix: Boolean, val farHeard: Boolean?, val levels: CaptureLevels? = null) {
+private data class MixResult(
+    val appCallMix: Boolean,
+    val farHeard: Boolean?,
+    val levels: CaptureLevels? = null,
+    /** The call had connected when its recording began (see [CaptureSilence.connectedWhenRecorded]). */
+    val callConnected: Boolean = true,
+) {
     /** Only the app-call capture can tell whether the far side was heard; unknown counts as not. */
     val healthFarHeard: Boolean? get() = if (appCallMix) farHeard ?: false else null
 
     /** Review N28: what the carrier capture's own loudness check made of the call. */
-    val silence: CaptureSilence.Verdict get() = if (appCallMix) CaptureSilence.Verdict.UNKNOWN else CaptureSilence.judge(levels)
+    val silence: CaptureSilence.Verdict get() = if (appCallMix) CaptureSilence.Verdict.UNKNOWN else CaptureSilence.judge(levels, callConnected)
 
     /** False only when the check ran and every channel stayed silent; null when nothing was measured or judged. */
     val healthHeardAnything: Boolean?

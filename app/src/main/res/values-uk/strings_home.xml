@@ -369,5 +369,5 @@
     <string name="whatsnew_241_where">Налаштування ▸ Запис ▸ Вихідні дзвінки ▸ Починати після відповіді</string>
     <string name="whatsnew_240_where">Головна ▸ Транскрипції ▸ Імпорт аудіо</string>
     <string name="whatsnew_230_where">Меню ⋮ запису ▸ Обʼєднати з іншим дзвінком</string>
-    <string name="home_health_failed_no_sound">Your last call was recorded as pure silence: neither side was heard. The file is kept.</string>
+    <string name="home_health_failed_no_sound">No sound was captured on your last call. The file is kept.</string>
 </resources>

@@ -952,5 +952,5 @@
         <item quantity="other">Vecchie registrazioni tenute sul telefono: Drive non le ha ancora salvate (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Le impostazioni di pulizia le eliminerebbero da questo telefono, ma Google Drive non ne ha ancora una copia confermata, quindi restano qui. Apri CallVault per controllare le impostazioni di Drive.</string>
-    <string name="carrier_call_silent">This call was recorded as pure silence: neither side was heard. The file is kept in case you want to check it. If it keeps happening, tell us your phone model.</string>
+    <string name="carrier_call_silent">No sound was captured on this call. The file is kept in case you want to check it. If it keeps happening on calls that connected, tell us your phone model.</string>
 </resources>
