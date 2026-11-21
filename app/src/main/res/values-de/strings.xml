@@ -951,4 +951,6 @@
         <item quantity="other">Alte Aufnahmen bleiben auf dem Handy: Drive hat sie noch nicht gesichert (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Deine Aufräum-Einstellungen würden sie von diesem Handy löschen, aber Google Drive hat noch keine bestätigte Kopie, deshalb bleiben sie hier. Öffne CallVault, um deine Drive-Einstellungen zu prüfen.</string>
+    <!-- batch B10 -->
+    <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
 </resources>

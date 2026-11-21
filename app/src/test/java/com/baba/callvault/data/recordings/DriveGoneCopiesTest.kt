@@ -40,11 +40,52 @@ class DriveGoneCopiesTest {
     }
 
     @Test
-    fun `with no usable listing every copy is checked one by one`() {
+    fun `with no usable listing copies are checked one by one until one is still there`() {
         // A deleted folder or a failed listing: only Drive's own answer per copy decides.
         val gone = DriveCatalogRepair.goneCopies(rows, null) { if (it == "u:c") Presence.GONE else Presence.UNKNOWN }
 
         assertEquals(listOf("u:c"), gone)
-        assertEquals(listOf("u:c"), DriveCatalogRepair.goneCopies(rows, emptySet()) { if (it == "u:c") Presence.GONE else Presence.PRESENT })
+    }
+
+    // Review R22: with no usable listing every copy used to be opened, and opening a Drive document can download it.
+
+    @Test
+    fun `a copy that is still there proves the listing wrong and ends the blind check`() {
+        val asked = mutableListOf<String>()
+
+        val gone = DriveCatalogRepair.goneCopies(rows, emptySet()) { asked += it; if (it == "u:a") Presence.PRESENT else Presence.GONE }
+
+        assertTrue(gone.isEmpty())
+        assertEquals(listOf("u:a"), asked)
+    }
+
+    @Test
+    fun `the blind check opens at most the cap per run`() {
+        val many = (1..500).map { "n$it.ogg" to "u:$it" }
+        val asked = mutableListOf<String>()
+
+        val gone = DriveCatalogRepair.goneCopies(many, null) { asked += it; Presence.GONE }
+
+        assertEquals(DriveCatalogRepair.MAX_BLIND_OPENS, asked.size)
+        assertEquals(DriveCatalogRepair.MAX_BLIND_OPENS, gone.size)
+    }
+
+    @Test
+    fun `the blind check does not run on a metered connection`() {
+        val asked = mutableListOf<String>()
+
+        assertTrue(DriveCatalogRepair.goneCopies(rows, null, blindAllowed = false) { asked += it; Presence.GONE }.isEmpty())
+        assertTrue(DriveCatalogRepair.goneCopies(rows, emptySet(), blindAllowed = false) { asked += it; Presence.GONE }.isEmpty())
+
+        assertTrue(asked.isEmpty())
+    }
+
+    @Test
+    fun `a good listing is not capped and not tied to the connection`() {
+        val many = (1..500).map { "n$it.ogg" to "u:$it" }
+
+        val gone = DriveCatalogRepair.goneCopies(many, setOf("other.ogg"), blindAllowed = false) { Presence.GONE }
+
+        assertEquals(500, gone.size)
     }
 }

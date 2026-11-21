@@ -25,7 +25,7 @@ class RetentionTimezoneReceiver : BroadcastReceiver() {
         when (intent.action) {
             Intent.ACTION_TIMEZONE_CHANGED, Intent.ACTION_TIME_CHANGED -> {
                 AppLogger.i(TAG, "Time/zone changed (${intent.action}); re-anchoring retention sweep to local time.")
-                runCatching { RetentionScheduler.apply(context.applicationContext) }
+                runCatching { RetentionScheduler.apply(context.applicationContext, forceReanchor = true) }
                     .onFailure { AppLogger.w(TAG, "Re-anchor failed: ${it.message}") }
             }
         }

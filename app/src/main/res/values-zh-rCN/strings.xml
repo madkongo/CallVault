@@ -949,4 +949,6 @@
         <item quantity="other">旧录音保留在手机上：Drive 尚未备份（%1$d）</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">你的清理设置本会把它们从这部手机删除，但 Google Drive 中还没有经过确认的副本，所以它们会保留在这里。打开 CallVault 检查 Drive 设置。</string>
+    <!-- batch B10 -->
+    <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
 </resources>

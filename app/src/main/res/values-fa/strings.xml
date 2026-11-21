@@ -1044,4 +1044,6 @@
         <item quantity="other">ضبط‌های قدیمی روی گوشی نگه داشته شد: Drive هنوز از آن‌ها نسخهٔ پشتیبان ندارد (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">تنظیمات پاک‌سازی این‌ها را از گوشی حذف می‌کرد، اما Google Drive هنوز نسخهٔ تأییدشده‌ای از آن‌ها ندارد، پس همین‌جا می‌مانند. برای بررسی تنظیمات Drive، CallVault را باز کنید.</string>
+    <!-- batch B10 -->
+    <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
 </resources>

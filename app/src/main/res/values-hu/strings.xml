@@ -951,4 +951,6 @@
         <item quantity="other">Régi felvételek a telefonon maradtak: a Drive még nem mentette őket (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">A takarítási beállítások törölnék őket erről a telefonról, de a Google Drive-on még nincs róluk megerősített másolat, ezért itt maradnak. Nyisd meg a CallVaultot a Drive-beállítások ellenőrzéséhez.</string>
+    <!-- batch B10 -->
+    <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
 </resources>

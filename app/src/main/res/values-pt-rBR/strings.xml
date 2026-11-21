@@ -955,4 +955,6 @@
         <item quantity="other">Gravações antigas mantidas no celular: o Drive ainda não fez backup delas (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Sua limpeza automática as apagaria deste celular, mas o Google Drive ainda não tem uma cópia confirmada, então elas ficam aqui. Abra o CallVault para verificar as configurações do Drive.</string>
+    <!-- batch B10 -->
+    <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
 </resources>

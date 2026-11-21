@@ -13,7 +13,9 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
@@ -71,23 +73,9 @@ object SyncScheduler {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val (repeatInterval, repeatUnit, initialDelayMillis) = when (mode) {
-            SyncScheduleMode.DAILY -> Triple(
-                DAILY_PERIOD_HOURS, TimeUnit.HOURS, nextDailyDelayMillis(hour, minute)
-            )
-            SyncScheduleMode.WEEKLY -> Triple(
-                WEEKLY_PERIOD_DAYS, TimeUnit.DAYS, nextWeeklyDelayMillis(prefs.getSyncDayOfWeek(), hour, minute)
-            )
-            SyncScheduleMode.IMMEDIATE -> return // unreachable (handled above), keeps the when exhaustive
-        }
-
-        // A short, linear retry delay instead of WorkManager's default (exponential up to 5 hours): see
-        // [CloudCopyPolicy.SWEEP_BACKOFF_MINUTES].
-        val request = PeriodicWorkRequestBuilder<SyncSweepWorker>(repeatInterval, repeatUnit)
-            .setConstraints(constraints)
-            .setInitialDelay(initialDelayMillis, TimeUnit.MILLISECONDS)
-            .setBackoffCriteria(BackoffPolicy.LINEAR, CloudCopyPolicy.SWEEP_BACKOFF_MINUTES, TimeUnit.MINUTES)
-            .build()
+        val dayOfWeek = prefs.getSyncDayOfWeek()
+        val initialDelayMillis = initialDelayMillis(mode, hour, minute, dayOfWeek)
+        val request = buildRequest(mode, initialDelayMillis, constraints)
 
         // UPDATE is never used: it keeps the old request's enqueue time and run count, so a plain re-application
         // (app start, call end, settings screen) added a fresh delay to the OLD enqueue time and the sweep ran
@@ -98,13 +86,56 @@ object SyncScheduler {
         // Nothing here reads WorkManager's state first: apply() runs on the main thread (app start, Settings, the
         // end of a call), and that read waited up to 3 s behind WorkManager's own queue (review C25) without
         // changing what WorkManager does. Which of the two happened is read back off this thread, for the journal.
-        val signature = signature(target, mode, hour, minute, prefs.getSyncDayOfWeek())
+        val signature = signature(target, mode, hour, minute, dayOfWeek)
         val decision = decide(oldSignature, signature)
         val operation = workManager.enqueueUniquePeriodicWork(WORK_NAME, decision.policy, request)
         scheduler.edit().putString(KEY_SIGNATURE, signature).apply()
         AppLogger.i(TAG, "Periodic sweep ${decision.policy.name} (mode=$mode at $hour:$minute, initialDelayMs=$initialDelayMillis).")
-        logOutcome(context, workManager, operation, request.id, decision, oldSignature, signature, initialDelayMillis / 60_000)
+        logOutcome(context, workManager, operation, request.id, decision, oldSignature, signature, initialDelayMillis / 60_000, Reanchor(mode, hour, minute, dayOfWeek, constraints))
     }
+
+
+    /** Millis until the next run of [mode] at [hour]:[minute] (and [dayOfWeek] when weekly). */
+    private fun initialDelayMillis(mode: SyncScheduleMode, hour: Int, minute: Int, dayOfWeek: Int): Long = when (mode) {
+        SyncScheduleMode.DAILY -> nextDailyDelayMillis(hour, minute)
+        SyncScheduleMode.WEEKLY -> nextWeeklyDelayMillis(dayOfWeek, hour, minute)
+        SyncScheduleMode.IMMEDIATE -> 0L // never scheduled (handled in apply)
+    }
+
+    /**
+     * The periodic request. A short, linear retry delay instead of WorkManager's default (exponential up to 5 hours): see
+     * [CloudCopyPolicy.SWEEP_BACKOFF_MINUTES].
+     */
+    private fun buildRequest(mode: SyncScheduleMode, initialDelayMillis: Long, constraints: Constraints): PeriodicWorkRequest {
+        val (repeatInterval, repeatUnit) =
+            if (mode == SyncScheduleMode.WEEKLY) WEEKLY_PERIOD_DAYS to TimeUnit.DAYS else DAILY_PERIOD_HOURS to TimeUnit.HOURS
+        return PeriodicWorkRequestBuilder<SyncSweepWorker>(repeatInterval, repeatUnit)
+            .setConstraints(constraints)
+            .setInitialDelay(initialDelayMillis, TimeUnit.MILLISECONDS)
+            .setBackoffCriteria(BackoffPolicy.LINEAR, CloudCopyPolicy.SWEEP_BACKOFF_MINUTES, TimeUnit.MINUTES)
+            .build()
+    }
+
+    /** What the drift re-anchor needs to build the same request again. */
+    private data class Reanchor(
+        val mode: SyncScheduleMode, val hour: Int, val minute: Int, val dayOfWeek: Int, val constraints: Constraints,
+    )
+
+    /** How far WorkManager's next run may sit from the chosen HH:mm before it is put back (review C152). */
+    internal const val DRIFT_TOLERANCE_MS = 10 * 60_000L
+
+    /**
+     * Review C152: WorkManager dates each next period from the END of the previous run, so "daily at HH:mm" drifts
+     * later (start latency, run time, retries) and shifts at DST. True only when the stored request is a plain waiting
+     * one: ENQUEUED, no retry pending ([runAttemptCount] 0), its next run still ahead of [nowMillis] (a run that is due
+     * but waiting for the network is never pushed out), and further than [DRIFT_TOLERANCE_MS] from [anchorMillis].
+     * The re-anchored run lands exactly on the anchor, never before it (the 'ran minutes early' bug, item 138).
+     */
+    internal fun needsReanchor(
+        state: WorkInfo.State, runAttemptCount: Int, nextScheduleMillis: Long, anchorMillis: Long, nowMillis: Long,
+    ): Boolean = state == WorkInfo.State.ENQUEUED && runAttemptCount == 0 &&
+        nextScheduleMillis != Long.MAX_VALUE && nextScheduleMillis > nowMillis &&
+        kotlin.math.abs(nextScheduleMillis - anchorMillis) > DRIFT_TOLERANCE_MS
 
     /** What [apply] does with the stored request: the WorkManager policy and why. */
     internal data class Decision(val policy: ExistingPeriodicWorkPolicy, val reason: Reason)
@@ -185,6 +216,7 @@ object SyncScheduler {
         old: String?,
         new: String,
         firstRunMin: Long,
+        reanchor: Reanchor,
     ) {
         Thread({
             val lines = runCatching {
@@ -199,7 +231,8 @@ object SyncScheduler {
                     "scheduler: WorkManager reports state=${it.state} runAttemptCount=${it.runAttemptCount} next run in " +
                         (if (next == Long.MAX_VALUE) "n/a" else "${(next - System.currentTimeMillis()) / 60_000} min")
                 }
-                listOf(describe(decision, old, new, firstRunMin, enqueuedNow, nextMin), state)
+                val moved = if (decision.reason == Reason.UNCHANGED && infos.size == 1 && enqueuedNow == false) reanchorIfDrifted(workManager, infos.single(), reanchor) else null
+                listOfNotNull(describe(decision, old, new, firstRunMin, enqueuedNow, nextMin), state, moved)
             }.getOrElse {
                 val why = "${it.javaClass.simpleName}: ${it.message}"
                 AppLogger.w(TAG, "Could not read the sweep request back from WorkManager: $why")
@@ -212,6 +245,21 @@ object SyncScheduler {
                 )
             }
         }, "cv-sync-sched-log").start()
+    }
+
+    /**
+     * Off the main thread, from [logOutcome]: puts a drifted waiting request back on the chosen time. Returns the journal
+     * line, or null when nothing was drifted.
+     */
+    private fun reanchorIfDrifted(workManager: WorkManager, info: WorkInfo, r: Reanchor): String? {
+        val now = System.currentTimeMillis()
+        val delay = initialDelayMillis(r.mode, r.hour, r.minute, r.dayOfWeek)
+        if (!needsReanchor(info.state, info.runAttemptCount, info.nextScheduleTimeMillis, now + delay, now)) return null
+        val driftMin = (info.nextScheduleTimeMillis - (now + delay)) / 60_000
+        workManager.enqueueUniquePeriodicWork(
+            WORK_NAME, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, buildRequest(r.mode, delay, r.constraints),
+        )
+        return "scheduler: next run was $driftMin min from the chosen time (WorkManager dates each period from the end of the last run) → re-anchored, next run in ${delay / 60_000} min"
     }
 
     /** Millis from now until the next occurrence of [hour]:[minute] (today if still ahead, else tomorrow). */

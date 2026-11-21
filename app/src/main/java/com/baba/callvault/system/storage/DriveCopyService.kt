@@ -33,20 +33,38 @@ import android.os.Process
  * happened and how long each step took. It reads nothing from preferences or the catalog, and
  * [com.baba.callvault.CallVaultApplication] skips the app's own start-up here.
  *
- * Unbinding stops the process on purpose ([onDestroy]): that is how the app abandons a copy stuck in the
- * provider, or one the user stopped, within seconds instead of waiting for it to return.
+ * Unbinding while work is unanswered stops the process on purpose ([onDestroy]): that is how the app abandons a
+ * copy stuck in the provider, or one the user stopped, within seconds instead of waiting for it to return. An idle
+ * unbind ends only the service (review C146).
  */
 class DriveCopyService : Service() {
 
     private lateinit var thread: HandlerThread
     private lateinit var messenger: Messenger
+    private val inFlight = DriveCopyInFlight()
 
     override fun onCreate() {
         super.onCreate()
         journal("copier service created (pid ${Process.myPid()}), ${DriveDiagnostics.memory(applicationContext)}")
         thread = HandlerThread("cv-drive-copy").also { it.start() }
         messenger = Messenger(object : Handler(thread.looper) {
+            // Counted when queued (on the binder thread), so a message still waiting counts as work (review C146).
+            override fun sendMessageAtTime(msg: Message, uptimeMillis: Long): Boolean {
+                inFlight.received()
+                val queued = super.sendMessageAtTime(msg, uptimeMillis)
+                if (!queued) inFlight.replied()
+                return queued
+            }
+
             override fun handleMessage(msg: Message) {
+                try {
+                    handleCounted(msg)
+                } finally {
+                    inFlight.replied()
+                }
+            }
+
+            private fun handleCounted(msg: Message) {
                 val reply = DriveCopyProtocol.replyTo(msg)
                 // [DriveCopyHandler.handle] never throws and journals every failure with its reason; this
                 // catch is only for something outside it, and says so.
@@ -120,11 +138,18 @@ class DriveCopyService : Service() {
     override fun onDestroy() {
         // The only exit this process chooses for itself; a kill by the system leaves no line here and shows in
         // the app's "copier exit records" line instead (see [DriveDiagnostics.copierExits]).
-        journal("copier service destroyed; ending the process (pid ${Process.myPid()})")
         // The app let go of us. A copy still blocked inside the provider would keep this process (and its
         // connection to Drive) alive for as long as the provider takes; ending the process is the only way
         // to stop it now.
-        Process.killProcess(Process.myPid())
+        if (inFlight.shouldKillOnDestroy()) {
+            journal("copier service destroyed with ${inFlight.count()} message(s) unanswered; ending the process (pid ${Process.myPid()})")
+            Process.killProcess(Process.myPid())
+        } else {
+            // Idle: no work is dropped, so no kill (a kill each time fills Android's exit history, review C146). The
+            // process may be cached and reused by the next bind, which builds a fresh service and thread.
+            journal("copier service destroyed while idle; keeping the process (pid ${Process.myPid()})")
+            thread.quitSafely()
+        }
         super.onDestroy()
     }
 }

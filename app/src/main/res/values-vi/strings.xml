@@ -949,4 +949,6 @@
         <item quantity="other">Đã giữ bản ghi cũ trên điện thoại: Drive chưa sao lưu chúng (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Cài đặt dọn dẹp sẽ xóa chúng khỏi điện thoại này, nhưng Google Drive chưa có bản sao được xác nhận nên chúng vẫn ở đây. Mở CallVault để kiểm tra cài đặt Drive.</string>
+    <!-- batch B10 -->
+    <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
 </resources>

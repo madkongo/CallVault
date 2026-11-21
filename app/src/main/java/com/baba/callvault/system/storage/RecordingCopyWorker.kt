@@ -93,7 +93,7 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
         }
         return when (val result = copyResult) {
             is SafHelper.CopyResult.AlreadyPresent -> {
-                if (FolderOverlap.isSameDocument(src, result.uri)) {
+                if (FolderOverlap.isSameFile(applicationContext, src, result.uri)) {
                     // The "Drive" folder is the recording folder: the copy we found is the recording itself.
                     // Deleting it now would delete the only copy (Xiaomi report, 2026-11-04). Keep it.
                     AppLogger.e(TAG, "'$name': the Drive folder is the recording folder; keeping the device copy, nothing uploaded")
@@ -129,7 +129,9 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
         // And the device copy goes only when Drive itself reported a document of the same length: a copy call
         // that returned is not proof (see [CloudCopyPolicy.mayDeleteLocal]). The sidecar's size is the source's.
         val verified = CloudCopyPolicy.mayDeleteLocal(driveSize, SafHelper.fileSize(applicationContext, src))
-        val localDocument = if (deleteLocal && verified) {
+        // The "Drive copy" may be the device file reached through a second provider (review C55): then it is the only copy.
+        val isSameFile = deleteLocal && FolderOverlap.isSameFile(applicationContext, src, driveUri)
+        val localDocument = if (deleteLocal && verified && !isSameFile) {
             DocumentFile.fromSingleUri(applicationContext, src)
         } else null
         val deletedLocally = deleteLocal && localDocument != null &&
@@ -139,6 +141,7 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
                 applicationContext,
                 "device copy of '$name' " + when {
                     deletedLocally -> "DELETED after Drive reported $driveSize bytes (after the call)"
+                    isSameFile -> "KEPT: the Drive copy is the same file as the device file (or could not be told apart from it; after the call)"
                     !verified -> "KEPT: Drive reports $driveSize bytes, which does not match the device file (not verified; after the call)"
                     else -> "KEPT: the provider refused the delete (after the call)"
                 },

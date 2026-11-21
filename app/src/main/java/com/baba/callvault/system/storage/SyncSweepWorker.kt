@@ -376,9 +376,9 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 journal("copy of '$name' UNVERIFIED: Drive reports $driveSize bytes, the device file is $sourceSize; the device copy is not deleted on this evidence and the next sweep checks it again")
             }
             if (deleteLocal) {
-                if (FolderOverlap.isSameDocument(file.uri, driveUri)) {
+                if (FolderOverlap.isSameFile(applicationContext, file.uri, driveUri)) {
                     kept++
-                    journal("device copy of '$name' KEPT: the Drive copy is the same document as the device file")
+                    journal("device copy of '$name' KEPT: the Drive copy is the same file as the device file (or could not be told apart from it)")
                 } else if (!CloudCopyPolicy.mayDeleteLocal(driveSize, sourceSize)) {
                     kept++
                     journal("device copy of '$name' KEPT: Drive reports $driveSize bytes, the device file is $sourceSize (not verified)")
