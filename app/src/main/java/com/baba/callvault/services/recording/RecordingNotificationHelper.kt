@@ -64,6 +64,15 @@ class RecordingNotificationHelper(base: Context) {
         private val channelsEnsured = EnsureOnce()
 
         /**
+         * Buttons that end or change a recording ask for the phone to be unlocked (R32, API 31+), so nobody holding a
+         * locked phone can stop it. Record and Mark are left as they were: starting a recording must stay one tap.
+         */
+        internal fun requiresUnlock(intentAction: String): Boolean =
+            intentAction == RecordingForegroundService.ACTION_STOP_RECORDING ||
+                intentAction == RecordingForegroundService.ACTION_PAUSE_RECORDING ||
+                intentAction == RecordingForegroundService.ACTION_RESUME_RECORDING
+
+        /**
          * Creates the recording and error channels if they are missing. Called at app start and before any notice
          * that uses them is posted (review N22): until then they were created only by the phone-call service, so a
          * phone that only records app calls never had them.
@@ -242,7 +251,11 @@ class RecordingNotificationHelper(base: Context) {
                 },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            builder.addAction(notifAction.icon, notifAction.text, actionPendingIntent)
+            builder.addAction(
+                NotificationCompat.Action.Builder(notifAction.icon, notifAction.text, actionPendingIntent)
+                    .setAuthenticationRequired(requiresUnlock(notifAction.intentAction))
+                    .build()
+            )
         }
 
         return builder.build()

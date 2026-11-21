@@ -148,6 +148,8 @@ object SilentFailureNotifier {
         info = true,
         title = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_title),
         text = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text, fileName),
+        // The file is named after the contact; the lock screen gets the title only (R32).
+        publicText = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text_public),
     )
 
     /**
@@ -347,6 +349,7 @@ object SilentFailureNotifier {
         text: String,
         info: Boolean = false,
         quietRepeat: Boolean = false,
+        publicText: String? = null,
     ): Boolean {
         createChannel(context)
         val open = PendingIntent.getActivity(
@@ -373,7 +376,8 @@ object SilentFailureNotifier {
         val alerts = context.getSharedPreferences(ALERTS_PREFS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
         val alert = !quietRepeat || HealthAlertPolicy.shouldAlert(alerts.getLong("alert_$id", 0L), now)
-        val notification = NotificationCompat.Builder(context, if (info) INFO_CHANNEL_ID else CHANNEL_ID)
+        val channelId = if (info) INFO_CHANNEL_ID else CHANNEL_ID
+        val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.stat_sys_warning)
             .setContentTitle(title)
             .setContentText(text)
@@ -385,7 +389,16 @@ object SilentFailureNotifier {
             .setOnlyAlertOnce(true)
             .setPriority(if (info) NotificationCompat.PRIORITY_LOW else NotificationCompat.PRIORITY_DEFAULT)
             .setSilent(!alert)
-            .build()
+        if (publicText != null) {
+            builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(
+                NotificationCompat.Builder(context, channelId)
+                    .setSmallIcon(android.R.drawable.stat_sys_warning)
+                    .setContentTitle(title)
+                    .setContentText(publicText)
+                    .build(),
+            )
+        }
+        val notification = builder.build()
         if (!PermissionChecks.hasNotificationPermission(context)) {
             AppLogger.w(TAG, "Health notification $id not shown: notification permission is not granted")
             return false

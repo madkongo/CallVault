@@ -964,4 +964,6 @@
     <string name="permission_battery_hint_other">Battery exemption set. On this App info page, open the battery setting and choose \"Unrestricted\" or \"Allow background activity\". If your phone has \"Autostart\" or \"Sleeping apps\", allow CallVault there too. More: dontkillmyapp.com</string>
     <!-- batch B26: English fallback, pending translation -->
     <string name="recording_notification_recording">This call is being recorded</string>
+    <!-- batch B30 (pending translation: English fallback) -->
+    <string name="notif_cut_off_saved_text_public">Open CallVault to see what was saved.</string>
 </resources>
