@@ -371,8 +371,14 @@ class RecordingForegroundService : Service() {
 
         when (action) {
             ACTION_START_RECORDING, ACTION_MANUAL_START -> {
-                if (hasSession || isCurrentlyRecording) {
-                    AppLogger.w(TAG, "Start request ignored. A session is already on-going.")
+                if (RecordingCommandPolicy.isDuplicateStart(
+                        hasSession = hasSession,
+                        isCurrentlyRecording = isCurrentlyRecording,
+                        isStarting = currentState is RecordingServiceState.Starting,
+                        stopRequested = stopRequested,
+                    )
+                ) {
+                    AppLogger.w(TAG, "Start request ignored. A session is already on-going or still starting.")
                     return START_NOT_STICKY
                 }
 
