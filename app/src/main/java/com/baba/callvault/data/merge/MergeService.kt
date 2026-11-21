@@ -247,8 +247,8 @@ object MergeService {
         onPartProgress: (Int, Boolean) -> Unit = { _, _ -> },
     ): Outcome {
         val db = RecordingDatabase.get(context)
-        val parts = db.mergePartDao().partsOf(mergedName)
-        if (parts.isEmpty()) return Outcome.Refused("This recording was not made by merging")
+        val allParts = db.mergePartDao().partsOf(mergedName)
+        if (allParts.isEmpty()) return Outcome.Refused("This recording was not made by merging")
 
         val entry = db.recordingDao().findByName(mergedName)
             ?: return Outcome.Failed("$mergedName is not in the catalog")
@@ -256,6 +256,17 @@ object MergeService {
             ?: return Outcome.Refused("The merged recording must be on the phone to take apart")
         val folderUri = AppPreferences(context).getRecordingFolderUri()
             ?: return Outcome.Failed("No recordings folder is set")
+
+        // 0. A part whose original is still here (merged with "keep originals") is not restored again: publishing
+        //    it would create a "name (1)" duplicate and re-point the original's row at it (C62). Only a part whose
+        //    original opens and holds exactly the frames the merge took from it is reused; any doubt restores it.
+        val reusedIndexes = allParts.indices.filter { originalStillMatches(context, allParts[it]) }.toSet()
+        val parts = allParts.filterIndexed { i, _ -> i !in reusedIndexes }
+        val indexInAll = allParts.indices.filter { it !in reusedIndexes }
+        if (reusedIndexes.isNotEmpty()) {
+            AppLogger.i(TAG, "Un-merging $mergedName: ${reusedIndexes.size} original(s) still present are kept, ${parts.size} restored")
+            reusedIndexes.forEach { onPartProgress(it, true) }
+        }
 
         // 1. Cut into staging, so a failure leaves the merged recording untouched. filesDir, not cacheDir:
         //    Android may clear a cache under storage pressure, mid-publish.
@@ -266,7 +277,7 @@ object MergeService {
             context.contentResolver.openFileDescriptor(source, "r")!!.use { pfd ->
                 val outs = targets.map { java.io.RandomAccessFile(it, "rw").apply { setLength(0) } }
                 try {
-                    AudioSplit.split(pfd.fileDescriptor, cuts, outs.map { it.fd }) { onPartProgress(it, false) }
+                    if (parts.isNotEmpty()) AudioSplit.split(pfd.fileDescriptor, cuts, outs.map { it.fd }) { onPartProgress(indexInAll[it], false) }
                 } finally {
                     outs.forEach { runCatching { it.close() } }
                 }
@@ -301,7 +312,7 @@ object MergeService {
                 return Outcome.Failed(unMergeFailure("A call could not be restored to your folder", undone))
             }
             published += uri
-            onPartProgress(i, true)
+            onPartProgress(indexInAll[i], true)
         }
 
         // 4. Catalogue every part before the merged recording may go: until a part has its row it is a hidden part,
@@ -328,8 +339,21 @@ object MergeService {
         MergeMetadata.onUnMerge(context, mergedName)
         staging.deleteRecursively()
 
-        AppLogger.i(TAG, "Un-merged $mergedName back into ${parts.size} calls")
-        return Outcome.UnMerged(parts.size)
+        AppLogger.i(TAG, "Un-merged $mergedName back into ${allParts.size} calls")
+        return Outcome.UnMerged(allParts.size)
+    }
+
+    /**
+     * True when [part]'s original is still catalogued on the phone, opens, and has exactly the frames the merge
+     * took from it, so un-merge can leave it be. Any failure to prove that returns false (the part is restored).
+     */
+    private suspend fun originalStillMatches(context: Context, part: MergePartEntry): Boolean {
+        val row = runCatching { RecordingDatabase.get(context).recordingDao().findByName(part.partName) }.getOrNull()
+        val uri = row?.localUri?.let(Uri::parse) ?: return false
+        val frames = runCatching {
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { MergeFormat.frameCount(it.fileDescriptor) }
+        }.getOrNull()
+        return frames != null && frames == part.frameCount
     }
 
     /** Why [catalogueParts] stopped, and whether it managed to put every row it had changed back. */

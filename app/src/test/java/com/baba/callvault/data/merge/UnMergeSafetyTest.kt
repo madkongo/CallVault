@@ -192,4 +192,53 @@ class UnMergeSafetyTest {
 
         assertTrue(outcome.reason, outcome.reason.contains("nothing was changed"))
     }
+
+    @Test
+    fun `a part whose original is still there is kept, not published again`() = runBlocking {
+        val original = File(context.filesDir, "original-a.m4a").apply { writeBytes(ByteArray(40)) }
+        RecordingCatalog.recordLocal(context, partA, Uri.fromFile(original), 40L, 5L)
+        every { SafHelper.publishStagedRecording(any(), any(), partB, any(), any()) } returns uriB
+
+        val outcome = MergeService.unMerge(context, merged)
+
+        assertEquals(MergeService.Outcome.UnMerged(2), outcome)
+        verify(exactly = 0) { SafHelper.publishStagedRecording(any(), any(), partA, any(), any()) }
+        verify(exactly = 0) { SafHelper.deleteDocument(any(), partA) }
+        assertEquals("the original keeps its row", Uri.fromFile(original).toString(), dao.findByName(partA)?.localUri)
+        assertEquals(uriB.toString(), dao.findByName(partB)?.localUri)
+        assertNull(dao.findByName(merged))
+        original.delete(); Unit
+    }
+
+    @Test
+    fun `a part whose original no longer matches the cut is published again`() = runBlocking {
+        val original = File(context.filesDir, "original-a.m4a").apply { writeBytes(ByteArray(40)) }
+        RecordingCatalog.recordLocal(context, partA, Uri.fromFile(original), 40L, 5L)
+        // The first read is the check of the original: it holds 7 frames where the merge took 10.
+        every { MergeFormat.frameCount(any()) } returnsMany listOf(7, 10, 10)
+        every { SafHelper.publishStagedRecording(any(), any(), partA, any(), any()) } returns uriA
+        every { SafHelper.publishStagedRecording(any(), any(), partB, any(), any()) } returns uriB
+
+        val outcome = MergeService.unMerge(context, merged)
+
+        assertEquals(MergeService.Outcome.UnMerged(2), outcome)
+        verify(exactly = 1) { SafHelper.publishStagedRecording(any(), any(), partA, any(), any()) }
+        assertEquals(uriA.toString(), dao.findByName(partA)?.localUri)
+        original.delete(); Unit
+    }
+
+    @Test
+    fun `a failed un-merge never removes an original that was kept`() = runBlocking {
+        val original = File(context.filesDir, "original-a.m4a").apply { writeBytes(ByteArray(40)) }
+        RecordingCatalog.recordLocal(context, partA, Uri.fromFile(original), 40L, 5L)
+        every { SafHelper.publishStagedRecording(any(), any(), partB, any(), any()) } returns null
+
+        val outcome = MergeService.unMerge(context, merged)
+
+        assertTrue(outcome is MergeService.Outcome.Failed)
+        verify(exactly = 0) { SafHelper.deleteDocument(any(), partA) }
+        assertNotNull(dao.findByName(partA)?.localUri)
+        assertNotNull(dao.findByName(merged)?.localUri)
+        original.delete(); Unit
+    }
 }
