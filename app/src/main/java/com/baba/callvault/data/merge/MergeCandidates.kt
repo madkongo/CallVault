@@ -55,9 +55,17 @@ object MergeCandidates {
      */
     private fun mergeKey(item: RecordingItem): String? {
         item.contactName?.let { return it }
-        val digits = item.number?.filter { it.isDigit() }?.takeIf { it.isNotEmpty() } ?: return null
+        val raw = item.number?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        // A template like {date}_{direction}_{contact_name} puts a NAME (or an opaque token) where the parser
+        // expects a number. Pulling digits out of it ("[C:4a4b]" -> 44) would join strangers, so anything
+        // that is not plainly a number is a name key, compared whole and never turned into a number.
+        if (raw.any { !it.isDigit() && it !in NUMBER_PUNCTUATION }) return raw
+        val digits = raw.filter { it.isDigit() }.takeIf { it.isNotEmpty() } ?: return null
         return if (digits.length >= TAIL_DIGITS) digits.takeLast(TAIL_DIGITS) else digits
     }
+
+    /** What a phone number may carry besides digits. */
+    private const val NUMBER_PUNCTUATION = "+-() ."
 
     /** Digits a subscriber number keeps across its national and international forms. */
     private const val TAIL_DIGITS = 9
