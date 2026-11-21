@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -54,7 +55,8 @@ internal class PopUpPermissionRequest(
 internal fun rememberPopUpPermissionRequest(onAllowed: () -> Unit = {}): PopUpPermissionRequest {
     val context = LocalContext.current
     var isDialogShown by remember { mutableStateOf(false) }
-    var isWaiting by remember { mutableStateOf(false) }
+    // Saveable: a rotation or process death while the user is on Android's overlay page must not drop the request (C162).
+    var isWaiting by rememberSaveable { mutableStateOf(false) }
     val resumes = rememberResumeCount()
     val isGranted = remember(resumes) { Settings.canDrawOverlays(context) }
     LaunchedEffect(resumes) {
