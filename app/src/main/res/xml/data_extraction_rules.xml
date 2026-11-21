@@ -8,21 +8,25 @@
   -->
 
 <!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+   CallVault never backs up or transfers anything. allowBackup="false" alone does not keep an app out of a
+   device-to-device transfer on Android 12+, so every domain is excluded here, in both directions: the ADB
+   private key (files/adbkey), the recordings' databases, the transcripts and the settings are meaningful on
+   this phone only (a new phone must pair again), and the key must never leave it. Settings travel by the
+   in-app Export / Import instead. Pattern after JemRec's rules (Apache-2.0).
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </device-transfer>
-    -->
 </data-extraction-rules>
