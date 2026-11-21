@@ -57,4 +57,24 @@ class WaveformDrawTest {
 
         assertArrayEquals(Waveform.decode(Waveform.encode(peaks)), seen, 0f)
     }
+
+    @Test
+    fun a_recording_is_only_queued_for_drawing_when_it_has_no_cached_shape() = runBlocking {
+        val drawn = "20261028_120000.000+0200_in_Already drawn.ogg"
+        val undrawn = "20261028_120100.000+0200_in_Not drawn.ogg"
+        TranscriptDatabase.get(context).noteDao().upsertWaveform(
+            RecordingWaveformEntry(displayName = drawn, peaks = Waveform.encode(floatArrayOf(0.2f, 0.4f)), updatedAt = 1L)
+        )
+
+        assertEquals(true, RecordingExtrasRepository.hasWaveform(context, drawn))
+        assertEquals(false, RecordingExtrasRepository.hasWaveform(context, undrawn))
+    }
+
+    @Test
+    fun a_draw_that_keeps_waiting_gives_up_and_leaves_it_to_the_next_visit() {
+        // R40: audio mode stuck on "in a call" (Honor #53, POCO #68) used to retry every 30 s for ever.
+        assertEquals(false, WaveformDrawPolicy.shouldGiveUp(runAttemptCount = 0))
+        assertEquals(false, WaveformDrawPolicy.shouldGiveUp(runAttemptCount = WaveformDrawPolicy.MAX_WAIT_ATTEMPTS - 1))
+        assertEquals(true, WaveformDrawPolicy.shouldGiveUp(runAttemptCount = WaveformDrawPolicy.MAX_WAIT_ATTEMPTS))
+    }
 }

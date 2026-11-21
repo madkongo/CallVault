@@ -30,41 +30,70 @@ class HomeStatusNeedsWifiTest {
         assertFalse(HomeViewModel.HomeStatus.NEEDS_WIFI.isReady)
     }
 
+    private fun status(n: ReadinessNotice) = HomeViewModel.statusForNotice(n)
+
     @Test
     fun theReportedStateIsFlagged() {
         // A Pixel 8 tester's phone: no Wi-Fi, recorder down, off-Wi-Fi recording off, USB debugging unreadable (Android 17).
         val n = notice(WifiState.NOT_CONNECTED)
         assertEquals(ReadinessNotice.NEEDS_WIFI_TO_RESTART, n)
-        assertTrue(ReadinessNotice.blocksRecordingOffWifi(n, offlineRecordingOn = false))
+        assertEquals(HomeViewModel.HomeStatus.NEEDS_WIFI, status(n))
     }
 
     @Test
     fun usbDebuggingOffWithNoWifiIsFlaggedToo() {
         val n = notice(WifiState.NOT_CONNECTED, usb = UsbDebuggingState.OFF)
-        assertTrue(ReadinessNotice.blocksRecordingOffWifi(n, offlineRecordingOn = false))
+        assertEquals(HomeViewModel.HomeStatus.NEEDS_WIFI, status(n))
+    }
+
+    @Test
+    fun noWifiIsFlaggedWhateverTheOffWifiSwitchSays() {
+        // C97: with the switch ON the keep-alive still stands down (nothing to dial) and the notification says down.
+        val n = notice(WifiState.NOT_CONNECTED, usb = UsbDebuggingState.OFF, offlineOn = true)
+        assertEquals(ReadinessNotice.NEEDS_WIFI, n)
+        assertEquals(HomeViewModel.HomeStatus.NEEDS_WIFI, status(n))
+        assertEquals(HomeViewModel.HomeStatus.NEEDS_WIFI, status(ReadinessNotice.NEEDS_WIFI_TO_RESTART))
+    }
+
+    @Test
+    fun wirelessDebuggingTurnedOffByTheUserIsDownNotReady() {
+        assertEquals(HomeViewModel.HomeStatus.WD_OFF_BY_USER, status(ReadinessNotice.WD_OFF_BY_USER))
+        assertFalse(HomeViewModel.HomeStatus.WD_OFF_BY_USER.isReady)
     }
 
     @Test
     fun wifiUpIsNotFlagged() {
-        assertFalse(ReadinessNotice.blocksRecordingOffWifi(notice(WifiState.CONNECTED), false))
+        assertEquals(null, status(notice(WifiState.CONNECTED)))
     }
 
     @Test
     fun unreadableWifiIsNotEvidence() {
-        assertFalse(ReadinessNotice.blocksRecordingOffWifi(notice(WifiState.UNKNOWN), false))
+        assertEquals(null, status(notice(WifiState.UNKNOWN)))
     }
 
     @Test
-    fun offWifiRecordingOnIsNotFlagged() {
-        val n = notice(WifiState.NOT_CONNECTED, offlineOn = true)
-        assertFalse(ReadinessNotice.blocksRecordingOffWifi(n, offlineRecordingOn = true))
-    }
-
-    @Test
-    fun otherNoticesAreNotFlagged() {
-        for (n in ReadinessNotice.values()) {
-            if (n == ReadinessNotice.NEEDS_WIFI || n == ReadinessNotice.NEEDS_WIFI_TO_RESTART) continue
-            assertFalse("$n", ReadinessNotice.blocksRecordingOffWifi(n, false))
+    fun noticesThatSayStartingOrReadyAreNotFlagged() {
+        for (n in listOf(ReadinessNotice.READY, ReadinessNotice.READY_OFFLINE_PAUSED, ReadinessNotice.STARTING)) {
+            assertEquals("$n", null, status(n))
         }
+    }
+
+    @Test
+    fun aSourceThatAnswersThenGoesNullIsReadOnlyOnce() {
+        var reads = 0
+        val flaky = { if (reads++ == 0) HomeViewModel.HomeStatus.NEEDS_WIFI else null }
+
+        val shown = HomeViewModel.pickConfiguredStatus(recorderDown = flaky, battery = { null }, recoveryStuck = { false })
+
+        assertEquals(HomeViewModel.HomeStatus.NEEDS_WIFI, shown)
+        assertEquals(1, reads)
+    }
+
+    @Test
+    fun theOrderIsRecorderDownThenBatteryThenStuckThenReady() {
+        val battery = HomeViewModel.HomeStatus.BATTERY_EXEMPTION_ADVISED
+        assertEquals(battery, HomeViewModel.pickConfiguredStatus({ null }, { battery }, { true }))
+        assertEquals(HomeViewModel.HomeStatus.RECOVERY_STUCK, HomeViewModel.pickConfiguredStatus({ null }, { null }, { true }))
+        assertEquals(HomeViewModel.HomeStatus.READY, HomeViewModel.pickConfiguredStatus({ null }, { null }, { false }))
     }
 }
