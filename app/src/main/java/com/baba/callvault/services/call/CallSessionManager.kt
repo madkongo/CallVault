@@ -9,6 +9,7 @@
 
 package com.baba.callvault.services.call
 
+import com.baba.callvault.system.updates.UpdateReadyNotice
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -247,6 +248,8 @@ class CallSessionManager private constructor(context: Context) {
             // Any call's end — even one this process never saw start, because the phone killed and restarted
             // CallVault mid-call — is when a recording that call left behind can be saved (backlog #4).
             CutOffRescueWorker.schedule(appContext)
+            // C3: an update install held back by this call is announced as ready (one notice, no install).
+            UpdateReadyNotice.onAnyCallEnded(appContext)
             // The recorder is checked for a session nobody owns: a call this process never saw start (killed and
             // restarted mid-call) left its recording running (C2). A moment later, so our own session's stop (sent
             // below) has claimed it and the audio mode has left the call; and only then is a call-free moment

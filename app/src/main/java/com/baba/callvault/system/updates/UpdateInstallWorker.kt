@@ -54,6 +54,9 @@ class UpdateInstallWorker(context: Context, params: WorkerParameters) : Coroutin
     companion object {
         private const val TAG = "CV:UpdateInstallWorker"
 
+        /** Whether the Home banner shows "installing": only while an install job is still queued or running (C3). */
+        fun isBannerBusy(states: List<androidx.work.WorkInfo.State>): Boolean = states.any { !it.isFinished }
+
         /** WorkManager progress key: download percentage (0-100). */
         const val KEY_PROGRESS = "progress_percent"
     }

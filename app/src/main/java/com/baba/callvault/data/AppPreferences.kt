@@ -438,6 +438,7 @@ class AppPreferences(context: Context) {
         OUTGOING_CALLS_PERMISSION_ASKED("outgoing_calls_permission_asked"),
         LAST_UPDATE_CHECK_MILLIS("last_update_check_millis"),
         UPDATE_INSTALL_ARMED("update_install_armed"),
+        UPDATE_READY_PENDING("update_ready_pending"),
         LAST_SEEN_VERSION_CODE("last_seen_version_code"),
         UPDATE_SUCCESS_BANNER_VERSION("update_success_banner_version"),
         WHATS_NEW_SEEN_VERSION("whats_new_seen_version"),
@@ -805,6 +806,10 @@ class AppPreferences(context: Context) {
      */
     fun isUpdateInstallArmed() = getBoolean(Key.UPDATE_INSTALL_ARMED)
     fun setUpdateInstallArmed(armed: Boolean) = setBoolean(Key.UPDATE_INSTALL_ARMED, armed)
+
+    /** C3: an install was held back by a call; the "Update ready" notice is owed once the call ends. */
+    fun isUpdateReadyPending() = getBoolean(Key.UPDATE_READY_PENDING)
+    fun setUpdateReadyPending(pending: Boolean) = setBoolean(Key.UPDATE_READY_PENDING, pending)
 
     /** The versionCode seen on the previous launch, used to detect that an update just landed. */
     fun getLastSeenVersionCode() = getInt(Key.LAST_SEEN_VERSION_CODE)

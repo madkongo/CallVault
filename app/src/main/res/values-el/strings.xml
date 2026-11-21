@@ -1147,4 +1147,7 @@
     <string name="notif_readiness_wd_off_by_user_usb_on_text">You turned Wireless debugging off, and nothing else lets CallVault restart the recorder. Turn Wireless debugging back on, or turn on \"Keep recording off Wi-Fi\" in CallVault settings.</string>
     <!-- emu fixes -->
     <string name="storage_low_none_text">No space is left. Calls can stop recording. Free some space.</string>
+    <!-- update tap -->
+    <string name="update_notif_ready_title">Update ready: v%1$s, tap to open and install</string>
+    <string name="update_notif_ready_text">Your call is over. Tap to open CallVault and install.</string>
 </resources>
