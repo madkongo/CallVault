@@ -218,6 +218,7 @@ class DaemonKeepAliveService : Service() {
         ensureOwnChannel()
         runCatching {
             startForeground(NOTIF_ID, buildNotification(ready), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            logNoticePost("re-posted through startForeground")
         }.onFailure {
             AppLogger.w(TAG, "Could not re-post \"Ready\" as the foreground notice (${it.message}); trying notify")
             updateNotification(ready)
@@ -726,6 +727,7 @@ class DaemonKeepAliveService : Service() {
                 ForegroundNoticeChannel.noticeForStart(applicationContext, buildNotification(RecorderConnection.isConnected), ::ensureOwnChannel),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
             )
+            logNoticePost("service start (startForeground)")
         }.onFailure { AppLogger.e(TAG, "keep-alive startForeground failed", it) }.isSuccess
         if (!startedForeground) {
             // Nothing else would start it again (review R3): queue a bounded retry before giving up.
@@ -1069,7 +1071,18 @@ class DaemonKeepAliveService : Service() {
             val posted = runCatching { manager.activeNotifications.firstOrNull { it.id == NOTIF_ID }?.notification }.getOrNull()
             if (!NoticeKey.shouldPost(posted, next)) return@runCatching
             manager.notify(NOTIF_ID, next)
+            logNoticePost(if (posted == null) "nothing was posted under the id" else "content differs from what is posted")
         }
+    }
+
+    private val noticePostLog = NoticePostLog()
+
+    /** Names the notice just built; read by [logNoticePost]. */
+    @Volatile
+    private var lastBuiltNoticeName = "unknown"
+
+    private fun logNoticePost(why: String) {
+        noticePostLog.lineIfChanged(lastBuiltNoticeName, why)?.let { AppLogger.i(TAG, it) }
     }
 
     private fun buildNotification(ready: Boolean): Notification {
@@ -1077,6 +1090,7 @@ class DaemonKeepAliveService : Service() {
         // Text from the app's language, not only the phone's (BabApps item 123); this service lives for days.
         val loc = LocalizedContext.of(this)
         val notice = ReadinessNoticeText.current(this, ready)
+        lastBuiltNoticeName = if (voipRecording) "${notice.name}+VOIP_RECORDING" else notice.name
         val baseText = when {
             voipRecording -> loc.getString(R.string.notif_voip_recording_text)
             else -> loc.getString(ReadinessNoticeText.textNow(this, notice))
