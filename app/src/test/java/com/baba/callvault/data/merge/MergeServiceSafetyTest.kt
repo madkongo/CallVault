@@ -23,6 +23,7 @@ import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -142,5 +143,23 @@ class MergeServiceSafetyTest {
             SafHelper.deleteDocument(any(), partA)
             SafHelper.deleteDocument(any(), partB)
         }
+    }
+
+    @Test
+    fun `a merge cancelled once the originals start to go still finishes, so the merged call is not left unrouted (C92)`() = runBlocking {
+        every { SafHelper.publishStagedRecording(any(), any(), any(), any(), any()) } returns publishedUri
+        every { SafHelper.fileSize(any(), publishedUri) } returns stagedBytes.toLong()
+        lateinit var job: kotlinx.coroutines.Job
+        // The screen is rebuilt (its scope cancelled) at the moment the first original is deleted.
+        every { SafHelper.deleteDocument(any(), any()) } answers { job.cancel(); true }
+        var outcome: MergeService.Outcome? = null
+
+        job = launch { outcome = MergeService.merge(context, partA, listOf(partB)) }
+        job.join()
+
+        assertTrue("the merge must run to its end: $outcome", outcome is MergeService.Outcome.Merged)
+        assertNull("part A fully retired", dao.findByName(partA))
+        assertNull("part B fully retired", dao.findByName(partB))
+        verify(exactly = 1) { StorageRouter.route(any(), any(), any(), any()) }
     }
 }

@@ -22,6 +22,8 @@ import com.baba.callvault.system.storage.StorageRouter
 import com.baba.callvault.utils.AppLogger
 import java.io.File
 import java.io.FileInputStream
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 /**
  * Turns several calls into one recording, and takes one back apart.
@@ -154,61 +156,86 @@ object MergeService {
             //    itself, so un-merge is always one level and partName always names an original call.
             val manifest = flatten(context, entries, boundaries)
 
-            // 4. Publish into the user's folder and PROVE it is there before anything of theirs goes: the
-            //    published document must read back at exactly the staged size. Until then the originals
-            //    are untouched, so a failed or short publish costs nothing but this merge (review C4).
-            val mergedName = freeName(context, primaryName)
-            val stagedSize = stagingFile.length()
-            val published = SafHelper.publishStagedRecording(context, folderUri, mergedName, mime, stagingFile)
-            if (published == null) {
-                AppLogger.e(TAG, "Publishing $mergedName failed; the originals are kept and the staged merge discarded")
-                stagingFile.delete()
-                return Outcome.Failed("The merged recording could not be saved to your folder")
+            // Steps 4-7 cannot be cancelled half-way (C92): the Activity that started this merge can be rebuilt by
+            // a notification tap, and a cancel after the originals started to go would leave parts deleted but not
+            // retired, or the merged call never sent to Drive. Everything before this point is still cancellable and
+            // has touched nothing of the user's.
+            return withContext(NonCancellable) {
+                finish(context, db, primaryName, names, folderUri, mime, stagingFile, boundaries, entries, manifest, actual, tempFiles, onPhase)
             }
-            val size = SafHelper.fileSize(context, published)
-            if (stagedSize <= 0L || size != stagedSize) {
-                AppLogger.e(TAG, "Published $mergedName reads back as $size bytes, staged $stagedSize; originals kept, published copy removed")
-                SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, published), mergedName)
-                stagingFile.delete()
-                return Outcome.Failed("The merged recording could not be saved to your folder")
-            }
-            stagingFile.delete()
-
-            // 5. Catalog the merged recording with its manifest and metadata, still before any delete:
-            //    the metadata is copied from the parts, so it has to be read while they exist.
-            RecordingCatalog.recordLocal(
-                context, mergedName, published, size,
-                entries.first().lastModified.takeIf { it > 0 } ?: System.currentTimeMillis()
-            )
-            RecordingCatalog.setDuration(context, mergedName, boundaries.sumOf { it.durationUs } / 1_000_000L)
-            val stamped = manifest.map { it.copy(mergedName = mergedName) }
-            db.mergePartDao().insertAll(stamped)
-            MergeMetadata.onMerge(context, mergedName, stamped)
-
-            // 6. Only now is it safe to remove what the user had. removeEverywhere drops both the local
-            //    and the Drive copy of each consumed part — a Drive-only part's Drive original is
-            //    replaced by the merged file, same as a local merge replaces the local originals.
-            val keepOriginals = AppPreferences(context).isKeepOriginalsAfterMerge()
-            if (!keepOriginals) entries.forEach { retireMergedInput(context, it) }
-
-            // Same reason as on the way back: the merged recording is a new file, and the parts' Drive
-            // copies were just deleted, so without this a library kept in Drive loses the conversation.
-            StorageRouter.route(context, published, mergedName, mime)
-
-            // 7. The merge is done; clean up the downloads as a visible step before reporting success.
-            if (tempFiles.isNotEmpty()) {
-                onPhase(MergePhase.DELETING_TEMP)
-                tempFiles.forEach { runCatching { it.delete() } }
-                tempFiles.clear()
-            }
-            onPhase(MergePhase.COMPLETED)
-
-            AppLogger.i(TAG, "Merged ${names.size} calls into $mergedName (${manifest.size} parts, $actual frames)")
-            return Outcome.Merged(mergedName, manifest.size)
         } finally {
             // Anything still here means we left on an error path — never keep orphaned downloads.
             tempFiles.forEach { runCatching { it.delete() } }
         }
+    }
+
+    /** Steps 4-7 of [merge]: publish and prove the merged file, catalogue it, then retire the originals. */
+    private suspend fun finish(
+        context: Context,
+        db: RecordingDatabase,
+        primaryName: String,
+        names: List<String>,
+        folderUri: Uri,
+        mime: String,
+        stagingFile: File,
+        boundaries: List<AudioConcat.PartBoundary>,
+        entries: List<RecordingEntry>,
+        manifest: List<MergePartEntry>,
+        actual: Int,
+        tempFiles: MutableList<File>,
+        onPhase: (MergePhase) -> Unit,
+    ): Outcome {
+        // 4. Publish into the user's folder and PROVE it is there before anything of theirs goes: the
+        //    published document must read back at exactly the staged size. Until then the originals
+        //    are untouched, so a failed or short publish costs nothing but this merge (review C4).
+        val mergedName = freeName(context, primaryName)
+        val stagedSize = stagingFile.length()
+        val published = SafHelper.publishStagedRecording(context, folderUri, mergedName, mime, stagingFile)
+        if (published == null) {
+            AppLogger.e(TAG, "Publishing $mergedName failed; the originals are kept and the staged merge discarded")
+            stagingFile.delete()
+            return Outcome.Failed("The merged recording could not be saved to your folder")
+        }
+        val size = SafHelper.fileSize(context, published)
+        if (stagedSize <= 0L || size != stagedSize) {
+            AppLogger.e(TAG, "Published $mergedName reads back as $size bytes, staged $stagedSize; originals kept, published copy removed")
+            SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, published), mergedName)
+            stagingFile.delete()
+            return Outcome.Failed("The merged recording could not be saved to your folder")
+        }
+        stagingFile.delete()
+
+        // 5. Catalog the merged recording with its manifest and metadata, still before any delete:
+        //    the metadata is copied from the parts, so it has to be read while they exist.
+        RecordingCatalog.recordLocal(
+            context, mergedName, published, size,
+            entries.first().lastModified.takeIf { it > 0 } ?: System.currentTimeMillis()
+        )
+        RecordingCatalog.setDuration(context, mergedName, boundaries.sumOf { it.durationUs } / 1_000_000L)
+        val stamped = manifest.map { it.copy(mergedName = mergedName) }
+        db.mergePartDao().insertAll(stamped)
+        MergeMetadata.onMerge(context, mergedName, stamped)
+
+        // 6. Only now is it safe to remove what the user had. removeEverywhere drops both the local
+        //    and the Drive copy of each consumed part — a Drive-only part's Drive original is
+        //    replaced by the merged file, same as a local merge replaces the local originals.
+        val keepOriginals = AppPreferences(context).isKeepOriginalsAfterMerge()
+        if (!keepOriginals) entries.forEach { retireMergedInput(context, it) }
+
+        // Same reason as on the way back: the merged recording is a new file, and the parts' Drive
+        // copies were just deleted, so without this a library kept in Drive loses the conversation.
+        StorageRouter.route(context, published, mergedName, mime)
+
+        // 7. The merge is done; clean up the downloads as a visible step before reporting success.
+        if (tempFiles.isNotEmpty()) {
+            onPhase(MergePhase.DELETING_TEMP)
+            tempFiles.forEach { runCatching { it.delete() } }
+            tempFiles.clear()
+        }
+        onPhase(MergePhase.COMPLETED)
+
+        AppLogger.i(TAG, "Merged ${names.size} calls into $mergedName (${manifest.size} parts, $actual frames)")
+        return Outcome.Merged(mergedName, manifest.size)
     }
 
     /**
@@ -247,8 +274,8 @@ object MergeService {
         onPartProgress: (Int, Boolean) -> Unit = { _, _ -> },
     ): Outcome {
         val db = RecordingDatabase.get(context)
-        val parts = db.mergePartDao().partsOf(mergedName)
-        if (parts.isEmpty()) return Outcome.Refused("This recording was not made by merging")
+        val allParts = db.mergePartDao().partsOf(mergedName)
+        if (allParts.isEmpty()) return Outcome.Refused("This recording was not made by merging")
 
         val entry = db.recordingDao().findByName(mergedName)
             ?: return Outcome.Failed("$mergedName is not in the catalog")
@@ -256,6 +283,17 @@ object MergeService {
             ?: return Outcome.Refused("The merged recording must be on the phone to take apart")
         val folderUri = AppPreferences(context).getRecordingFolderUri()
             ?: return Outcome.Failed("No recordings folder is set")
+
+        // 0. A part whose original is still here (merged with "keep originals") is not restored again: publishing
+        //    it would create a "name (1)" duplicate and re-point the original's row at it (C62). Only a part whose
+        //    original opens and holds exactly the frames the merge took from it is reused; any doubt restores it.
+        val reusedIndexes = allParts.indices.filter { originalStillMatches(context, allParts[it]) }.toSet()
+        val parts = allParts.filterIndexed { i, _ -> i !in reusedIndexes }
+        val indexInAll = allParts.indices.filter { it !in reusedIndexes }
+        if (reusedIndexes.isNotEmpty()) {
+            AppLogger.i(TAG, "Un-merging $mergedName: ${reusedIndexes.size} original(s) still present are kept, ${parts.size} restored")
+            reusedIndexes.forEach { onPartProgress(it, true) }
+        }
 
         // 1. Cut into staging, so a failure leaves the merged recording untouched. filesDir, not cacheDir:
         //    Android may clear a cache under storage pressure, mid-publish.
@@ -266,7 +304,7 @@ object MergeService {
             context.contentResolver.openFileDescriptor(source, "r")!!.use { pfd ->
                 val outs = targets.map { java.io.RandomAccessFile(it, "rw").apply { setLength(0) } }
                 try {
-                    AudioSplit.split(pfd.fileDescriptor, cuts, outs.map { it.fd }) { onPartProgress(it, false) }
+                    if (parts.isNotEmpty()) AudioSplit.split(pfd.fileDescriptor, cuts, outs.map { it.fd }) { onPartProgress(indexInAll[it], false) }
                 } finally {
                     outs.forEach { runCatching { it.close() } }
                 }
@@ -301,7 +339,7 @@ object MergeService {
                 return Outcome.Failed(unMergeFailure("A call could not be restored to your folder", undone))
             }
             published += uri
-            onPartProgress(i, true)
+            onPartProgress(indexInAll[i], true)
         }
 
         // 4. Catalogue every part before the merged recording may go: until a part has its row it is a hidden part,
@@ -328,8 +366,21 @@ object MergeService {
         MergeMetadata.onUnMerge(context, mergedName)
         staging.deleteRecursively()
 
-        AppLogger.i(TAG, "Un-merged $mergedName back into ${parts.size} calls")
-        return Outcome.UnMerged(parts.size)
+        AppLogger.i(TAG, "Un-merged $mergedName back into ${allParts.size} calls")
+        return Outcome.UnMerged(allParts.size)
+    }
+
+    /**
+     * True when [part]'s original is still catalogued on the phone, opens, and has exactly the frames the merge
+     * took from it, so un-merge can leave it be. Any failure to prove that returns false (the part is restored).
+     */
+    private suspend fun originalStillMatches(context: Context, part: MergePartEntry): Boolean {
+        val row = runCatching { RecordingDatabase.get(context).recordingDao().findByName(part.partName) }.getOrNull()
+        val uri = row?.localUri?.let(Uri::parse) ?: return false
+        val frames = runCatching {
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { MergeFormat.frameCount(it.fileDescriptor) }
+        }.getOrNull()
+        return frames != null && frames == part.frameCount
     }
 
     /** Why [catalogueParts] stopped, and whether it managed to put every row it had changed back. */
