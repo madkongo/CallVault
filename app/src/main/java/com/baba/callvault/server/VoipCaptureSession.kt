@@ -824,16 +824,5 @@ internal class VoipCaptureSession(
         private const val END_OF_STREAM_TIMEOUT_US = 100_000L
         private const val STOP_JOIN_MS = 3_000L
         private const val FAR_SILENCE_THRESHOLD = CaptureSilence.SILENCE_PEAK
-
-        /** True if this device can encode the chosen codec; the policy tap is checked when arming. */
-        fun supports(codec: ScrcpyAudioCodec): Boolean = runCatching {
-            val mime = when (codec) {
-                ScrcpyAudioCodec.OPUS -> MediaFormat.MIMETYPE_AUDIO_OPUS
-                ScrcpyAudioCodec.AAC -> MediaFormat.MIMETYPE_AUDIO_AAC
-            }
-            android.media.MediaCodecList(android.media.MediaCodecList.REGULAR_CODECS).codecInfos.any { info ->
-                info.isEncoder && info.supportedTypes.any { it.equals(mime, ignoreCase = true) }
-            }
-        }.getOrDefault(false)
     }
 }

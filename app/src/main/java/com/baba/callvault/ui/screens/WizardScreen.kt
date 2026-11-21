@@ -33,7 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -88,7 +88,7 @@ fun WizardScreen(
     viewModel: WizardViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val updateTrigger by viewModel.updateTrigger.collectAsState()
+    val updateTrigger by viewModel.updateTrigger.collectAsStateWithLifecycle()
 
     // Device/recording folder picker — persists access across reboots.
     val recordingFolderPicker = rememberLauncherForActivityResult(PersistentFolderPickerContract()) { uri ->

@@ -20,7 +20,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,21 +93,21 @@ fun AppNavigationScreen(
      * Every time the flow emits a new [OnboardingStatus.Status] value, Compose triggers a
      * refresh (recompose) so [resolveScreen] picks the correct destination.
      */
-    val onboardingStatus by appNavViewModel.onboardingStatus.collectAsState()
+    val onboardingStatus by appNavViewModel.onboardingStatus.collectAsStateWithLifecycle()
 
     /**
      * [collectAsState] bridges the [AppNavigationViewModel.manualScreen] `StateFlow` to Compose.
      * When non-null (and onboarding has resolved to Home), it overrides the resolved screen so the
      * user can step into Settings — there is no Jetpack NavHost, so this is the manual nav mechanism.
      */
-    val manualScreen by appNavViewModel.manualScreen.collectAsState()
+    val manualScreen by appNavViewModel.manualScreen.collectAsStateWithLifecycle()
 
     /**
      * [collectAsState] bridges the [SettingsViewModel.updateTrigger] `StateFlow` to Compose.
      * Reading allow us to trigger a refresh (recompose) whenever the user changes a setting that requires a
      * major UI update (e.g. theme change) that can only be updated here in the AppNavigationScreen.
      */
-    val settingsViewModelUpdateTrigger by settingsViewModel.updateTrigger.collectAsState() // reading .value here is required so it trigger a recomposition as soon as it changes.
+    val settingsViewModelUpdateTrigger by settingsViewModel.updateTrigger.collectAsStateWithLifecycle() // reading .value here is required so it trigger a recomposition as soon as it changes.
 
     // AppPreferences is used to read preferences directly.
     val preferences = settingsViewModel.preferences

@@ -19,7 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -108,7 +108,7 @@ class ShareImportActivity : AppCompatActivity() {
                     // resolving both re-enter this composition.
                     LaunchedEffect(Unit) { viewModel.begin(action, source) }
 
-                    val state by viewModel.state.collectAsState()
+                    val state by viewModel.state.collectAsStateWithLifecycle()
                     ShareImportScreen(
                         state = state,
                         onChoose = viewModel::choose,

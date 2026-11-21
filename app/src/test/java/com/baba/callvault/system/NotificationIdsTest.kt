@@ -3,7 +3,6 @@ package com.baba.callvault.system
 import com.baba.callvault.integrations.adb.AdbPairingService
 import com.baba.callvault.services.boot.AdbConnectionService
 import com.baba.callvault.services.debug.DebugNotificationHelper
-import com.baba.callvault.services.recording.RecorderReadinessNotifier
 import com.baba.callvault.services.recording.RecordingNotificationHelper
 import com.baba.callvault.services.recording.SharedStatusNotice
 import com.baba.callvault.services.recording.VoipRecordPrompt
@@ -32,7 +31,6 @@ class NotificationIdsTest {
             "DebugNotificationHelper" to DebugNotificationHelper.NOTIFICATION_ID,
             "AdbPairingService" to AdbPairingService.NOTIFICATION_ID,
             "AdbConnectionService" to AdbConnectionService.NOTIF_ID,
-            "RecorderReadinessNotifier" to RecorderReadinessNotifier.NOTIFICATION_ID,
             "SharedStatusNotice" to SharedStatusNotice.ID,
             "TranscriptNotifier.READY" to TranscriptNotifier.ID_READY,
             "TranscriptNotifier.FAILED" to TranscriptNotifier.ID_FAILED,

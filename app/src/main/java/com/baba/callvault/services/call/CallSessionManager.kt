@@ -74,11 +74,6 @@ class CallSessionManager private constructor(context: Context) {
                 INSTANCE ?: CallSessionManager(safeContext).also { INSTANCE = it }
             }
         }
-
-        // ── Debug broadcast action constants ────────────────────────────────────────────────
-        const val ACTION_DEBUG_IDLE     = "com.baba.callvault.action.DEBUG_IDLE"
-        const val ACTION_DEBUG_RINGING  = "com.baba.callvault.action.DEBUG_RINGING"
-        const val ACTION_DEBUG_OFFHOOK  = "com.baba.callvault.action.DEBUG_OFFHOOK"
     }
 
     /**
@@ -468,27 +463,6 @@ class CallSessionManager private constructor(context: Context) {
                 metadata.getBestNumber()?.takeIf { it.isNotBlank() }
             )
         }.onFailure { AppLogger.w(TAG, "Could not record setup-health gap: ${it.message}") }
-    }
-
-    @Synchronized
-    fun handleDebugAction(action: String) {
-        if (!preferences.isDebugEnabled()) {
-            AppLogger.w(TAG, "Received debug action '$action' but debug mode is disabled. Ignoring.")
-            return
-        }
-
-        val debugPhoneNumber = preferences.getDebugCallerNumber()
-
-        // Pass the action to handlePhoneState to simulate real call flow
-        val telephonyExtState = when (action) {
-            ACTION_DEBUG_IDLE     -> TelephonyManager.EXTRA_STATE_IDLE
-            ACTION_DEBUG_RINGING  -> TelephonyManager.EXTRA_STATE_RINGING
-            ACTION_DEBUG_OFFHOOK  -> TelephonyManager.EXTRA_STATE_OFFHOOK
-            else -> return
-        }
-
-        AppLogger.i(TAG, "Handling debug action: '$action' ($telephonyExtState) with debug number: $debugPhoneNumber")
-        handlePhoneState(telephonyExtState, debugPhoneNumber)
     }
 
     // Private helpers
