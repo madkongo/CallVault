@@ -11,6 +11,7 @@ package com.baba.callvault.system
 import com.baba.callvault.BuildConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Test
 
@@ -31,10 +32,13 @@ class AgentAbiDefaultTest {
         assertFalse(BuildConfig.VERSION_NAME.endsWith("-abi"))
     }
 
+    /**
+     * AGENT_ABI_ACTIVE is also true for -PagentNativeNoDebugInfo (suffix "-nodbg", or "-abi-nodbg"
+     * with both flags), so the test checks the exact suffix the build script chose (C186).
+     */
     @Test
     fun agentBuildIsMarkedInVersionName() {
-        if (BuildConfig.AGENT_ABI_ACTIVE) {
-            assertEquals(true, BuildConfig.VERSION_NAME.endsWith("-abi"))
-        }
+        assertTrue(BuildConfig.VERSION_NAME.endsWith(BuildConfig.AGENT_SUFFIX))
+        assertEquals(BuildConfig.AGENT_ABI_ACTIVE, BuildConfig.AGENT_SUFFIX.isNotEmpty())
     }
 }

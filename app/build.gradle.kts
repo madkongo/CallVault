@@ -199,6 +199,8 @@ android {
         ndk { abiFilters += nativeAbis }
         buildConfigField("String", "NATIVE_ABIS", "\"${nativeAbis.joinToString(",")}\"")
         buildConfigField("boolean", "AGENT_ABI_ACTIVE", agentFlagsActive.toString())
+        // The exact versionName suffix of an agent build ("", "-abi", "-nodbg" or "-abi-nodbg").
+        buildConfigField("String", "AGENT_SUFFIX", "\"$agentSuffix\"")
 
         // Instrumented tests. Added with on-device transcription: the JNI bridge to whisper.cpp
         // cannot be verified by a JVM unit test, and a wrong language parameter or a mismatched
@@ -361,6 +363,12 @@ android {
     androidResources {
         generateLocaleConfig = true
     }
+    // F-Droid's scanner rejects the Play dependency-metadata block AGP adds to the APK/AAB signing
+    // block by default. Build metadata only; no code or signing change (N43).
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -382,7 +390,12 @@ android {
         // Fail the build if any shipped locale is missing a translatable string, or has a
         // stale key that no longer exists in the default resources. This prevents the
         // "first page stays English" class of regressions where new strings ship untranslated.
-        warningsAsErrors = false
+        // F9: every warning is an error, from a committed baseline of what exists today, so nothing
+        // new gets in. Burn the baseline down by area; regenerate only with :app:updateLintBaseline
+        // after fixing, never to hide a new warning.
+        warningsAsErrors = true
+        abortOnError = true
+        baseline = file("lint-baseline.xml")
         error += setOf("MissingTranslation", "ExtraTranslation")
     }
 }
@@ -419,6 +432,14 @@ ksp {
 android.sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
 
 androidComponents {
+    // C169: the typed-task-name guard above cannot see aggregate tasks (assemble, build, bundle) or
+    // abbreviations (assembleR). Decide on the variant instead: an agent-flag build has no release
+    // variant at all, unless -PagentAbiAllowRelease=true. Flagless builds are untouched.
+    beforeVariants(selector().withBuildType("release")) { builder ->
+        if (agentFlagsActive && providers.gradleProperty("agentAbiAllowRelease").orNull != "true") {
+            builder.enable = false
+        }
+    }
     onVariants { variant ->
         variant.sources.assets?.addGeneratedSourceDirectory(
             downloadScrcpyServer,
