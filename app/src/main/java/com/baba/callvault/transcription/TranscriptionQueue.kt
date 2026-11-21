@@ -12,7 +12,12 @@ import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
 import com.baba.callvault.utils.AppLogger
 import android.content.Context
 import com.baba.callvault.data.recordings.RecordingCatalog
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.baba.callvault.data.transcripts.TranscribeAgainBackup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptState
 
@@ -136,8 +141,19 @@ object TranscriptionQueue {
         val dao = TranscriptDatabase.get(context).transcriptDao()
         val stale = dao.displayNamesWithState(TranscriptState.RUNNING) +
             dao.displayNamesWithState(TranscriptState.QUEUED)
+        if (stale.isEmpty()) return 0
+
+        // After a kill, WorkManager restarts the persisted run in this same process while this cleanup runs. The rows
+        // of that run are not stale: restoring or clearing them took a "transcribe again" back to its old transcript
+        // just as the new one was about to be stored (C95). WorkManager does not say which recording a run is for, so
+        // any live run holds the cleanup back; a row still stuck once nothing is queued is released on the next start.
+        if (hasLiveWork(context)) {
+            AppLogger.i(TAG, "releaseStaleWork: ${stale.size} row(s) left alone, a transcription run is still queued or running")
+            return 0
+        }
+
         // A stopped "transcribe again" (#72) gets its previous transcript back rather than losing it, and a row
-        // the run has already put back (finished again by now) is never deleted: the two cleanups race on Stop.
+        // the run has already put back (finished again by now) is never touched: the two cleanups race on Stop.
         stale.forEach {
             if (!TranscribeAgainBackup.restore(context, dao, it) &&
                 dao.findTranscript(it)?.state != TranscriptState.DONE
@@ -145,4 +161,25 @@ object TranscriptionQueue {
         }
         return stale.size
     }
+
+    /**
+     * Whether a transcription run is queued or running in WorkManager: any state of the tapped-run chain that is not
+     * finished, or the nightly sweep while it is actually running (it sits ENQUEUED between nights, which is not live).
+     * An answer that cannot be had counts as "no live work", the old behaviour: a stuck spinner is the worse failure.
+     */
+    private suspend fun hasLiveWork(context: Context): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            val manager = WorkManager.getInstance(context)
+            val tapped = manager.getWorkInfosForUniqueWork(TranscriptionScheduler.MANUAL_WORK_NAME)
+                .get(WORK_QUERY_SECONDS, TimeUnit.SECONDS)
+            val sweep = manager.getWorkInfosForUniqueWork(TranscriptionScheduler.WORK_NAME)
+                .get(WORK_QUERY_SECONDS, TimeUnit.SECONDS)
+            tapped.any { !it.state.isFinished } || sweep.any { it.state == WorkInfo.State.RUNNING }
+        }.getOrElse {
+            AppLogger.w(TAG, "releaseStaleWork: could not read WorkManager (${it.javaClass.simpleName}: ${it.message}); releasing as before")
+            false
+        }
+    }
+
+    private const val WORK_QUERY_SECONDS = 5L
 }

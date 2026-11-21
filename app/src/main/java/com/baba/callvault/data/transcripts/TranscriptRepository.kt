@@ -50,8 +50,8 @@ enum class TranscriptStatus {
 /**
  * The transcript side of the recordings list: what each row shows, and the actions it offers.
  *
- * Reads are scoped to the names asked for, because Home lists years of calls and observing the whole
- * table to draw a handful of icons would re-read everything on every change.
+ * The status read observes the transcripts table's states once and maps them against the names asked for in
+ * memory: a query that binds every listed name breaks on a library over 999 recordings on Android 11 (C52).
  */
 object TranscriptRepository {
 
@@ -73,7 +73,8 @@ object TranscriptRepository {
         // Until then the statuses follow the database once it appears: the first transcription creates it, and
         // its row has to show as queued without the app being reopened.
         return onceTranscriptsExist(context, displayNames.associateWith { TranscriptStatus.NONE }) { db ->
-            db.transcriptDao().observeAll(displayNames).map { rows ->
+            // Not scoped to displayNames in SQL: a thousand bound names break Android 11's SQLite (C52).
+            db.transcriptDao().observeStates().map { rows ->
                 val stored = rows.associate { it.displayName to TranscriptStatus.of(it.state) }
                 displayNames.associateWith { stored[it] ?: TranscriptStatus.NONE }
             }

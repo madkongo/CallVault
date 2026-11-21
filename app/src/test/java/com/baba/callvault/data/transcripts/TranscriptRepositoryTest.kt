@@ -76,6 +76,20 @@ class TranscriptRepositoryTest {
     }
 
     @Test
+    fun a_library_larger_than_sqlites_variable_limit_still_gets_its_statuses() = runBlocking {
+        // C52: the names were bound one by one into an IN list; platform SQLite 3.28 (Android 11) caps that at 999
+        // and the query threw inside Home's collectAsState. 40,000 is over every SQLite build's cap.
+        store("done.ogg", TranscriptState.DONE)
+        val names = (1..40_000).map { "call-$it.ogg" } + "done.ogg"
+
+        val statuses = TranscriptRepository.statusesFor(context, names).first()
+
+        assertEquals(names.size, statuses.size)
+        assertEquals(TranscriptStatus.DONE, statuses["done.ogg"])
+        assertEquals(TranscriptStatus.NONE, statuses["call-7.ogg"])
+    }
+
+    @Test
     fun reports_the_stored_state_for_a_recording_that_has_one() = runBlocking {
         // Arrange
         store("done.ogg", TranscriptState.DONE)

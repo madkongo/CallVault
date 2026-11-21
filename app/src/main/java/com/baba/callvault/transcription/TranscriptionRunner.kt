@@ -9,15 +9,16 @@
 package com.baba.callvault.transcription
 
 import android.content.Context
+import android.media.AudioManager
 import android.net.Uri
 import android.os.SystemClock
 import androidx.core.net.toUri
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.system.storage.StorageRouter
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingCatalog
-import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.TranscribeOnlyAudio
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
@@ -32,6 +33,7 @@ import com.baba.callvault.transcription.model.TranscriptionModelOffer
 import com.baba.callvault.server.speakers.OfflineSpeakerLabeller
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -108,6 +110,13 @@ class TranscriptionRunner(
         private set
 
     /**
+     * Set when a passing cloud failure met the end of the retry budget (C70). That recording is failed, like any
+     * other, but the batch stops there: the next recording would meet the same wall and every one of them would be
+     * marked failed with its own notification. The rest stay as they were for the next sweep or tap.
+     */
+    private var stoppedAtCloudWall: Boolean = false
+
+    /**
      * Transcribes each of [displayNames] in turn.
      *
      * @param shouldStop consulted between recordings; when it returns true the batch ends early and
@@ -128,6 +137,7 @@ class TranscriptionRunner(
     ): Int {
         var transcribed = 0
         var reached = 0
+        stoppedAtCloudWall = false
 
         for (displayName in displayNames) {
             if (shouldStop()) {
@@ -141,6 +151,10 @@ class TranscriptionRunner(
             if (runOne(modelId, modelPath, language, displayName, shouldStop, canRetryLater)) transcribed++
             if (retryRequested) {
                 AppLogger.i(TAG, "Stopping the batch: the service asked to wait; the rest stay queued")
+                break
+            }
+            if (stoppedAtCloudWall) {
+                AppLogger.w(TAG, "Stopping the batch: the cloud service is refusing and the retries are used up; the rest stay queued")
                 break
             }
         }
@@ -188,11 +202,9 @@ class TranscriptionRunner(
 
         mark(displayName, TranscriptState.RUNNING, modelId, language)
 
-        // Monotonic, like every other duration in this app. The wall clock can be corrected by NTP
-        // or changed by the user mid-run, and this number is not merely displayed — it is divided by
-        // the audio length and stored as this phone's permanent speed, so a clock jump would be
-        // learned as a property of the hardware and quoted back for the next dozen runs.
-        val startedAt = SystemClock.elapsedRealtime()
+        // The speed is timed around the first decode below, with the monotonic clock like every other duration in
+        // this app: the wall clock can be corrected by NTP mid-run, and this number is divided by the audio length
+        // and stored as this phone's permanent speed.
         // Named before the words are decoded, so a brand or a contact is spelled rather than
         // guessed at. Best-effort: no glossary and no resolvable name simply means no prompt.
         val prompt = if (isCloud) null else runCatching { promptFor(displayName, language) }.getOrNull()
@@ -203,20 +215,47 @@ class TranscriptionRunner(
         // Claimed for exactly as long as the engine is busy with this recording, so a delete
         // arriving mid-run knows there is something to abandon — see [TranscriptionInFlight].
         TranscriptionInFlight.claim(displayName)
+        // Evidence only (R37): note a transcription that starts during a call or ring. Nothing yields to it.
+        runCatching { context.getSystemService(AudioManager::class.java)?.mode }.getOrNull()
+            ?.let { TranscriptionCallOverlap.lineFor(displayName, it) }
+            ?.let { CallEndLog.record(context, it) }
         // Rides on the decode the transcription is about to do anyway, so a Shizuku recording gets
         // speaker labels for free -- its live capture never saw the raw channels (issue #38). Produces
         // nothing for a mono recording, which is every standalone one, and nothing where the encode
         // collapsed the channels. See OfflineSpeakerLabeller.
         val speakers = OfflineSpeakerLabeller()
+        var firstDecodeMs = 0L
+        var firstSetupMs = 0L
+        // Each fallback is decoded at most once per recording (C177): the wrong-script pass and the junk pass walk
+        // the same list with identical inputs, and the repeat is near-certain to give the same rejected output.
+        val fallbackDecodes = HashMap<DecodeSettings, kotlin.Result<List<TranscriptSegment>>>()
+        suspend fun decodeFallback(settings: DecodeSettings): List<TranscriptSegment> {
+            fallbackDecodes[settings]?.let { return it.getOrThrow() }
+            val outcome = try {
+                kotlin.Result.success(transcriber.transcribe(context, uri, modelPath, language, prompt, null, settings))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                kotlin.Result.failure(t)
+            }
+            fallbackDecodes[settings] = outcome
+            return outcome.getOrThrow()
+        }
         val attempt = try {
             runCatching {
                 // small has no Cantonese token; whisper would reject the pin (BabApps item 117).
                 check(isCloud || TranscriptionModelOffer.canDecodeId(modelId, language)) {
                     "The small model cannot transcribe $language; pick a large-v3-turbo model"
                 }
+                val firstStartedAt = SystemClock.elapsedRealtime()
                 val first = transcriber.transcribe(
                     context, uri, modelPath, language, prompt, speakers, DecodeSettings.DEFAULT,
                 )
+                // Only this decode ran with DecodeSettings.DEFAULT like every ordinary run, so only it says how fast
+                // this phone is. A retry's extra decodes and model loads would be learned as a slower phone (C144).
+                // The engine's setup time is read now, before a retry overwrites it.
+                firstDecodeMs = SystemClock.elapsedRealtime() - firstStartedAt
+                firstSetupMs = TranscriptionEngine.lastSetupMs
                 // The language pin is a hint to whisper, not a guarantee: a Hebrew call came back in
                 // English on two phones with nothing in the pipeline broken. See WrongScriptRetry.
                 // Retries get no speaker detector — the first decode already heard the whole file, and
@@ -224,18 +263,14 @@ class TranscriptionRunner(
                 val settled = if (isCloud || !WrongScriptRetry.shouldRetry(first, language, audioMs)) first
                 else {
                     AppLogger.w(TAG, "Transcript is not in the pinned language's script ($language); decoding again")
-                    WrongScriptRetry.recover(first, language) { settings ->
-                        transcriber.transcribe(context, uri, modelPath, language, prompt, null, settings)
-                    }
+                    WrongScriptRetry.recover(first, language, ::decodeFallback)
                 }
                 // One token said over and over, or only non-speech tags, is whisper not understanding the
                 // audio, not a transcript (BabApps item 139). The same fallbacks are tried first; if none
                 // gives words, the run FAILS instead of storing the junk as a finished transcript.
                 val junk = TranscriptJunk.find(settled) ?: return@runCatching settled
                 val rescued = if (isCloud || audioMs !in 1..WrongScriptRetry.MAX_RETRY_AUDIO_MS) null
-                else TranscriptJunk.recover(language) { settings ->
-                    transcriber.transcribe(context, uri, modelPath, language, prompt, null, settings)
-                }
+                else TranscriptJunk.recover(language, ::decodeFallback)
                 if (rescued != null) {
                     AppLogger.w(TAG, "'$displayName' came back as junk (${junk.kind} '${junk.token}', language ${language ?: "auto"}); a retry gave real words")
                     rescued
@@ -277,6 +312,7 @@ class TranscriptionRunner(
                 if (!TranscribeAgainBackup.restore(context, dao, displayName) &&
                     dao.findTranscript(displayName)?.state != TranscriptState.DONE
                 ) dao.deleteFor(displayName)
+                TranscribeAgainBackup.forgetSummaryChoice(context, displayName)
             }
             AppLogger.i(TAG, "Transcription of '$displayName' was stopped; left for a later run")
             if (error is CancellationException) throw error
@@ -305,6 +341,18 @@ class TranscriptionRunner(
                 }
                 dao.replaceSegments(displayName, segments.labelled(displayName))
                 mark(displayName, TranscriptState.DONE, modelId, language)
+                // The summary of the transcript this one replaces goes only now that the new one is stored, and
+                // before the sidecar below, which mirrors it (C73). A run that failed, was stopped or was
+                // junk never gets here, so the old summary stays next to the old words it was written from.
+                if (TranscribeAgainBackup.summaryDeleteWanted(context, displayName)) {
+                    withContext(NonCancellable) {
+                        runCatching { TranscriptDatabase.get(context).summaryDao().deleteFor(displayName) }
+                            .onFailure {
+                                AppLogger.w(TAG, "Could not delete the old summary of '$displayName': ${it.message}")
+                                CallEndLog.record(context, "transcribe again: old summary of ${CallEndLog.safeName(displayName)} not deleted: ${CallEndLog.describe(it)}")
+                            }
+                    }
+                }
                 TranscribeAgainBackup.clear(context, displayName)
                 // Mirror the finished transcript (+ notes/summary) to a file beside the audio, when the
                 // user has turned on sidecar backups. Guarded inside; NonCancellable so a stopping worker
@@ -342,7 +390,7 @@ class TranscriptionRunner(
                     withContext(NonCancellable) { localUriFor(displayName) } == null
                 // What it really cost on this phone, so the next estimate is measured rather than
                 // inherited from whatever hardware the published figure came from.
-                if (!isCloud) recordSpeed(modelId, audioMs, SystemClock.elapsedRealtime() - startedAt)
+                if (!isCloud) recordSpeed(modelId, audioMs, firstDecodeMs, firstSetupMs)
                 // Count, never content: a transcript is the substance of a private call.
                 AppLogger.i(TAG, "Transcribed '$displayName' (${segments.size} segment(s))")
                 // After the words, the DONE row and the audio decision are all settled, so the
@@ -366,9 +414,12 @@ class TranscriptionRunner(
                     mark(displayName, TranscriptState.QUEUED, modelId, language, failure.message)
                     retryRequested = true
                 } else {
+                    // A passing failure with no retry left: this recording fails, but the batch stops (C70).
+                    if (failure is CloudError && failure.isRetryable) stoppedAtCloudWall = true
                     AppLogger.w(TAG, "Failed to transcribe '$displayName': ${failure.message}")
                     // A failed "transcribe again" (#72) keeps the transcript it was meant to replace.
                     val previousKept = TranscribeAgainBackup.restore(context, dao, displayName)
+                    TranscribeAgainBackup.forgetSummaryChoice(context, displayName)
                     if (!previousKept) {
                         mark(displayName, TranscriptState.FAILED, modelId, language, failure.message)
                     }
@@ -409,12 +460,12 @@ class TranscriptionRunner(
     }
 
     /** Folds one run's observed cost into this phone's stored figures for [modelId]. */
-    private fun recordSpeed(modelId: String, audioMs: Long, elapsedMs: Long) {
+    private fun recordSpeed(modelId: String, audioMs: Long, elapsedMs: Long, reportedSetupMs: Long) {
         // The two halves of a run, learned separately because they scale differently: setup costs
         // the same whatever the call's length, and only the rest is per-second work. A run that
         // never reported its setup leaves this at zero, which charges the whole run as work — the
         // old behaviour, and pessimistic rather than wrong.
-        val setupMs = TranscriptionEngine.lastSetupMs.coerceIn(0L, elapsedMs)
+        val setupMs = reportedSetupMs.coerceIn(0L, elapsedMs)
         val workMs = elapsedMs - setupMs
 
         val measured = TranscriptionEstimate.measure(audioMs, workMs) ?: return
@@ -468,9 +519,8 @@ class TranscriptionRunner(
      * name shown on screen rather than by a number.
      */
     private suspend fun promptFor(displayName: String, language: String?): String? {
-        val contact = RecordingsRepository.listRecordings(context)
-            .firstOrNull { it.displayName == displayName }
-            ?.contactName
+        // One name from the file name and one contact lookup, not a pass over the whole library (R45).
+        val contact = withContext(Dispatchers.IO) { ContactNameResolver.nameFor(context, displayName) }
         return TranscriptionPrompt.build(contact, language)
     }
 

@@ -99,6 +99,15 @@ interface TranscriptDao {
     fun observeAll(displayNames: List<String>): Flow<List<TranscriptEntry>>
 
     /**
+     * The state of every transcript row, with no bound arguments. Home maps this against the names it lists: binding
+     * those names into an IN list made the query throw "too many SQL variables" on Android 11 (SQLite 3.28 caps a
+     * statement at 999) for a library of a thousand recordings (C52). The table holds one small row per recording
+     * that was ever transcribed, so reading it whole is cheaper than a thousand-argument query.
+     */
+    @Query("SELECT displayName, state FROM transcripts")
+    fun observeStates(): Flow<List<TranscriptNameState>>
+
+    /**
      * Overwrites a recording's segments in one transaction, so re-transcribing replaces rather than
      * appends. Without the delete, a second run would silently double every line.
      */
@@ -153,3 +162,6 @@ interface TranscriptDao {
     )
     suspend fun search(query: String): List<TranscriptSearchHit>
 }
+
+/** One transcript row reduced to what a recording row's icon needs. */
+data class TranscriptNameState(val displayName: String, val state: TranscriptState)
