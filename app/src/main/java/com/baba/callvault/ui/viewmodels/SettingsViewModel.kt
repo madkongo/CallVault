@@ -736,6 +736,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             LocaleListCompat.forLanguageTags(languageCode)
         }
         AppCompatDelegate.setApplicationLocales(localeList)
+        // Also kept in our own preferences: below Android 13 AppCompat tells notifications and workers nothing
+        // until an activity has loaded it (review C143).
+        preferences.setAppLanguageTag(languageCode)
         refresh()
     }
 

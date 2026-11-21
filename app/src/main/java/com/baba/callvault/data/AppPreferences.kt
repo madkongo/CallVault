@@ -511,6 +511,11 @@ class AppPreferences(context: Context) {
         // BabApps item 133: the section the app opens on (a HomeSection key). Absent means the hub.
         START_PAGE("start_page"),
 
+        // The language chosen in Settings > Language as a BCP-47 tag, mirrored here because below Android 13
+        // AppCompat knows it only after an activity has loaded it (review C143). Absent = follow the phone.
+        // Device-only (not in EXPORTABLE_KEYS): the system, not this copy, is the truth on Android 13+.
+        APP_LANGUAGE_TAG("app_language_tag"),
+
         // Unused since the classic Settings screen was removed (docs/dev-notes/rollback/classic-settings-removal.md):
         // kept so a revert of the classic-screen removal restores users' choice. Device-only (not in EXPORTABLE_KEYS).
         CLASSIC_SETTINGS_SCREEN("classic_settings_screen"),
@@ -1818,6 +1823,13 @@ class AppPreferences(context: Context) {
      * value may name nothing real, and [HomeSection.opening] turns that into the hub.
      */
     fun getStartPageKey(): String = getString(Key.START_PAGE) ?: HomeSection.Hub.key
+
+    /** The mirrored app-language tag, or null to follow the phone ([Key.APP_LANGUAGE_TAG]). */
+    fun getAppLanguageTag(): String? = getString(Key.APP_LANGUAGE_TAG)?.takeIf { it.isNotEmpty() }
+
+    /** Mirrors the chosen app language; an empty tag clears it ("follow system"). */
+    fun setAppLanguageTag(tag: String) =
+        if (tag.isEmpty()) prefs.edit().remove(Key.APP_LANGUAGE_TAG.id).apply() else setString(Key.APP_LANGUAGE_TAG, tag)
 
     /** Sets the page the app opens on. */
     fun setStartPage(section: HomeSection) = setString(Key.START_PAGE, section.key)

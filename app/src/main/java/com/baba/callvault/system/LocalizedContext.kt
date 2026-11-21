@@ -13,6 +13,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
+import com.baba.callvault.data.AppPreferences
 import java.util.Locale
 
 /**
@@ -30,16 +31,38 @@ object LocalizedContext {
         val fromCompat = runCatching {
             AppCompatDelegate.getApplicationLocales().takeIf { !it.isEmpty }?.get(0)
         }.getOrNull()
-        if (fromCompat != null) return fromCompat
         // AppCompat only knows the locale it was told about in this process; on Android 13+ ask the system,
         // which is where setApplicationLocales stores it.
-        if (Build.VERSION.SDK_INT >= 33) {
-            return runCatching {
+        val systemKnows = Build.VERSION.SDK_INT >= 33
+        val fromSystem = if (systemKnows) {
+            runCatching {
                 base.getSystemService(LocaleManager::class.java)?.applicationLocales
                     ?.takeIf { !it.isEmpty }?.get(0)
             }.getOrNull()
-        }
-        return null
+        } else null
+        val prefs = runCatching { AppPreferences(base) }.getOrNull()
+        // Below Android 13 nothing else remembers the choice in a process that never opened an activity (a
+        // boot, a worker, a notification after an update): AppCompat answers only once an activity loaded it
+        // (review C143). Keep the mirror current whenever the real answer is in hand.
+        if (fromCompat != null) prefs?.let { mirror(it, fromCompat) }
+        return resolve(fromCompat, fromSystem, prefs?.getAppLanguageTag(), systemKnows)
+    }
+
+    /**
+     * Which locale wins: what AppCompat loaded in this process, else what Android 13+ reports, else - below
+     * Android 13 only - the tag mirrored in our own preferences. On 13+ the system is the truth (the user can
+     * change the per-app language in Android's settings without opening CallVault), so a mirror never overrides
+     * a system that says "no per-app language".
+     */
+    internal fun resolve(compat: Locale?, system: Locale?, storedTag: String?, systemKnowsLocale: Boolean): Locale? {
+        if (compat != null) return compat
+        if (systemKnowsLocale) return system
+        return storedTag?.takeIf { it.isNotEmpty() }?.let { Locale.forLanguageTag(it) }
+    }
+
+    private fun mirror(prefs: AppPreferences, locale: Locale) {
+        val tag = locale.toLanguageTag()
+        if (prefs.getAppLanguageTag() != tag) prefs.setAppLanguageTag(tag)
     }
 
     fun of(base: Context): Context {
