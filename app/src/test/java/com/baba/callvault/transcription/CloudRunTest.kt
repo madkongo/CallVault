@@ -113,6 +113,32 @@ class CloudRunTest {
     }
 
     @Test
+    fun `out of retries, only the call that hit the wall fails and the rest stay waiting (C70)`() = runBlocking {
+        catalogued("g1.ogg")
+        catalogued("g2.ogg")
+        catalogued("g3.ogg")
+        var calls = 0
+        val reported = mutableListOf<String>()
+        val runner = TranscriptionRunner(
+            context,
+            onFinished = { name, _ -> reported += name },
+            transcriber = { _, _, _, _, _, _, _ ->
+                calls++
+                throw CloudError.forHttpStatus(429, "Groq")
+            },
+        )
+
+        runner.runBatch(CLOUD_ID, "", "he", listOf("g1.ogg", "g2.ogg", "g3.ogg"), canRetryLater = false)
+
+        assertEquals("the batch stops at the wall instead of failing every call", 1, calls)
+        assertEquals(TranscriptState.FAILED, transcript("g1.ogg")!!.transcript.state)
+        assertEquals(null, transcript("g2.ogg"))
+        assertEquals(null, transcript("g3.ogg"))
+        assertEquals("one notification, not one per call", listOf("g1.ogg"), reported)
+        assertFalse("nothing to retry through WorkManager: the next sweep or tap picks the rest up", runner.retryRequested)
+    }
+
+    @Test
     fun `a refused key fails at once, with a message saying what to fix`() = runBlocking {
         catalogued("f.ogg")
         val runner = TranscriptionRunner(context) { _, _, _, _, _, _, _ -> throw CloudError.forHttpStatus(401, "Groq") }

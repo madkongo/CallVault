@@ -14,6 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.baba.callvault.data.ChannelMap
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.data.transcripts.db.CallSummaryEntry
 import com.baba.callvault.data.transcripts.db.SpeakerTurnsEntry
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
@@ -29,6 +30,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowSystemClock
+import java.time.Duration
 
 /**
  * The orchestration around whisper: state transitions, checkpointing, and what happens when one
@@ -617,6 +620,123 @@ class TranscriptionRunnerTest {
     }
 
     // ---- "Transcribe again" (#72): the old text must survive anything but a successful new run ----
+
+    @Test
+    fun a_junk_transcript_after_a_wrong_script_retry_decodes_each_fallback_once() = runBlocking {
+        // C177: the wrong-script pass and the junk pass walked the same three fallbacks with identical inputs,
+        // up to seven full decodes (each reloading the model) for one recording.
+        catalogued("both.ogg")
+        val asked = mutableListOf<DecodeSettings>()
+        val runner = TranscriptionRunner(
+            context,
+            audioDurationMs = { 60_000L },
+            transcriber = { _, _, _, _, _, _, settings ->
+                asked += settings
+                listOf(TranscriptSegment(0, 1000, "foreign foreign foreign foreign foreign foreign foreign foreign"))
+            }
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, "he", listOf("both.ogg"))
+
+        assertEquals(
+            "the first decode, then every fallback exactly once",
+            listOf(DecodeSettings.DEFAULT) + WrongScriptRetry.FALLBACKS,
+            asked,
+        )
+        assertEquals(TranscriptState.FAILED, transcript("both.ogg")!!.transcript.state)
+    }
+
+    @Test
+    fun a_junk_fallback_found_by_the_wrong_script_pass_is_not_decoded_again_by_the_junk_pass() = runBlocking {
+        // The first fallback is in the right script but junk; the junk pass must reuse it, not repeat it.
+        catalogued("rescue.ogg")
+        val asked = mutableListOf<DecodeSettings>()
+        val runner = TranscriptionRunner(
+            context,
+            audioDurationMs = { 60_000L },
+            transcriber = { _, _, _, _, _, _, settings ->
+                asked += settings
+                when (settings) {
+                    DecodeSettings.DEFAULT -> listOf(TranscriptSegment(0, 1000, "this is plainly english text"))
+                    WrongScriptRetry.FALLBACKS[0] -> listOf(TranscriptSegment(0, 1000, "שלום ".repeat(10).trim()))
+                    else -> listOf(TranscriptSegment(0, 1000, "שלום עולם זה משפט אמיתי של שיחה"))
+                }
+            }
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, "he", listOf("rescue.ogg"))
+
+        assertEquals(asked.distinct(), asked)
+        assertEquals(listOf("שלום עולם זה משפט אמיתי של שיחה"), transcript("rescue.ogg")!!.segments.map { it.text })
+    }
+
+    @Test
+    fun a_retried_run_learns_the_speed_of_its_first_decode_only() = runBlocking {
+        // C144: the stored real-time factor included every retry decode, learning the phone as 2-5x slower.
+        catalogued("slow.ogg")
+        var decodes = 0
+        val runner = TranscriptionRunner(
+            context,
+            audioDurationMs = { 60_000L },
+            transcriber = { _, _, _, _, _, _, _ ->
+                decodes++
+                ShadowSystemClock.advanceBy(Duration.ofSeconds(if (decodes == 1) 30L else 60L))
+                listOf(TranscriptSegment(0, 1000, "this is plainly english text"))
+            }
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, "he", listOf("slow.ogg"))
+
+        assertTrue("the wrong-script retry must have run", decodes > 1)
+        val rtf = com.baba.callvault.data.AppPreferences(context).getTranscriptionRtf(MODEL_ID)!!
+        assertEquals("30 s of work over 60 s of audio", 0.5, rtf, 0.05)
+    }
+
+    @Test
+    fun a_failed_redo_keeps_the_old_summary() = runBlocking {
+        // C73: the summary was deleted when the redo was queued, whatever happened to the run afterwards.
+        queuedRedoOf("sum-fail.ogg", listOf("old"))
+        TranscriptDatabase.get(context).summaryDao().upsert(CallSummaryEntry("sum-fail.ogg", "{}", "m", createdAt = 1L, searchText = "old"))
+        com.baba.callvault.data.transcripts.TranscribeAgainBackup.deleteSummaryWhenDone(context, "sum-fail.ogg")
+        val runner = TranscriptionRunner(context, transcriber = { _, _, _, _, _, _, _ -> error("server unreachable") })
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("sum-fail.ogg"))
+
+        assertNotNull(TranscriptDatabase.get(context).summaryDao().summary("sum-fail.ogg"))
+        assertEquals(listOf("old"), transcript("sum-fail.ogg")!!.segments.map { it.text })
+    }
+
+    @Test
+    fun a_stopped_redo_keeps_the_old_summary() = runBlocking {
+        queuedRedoOf("sum-stop.ogg", listOf("old"))
+        TranscriptDatabase.get(context).summaryDao().upsert(CallSummaryEntry("sum-stop.ogg", "{}", "m", createdAt = 1L, searchText = "old"))
+        com.baba.callvault.data.transcripts.TranscribeAgainBackup.deleteSummaryWhenDone(context, "sum-stop.ogg")
+        val runner = TranscriptionRunner(
+            context,
+            transcriber = { _, _, _, _, _, _, _ -> listOf(TranscriptSegment(0, 1, "partial")) },
+            wasAborted = { true },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("sum-stop.ogg"))
+
+        assertNotNull(TranscriptDatabase.get(context).summaryDao().summary("sum-stop.ogg"))
+    }
+
+    @Test
+    fun a_successful_redo_with_the_box_ticked_deletes_the_summary_and_a_plain_one_keeps_it() = runBlocking {
+        queuedRedoOf("sum-ok.ogg", listOf("old"))
+        queuedRedoOf("sum-keep.ogg", listOf("old"))
+        val summaries = TranscriptDatabase.get(context).summaryDao()
+        summaries.upsert(CallSummaryEntry("sum-ok.ogg", "{}", "m", createdAt = 1L, searchText = "old"))
+        summaries.upsert(CallSummaryEntry("sum-keep.ogg", "{}", "m", createdAt = 1L, searchText = "old"))
+        com.baba.callvault.data.transcripts.TranscribeAgainBackup.deleteSummaryWhenDone(context, "sum-ok.ogg")
+
+        runnerReturning(listOf(TranscriptSegment(0, 1000, "new")))
+            .runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("sum-ok.ogg", "sum-keep.ogg"))
+
+        assertNull(summaries.summary("sum-ok.ogg"))
+        assertNotNull(summaries.summary("sum-keep.ogg"))
+    }
 
     /** A finished transcript of [name], then turned into a queued "transcribe again" exactly as the dialog does. */
     private suspend fun queuedRedoOf(name: String, oldWords: List<String>) {
