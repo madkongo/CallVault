@@ -574,7 +574,7 @@ class RecordingForegroundService : Service() {
             //    aborts before touching the daemon if the call already ended — preventing a mic that
             //    turns on after the call with nothing to stop it.
             val wanted = runCatching {
-                routeDecision("start", engineCanSwitch = true, forced = false, msSinceCaptureStart = 0).route
+                routeDecision("start", engineCanSwitch = true, msSinceCaptureStart = 0).route
             }.onFailure { AppLogger.w(WifiCallRoute.TAG, "route check at start failed: ${it.message}") }
                 .getOrDefault(WifiCallRoute.Route.CALL_SOURCE)
             val started = activeSession.startPipeline(this, metadata, { stopRequested }, wanted)
@@ -650,11 +650,10 @@ class RecordingForegroundService : Service() {
     private fun routeDecision(
         where: String,
         engineCanSwitch: Boolean,
-        forced: Boolean,
         msSinceCaptureStart: Long,
     ): WifiCallRoute.Decision {
         val (raw, seen) = WifiCallRoute.snapshot(
-            this, switchedToMix, forced, appPreferences.isVoipRecordingEnabled(), msSinceCaptureStart
+            this, switchedToMix, appPreferences.isVoipRecordingEnabled(), msSinceCaptureStart
         )
         if (raw.mode == android.media.AudioManager.MODE_IN_CALL) inCallSeenThisCall = true
         val inputs = raw.copy(
@@ -694,7 +693,7 @@ class RecordingForegroundService : Service() {
         if (stopRequested || isShuttingDown) return
         val sinceStart = android.os.SystemClock.elapsedRealtime() - captureStartedAt
         val decision = routeDecision(
-            "change", engineCanSwitch = !active.engine.isLocalFallback, forced = false, msSinceCaptureStart = sinceStart
+            "change", engineCanSwitch = !active.engine.isLocalFallback, msSinceCaptureStart = sinceStart
         )
         if (decision.reason == WifiCallRoute.Reason.WINDOW_PASSED) {
             // Never switches after the window, so stop watching.
