@@ -169,6 +169,10 @@ class AudioRecordingEngine {
     var waitingEmpty = false
         private set
 
+    /** After [release]: the staged recording held no audio, so nothing was published (review C37). */
+    var capturedNothing = false
+        private set
+
     /**
      * The exact number of audio bytes captured this session, when known reliably — set only after a
      * STAGED recording is successfully copied to its destination (we measured the internal temp before
@@ -1110,6 +1114,7 @@ class AudioRecordingEngine {
             // produced no audio leaves no misleading file behind.
             AppLogger.w(TAG, "Staged recording is empty — publishing nothing (capture never produced audio)")
             runCatching { temp.delete() }
+            capturedNothing = true
             return
         }
 

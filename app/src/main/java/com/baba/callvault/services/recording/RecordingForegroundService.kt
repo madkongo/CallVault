@@ -204,6 +204,10 @@ class RecordingForegroundService : Service() {
     @Volatile
     private var daemonLossNotified: Boolean = false
 
+    /** The "capture never started" notice has been shown for this session, so the end-of-call check does not repeat it. */
+    @Volatile
+    private var captureNeverStartedNotified: Boolean = false
+
     // ── Wi-Fi call route (#45) ─────────────────────────────────────────────────────
 
     private var routeWatcher: WifiCallRouteWatcher? = null
@@ -572,6 +576,7 @@ class RecordingForegroundService : Service() {
         // 1. Create a new session (declared here to allow cleanup if startPipeline fails)
         val activeSession = newEngine()
         daemonLossNotified = false
+        captureNeverStartedNotified = false
         // A fresh timeline and a fresh mark buffer for this call. beginCall() also drops anything a
         // previous call left behind after ending badly, so marks can never spill onto the next one.
         recordingClock.start()
@@ -651,6 +656,7 @@ class RecordingForegroundService : Service() {
         // refuses. Not routed through daemonLossNotified, because the daemon is alive and the two
         // messages say different things.
         onCaptureNeverStarted = {
+            captureNeverStartedNotified = true
             notificationHelper.showErrorNotification(getString(R.string.recording_error_capture_never_started))
         }
     }
@@ -905,6 +911,8 @@ class RecordingForegroundService : Service() {
             AppLogger.e(TAG, "The waiting recording is empty (0 bytes) — capture never ran. Notifying instead of keeping it.")
             notifyEmptyCapture()
             recordHealth(0L, "the waiting recording", mix.healthFarHeard, null)
+        } else if (finished == null) {
+            reportNoFile(activeSession, mix)
         }
 
         // If the initialization metadata do not contain a phone number, we attempt to query the call log as a fallback.
@@ -1294,6 +1302,24 @@ class RecordingForegroundService : Service() {
         }
         recordHealth(sizeBytes, name, mix.healthFarHeard, mix.healthHeardAnything)
         if (!isHeld) StorageRouter.route(applicationContext, uri, name, mimeType)
+    }
+
+    /**
+     * Review C37: a capture that left no file to route (the staged recording held no audio) is told to the user and
+     * counted, once; a publish that failed with the file kept for rescue is only written to the always-on log, as the
+     * recording is not lost. Reporting only, after the stop.
+     */
+    private fun reportNoFile(engine: AudioRecordingEngine, mix: MixResult) {
+        val capturedMs = android.os.SystemClock.elapsedRealtime() - captureStartedAt
+        val plan = NoFileReport.plan(engine.capturedNothing, captureNeverStartedNotified, capturedMs)
+        CallEndLog.record(
+            applicationContext,
+            "carrier call ended with no file: capturedNothing=${engine.capturedNothing} ran=${capturedMs}ms " +
+                "daemonLossNotified=$daemonLossNotified neverStartedNotified=$captureNeverStartedNotified " +
+                "-> notify=${plan.notify} health=${plan.recordHealth}",
+        )
+        if (plan.notify) notifyEmptyCapture()
+        if (plan.recordHealth) recordHealth(0L, "the empty capture", mix.healthFarHeard, null)
     }
 
     /**
