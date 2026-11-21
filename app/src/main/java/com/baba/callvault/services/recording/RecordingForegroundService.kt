@@ -50,6 +50,7 @@ import com.baba.callvault.system.storage.StorageRouter
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.HONOR_DIALER_TEMPLATE
 import com.baba.callvault.utils.HonorCallStart
+import com.baba.callvault.utils.LateNumberFromLog
 import com.baba.callvault.utils.PhoneNumberManager
 import com.baba.callvault.utils.RedirectedCall
 import com.baba.callvault.system.permissions.PermissionChecks
@@ -94,6 +95,8 @@ class RecordingForegroundService : Service() {
         private const val HONOR_LOG_RETRY_MS = 500L
         /** Tries at [HONOR_LOG_RETRY_MS] for this call's entry: it is written as the call ends, normally within a second. */
         private const val REDIRECT_LOG_ATTEMPTS = 6
+        /** Tries at [HONOR_LOG_RETRY_MS] for a late-number lookup: as many as the old lookup's 4 × 400 ms, rounded up. */
+        private const val LATE_NUMBER_LOG_ATTEMPTS = 4
 
         /** Slack for a switch queued inside [WifiCallRoute.SWITCH_WINDOW_MS] to reach the release. */
         private const val SWITCH_QUEUE_GRACE_MS = 1_000L
@@ -924,7 +927,7 @@ class RecordingForegroundService : Service() {
             // Android gives the process some time to live, so this is safe for a few seconds.
             CoroutineScope(Dispatchers.IO).launch {
                 val rawNumber =
-                    tryGetFinalNumberFromLog(applicationContext, originalMetadata.direction)
+                    tryGetFinalNumberFromLog(applicationContext, originalMetadata.direction, startedAt)
                 val sanitizedRaw = PhoneNumberManager.sanitizeOemNumber(rawNumber) ?: ""
 
                 val finalNumber = if (sanitizedRaw.isNotBlank()) {
@@ -1099,39 +1102,23 @@ class RecordingForegroundService : Service() {
         }.orEmpty()
 
     /**
-     * Tries to query the call log for the most recent call matching the given direction, and returns the associated phone number.
-     * @return The phone number from the most recent call log entry matching the direction, or null if no valid entry is found after multiple attempts.
+     * The number of the call that just ended, from the call log, for a recording that started without one (review C59).
+     * Only a call that began within [HonorCallStart.MAX_RING_MS] before this recording counts: the entry is written after the
+     * call ends, and while it is late the newest older call used to be taken, naming this recording after another person.
+     * Null when no row belongs to this call (the name is kept) or when the recording's start is unknown.
      */
     private suspend fun tryGetFinalNumberFromLog(
         context: Context,
-        direction: RecordingDirection?
+        direction: RecordingDirection?,
+        startedAt: Date?,
     ): String? {
-        val typeSelection = when (direction) {
-            // We do not want to include missed or rejected calls here since they are useless to us, and in a Dual-call scenario could lead to picking the wrong number.
-            RecordingDirection.INCOMING -> "${CallLog.Calls.TYPE} = ${CallLog.Calls.INCOMING_TYPE}"
-            RecordingDirection.OUTGOING -> "${CallLog.Calls.TYPE} = ${CallLog.Calls.OUTGOING_TYPE}"
-            else -> null
+        if (direction == null || startedAt == null || !PermissionChecks.hasCallLogPermission(context)) return null
+        val start = startedAt.time
+        val number = pollCallLog(context, LateNumberFromLog.since(start), LATE_NUMBER_LOG_ATTEMPTS) { rows ->
+            LateNumberFromLog.pick(rows.map { LateNumberFromLog.Row(it.date, it.number, it.direction) }, direction, start)
         }
-        // Try multiples times with a delay in case the OS didn't write the call log entry yet (only written after the call ended).
-        for (i in 1..4) {
-            try {
-                val cursor = context.contentResolver.query(
-                    CallLog.Calls.CONTENT_URI,
-                    arrayOf(CallLog.Calls.NUMBER),
-                    typeSelection, null,
-                    "${CallLog.Calls.DATE} DESC"
-                )
-                cursor?.use {
-                    if (it.moveToFirst()) {
-                        return it.getString(0)
-                    }
-                }
-            } catch (e: Exception) {
-                AppLogger.w(TAG, "Failed to query call log for fallback number", e)
-            }
-            if (i < 4) delay(400)
-        }
-        return null
+        if (number == null) AppLogger.d(TAG, "No call-log entry matched this recording; keeping its name")
+        return number
     }
 
     /**
