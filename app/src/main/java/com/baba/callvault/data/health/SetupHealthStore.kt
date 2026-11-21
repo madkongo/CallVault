@@ -22,6 +22,9 @@ import androidx.core.content.edit
 enum class FailureReason {
     EMPTY_FILE, NO_AUDIO, DAEMON_DIED, ONE_SIDED,
 
+    /** A full-length carrier recording whose every channel stayed silent (review N28); the file is kept. */
+    NO_SOUND,
+
     /** The phone closed CallVault mid-call; the part recorded before that was saved (backlog #4). */
     CUT_OFF,
 }

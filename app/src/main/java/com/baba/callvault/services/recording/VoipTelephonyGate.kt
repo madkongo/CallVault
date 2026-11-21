@@ -81,6 +81,11 @@ object VoipTelephonyGate {
         AppLogger.d(TAG, "Telecom unreadable (${it.message}) — treating as no carrier call")
     }.getOrDefault(false)
 
+    /** Like [managedCallInProgress] but null when Telecom could not be asked, so a caller can tell "no" from "unknown". */
+    fun managedCallOrNull(context: Context): Boolean? = runCatching {
+        context.getSystemService(TelecomManager::class.java)?.isInManagedCall
+    }.getOrNull()
+
     /** Convenience for the detector: may an app-call capture start on this device right now? */
     fun mayStartNow(context: Context): Boolean {
         val managed = managedCallInProgress(context)

@@ -1047,4 +1047,5 @@
     <string name="notif_retention_waiting_for_drive_text">تنظیمات پاک‌سازی این‌ها را از گوشی حذف می‌کرد، اما Google Drive هنوز نسخهٔ تأییدشده‌ای از آن‌ها ندارد، پس همین‌جا می‌مانند. برای بررسی تنظیمات Drive، CallVault را باز کنید.</string>
     <!-- batch B10 -->
     <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
+    <string name="carrier_call_silent">No sound was captured on this call. The file is kept in case you want to check it. If it keeps happening on calls that connected, tell us your phone model.</string>
 </resources>

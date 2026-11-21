@@ -17,6 +17,8 @@ import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.server.EncoderLimits
 import com.baba.callvault.server.StereoBitRate
 import com.baba.callvault.server.StereoEncoder
+import com.baba.callvault.data.health.CapturedCaptureLevels
+import com.baba.callvault.server.CaptureLevelMeter
 import com.baba.callvault.server.speakers.SpeakerTurnCodec
 import com.baba.callvault.server.speakers.SpeakerTurnDetector
 import com.baba.callvault.utils.AppLogger
@@ -88,12 +90,18 @@ class HandoffEncoder(
         // carrier calls. Only a stereo capture carries it — a mono one has nothing to compare.
         val speakers = if (stereoCapture) SpeakerTurnDetector(sampleRate) else null
         CapturedSpeakerTurns.clear()
+        CapturedCaptureLevels.clear()
+        // Loudness per channel before the downmix (review N28), published at the end like the turns.
+        val meter = CaptureLevelMeter(captureChannels, sampleRate)
 
         try {
             while (true) {
                 val read = readFull(pcm, captureChannels * 2) // whole frames only (avoids split-frame downmix)
                 if (read < 0) break // native closed the pipe → end of capture
                 if (read == 0) continue
+
+                runCatching { meter.accept(pcm, read) }
+                    .onFailure { AppLogger.w(TAG, "Level measurement failed; continuing without it: ${it.message}") }
 
                 // Guarded: a recording that works is worth more than a label, so a fault in
                 // detection must cost the turns and nothing else.
@@ -127,6 +135,9 @@ class HandoffEncoder(
                 runCatching { CapturedSpeakerTurns.publish(SpeakerTurnCodec.encode(speakers.finish())) }
                     .onFailure { AppLogger.w(TAG, "Could not encode speaker turns: ${it.message}") }
             }
+
+            runCatching { CapturedCaptureLevels.publish(meter.levels()) }
+                .onFailure { AppLogger.w(TAG, "Could not publish the capture levels: ${it.message}") }
 
             // Flush the encoder tail, then drain to EOS so the container trailer is complete.
             val inIdx = enc.dequeueInputBuffer(END_OF_STREAM_TIMEOUT_US)

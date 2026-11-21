@@ -395,4 +395,5 @@
     <string name="share_import_kept_body">It\'s in your recordings. You can start the transcript from there whenever you like.</string>
     <string name="share_import_kept_only_body">It\'s waiting under Transcripts. Start it there whenever you like, or delete it from the same place.</string>
     <string name="share_import_no_model">There\'s no transcription model installed yet, so CallVault can\'t read this. The audio was saved — install a model in Settings, then start it from Transcripts.</string>
+    <string name="home_health_failed_no_sound">No sound was captured on your last call. The file is kept.</string>
 </resources>

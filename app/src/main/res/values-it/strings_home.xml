@@ -370,4 +370,5 @@
     <string name="share_import_kept_body">È fra le tue registrazioni. Puoi avviare la trascrizione da lì quando vuoi.</string>
     <string name="share_import_kept_only_body">È in attesa in Trascrizioni. Avvialo da lì quando vuoi, oppure eliminalo dallo stesso posto.</string>
     <string name="share_import_no_model">Non è ancora installato alcun modello di trascrizione, perciò CallVault non può leggerlo. L\'audio è stato salvato: installa un modello nelle Impostazioni, poi avvialo da Trascrizioni.</string>
+    <string name="home_health_failed_no_sound">No sound was captured on your last call. The file is kept.</string>
 </resources>

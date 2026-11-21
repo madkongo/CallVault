@@ -370,4 +370,5 @@
     <string name="share_import_kept_body">Ott van a felvételeid között. Az átírást bármikor elindíthatod onnan.</string>
     <string name="share_import_kept_only_body">Az Átiratok alatt vár. Onnan indíthatod bármikor, vagy ugyanott törölheted.</string>
     <string name="share_import_no_model">Még nincs telepítve átíró modell, így a CallVault nem tudja elolvasni. A hangfájl elmentve — telepíts egy modellt a Beállításokban, majd indítsd el az Átiratok alól.</string>
+    <string name="home_health_failed_no_sound">No sound was captured on your last call. The file is kept.</string>
 </resources>

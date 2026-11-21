@@ -216,4 +216,32 @@ class RecordingPolicyTest {
             )
         )
     }
+
+    // N29: with app calls off, the carrier recording still starts for a self-managed call (Meet, Slack). It is NOT
+    // suppressed (that could lose a real carrier call on a phone whose Telecom answers wrongly); it is only named.
+    @Test
+    fun `app calls off and a self-managed call is named`() {
+        assertTrue(RecordingPolicy.startsForSelfManagedCall(voipEnabled = false, telecomReadable = true, managedCallUp = false, modeIsInCommunication = true))
+    }
+
+    @Test
+    fun `a managed carrier call is never named a self-managed one`() {
+        assertFalse(RecordingPolicy.startsForSelfManagedCall(voipEnabled = false, telecomReadable = true, managedCallUp = true, modeIsInCommunication = true))
+    }
+
+    @Test
+    fun `an unreadable Telecom names nothing`() {
+        assertFalse(RecordingPolicy.startsForSelfManagedCall(voipEnabled = false, telecomReadable = false, managedCallUp = false, modeIsInCommunication = true))
+    }
+
+    @Test
+    fun `an ordinary call mode or app calls on names nothing`() {
+        assertFalse(RecordingPolicy.startsForSelfManagedCall(voipEnabled = false, telecomReadable = true, managedCallUp = false, modeIsInCommunication = false))
+        assertFalse(RecordingPolicy.startsForSelfManagedCall(voipEnabled = true, telecomReadable = true, managedCallUp = false, modeIsInCommunication = true))
+    }
+
+    @Test
+    fun `the stand-down rule itself is unchanged with app calls off`() {
+        assertFalse(RecordingPolicy.standsDownForAppCall(voipEnabled = false, voipRecording = false, carrierCallUp = false, modeIsInCommunication = true))
+    }
 }

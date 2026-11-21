@@ -30,6 +30,8 @@ import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.DirectAudioRecorderSession
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderBackend
+import com.baba.callvault.data.health.CapturedCaptureLevels
+import com.baba.callvault.server.CaptureLevels
 import com.baba.callvault.services.recording.handoff.HandoffReceiver
 import com.baba.callvault.services.recording.handoff.HandoffSource
 import com.baba.callvault.system.diagnostics.CallEndLog
@@ -901,8 +903,12 @@ class AudioRecordingEngine {
                 // daemon's own log reaches a report only via logcat, which exists only if debug
                 // logging was already on when the call happened (issue #28b). An older daemon has no
                 // such method, hence the guard; empty is the normal, healthy answer.
-                runCatching { daemon.captureDiagnostics() }
-                    .getOrNull()
+                val diagnostics = runCatching { daemon.captureDiagnostics() }.getOrNull()
+                // The loudness the direct capture measured (review N28) rides on the same answer; an older
+                // recorder sends none, which the call end reads as "not measured", never as silence.
+                if (!isAppCallMix) CaptureLevels.parse(diagnostics)?.let { CapturedCaptureLevels.publish(it) }
+                diagnostics
+                    ?.let { CaptureLevels.strip(it) }
                     ?.takeIf { it.isNotBlank() }
                     ?.let { AppLogger.w(TAG, "Capture health for the recording just ended: $it") }
                 // Asked after stopRecording, as the app-call path does: the session measured it.

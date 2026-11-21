@@ -84,7 +84,11 @@ internal class DirectAudioRecorderSession(
      */
     @Volatile private var captureDiagnosticsLine: String = ""
 
-    override fun captureDiagnostics(): String = captureDiagnosticsLine
+    /** What the capture measured, published as the encode loop ends (review N28); read after [stop] joined it. */
+    @Volatile private var captureLevelsLine: String = ""
+
+    override fun captureDiagnostics(): String =
+        listOf(captureDiagnosticsLine, captureLevelsLine).filter { it.isNotEmpty() }.joinToString("\n")
 
     override fun start() {
         try {
@@ -310,6 +314,9 @@ internal class DirectAudioRecorderSession(
         // separate channels here. Keyed on the CAPTURE, not on the downmix, so stereo output keeps its
         // labels too. Only a stereo capture carries it — a mono route has nothing to compare.
         val speakers = if (stereoCapture) SpeakerTurnDetector(SAMPLE_RATE) else null
+        // Loudness per channel, from the same buffer and before the same downmix (review N28): whether the call
+        // was heard at all. One pass over bytes already in memory.
+        val meter = CaptureLevelMeter(captureChannels, SAMPLE_RATE)
         val info = MediaCodec.BufferInfo()
         var muxerStarted = false
         var totalFrames = 0L
@@ -328,6 +335,9 @@ internal class DirectAudioRecorderSession(
             }
             val pcm = chunk.bytes
             val read = chunk.length
+
+            runCatching { meter.accept(pcm, read) }
+                .onFailure { AppLogger.w(TAG, "Level measurement failed; continuing without it: ${it.message}") }
 
             // Read the channels BEFORE the downmix averages them away. Guarded: a recording that works
             // is worth more than a label, so a fault here must cost the turns and nothing else.
@@ -383,6 +393,8 @@ internal class DirectAudioRecorderSession(
             )
         }
 
+        // Published like the turns, and for the same reason; the app reads it from captureDiagnostics().
+        captureLevelsLine = runCatching { meter.levels().line() }.getOrDefault("")
         // Publish the turns before finalising, so stop() finds them once it has joined this thread.
         if (speakers != null) {
             runCatching { speakerTurnsEncoded = SpeakerTurnCodec.encode(speakers.finish()) }

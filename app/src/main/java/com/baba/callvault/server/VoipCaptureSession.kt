@@ -805,7 +805,7 @@ internal class VoipCaptureSession(
         private const val DEQUEUE_TIMEOUT_US = 10_000L
         private const val END_OF_STREAM_TIMEOUT_US = 100_000L
         private const val STOP_JOIN_MS = 3_000L
-        private const val FAR_SILENCE_THRESHOLD = 100
+        private const val FAR_SILENCE_THRESHOLD = CaptureSilence.SILENCE_PEAK
 
         /** True if this device can encode the chosen codec; the policy tap is checked when arming. */
         fun supports(codec: ScrcpyAudioCodec): Boolean = runCatching {

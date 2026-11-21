@@ -955,4 +955,5 @@
     <string name="notif_retention_waiting_for_drive_text">Tu limpieza automática las borraría de este teléfono, pero Google Drive aún no tiene una copia confirmada, así que se quedan aquí. Abre CallVault para revisar los ajustes de Drive.</string>
     <!-- batch B10 -->
     <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
+    <string name="carrier_call_silent">No sound was captured on this call. The file is kept in case you want to check it. If it keeps happening on calls that connected, tell us your phone model.</string>
 </resources>
