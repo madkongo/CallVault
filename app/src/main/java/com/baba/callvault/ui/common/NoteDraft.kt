@@ -91,8 +91,32 @@ class NoteDraft(
 fun rememberNoteDraft(stored: String, key: Any?, onSave: (String) -> Unit): NoteDraft {
     val scope = rememberCoroutineScope()
     val latestSave = rememberUpdatedState(onSave)
-    val draft = remember(key) { NoteDraft(stored, scope, NoteDraft.DEBOUNCE_MS) { latestSave.value(it) } }
+    val latestKey = rememberUpdatedState(key)
+    val draft = remember(key) {
+        NoteDraft(
+            stored, scope, NoteDraft.DEBOUNCE_MS,
+            ownerBoundSave(key, { latestKey.value }, onSave) { latestSave.value },
+        )
+    }
     LaunchedEffect(draft, stored) { draft.stored(stored) }
     DisposableEffect(draft) { onDispose { draft.flush() } }
     return draft
+}
+
+/**
+ * The save for a draft that belongs to [ownerKey] (C121).
+ *
+ * While the screen still shows that recording the latest callback is used, so a callback re-made by
+ * recomposition keeps working. Once the screen has moved to another recording ([currentKey] differs) the
+ * draft's last flush must still land on its own recording, so it goes through [ownerSave], the callback
+ * the draft was created with. The latest callback by then points at the NEW recording and would write
+ * the old note under it.
+ */
+internal fun ownerBoundSave(
+    ownerKey: Any?,
+    currentKey: () -> Any?,
+    ownerSave: (String) -> Unit,
+    latestSave: () -> (String) -> Unit,
+): (String) -> Unit = { text ->
+    if (currentKey() == ownerKey) latestSave()(text) else ownerSave(text)
 }
