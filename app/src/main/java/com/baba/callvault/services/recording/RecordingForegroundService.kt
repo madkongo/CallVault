@@ -1215,6 +1215,10 @@ class RecordingForegroundService : Service() {
                 // Deliberately no notification. The whole point of the setting is not being told
                 // about a misdial; a user who turned it on has already said they do not want these.
                 // It is logged, so a support question about a missing recording is still answerable.
+                // And noted as seen (review C113): a call the user's own setting discarded is not one the call-log
+                // sweep may report as "not recorded".
+                runCatching { SetupHealthStore(applicationContext).observeCall(System.currentTimeMillis()) }
+                    .onFailure { AppLogger.w(TAG, "Could not note the discarded call as seen: ${it.message}") }
                 return
             }
         }
