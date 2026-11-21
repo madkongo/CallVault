@@ -176,6 +176,11 @@ object RecordingsRepository {
             // "No name" is cached as "" — getOrPut re-runs the lambda for stored nulls.
             val hasContactsPermission = PermissionChecks.hasContactsPermission(context)
             val nameCache = HashMap<String, String>()
+            // Across passes too (R46): a contact change drops the process-level answers, so a resume only
+            // asks the provider about numbers it has not seen since the address book last changed. Only when
+            // changes can be watched; otherwise every pass looks up as before.
+            val watchingContacts = hasContactsPermission && ContactsChanges.ensureRegistered(context)
+            val contactsVersion = ContactsChanges.version.value
 
             // How long each call lasted, from the system call log — one query for the whole list. It
             // cannot account for every recording: an **app call is never in the call log at all**, and
@@ -216,6 +221,11 @@ object RecordingsRepository {
                 val seconds = when {
                     fromCallLog != null -> fromCallLog
                     item.durationSeconds != null -> item.durationSeconds
+                    // A file whose length could not be read is not opened again on every pass (R46): it is
+                    // marked by size and modified time and tried again when either changes or after a wait.
+                    item.localUri != null && failedProbes.shouldSkip(
+                        item.displayName, item.sizeBytes, item.lastModified, android.os.SystemClock.elapsedRealtime()
+                    ) -> null
                     else -> item.localUri?.let { uri ->
                         probes++
                         val probeStartedAt = android.os.SystemClock.elapsedRealtime()
@@ -227,7 +237,19 @@ object RecordingsRepository {
                         val read = probedMs.takeIf { it > 0 }?.let { (it + 500) / 1000 }
                         // A failed read stays uncached, so a transient failure cannot become a
                         // permanent wrong answer.
-                        if (read != null) RecordingCatalog.setDuration(context, item.displayName, read)
+                        if (read != null) {
+                            failedProbes.clear(item.displayName)
+                            RecordingCatalog.setDuration(context, item.displayName, read)
+                        } else if (failedProbes.markFailed(
+                                item.displayName, item.sizeBytes, item.lastModified, android.os.SystemClock.elapsedRealtime()
+                            )
+                        ) {
+                            // Once per file (and per retry), in the always-on log: why a row has no length.
+                            CallEndLog.record(
+                                context,
+                                "Duration unreadable for ${item.displayName} (${item.sizeBytes} bytes); not retried until it changes or in ${FAILED_PROBE_RETRY_MIN} min"
+                            )
+                        }
                         read
                     }
                 }
@@ -249,7 +271,9 @@ object RecordingsRepository {
                 if (lookupKey == null) withDuration
                 else {
                     val name = nameCache.getOrPut(lookupKey) {
-                        (if (hasContactsPermission) lookupContactName(context, lookupKey) else null)
+                        (if (!hasContactsPermission) null
+                        else if (watchingContacts) cachedContactName(context, lookupKey, contactsVersion)
+                        else lookupContactName(context, lookupKey))
                             ?: VoicemailLabel.labelOrNull(context, lookupKey)
                             ?: ""
                     }
@@ -529,7 +553,22 @@ object RecordingsRepository {
      * helper is private and not reusable from here). Caller must verify READ_CONTACTS first.
      * Never throws; returns null when there is no match.
      */
-    private fun lookupContactName(context: Context, phoneNumber: String): String? = runCatching {
+    private fun lookupContactName(context: Context, phoneNumber: String): String? =
+        runCatching { lookupContactNameOrThrow(context, phoneNumber) }.getOrNull()
+
+    /** [lookupContactName] across list passes: see [ContactsChanges]. A lookup that throws is logged and not remembered. */
+    private fun cachedContactName(context: Context, phoneNumber: String, contactsVersion: Long): String? =
+        runCatching {
+            contactNames.resolve(phoneNumber, contactsVersion) { lookupContactNameOrThrow(context, phoneNumber) }
+        }.onFailure { e ->
+            AppLogger.w(TAG, "Contact lookup failed, not remembered: ${e.message}")
+        }.getOrNull()?.takeIf { it.isNotEmpty() }
+
+    private val contactNames = ContactNameCache()
+    private val failedProbes = FailedProbeMarks()
+    private const val FAILED_PROBE_RETRY_MIN = 30
+
+    private fun lookupContactNameOrThrow(context: Context, phoneNumber: String): String? = run {
         val lookupUri = Uri.withAppendedPath(
             ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
             Uri.encode(phoneNumber)
@@ -541,7 +580,7 @@ object RecordingsRepository {
                 if (nameIndex != -1) cursor.getString(nameIndex) else null
             } else null
         }
-    }.getOrNull()
+    }
 
     /**
      * Enumerates one SAF folder, filtering to audio files. Never throws.
