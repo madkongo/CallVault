@@ -82,7 +82,7 @@ class RetentionKeepsUnsyncedTest {
             )
         )
         mockkObject(RecordingsRepository)
-        coEvery { RecordingsRepository.deleteFile(any(), any()) } returns true
+        coEvery { RecordingsRepository.deleteCopy(any(), any(), any()) } returns true
     }
 
     @After
@@ -100,7 +100,7 @@ class RetentionKeepsUnsyncedTest {
     }
 
     private fun deleted(name: String): Boolean = runCatching {
-        coVerify(atLeast = 1) { RecordingsRepository.deleteFile(any(), Uri.parse(local(name))) }
+        coVerify(atLeast = 1) { RecordingsRepository.deleteCopy(any(), Uri.parse(local(name)), any()) }
     }.isSuccess
 
     @Test

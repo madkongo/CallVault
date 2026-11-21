@@ -236,8 +236,10 @@ object RecordingCatalog {
     /**
      * Clears the single copy whose content URI is [uri] (device or Drive) from its row, then drops the
      * row if no copy remains. Mirrors a per-copy delete of a BOTH recording.
+     *
+     * @return the recording's name when this call took its LAST copy (so its sidecars can follow, C41), else null.
      */
-    suspend fun removeCopyByUri(context: Context, uri: Uri) {
+    suspend fun removeCopyByUri(context: Context, uri: Uri): String? {
         // Names whose last copy this call removes. Captured before deleteEmpty(), which is a bulk
         // delete and so cannot report what it dropped — and the transcript cascade needs to know.
         // This is the path the retention sweep takes (it deletes per copy, not by name).
@@ -246,7 +248,7 @@ object RecordingCatalog {
         runCatching {
             val dao = dao(context)
             val s = uri.toString()
-            val row = dao.getAll().firstOrNull { it.localUri == s || it.driveUri == s } ?: return@runCatching
+            val row = dao.findByUri(s) ?: return@runCatching
             if (row.localUri == s) dao.clearLocal(row.displayName)
             if (row.driveUri == s) dao.clearDrive(row.displayName)
             // Only the row this call emptied. Counting every copy-less row would also delete the transcript of
@@ -257,6 +259,7 @@ object RecordingCatalog {
         }.onFailure { AppLogger.w(TAG, "removeCopyByUri($uri) failed: ${it.message}") }
 
         TranscriptCascade.deleteFor(context, orphaned)
+        return orphaned.firstOrNull()
     }
 
     /** Extensions of the files CallVault writes beside a recording; never recordings themselves. */
