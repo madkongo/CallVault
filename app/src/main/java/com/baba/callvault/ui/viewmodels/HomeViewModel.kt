@@ -143,6 +143,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          */
         NEEDS_WIFI(R.string.home_status_needs_wifi_title, R.string.home_status_needs_wifi_suggestion),
         /**
+         * The recorder is down because the user switched Wireless debugging off and nothing else can restart it
+         * (review C97). Same words as the notification, so the card and the notification say one thing.
+         */
+        WD_OFF_BY_USER(R.string.notif_readiness_down_title, R.string.notif_readiness_wd_off_by_user_text),
+        /**
          * Android refused to start the recording service for a call (review N26): the phone is not exempt from battery
          * optimisation and nothing else lets the app start it from the background. Tapping asks for the exemption.
          */
@@ -1246,7 +1251,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // be brought up. Gated on the recovery streak rather than on the daemon simply being down —
         // an idle daemon is the normal, healthy state and must never turn the card red.
         null -> when {
-            needsWifiToRecord() -> HomeStatus.NEEDS_WIFI
+            recorderDownStatus() != null -> recorderDownStatus()!!
             batteryExemptionStatus() != null -> batteryExemptionStatus()!!
             DaemonKeepAliveService.isRecoveryStuck -> HomeStatus.RECOVERY_STUCK
             else -> HomeStatus.READY
@@ -1280,15 +1285,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }.getOrNull()
 
     /**
-     * Recorder down AND no Wi-Fi AND "Keep recording off Wi-Fi" off, using the notification's own rule
-     * ([ReadinessNoticeText.current]). Standalone mode only: [ReadinessNoticeText] answers Shizuku mode
-     * without the Wi-Fi notices. A live recorder is never flagged.
+     * The named cause the recorder is down for, using the notification's own rule ([ReadinessNoticeText.current]),
+     * so the card never says "Ready" under a notification that says "Calls aren't being recorded" (review C97).
+     * Standalone mode only: [ReadinessNoticeText] answers Shizuku mode without these notices. A live recorder
+     * is never flagged.
      */
-    private fun needsWifiToRecord(): Boolean = runCatching {
-        if (RecorderConnection.isConnected) return@runCatching false
-        val notice = ReadinessNoticeText.current(appContext, ready = false)
-        ReadinessNotice.blocksRecordingOffWifi(notice, AppPreferences(appContext).isOfflineRecordingEnabled())
-    }.getOrDefault(false)
+    private fun recorderDownStatus(): HomeStatus? = runCatching {
+        if (RecorderConnection.isConnected) return@runCatching null
+        statusForNotice(ReadinessNoticeText.current(appContext, ready = false))
+    }.getOrNull()
 
     /**
      * Reconciles the call log against the calls CallVault observed, then derives what the card says.
@@ -1580,6 +1585,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
+        /**
+         * The one mapping from the notification's notice to what the Home card says while the recorder is down
+         * (review C97): every named cause the keep-alive treats as unrecoverable. Null when the notice is not
+         * one of those (ready, starting, or a cause the card already shows another way).
+         */
+        internal fun statusForNotice(notice: ReadinessNotice): HomeStatus? = when (notice) {
+            ReadinessNotice.NEEDS_WIFI, ReadinessNotice.NEEDS_WIFI_TO_RESTART -> HomeStatus.NEEDS_WIFI
+            ReadinessNotice.WD_OFF_BY_USER -> HomeStatus.WD_OFF_BY_USER
+            else -> null
+        }
+
         /** How many call-log entries "All calls" reads: plenty for scrolling back weeks, bounded for a big log. */
         private const val CALL_HISTORY_LIMIT = 500
         /** How long the catalog must stop changing before the list is re-read. */

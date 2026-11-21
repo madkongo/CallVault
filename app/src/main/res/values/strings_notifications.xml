@@ -63,7 +63,7 @@
     <string name="transcript_notice_failed_many_text">Tap to see them.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. The previous transcript was kept.</string>
     <string name="home_status_needs_wifi_title">Needs Wi-Fi to record</string>
-    <string name="home_status_needs_wifi_suggestion">The recorder is stopped and can’t start without Wi-Fi, so calls are not being recorded. Connect to Wi-Fi, or turn on “Keep recording off Wi-Fi” in Settings.</string>
+    <string name="home_status_needs_wifi_suggestion">The recorder is stopped and can’t start without Wi-Fi, so calls are not being recorded. Connect to Wi-Fi to bring it back. Settings has “Keep recording off Wi-Fi”, which avoids this next time.</string>
     <string name="notif_stopped_by_user_title">You stopped CallVault</string>
     <string name="notif_stopped_by_user_text">Calls weren’t recorded while it was stopped. CallVault is open again and records new calls.</string>
     <string name="home_stopped_by_user_text">You stopped CallVault — calls weren’t recorded while it was stopped.</string>
