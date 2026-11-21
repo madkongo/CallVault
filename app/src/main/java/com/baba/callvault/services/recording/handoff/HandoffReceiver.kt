@@ -60,6 +60,15 @@ object HandoffReceiver {
     /** Takes an always-on microphone snapshot with this label (BabApps #95); the engine supplies it. Runs off-thread. */
     @Volatile private var onSnapshot: ((String) -> Unit)? = null
 
+    /**
+     * Told once, at once, when the capture ends for good while the call may still be up (budget spent or rebuild failed),
+     * with the always-on line. The engine uses it to stop saying "recording" (review C33). Context-less like the rest.
+     */
+    @Volatile private var onCaptureEnded: ((String) -> Unit)? = null
+
+    /** Whether a target is waiting for a delivery; false once a capture has ended for good. For tests and the log. */
+    internal val hasPendingTarget: Boolean get() = pending != null
+
     private fun snapshot(label: String) { runCatching { onSnapshot?.invoke(label) } }
 
     /** When the current capture began, for the completeness check in [stop]. */
@@ -110,11 +119,13 @@ object HandoffReceiver {
         requestRearm: (() -> Boolean)? = null,
         onEvent: ((String) -> Unit)? = null,
         onSnapshot: ((String) -> Unit)? = null,
+        onCaptureEnded: ((String) -> Unit)? = null,
     ) {
         pending = target
         this.requestRearm = requestRearm
         this.onEvent = onEvent
         this.onSnapshot = onSnapshot
+        this.onCaptureEnded = onCaptureEnded
         isLive = false
     }
 
@@ -409,8 +420,7 @@ object HandoffReceiver {
                 // part of the app carried on saying "recording" — the notification, the service, the
                 // engine — for the rest of the call. That is how a 710-second call came back as 1.06
                 // seconds with nothing amiss on screen.
-                isLive = false
-                endHeldTrackNow(exit.label, outcome, rearms)
+                captureEndedForGood(exit.label, outcome, rearms)
                 closePipe(writeFd)
                 return
             }
@@ -426,8 +436,7 @@ object HandoffReceiver {
             val next = rebuild()
             if (next == null) {
                 AppLogger.e(T, "capture rebuild failed — the recording ends here")
-                isLive = false
-                endHeldTrackNow(exit.label, HandoffEarlyEnd.Outcome.REBUILD_FAILED, rearms)
+                captureEndedForGood(exit.label, HandoffEarlyEnd.Outcome.REBUILD_FAILED, rearms)
                 closePipe(writeFd)
                 return
             }
@@ -469,6 +478,23 @@ object HandoffReceiver {
     }
 
     /**
+     * The capture is over for good while the call may still be up (rebuild budget spent, or a rebuild failed).
+     *
+     * One place for what both terminal branches must do, in this order: stop claiming to be live; forget the target, so a
+     * delivery that arrives late finds nothing to start a second capture into the same output (review C135); stop the
+     * held track and write the always-on line; then tell the engine, which stops saying "recording" (review C33). The
+     * listener is the engine's and may throw: that must not cost the rest of the teardown. The pipe is closed by the
+     * caller, which owns its fd.
+     */
+    internal fun captureEndedForGood(exitLabel: String, outcome: HandoffEarlyEnd.Outcome, rearms: Int) {
+        isLive = false
+        pending = null
+        val line = endHeldTrackNow(exitLabel, outcome, rearms)
+        runCatching { onCaptureEnded?.invoke(line) }
+            .onFailure { AppLogger.w(T, "the engine's capture-ended listener failed: ${it.message}") }
+    }
+
+    /**
      * The recording has ended while the call is still up: stop the held track NOW, not at the end of the call.
      *
      * Left started, the track keeps the shell's RECORD_AUDIO app-op running — the green dot — for as long as the call
@@ -476,7 +502,7 @@ object HandoffReceiver {
      * afterwards). Stopping an already-invalidated track may be refused; `accepted=` records which. The references are
      * left for [releaseRefs] at the end of the call, which stops again harmlessly. Also writes the always-on line.
      */
-    private fun endHeldTrackNow(exitLabel: String, outcome: HandoffEarlyEnd.Outcome, rearms: Int) {
+    private fun endHeldTrackNow(exitLabel: String, outcome: HandoffEarlyEnd.Outcome, rearms: Int): String {
         val binder = held
         val accepted = binder?.let { HeldRecordControl.stop(it) }
         if (binder != null) {
@@ -487,6 +513,7 @@ object HandoffReceiver {
         val line = HandoffEarlyEnd.timelineLine(exitLabel, outcome, rearms, MAX_REARMS, elapsedMs, accepted)
         AppLogger.e(T, line)
         runCatching { onEvent?.invoke(line) }
+        return line
     }
 
     /** Asks the daemon for a replacement capture and waits for it to be pushed back. */
