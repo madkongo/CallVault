@@ -179,8 +179,8 @@ class TranscriptionSchedulerTest {
         TranscriptionScheduler.runNow(context, "tapped.ogg", userRequested = true)
 
         val tapped = manualInfos().single()
-        // Not BLOCKED behind the charger-bound after-call run.
-        assertEquals(WorkInfo.State.ENQUEUED, tapped.state)
+        // Not BLOCKED behind the charger-bound after-call run (it has no constraints, so it starts at once).
+        assertTrue("tapped run is ${tapped.state}", tapped.state != WorkInfo.State.BLOCKED)
         val afterCall = WorkManager.getInstance(context)
             .getWorkInfosForUniqueWork(TranscriptionScheduler.AFTER_CALL_WORK_PREFIX + "call1.ogg").get().single()
         assertTrue(afterCall.tags.contains(TranscriptionScheduler.TAG_RUN))
