@@ -173,7 +173,7 @@ class CloudRunTest {
         AppPreferences(context).setTranscriptionService(TranscriptionService.GROQ)
         AppPreferences(context).setTranscriptionCloudMobileData(true)
         TranscriptionScheduler.runNow(context, "x.ogg", userRequested = true)
-        assertEquals(NetworkType.CONNECTED, manualNetworkType())
+        assertEquals(NetworkType.NOT_ROAMING, manualNetworkType())
     }
 
     @Test

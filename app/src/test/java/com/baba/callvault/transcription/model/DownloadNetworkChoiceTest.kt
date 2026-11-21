@@ -35,6 +35,6 @@ class DownloadNetworkChoiceTest {
     @Test
     fun `waiting for wifi needs an unmetered network and mobile data any connection`() {
         assertEquals(NetworkType.UNMETERED, DownloadNetwork.WIFI_ONLY.networkType)
-        assertEquals(NetworkType.CONNECTED, DownloadNetwork.ANY.networkType)
+        assertEquals(NetworkType.NOT_ROAMING, DownloadNetwork.ANY.networkType)
     }
 }

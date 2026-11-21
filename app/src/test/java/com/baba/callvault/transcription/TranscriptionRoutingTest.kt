@@ -33,7 +33,7 @@ class TranscriptionRoutingTest {
     @Test
     fun `a cloud run needs wifi unless mobile data was allowed`() {
         assertEquals(NetworkType.UNMETERED, TranscriptionRouting.constraints(true, allowMobileData = false, requiresCharging = false).networkType)
-        assertEquals(NetworkType.CONNECTED, TranscriptionRouting.constraints(true, allowMobileData = true, requiresCharging = false).networkType)
+        assertEquals(NetworkType.NOT_ROAMING, TranscriptionRouting.constraints(true, allowMobileData = true, requiresCharging = false).networkType)
     }
 
     @Test

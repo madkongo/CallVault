@@ -77,7 +77,7 @@ class ModelDownloadEnqueueTest {
         ModelDownloadWorker.enqueue(context, model, DownloadNetwork.ANY)
 
         val queued = liveWork().single()
-        assertEquals(NetworkType.CONNECTED, queued.constraints.requiredNetworkType)
+        assertEquals(NetworkType.NOT_ROAMING, queued.constraints.requiredNetworkType)
         assertFalse("the worker checks free space itself and says why (C163)", queued.constraints.requiresStorageNotLow())
     }
 
@@ -90,7 +90,7 @@ class ModelDownloadEnqueueTest {
 
         ModelDownloadWorker.enqueue(context, model, DownloadNetwork.ANY)
 
-        assertEquals(NetworkType.CONNECTED, liveWork().single().constraints.requiredNetworkType)
+        assertEquals(NetworkType.NOT_ROAMING, liveWork().single().constraints.requiredNetworkType)
     }
 
     @Test

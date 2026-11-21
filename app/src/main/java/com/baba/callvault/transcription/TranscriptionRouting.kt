@@ -119,7 +119,7 @@ object TranscriptionRouting {
             requiresCharging = requiresCharging,
             networkType = when {
                 !isCloud -> NetworkType.NOT_REQUIRED
-                allowMobileData -> NetworkType.CONNECTED
+                allowMobileData -> NetworkType.NOT_ROAMING
                 else -> NetworkType.UNMETERED
             },
         )

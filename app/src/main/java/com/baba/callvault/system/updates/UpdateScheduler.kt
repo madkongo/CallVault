@@ -53,7 +53,7 @@ object UpdateScheduler {
         }
         val request = PeriodicWorkRequestBuilder<UpdateCheckWorker>(PERIOD_HOURS, TimeUnit.HOURS)
             .setConstraints(
-                Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+                Constraints.Builder().setRequiredNetworkType(NetworkType.NOT_ROAMING).build()
             )
             .build()
         // UPDATE, not KEEP: an install already carrying the old 24 h schedule must pick up the 6 h one,
@@ -75,7 +75,7 @@ object UpdateScheduler {
 
         val request = OneTimeWorkRequestBuilder<UpdateCheckWorker>()
             .setConstraints(
-                Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+                Constraints.Builder().setRequiredNetworkType(NetworkType.NOT_ROAMING).build()
             )
             .build()
         WorkManager.getInstance(context)
@@ -89,7 +89,7 @@ object UpdateScheduler {
     fun enqueueInstallNow(context: Context) {
         val request = OneTimeWorkRequestBuilder<UpdateInstallWorker>()
             .setConstraints(
-                Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+                Constraints.Builder().setRequiredNetworkType(NetworkType.NOT_ROAMING).build()
             )
             .build()
         WorkManager.getInstance(context)

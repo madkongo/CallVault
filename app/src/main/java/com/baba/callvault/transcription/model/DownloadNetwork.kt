@@ -24,7 +24,7 @@ enum class DownloadNetwork(val networkType: NetworkType) {
     WIFI_ONLY(NetworkType.UNMETERED),
 
     /** The user said yes to mobile data for this one download. */
-    ANY(NetworkType.CONNECTED)
+    ANY(NetworkType.NOT_ROAMING)
 }
 
 /**

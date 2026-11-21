@@ -70,7 +70,7 @@ object SyncScheduler {
         val hour = prefs.getSyncTimeHour()
         val minute = prefs.getSyncTimeMinute()
         val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiredNetworkType(NetworkType.NOT_ROAMING)
             .build()
 
         val dayOfWeek = prefs.getSyncDayOfWeek()
