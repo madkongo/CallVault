@@ -29,6 +29,7 @@ import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.transcription.model.TranscriptionModelOffer
 import androidx.compose.ui.platform.LocalContext
 import com.baba.callvault.transcription.TranscriptionLanguageChoice
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.ui.common.TranscriptionLabels
 import com.baba.callvault.ui.common.TranscriptionLanguagePicker
 import com.baba.callvault.ui.common.TranscriptionTimeDialog
@@ -131,9 +132,15 @@ internal fun TranscriptionModelChoiceRow(preferences: AppPreferences, updateTrig
 internal fun TranscriptionLanguageRows(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
     val language = remember(updateTrigger) { preferences.getTranscriptionLanguage() }
     val askLanguage = remember(updateTrigger) { preferences.getTranscriptionAskLanguage() }
+    // Keyed to the same trigger as the rest, so the list follows a model or service change made on this page
+    // (review C159; it used to keep the model it was first drawn with).
+    val modelId = remember(updateTrigger) { preferences.getTranscriptionModelId() }
+    val isCloud = remember(updateTrigger) { preferences.getTranscriptionService() != TranscriptionService.ON_DEVICE }
 
     TranscriptionLanguageField(
         language = language,
+        modelId = modelId,
+        isCloud = isCloud,
         // No longer clears the summary language (BabApps item 135): that is its own setting now, so changing
         // the language to listen for must not undo a fixed summary language the user chose.
         onLanguageChange = { chosen -> actions.setTranscriptionLanguage(chosen) }
@@ -346,6 +353,8 @@ internal fun TranscriptionModeField(
 internal fun TranscriptionLanguageField(
     language: String?,
     onLanguageChange: (String?) -> Unit,
+    modelId: String? = null,
+    isCloud: Boolean? = null,
 ) {
     DropdownRow {
         // The shared picker: sorted by translated name, with type-to-find (see TranscriptionLanguagePicker).
@@ -354,7 +363,9 @@ internal fun TranscriptionLanguageField(
             selectedKey = TranscriptionLanguageChoice.encode(language),
             onSelected = { key ->
                 onLanguageChange(key.takeIf { k -> k != TranscriptionLabels.AUTO_DETECT_KEY })
-            }
+            },
+            modelId = modelId,
+            isCloud = isCloud,
         )
         if (language == null) {
             HintText(stringResource(R.string.transcription_language_auto_hint))

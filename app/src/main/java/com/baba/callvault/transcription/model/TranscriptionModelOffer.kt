@@ -69,7 +69,15 @@ object TranscriptionModelOffer {
      * The language codes to list while [modelId] is the selected model. A code the model cannot decode
      * is dropped, unless it is [selectedLanguage] (it stays visible so the field never names another
      * language than the one in force).
+     *
+     * With a cloud service the on-device model is not what decodes, so nothing is hidden (the runner's own
+     * rule: `isCloud || canDecodeId(...)`, review C159).
      */
-    fun languagesOffered(all: List<String?>, modelId: String?, selectedLanguage: String?): List<String?> =
-        all.filter { it == selectedLanguage || canDecodeId(modelId, it) }
+    fun languagesOffered(
+        all: List<String?>,
+        modelId: String?,
+        selectedLanguage: String?,
+        isCloud: Boolean = false,
+    ): List<String?> =
+        all.filter { isCloud || it == selectedLanguage || canDecodeId(modelId, it) }
 }

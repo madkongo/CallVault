@@ -69,6 +69,7 @@ import com.baba.callvault.R
 import androidx.compose.ui.platform.LocalContext
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.transcription.TranscriptionLanguageChoice
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.transcription.model.TranscriptionModelOffer
 
 /** How many rows to leave above the selected one when the list opens scrolled to it. */
@@ -91,6 +92,9 @@ private val DIALOG_MAX_HEIGHT = 560.dp
  * @param label the field's label, e.g. "Language".
  * @param selectedKey the encoded choice ([TranscriptionLanguageChoice.encode]), auto-detect included.
  * @param onSelected given the encoded key of the row picked.
+ * @param modelId the on-device model whose vocabulary filters the list; null reads the stored choice afresh on
+ *   every composition (it used to be read once, so the list kept the model it was first drawn with, review C159).
+ * @param isCloud whether a cloud service transcribes, in which case nothing is hidden; null reads the stored service.
  */
 @Composable
 fun TranscriptionLanguagePicker(
@@ -98,16 +102,22 @@ fun TranscriptionLanguagePicker(
     selectedKey: String,
     onSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
+    modelId: String? = null,
+    isCloud: Boolean? = null,
 ) {
-    // Cantonese is hidden while the small model is selected: small cannot decode it (BabApps item 117).
+    // Cantonese is hidden while the small model is selected: small cannot decode it (BabApps item 117) - but
+    // only for on-device runs; the cloud service decodes it (review C159).
     val context = LocalContext.current
-    val modelId = remember { AppPreferences(context).getTranscriptionModelId() }
+    val prefs = remember(context) { AppPreferences(context) }
+    val effectiveModelId = modelId ?: prefs.getTranscriptionModelId()
+    val effectiveIsCloud = isCloud ?: (prefs.getTranscriptionService() != TranscriptionService.ON_DEVICE)
     val items = LanguageSearch.itemsFor(
         TranscriptionLabels.sortLanguageOptions(
             TranscriptionModelOffer.languagesOffered(
                 TranscriptionLabels.LANGUAGE_OPTIONS,
-                modelId,
+                effectiveModelId,
                 selectedKey.takeIf { it != TranscriptionLanguageChoice.AUTO },
+                effectiveIsCloud,
             ).map { code ->
                 TranscriptionLanguageChoice.encode(code) to stringResource(TranscriptionLabels.languageOf(code))
             }

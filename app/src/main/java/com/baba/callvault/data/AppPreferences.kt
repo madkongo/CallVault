@@ -87,6 +87,26 @@ class AppPreferences(context: Context) {
 
         private const val EXPORT_TAG = "CV:SettingsExport"
 
+        /** The values a string setting may hold in an imported file; anything else is rejected (review C84). */
+        private val ALLOWED_IMPORT_STRINGS: Map<String, Set<String>> = mapOf(
+            "theme_mode" to ThemeMode.entries.map { it.key }.toSet(),
+            "ignore_contacts_mode_incoming" to IgnoreContactsMode.entries.map { it.key }.toSet(),
+            "ignore_contacts_mode_outgoing" to IgnoreContactsMode.entries.map { it.key }.toSet(),
+            "after_call_mode" to AfterCallMode.entries.map { it.key }.toSet(),
+            "after_call_ask_style" to AfterCallAskStyle.entries.map { it.key }.toSet(),
+            "after_call_unanswered" to AfterCallUnanswered.entries.map { it.key }.toSet(),
+        )
+
+        /** The file's declared type for [stored]'s Kotlin type, or null for a type we never write. */
+        private fun importTypeOf(stored: Any): String? = when (stored) {
+            is Boolean -> "bool"
+            is Int -> "int"
+            is Long -> "long"
+            is String -> "string"
+            is Set<*> -> "set"
+            else -> null
+        }
+
         /** Public key id for the available-update tag, for change-listener comparisons. */
         const val AVAILABLE_UPDATE_TAG_KEY = "available_update_tag"
 
@@ -491,6 +511,11 @@ class AppPreferences(context: Context) {
         // BabApps item 133: the section the app opens on (a HomeSection key). Absent means the hub.
         START_PAGE("start_page"),
 
+        // The language chosen in Settings > Language as a BCP-47 tag, mirrored here because below Android 13
+        // AppCompat knows it only after an activity has loaded it (review C143). Absent = follow the phone.
+        // Device-only (not in EXPORTABLE_KEYS): the system, not this copy, is the truth on Android 13+.
+        APP_LANGUAGE_TAG("app_language_tag"),
+
         // Unused since the classic Settings screen was removed (docs/dev-notes/rollback/classic-settings-removal.md):
         // kept so a revert of the classic-screen removal restores users' choice. Device-only (not in EXPORTABLE_KEYS).
         CLASSIC_SETTINGS_SCREEN("classic_settings_screen"),
@@ -530,13 +555,18 @@ class AppPreferences(context: Context) {
             /**
              * Parses a key string back into an enum constant.
              *
-             * @throws IllegalArgumentException if no matching entry is found.
+             * An unknown key reads as [NONE] (record everyone) and is logged: a value written by another
+             * build or an imported file must never crash a call decision (review C84), and the default is
+             * the one that cannot silently skip a call.
+             *
              * @param key The string stored in SharedPreferences.
-             * @return The matching [IgnoreContactsMode], or throws an error if unrecognized.
+             * @return The matching [IgnoreContactsMode], or [NONE] if unrecognized.
              */
-            fun fromKey(key: String?): IgnoreContactsMode {
-                return entries.firstOrNull { it.key == key } ?: throw IllegalArgumentException("Unknown IgnoreContactsMode key: $key")
-            }
+            fun fromKey(key: String?): IgnoreContactsMode =
+                entries.firstOrNull { it.key == key } ?: run {
+                    AppLogger.w("CV:AppPreferences", "Unknown ignore-contacts mode '$key'; reading it as NONE")
+                    NONE
+                }
         }
     }
 
@@ -551,11 +581,17 @@ class AppPreferences(context: Context) {
             /**
              * Parses a key string back into an enum constant.
              *
-             * @throws IllegalArgumentException if no matching entry is found.
+             * An unknown key reads as [SYSTEM] and is logged: a value written by another build or an
+             * imported file must never crash the app at start (review C84).
+             *
              * @param key The string stored in SharedPreferences.
-             * @return The matching [ThemeMode], or throws an error if unrecognized.
+             * @return The matching [ThemeMode], or [SYSTEM] if unrecognized.
              */
-            fun fromKey(key: String?): ThemeMode = entries.firstOrNull { it.key == key } ?: throw IllegalArgumentException("Unknown ThemeMode key: $key")
+            fun fromKey(key: String?): ThemeMode =
+                entries.firstOrNull { it.key == key } ?: run {
+                    AppLogger.w("CV:AppPreferences", "Unknown theme mode '$key'; reading it as SYSTEM")
+                    SYSTEM
+                }
         }
     }
 
@@ -1788,6 +1824,13 @@ class AppPreferences(context: Context) {
      */
     fun getStartPageKey(): String = getString(Key.START_PAGE) ?: HomeSection.Hub.key
 
+    /** The mirrored app-language tag, or null to follow the phone ([Key.APP_LANGUAGE_TAG]). */
+    fun getAppLanguageTag(): String? = getString(Key.APP_LANGUAGE_TAG)?.takeIf { it.isNotEmpty() }
+
+    /** Mirrors the chosen app language; an empty tag clears it ("follow system"). */
+    fun setAppLanguageTag(tag: String) =
+        if (tag.isEmpty()) prefs.edit().remove(Key.APP_LANGUAGE_TAG.id).apply() else setString(Key.APP_LANGUAGE_TAG, tag)
+
     /** Sets the page the app opens on. */
     fun setStartPage(section: HomeSection) = setString(Key.START_PAGE, section.key)
 
@@ -1846,8 +1889,25 @@ class AppPreferences(context: Context) {
         for (key in settings.keys()) {
             if (key !in EXPORTABLE_KEYS) continue
             val entry = settings.optJSONObject(key) ?: continue
+            val type = entry.optString("type")
+            // A value the app cannot read back would crash it at start or at the next call (review C84):
+            // refuse the entry, say why, and leave the stored value alone.
+            val stored = prefs.all[key]
+            val storedType = stored?.let(::importTypeOf)
+            if (storedType != null && storedType != type) {
+                AppLogger.w(EXPORT_TAG, "Skipped $key: the file says $type but this phone stores $storedType")
+                continue
+            }
+            val allowed = ALLOWED_IMPORT_STRINGS[key]
+            if (allowed != null) {
+                val value = if (type == "string") entry.optString("value", "") else null
+                if (value == null || value !in allowed) {
+                    AppLogger.w(EXPORT_TAG, "Skipped $key: '${entry.opt("value")}' is not a value this build knows")
+                    continue
+                }
+            }
             val ok = runCatching {
-                when (entry.optString("type")) {
+                when (type) {
                     "bool" -> editor.putBoolean(key, entry.getBoolean("value"))
                     "int" -> editor.putInt(key, entry.getInt("value"))
                     "long" -> editor.putLong(key, entry.getLong("value"))

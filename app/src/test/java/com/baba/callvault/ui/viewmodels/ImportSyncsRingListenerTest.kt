@@ -13,6 +13,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.ModeCapability
 import com.baba.callvault.services.recording.VoipRingListenerAccess
+import com.baba.callvault.services.recording.VoipToggleEffects
+import kotlinx.coroutines.CompletableDeferred
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockkObject
@@ -41,6 +43,10 @@ class ImportSyncsRingListenerTest {
     fun setUp() {
         mockkObject(VoipRingListenerAccess)
         every { VoipRingListenerAccess.requestSync(any()) } just runs
+        // The toggle's own effects (persist, ring listener sync, detection start, arm) are tested in
+        // VoipToggleEffectsTest; here only that an import runs them (review C96, which replaced the bare sync).
+        mockkObject(VoipToggleEffects)
+        every { VoipToggleEffects.apply(any<android.content.Context>(), any()) } returns CompletableDeferred(true)
         app = ApplicationProvider.getApplicationContext()
         viewModel = SettingsViewModel(app)
     }
@@ -52,14 +58,14 @@ class ImportSyncsRingListenerTest {
     fun `an import that turns app calls on re-syncs the listener`() {
         AppPreferences(app).setVoipRecordingEnabled(false)
         viewModel.importSettings(file(voipOn = true))
-        verify(exactly = 1) { VoipRingListenerAccess.requestSync(any()) }
+        verify(exactly = 1) { VoipToggleEffects.apply(any<android.content.Context>(), true) }
     }
 
     @Test
     fun `an import that leaves app calls as they were does not`() {
         AppPreferences(app).setVoipRecordingEnabled(false)
         viewModel.importSettings(file(voipOn = false))
-        verify(exactly = 0) { VoipRingListenerAccess.requestSync(any()) }
+        verify(exactly = 0) { VoipToggleEffects.apply(any<android.content.Context>(), any()) }
     }
 
     @Test

@@ -90,6 +90,14 @@ class TranscriptionModelOfferTest {
     }
 
     @Test
+    fun a_cloud_service_keeps_cantonese_even_when_the_stored_on_device_model_is_small() {
+        // C159: the cloud service decodes Cantonese, so the stored on-device model must not hide it.
+        val all = listOf("he", "yue", null)
+        assertEquals(all, TranscriptionModelOffer.languagesOffered(all, "small-q5_1", "he", isCloud = true))
+        assertEquals(listOf("he", null), TranscriptionModelOffer.languagesOffered(all, "small-q5_1", "he", isCloud = false))
+    }
+
+    @Test
     fun the_default_is_a_general_tier() {
         // The dropdown falls back to DEFAULT for an unknown id, so DEFAULT must always be listed.
         assertEquals(null, TranscriptionModel.DEFAULT.language)
