@@ -14,7 +14,6 @@ import com.baba.callvault.data.merge.HiddenMergeParts
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 
 /**
  * Starred recordings — the star on the playback screen, the Home filter, and the exemption the two
@@ -31,18 +30,18 @@ object FavouriteRepository {
     private fun dao(context: Context) = TranscriptDatabase.get(context).favouriteDao()
 
     /** Whether one recording is starred, as a stream, for the star button. */
-    fun isFavourite(context: Context, displayName: String): Flow<Boolean> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(false)
-        return dao(context).observeIsFavourite(displayName)
-    }
+    fun isFavourite(context: Context, displayName: String): Flow<Boolean> =
+        // False until the database exists, then the live query (C164).
+        onceTranscriptsExist(context, false) { it.favouriteDao().observeIsFavourite(displayName) }
 
     /** Every starred name, for Home's filter facet. */
-    fun all(context: Context): Flow<List<String>> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
+    fun all(context: Context): Flow<List<String>> =
         // A merged-away part keeps its star, hidden, for un-merge (N2); it is not a starred recording now.
-        return dao(context).observeAll()
-            .combine(HiddenMergeParts.observe(context)) { names, hidden -> names.filterNot { it in hidden } }
-    }
+        // Empty until the database exists, then the live query (C164).
+        onceTranscriptsExist(context, emptyList()) { db ->
+            db.favouriteDao().observeAll()
+                .combine(HiddenMergeParts.observe(context)) { names, hidden -> names.filterNot { it in hidden } }
+        }
 
     /**
      * A one-shot snapshot of the starred names, for the retention sweep and the storage cap.

@@ -13,7 +13,6 @@ import com.baba.callvault.data.transcripts.db.RecordingFlagEntry
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 
 /** The moments a user marked during a call. Shaped like [FavouriteRepository]. */
 object FlagRepository {
@@ -23,10 +22,9 @@ object FlagRepository {
     private fun dao(context: Context) = TranscriptDatabase.get(context).flagDao()
 
     /** The marks on one recording, earliest first. */
-    fun flagsFor(context: Context, displayName: String): Flow<List<Long>> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
-        return dao(context).observeFor(displayName)
-    }
+    fun flagsFor(context: Context, displayName: String): Flow<List<Long>> =
+        // Empty until the database exists, then the live query, so a screen opened first is not stuck empty (C164).
+        onceTranscriptsExist(context, emptyList()) { it.flagDao().observeFor(displayName) }
 
     /**
      * Stores [offsetsMs] against [displayName], at the end of a call.
