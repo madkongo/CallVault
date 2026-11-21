@@ -10,6 +10,7 @@
 package com.baba.callvault.ui.screens
 
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -167,7 +168,9 @@ fun PermissionsScreen(
         // hidden BEHIND the App Info page, so the user lands on App Info (not on a wizard step that
         // visibly jumped ahead before the settings page appeared).
         runCatching {
-            Toast.makeText(activityContext, R.string.permission_battery_oem_hint, Toast.LENGTH_LONG).show()
+            // Wording by maker (review R6): the OnePlus steps do not exist on other phones. Unknown maker = generic advice.
+            val maker = com.baba.callvault.system.phone.BatteryAdvice.makerOf(Build.MANUFACTURER, Build.BRAND)
+            Toast.makeText(activityContext, com.baba.callvault.system.phone.BatteryAdvice.hintRes(maker), Toast.LENGTH_LONG).show()
             activityContext.openAppSettings()
         }
         onPermissionGranted()

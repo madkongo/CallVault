@@ -87,11 +87,31 @@ object AppStopHistory {
         return callAtMillis - stop.atMillis <= STOP_REACH_MILLIS
     }
 
-    /** The recorded exits of this app, newest first. Android 11+; empty before it. */
+    /**
+     * How close to the install a USER_REQUESTED exit must be to be the installer's kill. Android 11-13 records the
+     * package manager's kill during an update as "stop <pkg> due to installPackageLI" with this very reason
+     * (review C142), which looks exactly like the user's own Stop.
+     */
+    private const val INSTALL_KILL_WINDOW_MILLIS = 2L * 60 * 1000
+
+    /** [exits] without the kills an app update caused. [lastUpdateMillis] 0 (unknown) keeps everything. */
+    fun withoutInstallKills(exits: List<ExitRecord>, lastUpdateMillis: Long): List<ExitRecord> {
+        if (lastUpdateMillis <= 0L) return exits
+        return exits.filterNot {
+            it.reason == ApplicationExitInfo.REASON_USER_REQUESTED &&
+                kotlin.math.abs(it.atMillis - lastUpdateMillis) <= INSTALL_KILL_WINDOW_MILLIS
+        }
+    }
+
+    /** The recorded exits of this app, newest first. Android 11+; empty before it. Update kills are left out. */
     fun exits(context: Context): List<ExitRecord> {
         val am = context.getSystemService(ActivityManager::class.java) ?: return emptyList()
-        return am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY)
+        val all = am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY)
             .map { ExitRecord(it.timestamp, it.reason, it.description, it.pid) }
+        val updatedAt = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime }
+            .onFailure { com.baba.callvault.utils.AppLogger.w("CV:AppStopHistory", "Could not read the install time: ${it.javaClass.simpleName}") }
+            .getOrDefault(0L)
+        return withoutInstallKills(all, updatedAt)
     }
 
     /** A start as Android stamps it: time since the boot it happened in — which boot, it does not say. */
@@ -117,7 +137,8 @@ object AppStopHistory {
     }
 
     private fun starts(context: Context): List<AppStart> {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return emptyList()
+        // Below Android 15 the system keeps no starts; the app's own ring does (empty = unknown, today's behaviour).
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return AppStartRing.starts(context)
         val am = context.getSystemService(ActivityManager::class.java) ?: return emptyList()
         val raw = am.getHistoricalProcessStartReasons(HISTORY)
             .filter { it.processName == context.packageName }
