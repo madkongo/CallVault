@@ -1083,4 +1083,6 @@
     <string name="risk_more_many">%1$d more: %2$s and others</string>
     <string name="risk_show">Show</string>
     <string name="risk_hide">Hide</string>
+    <string name="risk_notice_title">Calls may not be recorded</string>
+    <string name="risk_notice_action">Fix</string>
 </resources>

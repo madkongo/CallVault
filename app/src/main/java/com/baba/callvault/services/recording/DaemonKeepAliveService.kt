@@ -155,6 +155,11 @@ class DaemonKeepAliveService : Service() {
             com.baba.callvault.system.storage.RecordingFolderCheck.checkIfStale(
                 this@DaemonKeepAliveService, "keep-alive tick", com.baba.callvault.system.storage.FolderWatchPlan.KEEP_ALIVE_GOOD_MAX_AGE_MS,
             )
+            // R5: once a day, whether the phone's own settings can stop calls being recorded (one combined notice).
+            // Rides this existing tick; cheap between checks, and logs its own failures without throwing.
+            com.baba.callvault.system.health.RecordingRiskNotice.evaluate(
+                this@DaemonKeepAliveService, com.baba.callvault.system.health.RecordingRiskNotice.Trigger.TICK,
+            )
             watchdogHandler.postDelayed(this, WATCHDOG_INTERVAL_MS)
         }
     }

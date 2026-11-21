@@ -904,6 +904,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
         val updatedTo = preferences.getUpdateSuccessBannerVersion()
         val status = computeStatus()
+        val riskReasons = com.baba.callvault.system.health.RecordingRiskReasons.read(appContext)
         _uiState.update {
             it.copy(
                 status = status,
@@ -917,9 +918,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 showWhatsNew = pendingWhatsNew(updatedTo),
                 // Advisory when the USB default is a data mode (cheap cached read; never blocks/forces ADB).
                 usbScreenLockRisk = UsbDefaultConfig.isScreenLockRisk(appContext),
-                riskReasons = com.baba.callvault.system.health.RecordingRiskReasons.read(appContext),
+                riskReasons = riskReasons,
             )
         }
+        // R5: a notice that no longer applies comes down as soon as the user is back on Home.
+        com.baba.callvault.system.health.RecordingRiskNotice.evaluate(
+            appContext, com.baba.callvault.system.health.RecordingRiskNotice.Trigger.HOME, reasons = riskReasons,
+        )
         // An install-over can drop WRITE_SECURE_SETTINGS while the daemon stays warm (recording still
         // works). Whenever the grant is missing, silently try to restore it over any transport that's
         // already up (WD still on / loopback armed) — no user action, no adbd churn — so a later daemon
