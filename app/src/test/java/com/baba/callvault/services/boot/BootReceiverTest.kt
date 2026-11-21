@@ -16,6 +16,7 @@ import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.PrivilegedMode
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,5 +55,39 @@ class BootReceiverTest {
         assertTrue("the connection service was tried", context.asked.any { it.endsWith("AdbConnectionService") })
         assertTrue("the call monitor was still tried", context.asked.any { it.endsWith("CallMonitorService") })
         assertTrue("the keep-alive was still tried", context.asked.any { it.endsWith("DaemonKeepAliveService") })
+    }
+
+    private fun receiverAt(uptimeMs: Long) = BootReceiver().also { it.uptimeMs = { uptimeMs } }
+
+    private fun askedAfter(action: String, uptimeMs: Long): List<String> {
+        AppPreferences(app).setPrivilegedMode(PrivilegedMode.SHIZUKU)
+        val context = RefusingContext(app)
+        receiverAt(uptimeMs).onReceive(context, Intent(action))
+        return context.asked
+    }
+
+    @Test
+    fun `a real BOOT_COMPLETED runs the boot path whatever the uptime`() {
+        // A very slow phone, or a work profile unlocking late: only the system can send this action.
+        assertTrue(askedAfter(Intent.ACTION_BOOT_COMPLETED, uptimeMs = 3 * 60 * 60 * 1000L).any { it.endsWith("DaemonKeepAliveService") })
+        assertTrue(askedAfter(Intent.ACTION_BOOT_COMPLETED, uptimeMs = 5_000L).any { it.endsWith("DaemonKeepAliveService") })
+    }
+
+    @Test
+    fun `QUICKBOOT_POWERON shortly after boot runs the boot path`() {
+        assertTrue(askedAfter("android.intent.action.QUICKBOOT_POWERON", uptimeMs = 60_000L).any { it.endsWith("DaemonKeepAliveService") })
+    }
+
+    @Test
+    fun `QUICKBOOT_POWERON long after boot is ignored`() {
+        // Anyone can send it; with the phone up for hours it is not a boot.
+        assertTrue(askedAfter("android.intent.action.QUICKBOOT_POWERON", uptimeMs = 3 * 60 * 60 * 1000L).isEmpty())
+        assertFalse(BootReceiver.isGenuineBoot("android.intent.action.QUICKBOOT_POWERON", BootReceiver.FAKE_BOOT_UPTIME_LIMIT_MS))
+        assertTrue(BootReceiver.isGenuineBoot("android.intent.action.QUICKBOOT_POWERON", BootReceiver.FAKE_BOOT_UPTIME_LIMIT_MS - 1))
+    }
+
+    @Test
+    fun `other actions are never a boot`() {
+        assertFalse(BootReceiver.isGenuineBoot("android.intent.action.MY_PACKAGE_REPLACED", uptimeMs = 1_000L))
     }
 }
