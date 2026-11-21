@@ -32,6 +32,8 @@ class BcrMetadataTest {
         speakerTurns: String? = "0:A;1200:+;3400:-",
         nearChannel: String? = "B",
         simSlot: Int? = null,
+        appVersionCode: Int? = null,
+        appVersionName: String? = null,
     ) = BcrMetadata.Input(
         timestampUnixMs = 1689817988931L,
         packageName = "com.android.phone",
@@ -49,7 +51,31 @@ class BcrMetadataTest {
         speakerTurns = speakerTurns,
         nearChannel = nearChannel,
         simSlot = simSlot,
+        appVersionCode = appVersionCode,
+        appVersionName = appVersionName,
     )
+
+    @Test
+    fun `the app version is written when given and an explicit null otherwise (N42)`() {
+        val given = JSONObject(BcrMetadata.build(input(appVersionCode = 20610, appVersionName = "2.5.1")))
+        assertEquals(20610, given.getInt("app_version_code"))
+        assertEquals("2.5.1", given.getString("app_version_name"))
+        val unknown = JSONObject(BcrMetadata.build(input()))
+        assertTrue(unknown.has("app_version_code") && unknown.isNull("app_version_code"))
+        assertTrue(unknown.has("app_version_name") && unknown.isNull("app_version_name"))
+    }
+
+    @Test
+    fun `the E164 number is written only for a number already in international form (N42)`() {
+        fun e164(number: String?) = JSONObject(BcrMetadata.build(input(phoneNumber = number)))
+            .getJSONArray("calls").getJSONObject(0).let { if (it.isNull("phone_number_e164")) null else it.getString("phone_number_e164") }
+        assertEquals("+11234567890", e164("+11234567890"))
+        assertEquals(null, e164("0501234567"))
+        assertEquals(null, e164("*123"))
+        assertEquals(null, e164(null))
+        assertTrue(JSONObject(BcrMetadata.build(input(phoneNumber = "0501234567")))
+            .getJSONArray("calls").getJSONObject(0).has("phone_number_e164"))
+    }
 
     @Test
     fun `the SIM slot is written when known and an explicit null otherwise`() {

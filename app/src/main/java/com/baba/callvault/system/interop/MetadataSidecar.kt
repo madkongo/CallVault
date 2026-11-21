@@ -127,6 +127,8 @@ object MetadataSidecar {
                     speakerTurns = speakerTurns,
                     nearChannel = nearChannel,
                     simSlot = simSlot,
+                    appVersionCode = com.baba.callvault.BuildConfig.VERSION_CODE,
+                    appVersionName = com.baba.callvault.BuildConfig.VERSION_NAME,
                 )
             )
 
