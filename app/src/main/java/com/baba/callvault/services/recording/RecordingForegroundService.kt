@@ -660,7 +660,12 @@ class RecordingForegroundService : Service() {
         // messages say different things.
         onCaptureNeverStarted = {
             captureNeverStartedNotified = true
-            notificationHelper.showErrorNotification(getString(R.string.recording_error_capture_never_started))
+            val storageFull = FreeSpacePolicy.startFailureIsStorageFull(
+                freeNowBytes = FreeSpaceMonitor.freeBytes(applicationContext),
+                folderOnPhoneStorage = FreeSpaceMonitor.folderOnPhoneStorage(applicationContext),
+            )
+            val message = if (storageFull) R.string.storage_full_empty_text else R.string.recording_error_capture_never_started
+            notificationHelper.showErrorNotification(getString(message))
         }
     }
 

@@ -129,4 +129,20 @@ class FreeSpacePolicyTest {
         FreeSpaceMonitor.beginCall()
         assertEquals(null, FreeSpaceMonitor.lowAtCallStart)
     }
+
+    @Test
+    fun `a start that failed on an almost full phone is named as storage full (R2 AAC)`() {
+        assertTrue(FreeSpacePolicy.startFailureIsStorageFull(freeNowBytes = 144 * 1024L, folderOnPhoneStorage = true))
+    }
+
+    @Test
+    fun `a start that failed with room to spare keeps the audio format advice`() {
+        assertFalse(FreeSpacePolicy.startFailureIsStorageFull(freeNowBytes = 150 * mb, folderOnPhoneStorage = true))
+    }
+
+    @Test
+    fun `an unreadable free space or another volume never gives the storage wording for a failed start`() {
+        assertFalse(FreeSpacePolicy.startFailureIsStorageFull(-1L, true))
+        assertFalse(FreeSpacePolicy.startFailureIsStorageFull(5 * mb, false))
+    }
 }

@@ -72,6 +72,13 @@ object FreeSpacePolicy {
         else "free space at call start: ${free / MB} MB (warn below ${threshold / MB} MB)" +
             (if (free < threshold) " LOW" else "")
 
+    /**
+     * The capture never started (the muxer or codec refused): when almost nothing is left on the measured volume the
+     * cause is the full phone, not the audio format (R2, AAC). Unreadable space or another volume never qualifies.
+     */
+    fun startFailureIsStorageFull(freeNowBytes: Long, folderOnPhoneStorage: Boolean): Boolean =
+        folderOnPhoneStorage && mayHaveBeenCutShort(freeNowBytes)
+
     enum class EmptyCause { STORAGE_FULL, OTHER }
 
     /**
