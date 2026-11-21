@@ -18,7 +18,7 @@ import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -62,7 +62,7 @@ class ModelDownloadEnqueueTest {
 
         val queued = liveWork().single()
         assertEquals(NetworkType.UNMETERED, queued.constraints.requiredNetworkType)
-        assertTrue(queued.constraints.requiresStorageNotLow())
+        assertFalse("the worker checks free space itself and says why (C163)", queued.constraints.requiresStorageNotLow())
     }
 
     @Test
@@ -78,7 +78,7 @@ class ModelDownloadEnqueueTest {
 
         val queued = liveWork().single()
         assertEquals(NetworkType.CONNECTED, queued.constraints.requiredNetworkType)
-        assertTrue(queued.constraints.requiresStorageNotLow())
+        assertFalse("the worker checks free space itself and says why (C163)", queued.constraints.requiresStorageNotLow())
     }
 
     @Test

@@ -119,6 +119,17 @@ object ModelDownloadPolicy {
     fun retryCleanAfterDigestFailure(cleanRetriesUsed: Int): Boolean =
         cleanRetriesUsed < CLEAN_RETRIES_AFTER_DIGEST_FAILURE
 
+    /** Whole-file replies to a resume, in a row, after which the download stops: the server cannot resume (R27). */
+    const val MAX_RESTARTS_ON_RESUME = 2
+
+    /** True when [reply] to a request that asked to continue from [resumeFrom] threw the banked bytes away. */
+    fun isRestartOfResume(reply: Reply, resumeFrom: Long): Boolean =
+        reply == Reply.START_OVER && resumeFrom > 0L
+
+    /** Whether [consecutiveRestarts] whole-file replies to resumes are enough to stop retrying. */
+    fun shouldGiveUpOnResume(consecutiveRestarts: Int): Boolean =
+        consecutiveRestarts >= MAX_RESTARTS_ON_RESUME
+
     private const val HTTP_OK = 200
     private const val HTTP_PARTIAL = 206
 

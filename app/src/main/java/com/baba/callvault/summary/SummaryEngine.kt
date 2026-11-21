@@ -11,6 +11,7 @@ package com.baba.callvault.summary
 import android.content.Context
 import com.baba.callvault.transcription.TranscriptionEngine
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.transcription.NativeBackendGate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -81,7 +82,11 @@ object SummaryEngine {
     ): T =
         withContext(Dispatchers.Default) {
             mutex.withLock {
-                val ptr = LlamaNative.initContext(modelPath, context.applicationInfo.nativeLibraryDir)
+                val libDir = context.applicationInfo.nativeLibraryDir
+                // Backends load under the gate shared with transcription, so the two never register
+                // ggml's CPU backend at the same time (C83).
+                NativeBackendGate.shared.ensureLoaded("llama") { LlamaNative.systemInfo(libDir) }
+                val ptr = LlamaNative.initContext(modelPath, libDir)
                 if (ptr == 0L) error("Could not load the summarisation model")
                 isRunning = true
                 try {

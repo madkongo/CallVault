@@ -17,6 +17,7 @@
 #include <string>
 #include "whisper.h"
 #include "ggml-backend.h"
+#include "jni_utf8.h"
 
 static inline whisper_context *ctx_of(jlong p) {
     return reinterpret_cast<whisper_context *>(p);
@@ -106,79 +107,6 @@ static bool abort_requested(void *) {
 }
 
 
-/**
- * Whisper's text, made safe to hand to JNI.
- *
- * `NewStringUTF` does not validate and does not fail politely: given a byte sequence that is not
- * well-formed **modified** UTF-8 it aborts the entire process with SIGABRT. That is not theoretical
- * — it happened on a real 26-minute Hebrew call, where whisper emitted a segment cut in the middle of
- * a two-byte character (`0xd7` followed by another `0xd7`) and the app died outright:
- *
- *     JNI DETECTED ERROR IN APPLICATION: input is not valid Modified UTF-8:
- *     illegal continuation byte 0xd7 ... in call to NewStringUTF
- *
- * whisper builds a segment by concatenating tokens, and a token boundary is not a character
- * boundary, so a truncated multi-byte character is an ordinary thing for it to produce — most often
- * on non-Latin scripts, where nearly every character is multi-byte. A transcriber that crashes the
- * app on some Hebrew calls and not others is the worst possible shape for this bug.
- *
- * Two departures from plain UTF-8, both required by the *modified* form JNI expects:
- *  - a four-byte sequence (anything outside the BMP, e.g. an emoji) must be re-encoded as a
- *    surrogate pair of two three-byte sequences, not passed through;
- *  - an embedded NUL would have to become `0xC0 0x80`, which cannot arise here because the input is
- *    already a NUL-terminated C string.
- *
- * Malformed bytes are dropped rather than replaced. A replacement character in the middle of a word
- * is not more useful to a reader than the word simply being a character shorter, and it would travel
- * into the summary and the search index as content.
- */
-static std::string to_modified_utf8(const char *s) {
-    std::string out;
-    if (s == nullptr) return out;
-
-    const auto *p = reinterpret_cast<const unsigned char *>(s);
-    while (*p) {
-        const unsigned char c = *p;
-
-        int len;
-        if (c < 0x80)             len = 1;
-        else if ((c & 0xE0) == 0xC0) len = 2;
-        else if ((c & 0xF0) == 0xE0) len = 3;
-        else if ((c & 0xF8) == 0xF0) len = 4;
-        else { ++p; continue; }              // stray continuation byte, or an invalid lead
-
-        // Every continuation byte must be present and well-formed. This is the check that was
-        // missing: a sequence truncated by the end of the string fails here instead of aborting.
-        bool ok = true;
-        for (int k = 1; k < len; ++k) {
-            if (p[k] == 0 || (p[k] & 0xC0) != 0x80) { ok = false; break; }
-        }
-        if (!ok) { ++p; continue; }
-
-        if (len < 4) {
-            out.append(reinterpret_cast<const char *>(p), len);
-            p += len;
-            continue;
-        }
-
-        // Outside the BMP: decode, then emit the surrogate pair as two three-byte sequences, which
-        // is what modified UTF-8 requires and what plain UTF-8 would get wrong.
-        const uint32_t cp = ((uint32_t) (p[0] & 0x07) << 18) | ((uint32_t) (p[1] & 0x3F) << 12) |
-                            ((uint32_t) (p[2] & 0x3F) << 6)  |  (uint32_t) (p[3] & 0x3F);
-        p += 4;
-        if (cp < 0x10000 || cp > 0x10FFFF) continue;   // overlong or out of range
-        const uint32_t v    = cp - 0x10000;
-        const uint32_t hi   = 0xD800 + (v >> 10);
-        const uint32_t lo   = 0xDC00 + (v & 0x3FF);
-        for (uint32_t half : {hi, lo}) {
-            out.push_back((char) (0xE0 | (half >> 12)));
-            out.push_back((char) (0x80 | ((half >> 6) & 0x3F)));
-            out.push_back((char) (0x80 | (half & 0x3F)));
-        }
-    }
-    return out;
-}
-
 extern "C" {
 
 // Lists the loaded CPU backend's own features, so this is where the phone says which variant it
@@ -223,7 +151,9 @@ Java_com_baba_callvault_transcription_WhisperNative_requestAbort(JNIEnv *, jobje
     g_abort.store(true, std::memory_order_relaxed);
 }
 
-JNIEXPORT void JNICALL
+// Returns whisper_full's code: 0 when the pass was decoded, non-zero when it was not (and when it was
+// aborted). Kotlin tells those two apart by its own abort flag -- see WhisperResult (C42).
+JNIEXPORT jint JNICALL
 Java_com_baba_callvault_transcription_WhisperNative_transcribe(
         JNIEnv *env, jobject, jlong ptr, jfloatArray audio, jint threads, jstring language,
         jstring prompt, jstring vad_model_path, jint beam_size, jint max_text_ctx) {
@@ -401,6 +331,7 @@ Java_com_baba_callvault_transcription_WhisperNative_transcribe(
     // Released only after whisper_full returns: params.vad_model_path is a borrowed pointer, and
     // whisper reads it during the run rather than copying it at assignment.
     if (vad_path != nullptr) env->ReleaseStringUTFChars(vad_model_path, vad_path);
+    return static_cast<jint>(rc);
 }
 
 // How many stretches of speech the VAD kept, for the run that just finished. 0 when VAD was off.
@@ -444,10 +375,10 @@ Java_com_baba_callvault_transcription_WhisperNative_segmentEndMs(JNIEnv *, jobje
 
 // The i-th segment's words, one per line as "<start in ms>\t<word>\n".
 //
-// Times are on the VAD's COMPRESSED timeline when VAD is on -- the audio whisper actually decoded, with
-// the silence taken out -- which is exactly what SpeakerSeamSplit wants: it places each word in a kept
-// stretch by that time. Measured with whisper-cli -ojf on a real call: 0.01 -> 4.74 s for one speaker,
-// 5.07 -> 8.53 s for the other, the seam between the two kept stretches exactly in the gap.
+// Times are in ORIGINAL audio time (C151): whisper_full_get_token_t0 maps a token's time on the VAD's
+// compressed timeline back over each kept stretch's exact bounds, and snaps a time in a removed gap to
+// the nearer stretch. SpeakerSeamSplit therefore no longer rebuilds whisper's layout itself (it used to
+// assume 100 ms between stretches; whisper puts its sample overlap plus 100 ms).
 //
 // Words are assembled HERE, not in Kotlin, because a token is a run of bytes and not a run of characters:
 // a Hebrew word is several tokens and a character can straddle two of them. A token starting with a space
@@ -470,7 +401,7 @@ Java_com_baba_callvault_transcription_WhisperNative_segmentWords(JNIEnv *env, jo
         const char *text = whisper_full_get_token_text(ctx, i, j);
         if (text == nullptr || text[0] == '\0') continue;
         if (text[0] == ' ') flush();
-        if (word.empty()) word_t0 = whisper_full_get_token_data(ctx, i, j).t0;
+        if (word.empty()) word_t0 = whisper_full_get_token_t0(ctx, i, j);
         for (const char *c = text; *c != '\0'; ++c) {
             // The separators of this format must not appear inside a word.
             if (*c != '\t' && *c != '\n' && !(word.empty() && *c == ' ')) word += *c;

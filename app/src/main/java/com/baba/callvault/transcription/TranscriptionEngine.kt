@@ -192,6 +192,21 @@ object TranscriptionEngine {
     }
 
     /**
+     * Decodes one pass; returns the VAD path the successful decode used (null after a VAD-off retry).
+     * Throws when whisper failed a pass nobody asked to stop, logging why first (C42).
+     */
+    private fun decodePass(
+        ptr: Long, audio: FloatArray, threads: Int, language: String?, prompt: String?,
+        vadModelPath: String?, settings: DecodeSettings, pass: Int, passes: Int,
+    ): String? = runCatching {
+        WhisperResult.runPass(
+            vadModelPath, { abortRequested.get() }, pass, passes, { AppLogger.w(TAG, it) },
+        ) { vad ->
+            WhisperNative.transcribe(ptr, audio, threads, language, prompt, vad, settings.beamSize, settings.maxTextCtx)
+        }
+    }.onFailure { AppLogger.w(TAG, "${it.message}; the transcript is not stored as complete") }.getOrThrow()
+
+    /**
      * Transcribes [uri] using the model at [modelPath].
      *
      * @param language ISO code such as "he", or null to auto-detect. Passing the wrong language is
@@ -225,15 +240,12 @@ object TranscriptionEngine {
         settings: DecodeSettings,
     ): List<TranscriptSegment> {
         whisperActive = true
-        try {
-            WhisperNative.transcribe(
-                ptr, audio, preferredThreadCount(), language, prompt,
-                vadModelPath, settings.beamSize, settings.maxTextCtx,
-            )
+        val vadUsed = try {
+            decodePass(ptr, audio, preferredThreadCount(), language, prompt, vadModelPath, settings, 1, 1)
         } finally {
             whisperActive = false
         }
-        return readSegments(ptr, vadOn = vadModelPath != null)
+        return readSegments(ptr, vadOn = vadUsed != null)
     }
 
     /**
@@ -324,7 +336,11 @@ object TranscriptionEngine {
         // once, whatever the length of the call.
         lastSetupMs = 0L
         val setupStartedAt = SystemClock.elapsedRealtime()
-        val ptr = WhisperNative.initContext(modelPath, context.applicationInfo.nativeLibraryDir)
+        val libDir = context.applicationInfo.nativeLibraryDir
+        // systemInfo loads the ggml backends under the shared gate, so a summary starting at the same
+        // moment cannot register them at the same time (C83).
+        NativeBackendGate.shared.ensureLoaded("whisper") { WhisperNative.systemInfo(libDir) }
+        val ptr = WhisperNative.initContext(modelPath, libDir)
         if (ptr == 0L) error("Could not load whisper model at $modelPath")
         try {
             val threads = preferredThreadCount()
@@ -359,11 +375,8 @@ object TranscriptionEngine {
                 // Bracketed as tightly as possible around the native call: outside it, the counter
                 // still holds whatever the previous run left behind.
                 whisperActive = true
-                try {
-                    WhisperNative.transcribe(
-                        ptr, slice.audio, threads, language, prompt,
-                        vadModelPath, settings.beamSize, settings.maxTextCtx,
-                    )
+                val vadUsed = try {
+                    decodePass(ptr, slice.audio, threads, language, prompt, vadModelPath, settings, index + 1, plan.size)
                 } finally {
                     whisperActive = false
                 }
@@ -371,13 +384,13 @@ object TranscriptionEngine {
                 // Logged because a missing VAD model is not an error to whisper.cpp — it decodes
                 // everything instead — so zero here on a run that asked for VAD is the only signal
                 // that the trimming did not happen.
-                if (vadModelPath != null) {
+                if (vadUsed != null) {
                     AppLogger.i(TAG, "VAD kept ${WhisperNative.vadSegmentCount(ptr)} speech stretches")
                 }
 
                 // Before the chunk offset is added, so the stretches and the segments are in the same
                 // (chunk-local) timeline — issue #25.
-                val raw = readSegments(ptr, vadOn = vadModelPath != null)
+                val raw = readSegments(ptr, vadOn = vadUsed != null)
 
                 // Stitched against where the audio REALLY started, which a seek may have moved earlier
                 // than the plan asked for. Using the planned offset instead would skew every timestamp
