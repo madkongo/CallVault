@@ -12,6 +12,7 @@ import android.content.Context
 import androidx.core.net.toUri
 import androidx.test.core.app.ApplicationProvider
 import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.data.transcripts.db.RecordingLabelEntry
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptSegmentEntry
@@ -135,6 +136,30 @@ class TranscriptCascadeTest {
 
         // Assert
         assertNotNull("transcript was destroyed while the recording still exists", transcript(name))
+    }
+
+    @Test
+    fun deleting_a_recording_deletes_its_cached_label() = runBlocking {
+        // R48: the label row holds the contact name and date; it must not outlive the call.
+        val name = "cascade-label.ogg"
+        val other = "cascade-label-kept.ogg"
+        RecordingCatalog.recordLocal(context, name, "content://local/20".toUri(), 10L, 0L)
+        seedTranscript(name)
+        val labels = TranscriptDatabase.get(context).labelDao()
+        labels.upsertAll(
+            listOf(
+                RecordingLabelEntry(name, "Dana", "20/09/26 12:25"),
+                RecordingLabelEntry(other, "Sam", "21/09/26 09:00"),
+            )
+        )
+
+        // Act
+        RecordingCatalog.removeName(context, name)
+
+        // Assert
+        val left = labels.all().map { it.displayName }
+        assertFalse("the contact name and date outlived the call", name in left)
+        assertTrue("an unrelated label was removed", other in left)
     }
 
     @Test

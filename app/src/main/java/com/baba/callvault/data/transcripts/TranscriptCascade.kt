@@ -114,6 +114,15 @@ object TranscriptCascade {
         }
 
         runCatching {
+            val dao = TranscriptDatabase.get(context).labelDao()
+            displayNames.forEach { dao.deleteFor(it) }
+        }.onFailure {
+            // The label is the contact name and date of a call the user deleted; kept, the database
+            // would still say who they spoke to and when (R48). Never logged, for that reason.
+            AppLogger.w(TAG, "Failed to delete labels for ${displayNames.size} recording(s): ${it.message}")
+        }
+
+        runCatching {
             val dao = TranscriptDatabase.get(context).flagDao()
             displayNames.forEach { dao.deleteFor(it) }
         }.onFailure {
