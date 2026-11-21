@@ -25,4 +25,33 @@ object WhisperResult {
         if (rc == 0 || aborted) return
         throw PassFailedException(rc, "whisper failed on pass $pass/$passes (code $rc)")
     }
+
+    /** whisper_full's code for a failed VAD (the Silero context did not load, or detecting speech failed). */
+    const val VAD_FAILED = -1
+
+    /**
+     * Runs one pass through [decode] (given the VAD model path, or null for none) and returns the VAD path
+     * the successful decode used.
+     *
+     * A VAD failure (-1, nobody aborted) is retried ONCE with VAD off, so a corrupt-but-present VAD file
+     * costs the trimming and not the transcript; the retry is logged through [log]. Any other failure,
+     * or a retry that fails too, throws [PassFailedException].
+     */
+    fun runPass(
+        vadModelPath: String?,
+        aborted: () -> Boolean,
+        pass: Int,
+        passes: Int,
+        log: (String) -> Unit,
+        decode: (String?) -> Int,
+    ): String? {
+        val rc = decode(vadModelPath)
+        if (rc == VAD_FAILED && vadModelPath != null && !aborted()) {
+            log("whisper pass $pass/$passes failed with the VAD (code $rc); decoding it again without VAD")
+            check(decode(null), aborted(), pass, passes)
+            return null
+        }
+        check(rc, aborted(), pass, passes)
+        return vadModelPath
+    }
 }
