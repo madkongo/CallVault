@@ -49,14 +49,31 @@ class AfterCallDecisionReceiver : BroadcastReceiver() {
          * The question stays in place, so the same button works once the phone is unlocked. Keep and Undo are
          * not destructive and are never refused.
          */
-        internal fun applyAction(context: Context, action: String, name: String) {
+        internal fun applyAction(context: Context, action: String, name: String) =
+            applyAction(context, action, name, isLocked = { isDeviceLocked(context) }, sleep = Thread::sleep)
+
+        private fun isDeviceLocked(context: Context): Boolean =
+            runCatching { context.getSystemService(KeyguardManager::class.java)?.isDeviceLocked }.getOrNull() == true
+
+        /**
+         * [isLocked] and [sleep] are injectable for tests. A locked phone is re-checked for a short while
+         * (C77, Android 14): the system delivers the authenticated Delete about 60 ms after the unlock, when
+         * the keyguard state can still read locked. A phone that stays locked is refused, and the question is
+         * put back, because the system may have taken it out of the shade when the action was tapped.
+         */
+        internal fun applyAction(
+            context: Context,
+            action: String,
+            name: String,
+            isLocked: () -> Boolean,
+            sleep: (Long) -> Unit,
+        ) {
             when (action) {
                 ACTION_KEEP -> AfterCallDecision.keep(context, name)
                 ACTION_DELETE -> {
-                    val isLocked = runCatching { context.getSystemService(KeyguardManager::class.java)?.isDeviceLocked }
-                        .getOrNull() == true
-                    if (AfterCallPolicy.shouldRefuseDelete(isLocked)) {
+                    if (AfterCallPolicy.shouldRefuseDelete(AfterCallPolicy.isLockedAfterSettling(isLocked, sleep))) {
                         AppLogger.i(TAG, "Delete on the after-call question refused: the phone is locked")
+                        AfterCallDecisions.peek(context, name)?.let { AfterCallNotifier.postQuestion(context, it) }
                         return
                     }
                     AfterCallDecision.delete(context, name)

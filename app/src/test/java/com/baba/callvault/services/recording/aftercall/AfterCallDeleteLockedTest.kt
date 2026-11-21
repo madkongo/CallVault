@@ -84,6 +84,48 @@ class AfterCallDeleteLockedTest {
     }
 
     @Test
+    fun `delete arriving just after the unlock is honoured (C77 Android 14)`() {
+        lock(true)
+        var waitedMs = 0L
+
+        AfterCallDecisionReceiver.applyAction(
+            context, AfterCallDecisionReceiver.ACTION_DELETE, name,
+            isLocked = { waitedMs < 100L },
+            sleep = { waitedMs += it },
+        )
+
+        assertTrue(AfterCallDecisions.peek(context, name)!!.deleteRequested)
+    }
+
+    @Test
+    fun `delete on a phone that stays locked is refused after a bounded wait and the question is put back`() {
+        var waitedMs = 0L
+        val notifications = shadowOf(context.getSystemService(NotificationManager::class.java))
+        context.getSystemService(NotificationManager::class.java).cancelAll()
+
+        AfterCallDecisionReceiver.applyAction(
+            context, AfterCallDecisionReceiver.ACTION_DELETE, name,
+            isLocked = { true },
+            sleep = { waitedMs += it },
+        )
+
+        assertFalse(AfterCallDecisions.peek(context, name)!!.deleteRequested)
+        assertTrue("bounded wait", waitedMs in 1L..AfterCallPolicy.UNLOCK_SETTLE_MS)
+        assertTrue("the question is back in the shade", notifications.allNotifications.size == 1)
+    }
+
+    @Test
+    fun `an unlocked phone does not wait`() {
+        var slept = false
+        AfterCallDecisionReceiver.applyAction(
+            context, AfterCallDecisionReceiver.ACTION_DELETE, name,
+            isLocked = { false },
+            sleep = { slept = true },
+        )
+        assertFalse(slept)
+    }
+
+    @Test
     fun `the delete button on the posted question asks for the unlock`() {
         val held = AfterCallDecisions.peek(context, name)!!
 

@@ -114,6 +114,21 @@ object AfterCallPolicy {
     /** A Delete tap that reaches the receiver while the phone is locked is not honoured (it needs the unlock first). */
     fun shouldRefuseDelete(isDeviceLocked: Boolean): Boolean = isDeviceLocked
 
+    /** How long a Delete that reads the phone as locked is re-checked, and how often (C77, Android 14). */
+    const val UNLOCK_SETTLE_MS = 1_500L
+    const val UNLOCK_POLL_MS = 100L
+
+    /** True only if the phone still reads as locked after [UNLOCK_SETTLE_MS]; an unlocked read returns at once. */
+    fun isLockedAfterSettling(isLocked: () -> Boolean, sleep: (Long) -> Unit): Boolean {
+        var waited = 0L
+        while (isLocked()) {
+            if (waited >= UNLOCK_SETTLE_MS) return true
+            sleep(UNLOCK_POLL_MS)
+            waited += UNLOCK_POLL_MS
+        }
+        return false
+    }
+
     /** Hold only when the user asked to be asked AND the question can be shown. */
     fun shouldHold(mode: AfterCallMode, canShowQuestion: Boolean): Boolean = shouldAsk(mode) && canShowQuestion
 
