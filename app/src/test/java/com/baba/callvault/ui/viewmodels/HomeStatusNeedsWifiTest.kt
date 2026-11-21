@@ -77,4 +77,23 @@ class HomeStatusNeedsWifiTest {
             assertEquals("$n", null, status(n))
         }
     }
+
+    @Test
+    fun aSourceThatAnswersThenGoesNullIsReadOnlyOnce() {
+        var reads = 0
+        val flaky = { if (reads++ == 0) HomeViewModel.HomeStatus.NEEDS_WIFI else null }
+
+        val shown = HomeViewModel.pickConfiguredStatus(recorderDown = flaky, battery = { null }, recoveryStuck = { false })
+
+        assertEquals(HomeViewModel.HomeStatus.NEEDS_WIFI, shown)
+        assertEquals(1, reads)
+    }
+
+    @Test
+    fun theOrderIsRecorderDownThenBatteryThenStuckThenReady() {
+        val battery = HomeViewModel.HomeStatus.BATTERY_EXEMPTION_ADVISED
+        assertEquals(battery, HomeViewModel.pickConfiguredStatus({ null }, { battery }, { true }))
+        assertEquals(HomeViewModel.HomeStatus.RECOVERY_STUCK, HomeViewModel.pickConfiguredStatus({ null }, { null }, { true }))
+        assertEquals(HomeViewModel.HomeStatus.READY, HomeViewModel.pickConfiguredStatus({ null }, { null }, { false }))
+    }
 }

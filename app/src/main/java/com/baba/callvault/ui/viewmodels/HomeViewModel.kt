@@ -1262,12 +1262,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // Everything is configured, so the only remaining question is whether the recorder can actually
         // be brought up. Gated on the recovery streak rather than on the daemon simply being down —
         // an idle daemon is the normal, healthy state and must never turn the card red.
-        null -> when {
-            recorderDownStatus() != null -> recorderDownStatus()!!
-            batteryExemptionStatus() != null -> batteryExemptionStatus()!!
-            DaemonKeepAliveService.isRecoveryStuck -> HomeStatus.RECOVERY_STUCK
-            else -> HomeStatus.READY
-        }
+        null -> pickConfiguredStatus(
+            recorderDown = ::recorderDownStatus,
+            battery = ::batteryExemptionStatus,
+            recoveryStuck = { DaemonKeepAliveService.isRecoveryStuck },
+        )
     }
 
     /**
@@ -1602,6 +1601,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          * (review C97): every named cause the keep-alive treats as unrecoverable. Null when the notice is not
          * one of those (ready, starting, or a cause the card already shows another way).
          */
+        /**
+         * First problem wins; each source is read exactly once. Reading one twice (once to test, once to use)
+         * let a recorder that connected in between turn the second read into null and crash Home.
+         */
+        internal fun pickConfiguredStatus(
+            recorderDown: () -> HomeStatus?,
+            battery: () -> HomeStatus?,
+            recoveryStuck: () -> Boolean,
+        ): HomeStatus =
+            recorderDown() ?: battery() ?: if (recoveryStuck()) HomeStatus.RECOVERY_STUCK else HomeStatus.READY
+
         internal fun statusForNotice(notice: ReadinessNotice): HomeStatus? = when (notice) {
             ReadinessNotice.NEEDS_WIFI, ReadinessNotice.NEEDS_WIFI_TO_RESTART -> HomeStatus.NEEDS_WIFI
             ReadinessNotice.WD_OFF_BY_USER -> HomeStatus.WD_OFF_BY_USER

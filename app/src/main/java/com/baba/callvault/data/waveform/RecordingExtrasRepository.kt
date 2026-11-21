@@ -141,6 +141,10 @@ object RecordingExtrasRepository {
         return accumulator.peaks()
     }
 
+    /** Whether a shape is already cached for [displayName]; one indexed lookup, so callers can skip queueing a draw (R40). */
+    suspend fun hasWaveform(context: Context, displayName: String): Boolean =
+        runCatching { dao(context).waveform(displayName) != null }.getOrDefault(false)
+
     /**
      * Computes and caches the shape now, so opening the recording later has nothing to wait for.
      *
@@ -150,10 +154,6 @@ object RecordingExtrasRepository {
      *
      * Skips anything already cached, so it costs nothing when called twice.
      */
-    /** Whether a shape is already cached for [displayName]; one indexed lookup, so callers can skip queueing a draw (R40). */
-    suspend fun hasWaveform(context: Context, displayName: String): Boolean =
-        runCatching { dao(context).waveform(displayName) != null }.getOrDefault(false)
-
     suspend fun precomputeWaveform(context: Context, displayName: String, uri: Uri) {
         runCatching {
             if (dao(context).waveform(displayName) != null) return
