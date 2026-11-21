@@ -20,6 +20,7 @@ import androidx.work.WorkManager
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.SyncScheduleMode
+import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.utils.AppLogger
 import java.util.concurrent.TimeUnit
 
@@ -73,6 +74,10 @@ object StorageRouter {
         AppLogger.i(TAG, "Enqueued copy-to-Drive for '$displayName' (target=$target)")
     }
 
+    /** Whether the setting that writes [sidecarName] (`.md` transcript or `.json` details) is on. */
+    internal fun sidecarMayExist(sidecarName: String, detailsFileOn: Boolean, transcriptSidecarOn: Boolean): Boolean =
+        if (TranscriptSidecar.isSidecarName(sidecarName)) transcriptSidecarOn else detailsFileOn
+
     /**
      * Routes a recording's sidecar (the `.json` details file or the `.md` transcript) to Drive the same
      * way [route] does the audio — but ONLY in [SyncScheduleMode.IMMEDIATE]. DAILY/WEEKLY already copy the
@@ -87,6 +92,9 @@ object StorageRouter {
     fun routeSidecar(context: Context, recordingName: String, sidecarName: String, mimeType: String) {
         if (!CloudCopyPolicy.mayGoToCloud(recordingName)) return
         val prefs = AppPreferences(context)
+        // Both sidecar settings are off by default; looking for a file nobody writes lists the whole folder
+        // (about 18 s on 3,000 files), after every call and every transcription (R43).
+        if (!sidecarMayExist(sidecarName, prefs.isWriteMetadataFileEnabled(), prefs.isWriteTranscriptSidecarEnabled())) return
         val target = prefs.getStorageTarget()
         if (target == StorageTarget.LOCAL) return
         if (prefs.getSyncScheduleMode() != SyncScheduleMode.IMMEDIATE) return // the sweep handles DAILY/WEEKLY

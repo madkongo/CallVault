@@ -16,7 +16,9 @@ import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.transcripts.db.CallSummaryEntry
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptSegmentEntry
+import com.baba.callvault.data.transcripts.db.TranscriptWithSegments
 import com.baba.callvault.server.speakers.SpeakerChannel
+import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.transcription.ChineseScript
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.first
@@ -90,7 +92,8 @@ class SummaryRunner(
         shouldStop: () -> Boolean = { false },
         onProgress: (completed: Int, total: Int) -> Unit = { _, _ -> }
     ): CallSummary? {
-        val stored = segmentsFor(displayName)
+        val source = transcriptFor(displayName)
+        val stored = source?.segments.orEmpty()
         val segments = stored.named(displayName)
         val speakersAreNamed = segments !== stored
         if (segments.isEmpty()) {
@@ -150,8 +153,10 @@ class SummaryRunner(
                 // part to it would mean minutes of work the user watched, ending in nothing —
                 // so a merge that will not parse falls back to the parts that did.
                 logDroppedFragments("merge", listOf(document))
-                CallSummary.parse(document) ?: run {
-                    AppLogger.w(TAG, "The merge did not parse; falling back to the parts")
+                // Whole or nothing: a merge cut off by its token budget is not repaired into a shorter
+                // summary, because the parts joined together say more than half a merge (C71).
+                CallSummary.parseComplete(document) ?: run {
+                    AppLogger.w(TAG, "The merge did not parse whole; falling back to the parts")
                     CallSummary.concatenate(parsedParts)
                 }
             }
@@ -202,16 +207,26 @@ class SummaryRunner(
         }.getOrNull().orEmpty()
         val toStore = summary.inheritingDismissed(dismissed)
 
-        db.summaryDao().upsert(
+        // Only if the transcript this was written from still exists unchanged: the run took minutes, and a
+        // recording deleted or re-transcribed meanwhile must not get a summary of text that is gone (C53).
+        val kept = db.summaryDao().upsertIfTranscriptUnchanged(
             CallSummaryEntry(
                 displayName = displayName,
                 document = toStore.toJson(),
                 searchText = toStore.searchableText(),
                 model = modelId,
                 createdAt = now
-            )
+            ),
+            transcriptUpdatedAt = source?.transcript?.updatedAt ?: return null
         )
+        if (!kept) {
+            AppLogger.w(TAG, "No summary stored: the transcript was changed or deleted while summarising")
+            return null
+        }
         AppLogger.i(TAG, "Stored a summary of ${chunks.size} chunk(s)")
+        // The summary is part of the .md file beside the recording, so a copy written before it existed is
+        // now out of date (C112). No-op when sidecars are off; never throws.
+        TranscriptSidecar.refresh(context, displayName)
         return summary
     }
 
@@ -270,10 +285,10 @@ class SummaryRunner(
                 ?.contactName
         }.getOrNull().orEmpty().ifBlank { "the other person" }
 
-    /** The transcribed words, in order. Empty when there is no transcript. */
-    private suspend fun segmentsFor(displayName: String): List<TranscriptSegmentEntry> {
-        if (!TranscriptDatabase.exists(context)) return emptyList()
-        return db.transcriptDao().observe(displayName).first()?.segments.orEmpty()
+    /** The transcript row with its words in order, or null when there is no transcript. */
+    private suspend fun transcriptFor(displayName: String): TranscriptWithSegments? {
+        if (!TranscriptDatabase.exists(context)) return null
+        return db.transcriptDao().observe(displayName).first()
     }
 
     private companion object {

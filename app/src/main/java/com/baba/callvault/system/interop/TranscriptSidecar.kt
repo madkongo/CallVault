@@ -18,8 +18,11 @@ import com.baba.callvault.data.transcripts.export.ExportLabels
 import com.baba.callvault.data.transcripts.export.TranscriptExport
 import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
+import com.baba.callvault.system.storage.StorageRouter
 import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -48,27 +51,29 @@ object TranscriptSidecar {
     /**
      * Writes the sidecar for [displayName], or removes it when there is nothing (no transcript, summary
      * or note) to write. No-op when the setting is off. Never throws.
+     *
+     * @return true when a sidecar file was written, so a caller can send it on to Drive.
      */
     suspend fun writeOrClear(
         context: Context,
         displayName: String,
         clearWhenEmpty: Boolean = true,
         index: FolderIndex? = null,
-    ) {
+    ): Boolean {
         // A sidecar's own name maps to itself, so replacing it would delete the file we mean to keep.
-        if (isSidecarName(displayName)) return
+        if (isSidecarName(displayName)) return false
         val prefs = AppPreferences(context)
-        if (!prefs.isWriteTranscriptSidecarEnabled()) return
+        if (!prefs.isWriteTranscriptSidecarEnabled()) return false
         val folderUri = prefs.getRecordingFolderUri()
         if (folderUri == null) {
             AppLogger.w(TAG, "No recording folder; not writing a transcript sidecar for '$displayName'.")
-            return
+            return false
         }
-        runCatching {
+        return runCatching {
             val content = buildContent(context, displayName)
             // The backfill passes clearWhenEmpty=false: with nothing to write there is nothing to replace,
             // and the folder lookup below is a provider round trip per recording.
-            if (content.isNullOrBlank() && !clearWhenEmpty) return@runCatching
+            if (content.isNullOrBlank() && !clearWhenEmpty) return@runCatching false
             val folder = index?.folder ?: DocumentFile.fromTreeUri(context, folderUri)
                 ?: error("folder $folderUri could not be opened")
             val name = sidecarNameFor(displayName)
@@ -79,17 +84,33 @@ object TranscriptSidecar {
             (if (index != null) index.remove(name) else folder.findFile(name))?.delete()
             if (content.isNullOrBlank()) {
                 AppLogger.d(TAG, "Nothing to write for '$displayName'; sidecar left absent.")
-                return@runCatching
+                return@runCatching false
             }
             val doc = folder.createFile(FORMAT.mimeType, name) ?: error("could not create $name")
             index?.put(name, doc)
             context.contentResolver.openOutputStream(doc.uri)?.use { it.write(content.toByteArray()) }
                 ?: error("could not open $name for writing")
             AppLogger.i(TAG, "Wrote transcript sidecar '$name'.")
+            true
         }.onFailure {
             // A cancelled job must stop, not log a warning per remaining recording.
             if (it is CancellationException) throw it
             AppLogger.w(TAG, "Could not write the transcript sidecar for '$displayName': ${it.message}")
+        }.getOrDefault(false)
+    }
+
+    /**
+     * Brings the sidecar up to date after something it mirrors changed (a summary was stored), and sends
+     * a rewritten file on to Drive the way the transcript step does. One entry point so each path that
+     * changes the text does not re-learn that (review C112). NonCancellable, so a stopping worker still
+     * leaves the file matching the database. Never throws; a no-op when the setting is off.
+     */
+    suspend fun refresh(context: Context, displayName: String) {
+        withContext(NonCancellable) {
+            if (!writeOrClear(context, displayName)) return@withContext
+            runCatching {
+                StorageRouter.routeSidecar(context, displayName, sidecarNameFor(displayName), FORMAT.mimeType)
+            }.onFailure { AppLogger.w(TAG, "Could not route the refreshed transcript sidecar to Drive: ${it.message}") }
         }
     }
 

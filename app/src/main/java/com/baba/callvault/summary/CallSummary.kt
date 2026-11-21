@@ -199,6 +199,19 @@ data class CallSummary(
             return objectIn(closed)?.let { json -> from(json, REQUIRED_WHEN_CLOSED) }
         }
 
+        /**
+         * Like [parse], but only for a document that arrived whole: a cut-off one is NOT closed by hand.
+         *
+         * The merge pass of a long call uses this. [parse] repairs a truncated document into an
+         * incomplete summary, which then replaced the complete answer the parts could be joined into
+         * ([concatenate]); for the merge, a cut means "fall back to the parts" (review C71). A single
+         * chunk keeps using [parse], where the repaired document is all there is.
+         */
+        fun parseComplete(raw: String): CallSummary? {
+            val text = SummaryText.stripReasoning(raw)
+            return objectIn(text)?.let { json -> from(json, REQUIRED) }
+        }
+
         /** The summary in [json], or null when [required] is not all there or the prose is blank. */
         private fun from(json: JSONObject, required: List<String>): CallSummary? {
             if (required.any { !json.has(it) }) return null

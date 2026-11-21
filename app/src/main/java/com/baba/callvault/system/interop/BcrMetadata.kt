@@ -26,8 +26,9 @@ import java.util.Locale
  * else in the app: a plausible-looking file with the wrong key names is worse than no file, because
  * the reader silently shows blanks instead of failing.
  *
- * BCR guarantees only `timestamp_unix_ms`, `timestamp` and `output.format.*`; every other field is
- * set to **null** when it cannot be determined. That is what makes this safe for us to emit — where
+ * BCR guarantees `timestamp_unix_ms`, `timestamp`, `app_version_name`, `app_version_code`,
+ * `calls[].phone_number_e164` and `output.format.*` (its README, re-read for review N42); every other
+ * field is set to **null** when it cannot be determined. That is what makes this safe for us to emit — where
  * CallVault does not know something (the SIM slot, the encoder's exact frame counts) the honest
  * answer is already part of the format, and we never have to guess a value to fill a hole.
  */
@@ -63,6 +64,9 @@ object BcrMetadata {
         val nearChannel: String? = null,
         /** 1-based SIM slot the call used, when the opt-in SIM label is on and the call log says; else null. */
         val simSlot: Int? = null,
+        /** CallVault's own version, written as BCR writes its own (`app_version_*`). Null when not given. */
+        val appVersionCode: Int? = null,
+        val appVersionName: String? = null,
     )
 
     /** The `callvault` block's schema version, so a reader can tell what to expect of it. */
@@ -79,6 +83,8 @@ object BcrMetadata {
         // the digits must not become Arabic-Indic on an ar-EG phone, but the offset is genuinely
         // local — BCR's own example carries one.
         root.put("timestamp", SimpleDateFormat(ISO_8601, Locale.US).format(Date(input.timestampUnixMs)))
+        root.putOrNull("app_version_name", input.appVersionName)
+        root.putOrNull("app_version_code", input.appVersionCode)
         root.putOrNull("package_name", input.packageName)
         root.putOrNull("direction", input.direction)
         // We do not read the SIM slot anywhere, and BCR's contract already has a word for that.
@@ -90,6 +96,7 @@ object BcrMetadata {
         // Null, not a re-derived guess. BCR means the country-specific formatting Android produced;
         // ours would be our own formatter's opinion wearing that field's name.
         call.put("phone_number_formatted", JSONObject.NULL)
+        call.putOrNull("phone_number_e164", e164Of(input.phoneNumber))
         call.put("caller_name", JSONObject.NULL)
         call.putOrNull("contact_name", input.contactName)
         root.put("calls", JSONArray().put(call))
@@ -138,6 +145,15 @@ object BcrMetadata {
 
         return root.toString(4)
     }
+
+    /** A full international number: `+`, then 7 to 15 digits, the first not 0 (the E.164 shape). */
+    private val E164 = Regex("""\+[1-9][0-9]{6,14}""")
+
+    /**
+     * [number] when it is already in E.164 form, else null. A national number cannot be completed without
+     * knowing the country, and a guessed country code would be a wrong number wearing the right field.
+     */
+    internal fun e164Of(number: String?): String? = number?.trim()?.takeIf { E164.matches(it) }
 
     /**
      * Puts [value], or an explicit JSON null when it is absent.

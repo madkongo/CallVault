@@ -159,6 +159,54 @@ class SummaryRunnerTest {
     }
 
     @Test
+    fun `a merge that ran out of tokens falls back to the joined parts instead of a repaired fragment`() = runBlocking {
+        // C71: a cut-off merge used to be closed by hand into an incomplete summary, which then
+        // replaced the complete one the parts could be joined into.
+        giveTranscript(words = List(4) { "x".repeat(SummaryChunking.DEFAULT_MAX_CHARS / 2) })
+        val truncatedMerge =
+            """{"intent":"Cut merge","summary":"Only the start of the merge.","keyPoints":["Half a point""""
+        val model = FakeModel { if (isMerge(it)) truncatedMerge else json("part") }
+
+        val summary = runner(model).run(CALL, MODEL_ID, PATH, "en", now = 1L)
+
+        assertEquals("the parts' own intent, not the cut merge's", "part", summary?.intent)
+        assertEquals("part", CallSummary.parse(TranscriptDatabase.get(context).summaryDao().summary(CALL)!!.document)?.intent)
+    }
+
+    @Test
+    fun `a recording deleted while it was being summarised gets no summary`() = runBlocking {
+        // C53: the run takes minutes and nothing stopped the result being stored for a call that is gone.
+        giveTranscript(words = listOf("hello there"))
+        val model = FakeModel {
+            runBlocking { TranscriptDatabase.get(context).transcriptDao().deleteFor(CALL) }
+            json("orphan")
+        }
+
+        val summary = runner(model).run(CALL, MODEL_ID, PATH, "en", now = 1L)
+
+        assertNull(summary)
+        assertNull(TranscriptDatabase.get(context).summaryDao().summary(CALL))
+    }
+
+    @Test
+    fun `a transcript redone while it was being summarised does not get the old words' summary`() = runBlocking {
+        giveTranscript(words = listOf("hello there"))
+        val model = FakeModel {
+            runBlocking {
+                TranscriptDatabase.get(context).transcriptDao().upsertTranscript(
+                    TranscriptEntry(CALL, TranscriptState.QUEUED, MODEL_ID, "en", 99L, null)
+                )
+            }
+            json("stale")
+        }
+
+        val summary = runner(model).run(CALL, MODEL_ID, PATH, "en", now = 1L)
+
+        assertNull(summary)
+        assertNull(TranscriptDatabase.get(context).summaryDao().summary(CALL))
+    }
+
+    @Test
     fun `every pass is constrained by the grammar`() = runBlocking {
         // The grammar is the only thing making malformed JSON impossible. A pass that forgot it
         // would still usually work, which is exactly why it needs a test rather than vigilance.
