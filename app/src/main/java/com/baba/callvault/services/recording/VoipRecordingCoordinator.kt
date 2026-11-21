@@ -8,6 +8,7 @@
 
 package com.baba.callvault.services.recording
 
+import com.baba.callvault.system.updates.UpdateReadyNotice
 import com.baba.callvault.services.recording.aftercall.AfterCallDecision
 import android.content.Context
 import android.media.AudioDeviceInfo
@@ -964,6 +965,8 @@ object VoipRecordingCoordinator {
      */
     @Synchronized
     fun onCallEnded(context: Context, neverConnected: Boolean = false) {
+        // C3: an update install held back by this call is announced as ready (one notice, no install).
+        UpdateReadyNotice.onAnyCallEnded(context)
         if (!recording) {
             takeNotReadyAtEnd(context)
             callEnds++

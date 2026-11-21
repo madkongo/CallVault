@@ -66,6 +66,21 @@ object UpdateNotifications {
         )
     }
 
+    /** C3: "Update ready, tap to install", after a call held the install back. Same id and tap path as "available". */
+    fun showUpdateReady(context: Context, tag: String) {
+        val openApp = PendingIntent.getActivity(
+            context, NotificationDestination.Update.requestCode,
+            openAppIntent(context),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        post(
+            context, AVAILABLE_NOTIFICATION_ID,
+            title = LocalizedContext.of(context).getString(R.string.update_notif_ready_title, tag.removePrefix("v")),
+            text = LocalizedContext.of(context).getString(R.string.update_notif_ready_text),
+            contentIntent = openApp
+        )
+    }
+
     /**
      * Ongoing "Downloading update… N%" notification — the only feedback the user has once the app's
      * own UI is torn down by the install, so it's posted for BOTH the auto and manual paths.

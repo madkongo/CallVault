@@ -166,6 +166,8 @@ object UpdateManager {
                 preferences.setPendingUpdateTag(null)
                 AppLogger.i(TAG, "Update install deferred: a call is in progress")
                 UpdateNotifications.cancelProgress(context)
+                // C3: the update is downloaded and ready; one "ready" notice follows the call. No automatic install.
+                UpdateReadyNotice.forContext(context).noteDeferred()
                 false
             }
             UpdateInstaller.ShellResult.UNAVAILABLE -> {
@@ -176,6 +178,8 @@ object UpdateManager {
                     // No shell and no interactive path: leave the "update available" notification so
                     // the user can still install manually.
                     notifyAvailableOnce(context, preferences, release.tag)
+                    // The system installer is also called off when a call began meanwhile (C3).
+                    if (!CallInProgressGate.mayInstall(context)) UpdateReadyNotice.forContext(context).noteDeferred()
                     false
                 }
             }

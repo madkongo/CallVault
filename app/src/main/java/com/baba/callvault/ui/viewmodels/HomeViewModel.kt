@@ -1117,7 +1117,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     val percent = running?.progress?.getInt(UpdateInstallWorker.KEY_PROGRESS, -1) ?: -1
                     _uiState.update {
                         it.copy(
-                            isUpdateInstalling = running != null,
+                            isUpdateInstalling = UpdateInstallWorker.isBannerBusy(infos.map { it.state }),
                             updateProgressPercent = percent,
                             availableUpdateTag = preferences.getAvailableUpdateTag(),
                             updatePopupTag = updatePopupTag()
