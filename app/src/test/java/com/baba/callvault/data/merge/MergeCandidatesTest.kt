@@ -109,4 +109,49 @@ class MergeCandidatesTest {
         // Including one whose contact is called Important — the exemption reads the marker slot only.
         assertTrue(MergeCandidates.canMerge(call("20260916_101010.123+0300_in_Important.ogg", null)))
     }
+
+    // A name parsed from a file via RecordingsRepository.parseName, as the catalog row would carry it.
+    private fun parsedCall(name: String): RecordingItem {
+        val p = com.baba.callvault.data.recordings.RecordingsRepository.parseName(name)
+        return call(name, p.number).copy(contactName = p.contactName)
+    }
+
+    @Test
+    fun `default template calls from one number are candidates for each other`() {
+        val a = parsedCall("20261121_111219.379+0200_in_0541234567.ogg")
+        val b = parsedCall("20261121_120000.100+0200_out_0541234567.ogg")
+        val c = parsedCall("20261121_130000.100+0200_out_0549999999.ogg")
+        assertEquals(listOf(b.displayName), MergeCandidates.of(a, listOf(a, b, c)).map { it.displayName })
+    }
+
+    @Test
+    fun `contact name template calls from one contact are candidates for each other`() {
+        val a = parsedCall("20261121_111219.379+0200_in_[C:4a4b].ogg")
+        val b = parsedCall("20261121_120000.100+0200_out_[C:4a4b].ogg")
+        assertEquals(listOf(b.displayName), MergeCandidates.of(a, listOf(a, b)).map { it.displayName })
+    }
+
+    @Test
+    fun `contact name template never joins two different contacts whose tokens share digits`() {
+        val a = parsedCall("20261121_111219.379+0200_in_[C:4a4b].ogg")
+        val other = parsedCall("20261121_120000.100+0200_out_[C:9a4b].ogg")
+        val named = parsedCall("20261121_121000.100+0200_out_Dana Levi.ogg")
+        assertEquals(emptyList<String>(), MergeCandidates.of(a, listOf(a, other, named)).map { it.displayName })
+    }
+
+    @Test
+    fun `a name where the number should be does not match a number made of its digits`() {
+        val a = parsedCall("20261121_111219.379+0200_in_[C:4a4b].ogg")
+        val numeric = parsedCall("20261121_120000.100+0200_out_44.ogg")
+        assertEquals(emptyList<String>(), MergeCandidates.of(a, listOf(a, numeric)).map { it.displayName })
+    }
+
+    @Test
+    fun `two Private or Unknown files are not candidates for each other`() {
+        listOf("Private", "Unknown", "Anonymous", "Hidden").forEach { word ->
+            val a = parsedCall("20261121_111219.379+0200_in_$word.ogg")
+            val b = parsedCall("20261121_120000.100+0200_out_$word.ogg")
+            assertEquals(word, emptyList<String>(), MergeCandidates.of(a, listOf(a, b)).map { it.displayName })
+        }
+    }
 }
