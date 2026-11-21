@@ -12,7 +12,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.integrations.adb.UsbDebuggingEvents
 import com.baba.callvault.services.call.CallMonitorService
+import com.baba.callvault.services.call.ForegroundStartGuard
 import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.utils.AppLogger
 
@@ -29,13 +31,23 @@ class BootReceiver : BroadcastReceiver() {
         // stopped Shizuku too.
         if (!AppPreferences(context).isPrivilegedTransportSetUp()) return
         AppLogger.i(TAG, "Boot completed; starting ADB connection service + post-boot call monitor")
-        AdbConnectionService.start(context)
+        // Each start on its own: the system may refuse one (a background-start limit), and one refusal must neither
+        // crash the receiver nor cost the other two (C57). Refusals go to the always-on log.
+        startOrLog(context, "boot connection service") { AdbConnectionService.start(context) }
         // Hold a live telephony listener for a bounded window so the first call(s) after a reboot are
         // detected in real time, instead of via the post-boot-delayed PHONE_STATE broadcast.
-        CallMonitorService.start(context)
+        startOrLog(context, "post-boot call monitor") { CallMonitorService.start(context) }
         // Persistent anchor: keep the recorder daemon warm from boot onward so calls record instantly
         // (and off-Wi-Fi over binder) without a per-call cold-start. Boot grants the FGS-start exemption.
-        DaemonKeepAliveService.start(context)
+        startOrLog(context, "keep-alive") { DaemonKeepAliveService.start(context) }
+    }
+
+    private fun startOrLog(context: Context, what: String, start: () -> Unit) {
+        val outcome = ForegroundStartGuard.attempt(start)
+        if (outcome is ForegroundStartGuard.Outcome.Refused) {
+            AppLogger.w(TAG, "Boot: could not start the $what: ${outcome.cause.message}")
+            runCatching { UsbDebuggingEvents.record(context, ForegroundStartGuard.describe("boot $what", outcome.cause, batteryExempt = false)) }
+        }
     }
 
     companion object {
