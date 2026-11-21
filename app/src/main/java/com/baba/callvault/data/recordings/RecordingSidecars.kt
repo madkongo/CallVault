@@ -106,8 +106,15 @@ object RecordingSidecars {
                 val doomed = orphanedSidecarsIn(listing.names, orphanedAudio)
                 listing.names.forEachIndexed { i, name ->
                     if (name !in doomed) return@forEachIndexed
-                    val gone = runCatching { DocumentFile.fromSingleUri(context, listing.uris[i])?.delete() == true }
-                        .getOrElse { e -> AppLogger.w(TAG, "Deleting sidecar '$name' threw: ${e.message}"); false }
+                    val gone = runCatching {
+                        val doc = DocumentFile.fromSingleUri(context, listing.uris[i])
+                        // Only a plain file: a folder that happens to carry a sidecar's name is never touched.
+                        if (doc == null || !doc.isFile) {
+                            AppLogger.w(TAG, "'$name' is not a plain file; left alone")
+                            return@runCatching false
+                        }
+                        doc.delete()
+                    }.getOrElse { e -> AppLogger.w(TAG, "Deleting sidecar '$name' threw: ${e.message}"); false }
                     if (gone) deleted++ else AppLogger.w(TAG, "Sidecar '$name' was not deleted; it stays")
                 }
             }.onFailure { AppLogger.w(TAG, "Could not clean up sidecars in a storage folder: ${it.message}") }
