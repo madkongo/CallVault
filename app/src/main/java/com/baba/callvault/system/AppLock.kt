@@ -8,6 +8,7 @@
 
 package com.baba.callvault.system
 
+import android.app.KeyguardManager
 import android.content.Context
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
@@ -51,11 +52,20 @@ object AppLock {
      * False when there is no screen lock set up, which is the case that matters: enabling the setting
      * there would lock the app with a key that does not exist.
      *
-     * `BIOMETRIC_STATUS_UNKNOWN` and "none enrolled" are treated as available, because both can be
-     * resolved by the user in Settings and the device-credential path covers them meanwhile.
+     * `BIOMETRIC_STATUS_UNKNOWN` is treated as available. "None enrolled" is available only when the
+     * keyguard is secure: with the device credential allowed, that status means no screen lock at all.
      */
-    fun isAvailable(context: Context): Boolean =
-        canLockWith(BiometricManager.from(context).canAuthenticate(ALLOWED))
+    fun isAvailable(context: Context): Boolean {
+        val status = BiometricManager.from(context).canAuthenticate(ALLOWED)
+        // Read the keyguard only for the one status it settles (C78); any other status is decided alone.
+        val deviceSecure = if (status == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+            runCatching { context.getSystemService(KeyguardManager::class.java)?.isDeviceSecure }
+                .getOrNull() ?: true
+        } else {
+            true
+        }
+        return canLockWith(status, deviceSecure)
+    }
 
     /**
      * Which `BiometricManager` statuses mean the app can be locked, separated out so the decision can
@@ -67,16 +77,27 @@ object AppLock {
      * credential still answers and the user can enrol later without the setting having silently
      * turned itself off in the meantime.
      */
-    internal fun canLockWith(status: Int): Boolean = when (status) {
+    internal fun canLockWith(status: Int, deviceSecure: Boolean = true): Boolean = when (status) {
         BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
         BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED,
         BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED -> false
+        // With DEVICE_CREDENTIAL in the set the framework answers NONE_ENROLLED only when the phone
+        // has no screen lock at all: no key for the door (C78). Needs the keyguard's word to be sure.
+        BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> deviceSecure
         else -> true
     }
 
     /** Whether the user has asked for the app to be locked **and** the phone can honour it. */
     fun isEnabled(context: Context): Boolean =
         AppPreferences(context).isAppLockEnabled() && isAvailable(context)
+
+    /**
+     * Whether the current visit counts as unlocked after the Settings toggle changed (C76).
+     * Switching the lock on from the open app is the owner being present, so it stays unlocked until
+     * the next visit; switching it off changes nothing here.
+     */
+    internal fun unlockedAfterToggle(nowEnabled: Boolean, wasUnlocked: Boolean): Boolean =
+        nowEnabled || wasUnlocked
 
     /** The authenticator set to pass to a `BiometricPrompt.PromptInfo`. */
     fun allowedAuthenticators(): Int = ALLOWED

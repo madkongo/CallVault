@@ -70,6 +70,37 @@ class AppLockTest {
     }
 
     @Test
+    fun `none enrolled on a phone without a screen lock cannot be locked (C78)`() {
+        // For BIOMETRIC_WEAK|DEVICE_CREDENTIAL the framework answers NONE_ENROLLED only when there is no
+        // screen lock at all, so there is no key for the door.
+        assertFalse(AppLock.canLockWith(BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED, deviceSecure = false))
+    }
+
+    @Test
+    fun `none enrolled on a phone with a screen lock stays lockable (C78)`() {
+        assertTrue(AppLock.canLockWith(BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED, deviceSecure = true))
+    }
+
+    @Test
+    fun `a screen-lock reading never blocks the other statuses (C78)`() {
+        // Only the NONE_ENROLLED answer is cross-checked; a false-negative keyguard read must not
+        // switch the lock off for a phone that authenticates fine.
+        assertTrue(AppLock.canLockWith(BiometricManager.BIOMETRIC_SUCCESS, deviceSecure = false))
+        assertTrue(AppLock.canLockWith(BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE, deviceSecure = false))
+    }
+
+    @Test
+    fun `turning the lock on from the open app keeps this visit unlocked (C76)`() {
+        assertTrue(AppLock.unlockedAfterToggle(nowEnabled = true, wasUnlocked = false))
+    }
+
+    @Test
+    fun `turning the lock off leaves the unlocked state alone (C76)`() {
+        assertFalse(AppLock.unlockedAfterToggle(nowEnabled = false, wasUnlocked = false))
+        assertTrue(AppLock.unlockedAfterToggle(nowEnabled = false, wasUnlocked = true))
+    }
+
+    @Test
     fun `the lock is off until it is asked for`() {
         // The default matters: a lock nobody asked for, appearing on an app they already rely on,
         // reads as a malfunction rather than as a feature.

@@ -11,7 +11,6 @@ package com.baba.callvault.onboarding
 
 import android.content.Context
 import com.baba.callvault.data.AppPreferences
-import com.baba.callvault.integrations.adb.AdbConnectionManager
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.ui.viewmodels.AppNavigationViewModel
@@ -87,11 +86,12 @@ object OnboardingStatus {
             // Embedded-ADB is the privileged transport. Onboarding is satisfied once the user has paired (a
             // persisted flag) — not only while a live connection exists, since a connection is
             // per-process and would otherwise force re-onboarding on every launch. The live
-            // connection is (re)established lazily by the recording path and on app start.
+            // connection is (re)established lazily by the recording path and on app start. No live
+            // isConnected term here (C85): it takes libadb's lock, which pairing holds for the whole
+            // exchange, and this runs on the main thread. Every successful connect persists the flag.
             // In Shizuku mode there is nothing to pair, so this step is satisfied by the choice
             // itself; otherwise onboarding would never complete and the app would loop on setup.
-            adbConnected             = preferences.isPrivilegedTransportSetUp() ||
-                AdbConnectionManager.getInstance(context).isConnected,
+            adbConnected             = preferences.isPrivilegedTransportSetUp(),
             wizardCompleted          = preferences.isWizardCompleted()
         )
     }

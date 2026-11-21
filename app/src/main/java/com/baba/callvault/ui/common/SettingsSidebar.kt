@@ -44,8 +44,6 @@ fun SettingsSidebar(
     settings: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    BackHandler(enabled = open) { onClose() }
-
     Box(Modifier.fillMaxSize()) {
         content()
         AnimatedVisibility(
@@ -54,6 +52,9 @@ fun SettingsSidebar(
             enter = slideInHorizontally { it } + fadeIn(),
             exit = slideOutHorizontally { it } + fadeOut(),
         ) {
+            // Registered when the page appears, so it is the newest handler and answers before any
+            // Home handler (open recording, reading view) that is covered by the page (C158).
+            BackHandler(enabled = open) { onClose() }
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 // Match the app background so CvScaffold's own header sits on the colour it expects.
