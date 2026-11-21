@@ -60,6 +60,12 @@ class RecordingPlaybackController {
 
     private var player: MediaPlayer? = null
 
+    /** Kept so a Play tap in [Phase.ERROR] can load the same track again (review C154). */
+    private var appContext: Context? = null
+
+    /** A seek asked for while [Phase.LOADING]: applied in the prepared callback, never on an unprepared player. */
+    private var pendingSeekMs: Int? = null
+
     /**
      * Starts (or restarts) playback of [uri]. Releases any previously playing track first, then
      * prepares asynchronously and auto-starts on completion. Errors transition to [Phase.ERROR].
@@ -69,6 +75,8 @@ class RecordingPlaybackController {
      */
     fun play(context: Context, uri: Uri, startAtMs: Int = 0) {
         releasePlayer()
+        appContext = context.applicationContext
+        pendingSeekMs = null
         _state.update { PlaybackState(activeUri = uri, phase = Phase.LOADING, speed = it.speed) }
 
         runCatching {
@@ -79,7 +87,8 @@ class RecordingPlaybackController {
                     // Seek here rather than at the call site: until this callback runs the duration
                     // is unknown, and seekTo clamps against it — so an earlier seek would silently
                     // land at zero instead of at the moment the user asked for.
-                    val start = startAtMs.coerceIn(0, duration)
+                    val start = (pendingSeekMs ?: startAtMs).coerceIn(0, duration)
+                    pendingSeekMs = null
                     if (start > 0) mp.seekTo(start)
                     _state.update {
                         it.copy(phase = Phase.PLAYING, positionMs = start, durationMs = duration)
@@ -116,31 +125,60 @@ class RecordingPlaybackController {
         }
     }
 
-    /** Resumes a paused track. */
+    /**
+     * Resumes a paused track. While [Phase.LOADING] it does nothing (the track starts by itself when
+     * prepared; start() on a preparing player is a native error). In [Phase.ERROR] the player is gone,
+     * so it loads the same track again from where it was instead of touching a null player (review C154).
+     */
     fun resume() {
-        runCatching {
-            player?.let {
-                it.start()
-                _state.update { s -> s.copy(phase = Phase.PLAYING) }
-                applySpeed(_state.value.speed)
+        val s = _state.value
+        when (s.phase) {
+            Phase.PLAYING, Phase.PAUSED -> runCatching {
+                player?.let {
+                    it.start()
+                    _state.update { cur -> cur.copy(phase = Phase.PLAYING) }
+                    applySpeed(_state.value.speed)
+                }
             }
+            Phase.ERROR -> {
+                val ctx = appContext
+                val uri = s.activeUri
+                if (ctx != null && uri != null) {
+                    AppLogger.i(TAG, "resume in ERROR: loading $uri again from ${s.positionMs} ms")
+                    play(ctx, uri, s.positionMs)
+                }
+            }
+            Phase.LOADING, Phase.IDLE -> Unit
         }
     }
 
-    /** Seeks the active track to [positionMs] (clamped to the known duration). */
+    /**
+     * Seeks the active track to [positionMs] (clamped to the known duration). While [Phase.LOADING] the
+     * seek is held and applied once the track is prepared; in any other unprepared phase it is ignored.
+     */
     fun seekTo(positionMs: Int) {
-        runCatching {
-            player?.let {
-                val clamped = positionMs.coerceIn(0, _state.value.durationMs)
-                it.seekTo(clamped)
-                _state.update { s -> s.copy(positionMs = clamped) }
+        when (_state.value.phase) {
+            Phase.LOADING -> {
+                val wanted = positionMs.coerceAtLeast(0)
+                pendingSeekMs = wanted
+                _state.update { s -> s.copy(positionMs = wanted) }
             }
+            Phase.PLAYING, Phase.PAUSED -> runCatching {
+                player?.let {
+                    val clamped = positionMs.coerceIn(0, _state.value.durationMs)
+                    it.seekTo(clamped)
+                    _state.update { s -> s.copy(positionMs = clamped) }
+                }
+            }
+            Phase.ERROR, Phase.IDLE -> Unit
         }
     }
 
     /** Moves [PlaybackControls.SKIP_MS] in either direction, clamped inside the recording. */
     fun skip(deltaMs: Int) {
         val state = _state.value
+        // The duration is unknown until prepared, so a skip before then has nothing to be clamped against.
+        if (state.phase != Phase.PLAYING && state.phase != Phase.PAUSED) return
         seekTo(PlaybackControls.skipTo(state.positionMs, deltaMs, state.durationMs))
     }
 
