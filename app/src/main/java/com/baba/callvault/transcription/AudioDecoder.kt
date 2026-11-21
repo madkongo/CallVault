@@ -542,7 +542,7 @@ object AudioDecoder {
         // later stage — the decoder REPORTS where its audio really starts, and the caller stitches
         // from that. Exact timestamps, no offset arithmetic, and a few extra frames of run-up that
         // whisper is glad of anyway.
-        if (fromUs > 0L) extractor.seekTo(fromUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+        if (fromUs > 0L) SeekAtOrBefore.seek(ExtractorTrack(extractor), fromUs)
         var firstOutUs = -1L
 
         var sampleRate = inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
