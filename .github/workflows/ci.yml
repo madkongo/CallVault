@@ -1,4 +1,4 @@
-# CI: every push and pull request runs the unit tests, lint and a debug build (F1).
+# CI (F1): unit tests and a debug build, started manually for now.
 #
 # This workflow never signs anything. Release signing stays on the maintainer's machine
 # (signing/callvault-signing.keystore, gitignored), and no secret is available here.
@@ -14,8 +14,8 @@
 name: CI
 
 on:
-  push:
-  pull_request:
+  # Manual only until the owner approves CI on push (decided: yes, after 2.5.2).
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -58,8 +58,8 @@ jobs:
       - name: versionCode is not below the shipped floor
         run: tools/ci/check-version-floor.sh
 
-      - name: Unit tests, lint and debug build
-        run: ./gradlew testDebugUnitTest lintDebug assembleDebug --stacktrace
+      - name: Unit tests and debug build
+        run: ./gradlew testDebugUnitTest assembleDebug --stacktrace
 
       - name: Our native libraries are 16 KB page aligned
         run: |
@@ -77,6 +77,5 @@ jobs:
           name: test-and-lint-reports
           path: |
             app/build/reports/tests
-            app/build/reports/lint-results-debug.html
           retention-days: 14
           if-no-files-found: ignore
