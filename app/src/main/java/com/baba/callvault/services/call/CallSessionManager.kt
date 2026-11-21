@@ -166,7 +166,8 @@ class CallSessionManager private constructor(context: Context) {
 
     private val temporaryCache = CallSessionTemporaryCache(appContext)
 
-    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // The handler (review C40): an exception nobody caught here used to crash the app at the start or end of a call.
+    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Main + CallSessionErrors.handler(appContext, "call session"))
 
     /**
      * The number the user dialled, from the last [Intent.ACTION_NEW_OUTGOING_CALL], and when it arrived
