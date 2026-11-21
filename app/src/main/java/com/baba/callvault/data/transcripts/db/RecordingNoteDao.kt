@@ -56,6 +56,10 @@ interface RecordingNoteDao {
     @Query("SELECT peaks FROM recording_waveforms WHERE displayName = :displayName")
     suspend fun waveform(displayName: String): String?
 
+    /** When the row was written; for a failed-draw marker (empty peaks) this is when the draw failed (R39). */
+    @Query("SELECT updatedAt FROM recording_waveforms WHERE displayName = :displayName")
+    suspend fun waveformUpdatedAt(displayName: String): Long?
+
     /** [waveform], as it changes: lets an open recording show its bars the moment a background draw saves them. */
     @Query("SELECT peaks FROM recording_waveforms WHERE displayName = :displayName")
     fun observeWaveform(displayName: String): Flow<String?>

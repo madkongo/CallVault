@@ -10,16 +10,17 @@ package com.baba.callvault.data.waveform
 
 import android.content.Context
 import android.net.Uri
+import com.baba.callvault.data.transcripts.db.RecordingNoteDao
 import com.baba.callvault.data.transcripts.db.RecordingNoteEntry
 import com.baba.callvault.data.transcripts.db.RecordingWaveformEntry
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
+import com.baba.callvault.data.transcripts.onceTranscriptsExist
 import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.transcription.ChunkPlan
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -31,13 +32,19 @@ object RecordingExtrasRepository {
 
     private const val TAG = "CV:RecordingExtras"
 
+    /** How long a failed draw is left alone by the background pre-draw (R39). */
+    private const val DRAW_RETRY_AFTER_MS = 24L * 60 * 60 * 1000
+
     private fun dao(context: Context) = TranscriptDatabase.get(context).noteDao()
 
     /** The note for [displayName], empty when there is none. */
     fun note(context: Context, displayName: String): Flow<String> {
         // Do not materialise a database just to find out a recording has no note — most never will.
-        if (!TranscriptDatabase.exists(context)) return flowOf("")
-        return dao(context).observeNote(displayName).map { it?.text.orEmpty() }
+        // Until it exists the flow says "empty" and then follows the live query, so a screen opened
+        // before the first transcription does not stay empty after it (C164).
+        return onceTranscriptsExist(context, "") { db ->
+            db.noteDao().observeNote(displayName).map { it?.text.orEmpty() }
+        }
     }
 
     /** Saves [text], or removes the note when it has been emptied. */
@@ -55,8 +62,20 @@ object RecordingExtrasRepository {
             )
         }
         // Keep the beside-the-audio transcript/notes file in step with the edited note (no-op when the
-        // sidecar setting is off; never throws).
-        TranscriptSidecar.writeOrClear(context, displayName)
+        // sidecar setting is off; never throws). The note is already in Room, so only the timing of the
+        // file changes: off the calling (often main) thread, because listing the folder can take
+        // seconds on a big one, and one rewrite per burst of saves, because the file is rebuilt from
+        // Room when it is written (C74).
+        sidecarWrites.run(displayName) {
+            withContext(Dispatchers.IO) { sidecarWriter(context, displayName) }
+        }
+    }
+
+    private val sidecarWrites = SingleFlightPerKey()
+
+    /** What rewrites the sidecar after a note save. A seam for tests; always [TranscriptSidecar] in the app. */
+    internal var sidecarWriter: suspend (Context, String) -> Unit = { context, name ->
+        TranscriptSidecar.writeOrClear(context, name)
     }
 
     /**
@@ -95,6 +114,7 @@ object RecordingExtrasRepository {
                 // genuinely out of memory the drawing degrades to a resting line rather than crashing
                 // playback. Named plainly so a future log reads as a cause, not a mystery.
                 AppLogger.w(TAG, "Could not draw '$displayName': ${it::class.simpleName}: ${it.message}")
+                markDrawFailed(dao, displayName)
                 return@withContext FloatArray(0)
             }
 
@@ -152,10 +172,38 @@ object RecordingExtrasRepository {
      */
     suspend fun precomputeWaveform(context: Context, displayName: String, uri: Uri) {
         runCatching {
-            if (dao(context).waveform(displayName) != null) return
+            val dao = dao(context)
+            if (isPredrawSettled(dao.waveform(displayName), dao.waveformUpdatedAt(displayName), System.currentTimeMillis())) {
+                return
+            }
             waveform(context, displayName, uri)
             AppLogger.i(TAG, "Drew '$displayName' ahead of time")
         }.onFailure { AppLogger.w(TAG, "Could not pre-draw '$displayName': ${it.message}") }
+    }
+
+    /**
+     * Leaves a failed-draw marker (a row with empty peaks and the time) so the background pre-draw does
+     * not decode the same unreadable or too-long file again on every Home refresh (R39). Only the pre-draw
+     * honours it: opening the recording still tries to draw, and a good draw replaces the marker.
+     */
+    private suspend fun markDrawFailed(dao: RecordingNoteDao,displayName: String) {
+        runCatching {
+            // Never over a good shape: a failed re-draw must not wipe bars that already work.
+            if (dao.waveform(displayName)?.isNotBlank() == true) return
+            dao.upsertWaveform(RecordingWaveformEntry(displayName, "", System.currentTimeMillis()))
+        }.onFailure { AppLogger.w(TAG, "Could not remember the failed draw of '$displayName': ${it.message}") }
+    }
+
+    /**
+     * Whether the background pre-draw has nothing to do: a shape is cached, or a draw failed less than
+     * [DRAW_RETRY_AFTER_MS] ago. A marker older than that is retried once (the file may have been
+     * finished, or the phone had no memory to spare). A marker from the future (clock change) is retried.
+     */
+    internal fun isPredrawSettled(cachedPeaks: String?, updatedAt: Long?, now: Long): Boolean {
+        if (cachedPeaks == null) return false
+        if (cachedPeaks.isNotBlank()) return true
+        val age = now - (updatedAt ?: return false)
+        return age in 0 until DRAW_RETRY_AFTER_MS
     }
 
     /**
