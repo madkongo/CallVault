@@ -149,7 +149,7 @@ object RecordingFileNameFormatter {
         name.replace('_', ' ').replace(HONOR_UNSAFE_NAME_CHARS, "").replace(Regex("""\s+"""), " ").trim()
 
     /** Fewer digits than this is a placeholder ("-1", "Unknown 5"), not a number. Short codes like 087011 pass. */
-    private const val MIN_DIALLED_DIGITS = 3
+    internal const val MIN_DIALLED_DIGITS = 3
 
     /**
      * [number] as the call log shows it, for the Honor preset: digits only, keeping a leading '+'. Null for a

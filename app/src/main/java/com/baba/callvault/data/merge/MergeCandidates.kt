@@ -10,6 +10,7 @@ package com.baba.callvault.data.merge
 
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
+import com.baba.callvault.utils.RecordingFileNameFormatter
 
 /**
  * Which recordings a merge may join, kept away from the view model because a merge deletes the parts
@@ -59,15 +60,23 @@ object MergeCandidates {
      * short code (fewer than [TAIL_DIGITS] digits) must match in full. Mirrors ContactIgnoreRule.
      */
     private fun mergeKey(item: RecordingItem, noParty: Set<String>): String? {
-        item.contactName?.let { return fold(it) }
+        item.contactName?.takeIf { it.isNotBlank() }?.let { return fold(it).takeUnless { k -> isNoParty(k, noParty) } }
         val raw = item.number?.trim()?.takeIf { it.isNotEmpty() } ?: return null
         // A {contact_name} template writes the contact's real name (any script) where a number would be.
         // A name is the key, compared whole; digits are never pulled out of it ("Mom 2" is not "2").
-        if (raw.any { it.isLetter() }) return fold(raw).takeUnless { it in noParty }
+        if (raw.any { it.isLetter() }) return fold(raw).takeUnless { isNoParty(it, noParty) }
         if (raw.any { !it.isDigit() && it !in NUMBER_PUNCTUATION }) return null
-        val digits = raw.filter { it.isDigit() }.takeIf { it.isNotEmpty() } ?: return null
+        // Fewer digits than a dialled number has is a placeholder ("-1"), not a party.
+        val digits = raw.filter { it.isDigit() }.takeIf { it.length >= RecordingFileNameFormatter.MIN_DIALLED_DIGITS } ?: return null
         return if (digits.length >= TAIL_DIGITS) digits.takeLast(TAIL_DIGITS) else digits
     }
+
+    /**
+     * True when [key] IS a no-party label or starts with one as a whole word ("unknown 5"). A real contact
+     * called "Hidden Valley Pizza" is missed this way: a missed match is harmless, a false merge deletes audio.
+     */
+    private fun isNoParty(key: String, noParty: Set<String>): Boolean =
+        noParty.any { key == it || (key.startsWith(it) && !key[it.length].isLetterOrDigit()) }
 
     /** NFC-normalised, trimmed and case-folded, so "Zoë"/"ZOË" written differently are one name. */
     private fun fold(name: String): String =

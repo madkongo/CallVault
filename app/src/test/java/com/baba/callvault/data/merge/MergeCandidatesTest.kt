@@ -164,4 +164,34 @@ class MergeCandidatesTest {
         val b = named("\u05DE\u05E1\u05E4\u05E8 \u05D7\u05E1\u05D5\u05DD", "120000.100")
         assertTrue(MergeCandidates.of(a, listOf(a, b), setOf("\u05DE\u05E1\u05E4\u05E8 \u05D7\u05E1\u05D5\u05DD")).isEmpty())
     }
+
+    @Test
+    fun `placeholder callers Unknown 5 and Unknown 7 are not candidates`() {
+        assertFalse(pairs(named("Unknown 5"), named("Unknown 7", "120000.100")))
+        assertFalse(pairs(named("Unknown 5"), named("Unknown 5", "120000.100")))
+    }
+
+    @Test
+    fun `the placeholder number -1 is not a key`() {
+        assertFalse(pairs(parsedCall("20261121_111219.379+0200_in_-1.ogg"), parsedCall("20261121_120000.100+0200_in_-1.ogg")))
+    }
+
+    @Test
+    fun `a resolved contactName of Unknown or Voicemail is not a key`() {
+        listOf("Unknown", "Voicemail", "Private number").forEach { w ->
+            val a = call("a.ogg", "5551234").copy(contactName = w)
+            val b = call("b.ogg", "5559999").copy(contactName = w)
+            assertFalse(w, pairs(a, b))
+        }
+    }
+
+    @Test
+    fun `Mom 2 still pairs with Mom 2`() {
+        assertTrue(pairs(named("Mom 2"), named("Mom 2", "120000.100")))
+    }
+
+    @Test
+    fun `a contact literally named Hidden Valley Pizza is missed on purpose because names starting with a stoplist word are dropped`() {
+        assertFalse(pairs(named("Hidden Valley Pizza"), named("Hidden Valley Pizza", "120000.100")))
+    }
 }
