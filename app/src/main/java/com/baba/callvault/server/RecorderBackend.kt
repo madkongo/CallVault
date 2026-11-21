@@ -462,7 +462,9 @@ object RecorderBackend {
 
     private fun ensureShizukuRunningLocked(context: Context): Boolean {
         val installedApk = context.applicationInfo.sourceDir
-        if (RecorderConnection.isConnected && !retireIfStale(installedApk)) {
+        // retireIfStale also drops a holder whose binder is already dead, and answers "not stale" for it; so the
+        // connection is asked again after it, or a call starting at that instant was told a recorder was up (C66).
+        if (RecorderConnection.isConnected && !retireIfStale(installedApk) && RecorderConnection.isConnected) {
             AppLogger.d(TAG, "Recorder already connected; reusing existing binder")
             return true
         }
