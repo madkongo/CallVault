@@ -12,6 +12,7 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.net.Uri
 import android.provider.Settings
+import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.system.interop.MetadataSidecar
@@ -84,9 +85,20 @@ object AfterCallDecision {
         AfterCallDecisions.all(context)
             .filter { AfterCallPolicy.shouldRepostQuestion(it.deleteRequested, it.dismissed) }
             .forEach { held ->
-                runCatching { AfterCallNotifier.postQuestion(context, held) }
+                runCatching { repostIfStillWaiting(context, held) }
                     .onFailure { AppLogger.w(TAG, "Could not ask keep-or-delete by notification: ${it.message}") }
             }
+    }
+
+    /**
+     * Posts [snapshot]'s question from a snapshot that may be old (startup, the pop-up closing): the text is
+     * built first, outside the store lock, and the post happens only if the entry still waits at that moment,
+     * so an answer given meanwhile is not followed by the same question coming back (C176).
+     */
+    private fun repostIfStillWaiting(context: Context, snapshot: AfterCallDecisions.Held) {
+        val notify = AfterCallNotifier.prepareQuestion(context, snapshot)
+        val posted = AfterCallDecisions.postIfStillWaiting(context, snapshot.displayName) { notify() }
+        if (!posted) AppLogger.i(TAG, "A held recording's question was answered meanwhile; not asking again")
     }
 
     /** Opens the pop-up window. A seam so tests can see the call without drawing an overlay. */
@@ -147,6 +159,8 @@ object AfterCallDecision {
         AfterCallWork.cancelDelete(context, displayName)
         // Null: the delete already ran, and it cleared the notification on its way.
         val held = AfterCallDecisions.setDeleteRequested(context, displayName, requested = false) ?: return
+        // Not repostIfStillWaiting: Undo is the user's own act just now, and must ask again even for a question
+        // that was swiped away before Delete.
         AfterCallNotifier.postQuestion(context, held)
         AppLogger.i(TAG, "Delete undone; asking again")
     }
@@ -158,13 +172,19 @@ object AfterCallDecision {
 
     /**
      * Deletes a held recording everywhere — file, sidecars in both folders, catalog row and everything that
-     * cascades from it — and ends the wait. Called from the delete worker and the 24-hour check.
+     * cascades from it — and then ends the wait. Called from the delete worker and the 24-hour check.
+     *
+     * The wait ends only AFTER the delete: if the process dies in between, or the provider refuses, the entry is
+     * still held, so nothing sweeps, adopts or uploads the half-deleted file and the work retries (C137). A
+     * delete that reports nothing removed counts as done only when the file is really gone (already deleted by
+     * hand, say); a file that is still there keeps the entry held and returns false.
      */
     internal suspend fun deleteNow(context: Context, displayName: String, fromUnansweredCheck: Boolean): Boolean {
-        val held = AfterCallDecisions.release(context, displayName)
-        if (!fromUnansweredCheck) AfterCallWork.cancelUnansweredCheck(context, displayName)
-        if (held == null) return false
-        AfterCallNotifier.cancel(context, held.notificationId)
+        val held = AfterCallDecisions.peek(context, displayName)
+        if (held == null) {
+            if (!fromUnansweredCheck) AfterCallWork.cancelUnansweredCheck(context, displayName)
+            return false
+        }
         val item = RecordingsRepository.RecordingItem(
             uri = held.uri,
             displayName = held.displayName,
@@ -175,11 +195,29 @@ object AfterCallDecision {
             startedAtMillis = null,
             number = null,
         )
-        val deleted = runCatching { RecordingsRepository.deleteRecording(context, item) }
+        val deleted = runCatching { recordingDeleter(context, item) }
             .onFailure { AppLogger.e(TAG, "Deleting a held recording failed", it) }
             .getOrDefault(false)
+        if (!deleted && fileStillExists(context, held.uri)) {
+            AppLogger.w(TAG, "A held recording could not be deleted and is still there; it stays held and the delete will be retried")
+            return false
+        }
+        AfterCallDecisions.release(context, displayName)
+        if (!fromUnansweredCheck) AfterCallWork.cancelUnansweredCheck(context, displayName)
+        AfterCallNotifier.cancel(context, held.notificationId)
         AppLogger.i(TAG, "Deleted a held recording: removed=$deleted${if (fromUnansweredCheck) " (no answer in 24 h)" else ""}")
         return deleted
+    }
+
+    /** The real delete. A seam so tests can stand in for a provider that refuses or a process that dies. */
+    @androidx.annotation.VisibleForTesting
+    internal var recordingDeleter: suspend (Context, RecordingsRepository.RecordingItem) -> Boolean =
+        { context, item -> RecordingsRepository.deleteRecording(context, item) }
+
+    /** Whether the file at [uri] is still there. A seam for tests; unreadable counts as gone (the old behaviour). */
+    @androidx.annotation.VisibleForTesting
+    internal var fileStillExists: (Context, Uri) -> Boolean = { context, uri ->
+        runCatching { DocumentFile.fromSingleUri(context, uri)?.exists() == true }.getOrDefault(false)
     }
 
     /** Ends the wait and does nothing else: the recording is no longer in the catalog (a merge took it). */
@@ -215,7 +253,7 @@ object AfterCallDecision {
                     AfterCallWork.scheduleDelete(context, name, AfterCallPolicy.DELETE_UNDO_WINDOW_MS, replace = false)
                 }
                 if (AfterCallPolicy.shouldRepostQuestion(entry.deleteRequested, entry.dismissed)) {
-                    AfterCallNotifier.postQuestion(context, entry)
+                    repostIfStillWaiting(context, entry)
                 }
             }.onFailure { AppLogger.w(TAG, "Could not restore a held recording's question: ${it.message}") }
         }

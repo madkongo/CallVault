@@ -117,6 +117,25 @@ object AfterCallDecisions {
         update(context, displayName) { it.copy(dismissed = true) }
 
     /**
+     * Runs [post] for [displayName] only if, at this moment, its entry still waits for an answer (not answered,
+     * not swiped away, no Delete tapped). The check and the post happen under the store lock, so an answer that
+     * lands in between cannot be followed by a stale question coming back (C176). Do slow work (the duration
+     * read, the title) before calling this, and only the quick notify inside [post].
+     * Returns whether [post] ran and finished; a throwing [post] is logged and reads as false.
+     */
+    fun postIfStillWaiting(context: Context, displayName: String, post: (Held) -> Unit): Boolean = runCatching {
+        synchronized(lock) {
+            val held = peek(context, displayName) ?: return@synchronized false
+            if (!AfterCallPolicy.shouldRepostQuestion(held.deleteRequested, held.dismissed)) return@synchronized false
+            post(held)
+            true
+        }
+    }.getOrElse {
+        AppLogger.w(TAG, "Could not post a held recording's question: ${it.message}")
+        false
+    }
+
+    /**
      * The recording the pop-up should ask about: the oldest one still waiting for an answer. One with Delete
      * tapped is not waiting — it is in its Undo window, and the notification carries that.
      */

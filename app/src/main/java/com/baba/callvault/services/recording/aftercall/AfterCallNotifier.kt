@@ -57,7 +57,13 @@ internal object AfterCallNotifier {
     }.getOrDefault(false)
 
     /** Posts (or re-posts) the keep-or-delete question for [held]. Blocking: reads the duration. */
-    fun postQuestion(base: Context, held: AfterCallDecisions.Held) {
+    fun postQuestion(base: Context, held: AfterCallDecisions.Held) = prepareQuestion(base, held)()
+
+    /**
+     * Does the slow part of [postQuestion] (the duration read, the text) now and returns the quick notify, so a
+     * caller can run only that under [AfterCallDecisions.postIfStillWaiting]'s lock.
+     */
+    fun prepareQuestion(base: Context, held: AfterCallDecisions.Held): () -> Unit {
         val context = LocalizedContext.of(base)
         val name = held.displayName
         val title = AfterCallText.notificationTitle(context, name, AfterCallText.durationOf(context, held))
@@ -65,10 +71,17 @@ internal object AfterCallNotifier {
             .setContentTitle(title)
             .setContentText(context.getString(R.string.after_call_question_text))
             .addAction(0, context.getString(R.string.after_call_keep), receiverIntent(context, AfterCallDecisionReceiver.ACTION_KEEP, held))
-            .addAction(0, context.getString(R.string.after_call_delete), receiverIntent(context, AfterCallDecisionReceiver.ACTION_DELETE, held))
+            // Delete asks for the unlock first on Android 12+ (C77); the receiver refuses it on a locked phone anyway.
+            .addAction(
+                NotificationCompat.Action.Builder(
+                    0,
+                    context.getString(R.string.after_call_delete),
+                    receiverIntent(context, AfterCallDecisionReceiver.ACTION_DELETE, held),
+                ).setAuthenticationRequired(true).build(),
+            )
             // A swipe is "not now": recorded so startup does not keep putting the question back.
             .setDeleteIntent(receiverIntent(context, AfterCallDecisionReceiver.ACTION_DISMISSED, held))
-        notify(context, held.notificationId, builder)
+        return { notify(context, held.notificationId, builder) }
     }
 
     /** Replaces the question with "Recording deleted" and its Undo, for the length of the Undo window. */

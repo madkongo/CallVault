@@ -8,6 +8,7 @@
 
 package com.baba.callvault.services.recording.aftercall
 
+import android.app.KeyguardManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -32,13 +33,7 @@ class AfterCallDecisionReceiver : BroadcastReceiver() {
         // Off the main thread: every answer commits to the store, and Undo reads the duration.
         Thread {
             try {
-                when (action) {
-                    ACTION_KEEP -> AfterCallDecision.keep(app, name)
-                    ACTION_DELETE -> AfterCallDecision.delete(app, name)
-                    ACTION_UNDO -> AfterCallDecision.undo(app, name)
-                    ACTION_DISMISSED -> AfterCallDecision.dismissed(app, name)
-                    else -> AppLogger.w(TAG, "Unknown after-call action ignored")
-                }
+                applyAction(app, action, name)
             } catch (e: Exception) {
                 AppLogger.e(TAG, "The after-call answer could not be applied", e)
             } finally {
@@ -48,6 +43,30 @@ class AfterCallDecisionReceiver : BroadcastReceiver() {
     }
 
     companion object {
+        /**
+         * Carries out one answer. Delete is refused while the phone is locked (C77): the lock screen can show
+         * the question, and anyone holding the phone must not be able to delete the call without unlocking.
+         * The question stays in place, so the same button works once the phone is unlocked. Keep and Undo are
+         * not destructive and are never refused.
+         */
+        internal fun applyAction(context: Context, action: String, name: String) {
+            when (action) {
+                ACTION_KEEP -> AfterCallDecision.keep(context, name)
+                ACTION_DELETE -> {
+                    val isLocked = runCatching { context.getSystemService(KeyguardManager::class.java)?.isDeviceLocked }
+                        .getOrNull() == true
+                    if (AfterCallPolicy.shouldRefuseDelete(isLocked)) {
+                        AppLogger.i(TAG, "Delete on the after-call question refused: the phone is locked")
+                        return
+                    }
+                    AfterCallDecision.delete(context, name)
+                }
+                ACTION_UNDO -> AfterCallDecision.undo(context, name)
+                ACTION_DISMISSED -> AfterCallDecision.dismissed(context, name)
+                else -> AppLogger.w(TAG, "Unknown after-call action ignored")
+            }
+        }
+
         private const val TAG = "CV:AfterCall"
         private const val DATA_SCHEME = "callvault-aftercall"
 

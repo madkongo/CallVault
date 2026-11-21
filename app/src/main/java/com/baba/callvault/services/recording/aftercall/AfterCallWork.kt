@@ -13,6 +13,7 @@ import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
+import androidx.work.ListenableWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -87,6 +88,19 @@ internal object AfterCallWork {
         false
     }
 
+    /** How many times a refused delete is tried before the work ends; startup and the 24-hour check try again later. */
+    internal const val MAX_DELETE_ATTEMPTS = 5
+
+    /** Retry (with WorkManager's backoff) while [isUnfinished] and attempts remain; otherwise end, logging why. */
+    internal fun retryOrGiveUp(isUnfinished: Boolean, runAttemptCount: Int, name: String): ListenableWorker.Result {
+        if (!isUnfinished) return ListenableWorker.Result.success()
+        if (runAttemptCount + 1 >= MAX_DELETE_ATTEMPTS) {
+            AppLogger.w(TAG, "A held recording could not be deleted after $MAX_DELETE_ATTEMPTS tries; it stays held for the next check")
+            return ListenableWorker.Result.success()
+        }
+        return ListenableWorker.Result.retry()
+    }
+
     private fun cancel(context: Context, uniqueName: String) {
         runCatching { WorkManager.getInstance(context).cancelUniqueWork(uniqueName) }
             .onFailure { AppLogger.w(TAG, "Could not cancel after-call work: ${it.message}") }
@@ -98,7 +112,9 @@ class AfterCallDeleteWorker(ctx: Context, params: WorkerParameters) : CoroutineW
     override suspend fun doWork(): Result {
         val name = inputData.getString(AfterCallWork.KEY_NAME) ?: return Result.success()
         AfterCallDecision.deleteNow(applicationContext, name, fromUnansweredCheck = false)
-        return Result.success()
+        // Still held and still marked: the delete did not happen (provider refused, file still there). Try again.
+        val isStillWaitingToDelete = AfterCallDecisions.peek(applicationContext, name)?.deleteRequested == true
+        return AfterCallWork.retryOrGiveUp(isStillWaitingToDelete, runAttemptCount, name)
     }
 }
 
@@ -130,7 +146,10 @@ class AfterCallUnansweredWorker(ctx: Context, params: WorkerParameters) : Corout
             UnansweredAction.NOTHING -> Unit
             UnansweredAction.RELEASE -> AfterCallDecision.releaseOnly(context, name)
             UnansweredAction.KEEP -> AfterCallDecision.keep(context, name, fromUnansweredCheck = true)
-            UnansweredAction.DELETE -> AfterCallDecision.deleteNow(context, name, fromUnansweredCheck = true)
+            UnansweredAction.DELETE -> {
+                AfterCallDecision.deleteNow(context, name, fromUnansweredCheck = true)
+                return AfterCallWork.retryOrGiveUp(AfterCallDecisions.peek(context, name) != null, runAttemptCount, name)
+            }
         }
         return Result.success()
     }
