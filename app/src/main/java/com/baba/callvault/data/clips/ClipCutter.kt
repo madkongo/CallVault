@@ -58,21 +58,54 @@ object ClipCutter {
      * Runs [block] on a seekable descriptor of [uri]. A Drive-only recording comes through a provider that may hand back
      * a pipe, which MediaExtractor cannot seek; then the recording is copied to the cache first and read from there.
      */
-    private fun <T> withSource(context: Context, uri: Uri, block: (java.io.FileDescriptor) -> T): T {
-        val direct = runCatching {
-            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+    private fun <T> withSource(context: Context, uri: Uri, block: (java.io.FileDescriptor) -> T): T =
+        withSeekableSource(
+            openDescriptor = { context.contentResolver.openFileDescriptor(uri, "r") },
+            copyTo = { copy ->
+                context.contentResolver.openInputStream(uri)?.use { input -> copy.outputStream().use { input.copyTo(it) } }
+                    ?: error("Cannot open the recording")
+            },
+            copyFile = File(ClipFiles.directory(context), ".source.tmp"),
+            uriForLog = uri.toString(),
+            block = block,
+        )
+
+    /**
+     * The decision behind [withSource], with the two ways to reach the bytes passed in so it can be tested. Only OPENING
+     * the descriptor and asking whether it is a pipe may fall back to the cache copy; a failure inside [block] on a real
+     * file is the cut's own and propagates, logged once (review 2026-11-20, C167: it used to be swallowed and the whole
+     * recording copied and cut a second time).
+     */
+    internal fun <T> withSeekableSource(
+        openDescriptor: () -> android.os.ParcelFileDescriptor?,
+        copyTo: (File) -> Unit,
+        copyFile: File,
+        uriForLog: String,
+        block: (java.io.FileDescriptor) -> T,
+    ): T {
+        val pfd = runCatching { openDescriptor() }
+            .onFailure { AppLogger.w(TAG, "Could not open $uriForLog directly (${it.javaClass.simpleName}); copying it first") }
+            .getOrNull()
+        if (pfd != null) {
+            pfd.use {
                 // A pipe has no size; a real file does.
-                if (pfd.statSize <= 0L) null else block(pfd.fileDescriptor)
+                val isFile = runCatching { it.statSize > 0L }.getOrDefault(false)
+                if (isFile) {
+                    try {
+                        return block(it.fileDescriptor)
+                    } catch (e: Exception) {
+                        AppLogger.w(TAG, "Reading $uriForLog failed (${e.javaClass.simpleName}: ${e.message})")
+                        throw e
+                    }
+                }
             }
-        }.getOrNull()
-        if (direct != null) return direct
-        val copy = File(ClipFiles.directory(context), ".source.tmp").apply { parentFile?.mkdirs() }
+        }
+        copyFile.apply { parentFile?.mkdirs() }
         try {
-            context.contentResolver.openInputStream(uri)?.use { input -> copy.outputStream().use { input.copyTo(it) } }
-                ?: error("Cannot open the recording")
-            return java.io.FileInputStream(copy).use { block(it.fd) }
+            copyTo(copyFile)
+            return java.io.FileInputStream(copyFile).use { block(it.fd) }
         } finally {
-            copy.delete()
+            copyFile.delete()
         }
     }
 
