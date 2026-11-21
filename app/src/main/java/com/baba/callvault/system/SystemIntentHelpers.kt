@@ -10,6 +10,7 @@
 package com.baba.callvault.system
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -178,29 +179,49 @@ fun Context.openWirelessDebugging() {
     }
 }
 
+/**
+ * Opens [url] in whatever handles it. On a phone with no browser (or one that refuses) it does not
+ * crash (C140): the link is copied to the clipboard, which also shows the "copied" toast, and the
+ * failure is logged. Returns whether something opened it.
+ *
+ * Only for the browser links; [launchSmartIntent] still throws so the settings fallback chains work.
+ */
+fun Context.openUrl(url: String): Boolean = try {
+    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = url.toUri() })
+    true
+} catch (e: ActivityNotFoundException) {
+    AppLogger.w(TAG, "No app can open a link: ${e.javaClass.simpleName}")
+    copyToClipboard("link", url)
+    false
+} catch (e: SecurityException) {
+    AppLogger.w(TAG, "Opening a link was refused: ${e.javaClass.simpleName}")
+    copyToClipboard("link", url)
+    false
+}
+
 /** Opens the upstream project repository (required fork attribution, GPLv3 §7). */
 fun Context.openOriginalProjectRepo() {
-    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = ORIGINAL_PROJECT_URL.toUri() })
+    openUrl(ORIGINAL_PROJECT_URL)
 }
 
 /** Opens the project's Telegram group, in the Telegram app when it is installed, else the browser. */
 fun Context.openTelegramGroup() {
-    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = TELEGRAM_GROUP_URL.toUri() })
+    openUrl(TELEGRAM_GROUP_URL)
 }
 
 /** Opens the maintainer's Ko-fi page in the browser so the user can support development. */
 fun Context.openKofi() {
-    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = KOFI_SUPPORT_URL.toUri() })
+    openUrl(KOFI_SUPPORT_URL)
 }
 
 /** Opens the maintainer's PayPal page in the browser. The alternative to [openKofi], not a successor. */
 fun Context.openPayPal() {
-    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = PAYPAL_SUPPORT_URL.toUri() })
+    openUrl(PAYPAL_SUPPORT_URL)
 }
 
 /** Opens the maintainer's Buy Me a Coffee page in the browser. */
 fun Context.openBuyMeACoffee() {
-    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = BUYMEACOFFEE_SUPPORT_URL.toUri() })
+    openUrl(BUYMEACOFFEE_SUPPORT_URL)
 }
 
 /**
