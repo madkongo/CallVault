@@ -324,6 +324,12 @@ object RecorderServerLauncher {
      * once and the daemon's own stdio is /dev/null), so failures are logged at debug, not error.
      */
     private fun launchOnce(context: Context, apk: String, attempt: Int) {
+        // A daemon from an earlier attempt (or a slow cold start) may have delivered its binder while this attempt was
+        // connecting. Killing "stale" daemons now would kill that one, and the launch below would start a second (C39).
+        if (RecorderConnection.isConnected) {
+            AppLogger.i(TAG, "Attempt $attempt: the recorder's binder arrived while preparing; not clearing or launching again")
+            return
+        }
         // Clear any stale/orphaned daemon (e.g. old code surviving a reinstall) before launching fresh,
         // so at most one daemon — matching the installed code — is ever running. Skipped shortly after
         // boot: a reboot already cleared every process, so the scan can only cost time on the
