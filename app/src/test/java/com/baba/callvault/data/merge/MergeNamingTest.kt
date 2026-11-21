@@ -39,4 +39,15 @@ class MergeNamingTest {
     fun `a stem with no date still gets a distinct name`() {
         assertEquals("odd name_3", MergeNaming.bumpedStem("odd name", 3))
     }
+
+    @Test
+    fun `the nudged millisecond is ASCII digits in a locale with native digits`() {
+        val previous = java.util.Locale.getDefault()
+        try {
+            java.util.Locale.setDefault(java.util.Locale.forLanguageTag("ar-EG"))
+            assertEquals("20261009_143052.007+0300_in_Dana", MergeNaming.bumpedStem("20261009_143052.006+0300_in_Dana", 1))
+        } finally {
+            java.util.Locale.setDefault(previous)
+        }
+    }
 }

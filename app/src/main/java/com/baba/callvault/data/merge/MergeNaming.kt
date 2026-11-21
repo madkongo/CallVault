@@ -29,7 +29,7 @@ internal object MergeNaming {
      */
     fun bumpedStem(stem: String, by: Int): String {
         MILLIS_DATE.find(stem)?.let { m ->
-            val millis = "%03d".format((m.groupValues[2].toInt() + by) % 1000)
+            val millis = "%03d".format(Locale.ROOT, (m.groupValues[2].toInt() + by) % 1000)
             return stem.replaceRange(m.groups[2]!!.range, millis)
         }
         // A {day}/{time} stamp (#82) has no millisecond either, so its second moves.
