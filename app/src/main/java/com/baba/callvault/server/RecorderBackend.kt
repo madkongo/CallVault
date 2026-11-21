@@ -311,7 +311,8 @@ object RecorderBackend {
      * without a second AIDL method, since draining already empties the ring.
      */
     fun clearHostDiagnostics() {
-        runCatching { RecorderConnection.service?.drainDiagnostics() }
+        // Draining is batched (C138), so one call empties only the oldest slice: ask until nothing is left.
+        runCatching { AppLogger.drainAll({ RecorderConnection.service?.drainDiagnostics() ?: emptyArray() }) }
             .onFailure { AppLogger.d(TAG, "Could not clear the recorder host's diagnostics: ${it.message}") }
     }
 

@@ -8,6 +8,7 @@
 
 package com.baba.callvault.server
 
+import com.baba.callvault.utils.AppLogger
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -56,5 +57,25 @@ object BoundedProcess {
         } finally {
             process.destroyForcibly()
         }
+    }
+
+    /**
+     * [command]'s whole output as text, or null when it could not be had in full: not started, timed out (the
+     * output would be cut at an arbitrary byte, and a parser could take half a number for a whole one) or blank.
+     * A non-zero exit still returns the text: `dumpsys` often prints its answer and exits non-zero. Logs why a
+     * null came back, under [tag], so a report can say which dump was missing.
+     */
+    fun runText(command: Array<String>, timeoutMs: Long, tag: String): String? {
+        val outcome = try {
+            run(command, timeoutMs) { it.bufferedReader().readText() }
+        } catch (e: java.io.IOException) {
+            AppLogger.w(tag, "could not start ${command.lastOrNull()?.take(40)}: ${e.message}")
+            throw e
+        }
+        if (outcome.timedOut) {
+            AppLogger.w(tag, "${command.lastOrNull()?.take(40)} timed out after ${timeoutMs} ms; stopped it, answer not used")
+            return null
+        }
+        return outcome.value?.takeIf { it.isNotBlank() }
     }
 }

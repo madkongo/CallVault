@@ -10,6 +10,8 @@ package com.baba.callvault.server
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * Runs one piece of work at a time for ALL callers: while a run is in progress, any other caller does not start its
@@ -28,9 +30,12 @@ class SingleFlight<T> {
 
     /**
      * @param onJoin called on a caller that joined a run already in progress, before it waits.
+     * @param joinTimeoutMs how long a joiner waits for the run it joined before it gives up with a [TimeoutException]
+     *   (the run itself carries on for its own caller); null waits as long as the run takes. Nothing passes it yet:
+     *   RecorderBackend is the call site and keeps the old behaviour until it chooses a deadline (C133).
      * @param block the work; runs on the first caller's own thread.
      */
-    fun run(onJoin: () -> Unit = {}, block: () -> T): T {
+    fun run(onJoin: () -> Unit = {}, joinTimeoutMs: Long? = null, block: () -> T): T {
         val joined: CompletableFuture<T>?
         val mine: CompletableFuture<T>?
         synchronized(this) {
@@ -46,7 +51,7 @@ class SingleFlight<T> {
         if (joined != null) {
             onJoin()
             return try {
-                joined.get()
+                if (joinTimeoutMs == null) joined.get() else joined.get(joinTimeoutMs, TimeUnit.MILLISECONDS)
             } catch (e: ExecutionException) {
                 throw e.cause ?: e
             }

@@ -146,16 +146,30 @@ object AppLogger {
     /** Whether the ring is currently collecting. */
     fun isRingEnabled(): Boolean = ringEnabled
 
+    /** Characters one [drainRing] batch may hold: UTF-16 on the wire, so ~300 KB of the binder's 1 MB. */
+    internal const val RING_BATCH_CHARS = 150_000
+
     /**
-     * Takes everything collected so far and empties the ring.
+     * Takes the OLDEST lines collected so far, up to [maxChars] characters, and removes them from the ring; the rest
+     * stays for the next call. Draining rather than copying, so a second export does not repeat what the first
+     * already carried, and the daemon does not hold the lines any longer than it has to.
      *
-     * Draining rather than copying, so a second export does not repeat what the first already carried,
-     * and the daemon does not hold the lines any longer than it has to.
+     * Bounded because the whole ring (4,000 lines) can pass the binder's 1 MB limit, and the ring used to be cleared
+     * before the reply: the call failed and the lines were gone (C138). The app asks again until it gets nothing.
      */
-    fun drainRing(): List<String> = synchronized(ring) {
-        val out = ring.toList()
-        ring.clear()
-        out
+    fun drainRing(maxChars: Int = RING_BATCH_CHARS): List<String> = synchronized(ring) { takeBatch(ring, maxChars) }
+
+    internal fun takeBatch(lines: ArrayDeque<String>, maxChars: Int): List<String> {
+        val out = ArrayList<String>()
+        var used = 0
+        while (lines.isNotEmpty()) {
+            val next = lines.first()
+            if (out.isNotEmpty() && used + next.length > maxChars) break
+            lines.removeFirst()
+            out += if (next.length > maxChars) next.take(maxChars) else next
+            used += minOf(next.length, maxChars)
+        }
+        return out
     }
 
     /**
@@ -470,6 +484,28 @@ object AppLogger {
         }
     }
 
+    /**
+     * Asks [drainOnce] until it returns nothing, at most [maxRounds] times, and returns every line it handed over.
+     * A call that throws ends the loop but never costs the batches already taken: they are returned and the failure
+     * is logged (C138). Also what "delete the log" uses to empty the recorder's copy.
+     */
+    internal fun drainAll(drainOnce: () -> Array<String>, maxRounds: Int = MAX_DRAIN_ROUNDS): List<String> {
+        val all = ArrayList<String>()
+        try {
+            repeat(maxRounds) {
+                val batch = drainOnce()
+                if (batch.isEmpty()) return all
+                all += batch
+            }
+        } catch (e: Exception) {
+            w(TAG, "Recorder host diagnostics cut short after ${all.size} lines: ${e.message}")
+        }
+        return all
+    }
+
+    /** Upper bound on batches asked of the recorder in one export: 4,000 lines never need more. */
+    internal const val MAX_DRAIN_ROUNDS = 40
+
     /** Length of the "yyyy-MM-dd HH:mm:ss.SSS" prefix every entry starts with, used to sort by time. */
     private const val TIMESTAMP_LENGTH = 23
 
@@ -501,7 +537,9 @@ object AppLogger {
         // system lines are redacted by SystemLogCollector -- but these arrive raw over the binder from
         // a process that does its own logging, and they land in the same report that gets attached to
         // a public issue. One rule for all three sources, applied where they enter the report.
-        RecorderConnection.service?.drainDiagnostics()?.map { redactForReport(it) }.orEmpty()
+        // In batches: the recorder hands over a bounded slice per call (C138), so ask until it has nothing more. An
+        // older recorder returns everything at once and then nothing, which ends the loop the same way.
+        drainAll({ RecorderConnection.service?.drainDiagnostics() ?: emptyArray() }).map { redactForReport(it) }
     }.onFailure {
         w(TAG, "Could not read the recorder host's diagnostics: ${it.message}")
     }.getOrDefault(emptyList())
@@ -744,8 +782,18 @@ object AppLogger {
      * any text in front of a date. Read per line, so a changed template applies at once; false before [init] and
      * in the daemon process, whose lines are redacted again here when the report is built.
      */
-    private fun namesAroundDate(): Boolean =
-        prefs?.let { runCatching { LogRedaction.namesAroundDate(it.getFileNameTemplate()) }.getOrNull() } ?: false
+    private fun namesAroundDate(): Boolean {
+        val template = prefs?.let { runCatching { it.getFileNameTemplate() }.getOrNull() } ?: return false
+        // One string comparison per line while the template is unchanged; the answer is recomputed when it is not (C165).
+        val cached = templateAnswer
+        if (cached != null && cached.first == template) return cached.second
+        val answer = runCatching { LogRedaction.namesAroundDate(template) }.getOrDefault(false)
+        templateAnswer = template to answer
+        return answer
+    }
+
+    @Volatile
+    private var templateAnswer: Pair<String, Boolean>? = null
 
     /**
      * The stored per-install salt, cached after the first successful read.

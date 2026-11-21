@@ -138,14 +138,24 @@ object LogRedaction {
     private val CONTACT_TOKEN_REGEX = Regex("\\[C:[0-9a-f]+]")
 
     /**
-     * Cheap pre-filter for [RECORDING_NAME_REGEX].
+     * Cheap pre-filter for [RECORDING_NAME_REGEX] and [HONOR_NAME_REGEX].
      *
-     * [redact] runs on **every** log write, so the second regex has to earn its place. Every recording
-     * filename contains the `_` inside `yyyyMMdd_HHmmss`, so a message with no underscore cannot
-     * possibly contain one. That is a single linear character scan with no regex machinery, and it
-     * skips the majority of lines (prose, `->` state changes, exception messages).
+     * [redact] runs on **every** log write, so the name regexes have to earn their place. Both end in
+     * [EXTENSION_PATTERN] — a literal `.` and one of [NAME_EXTENSIONS], any case — so a line holding no such
+     * extension cannot hold a name either. Looking for the extension is a linear scan with no regex machinery.
+     * (2.5.2 first passed any line with a `_` or a `.`, which is most lines.) The test is derived from the part
+     * both regexes require, so it cannot hide a name they would have matched.
      */
-    private fun mayContainRecordingName(message: String) = message.indexOf('_') >= 0 || message.indexOf('.') >= 0 // a {day}-{time} name may hold no '_' (#82), but always its extension's '.'
+    internal fun mayContainRecordingName(message: String): Boolean {
+        var dot = message.indexOf('.')
+        while (dot >= 0) {
+            for (ext in NAME_EXTENSIONS) {
+                if (message.regionMatches(dot + 1, ext, 0, ext.length, ignoreCase = true)) return true
+            }
+            dot = message.indexOf('.', dot + 1)
+        }
+        return false
+    }
 
     /**
      * Redacts a single log line: phone numbers out, contact names pseudonymised.
@@ -184,13 +194,15 @@ object LogRedaction {
     private val EMAIL_REGEX =
         Regex("""(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?![A-Za-z0-9-])""")
 
+    private val DATE_IN_TEMPLATE = Regex("""\{date\}|\{day-?\}[_ T-]\{time-?\}""")
+
     /**
      * True when [template] has text both before and after `{date}` ("{contact_name} {date} {direction}").
      * A template with nothing after the date needs no help: a name that ends at its date is caught anyway.
      */
     fun namesAroundDate(template: String): Boolean {
         // The date is `{date}`, or the `{day}` + `{time}` pair that stands for it (#82).
-        val span = Regex("""\{date\}|\{day-?\}[_ T-]\{time-?\}""").find(template)?.range ?: return false
+        val span = DATE_IN_TEMPLATE.find(template)?.range ?: return false
         return template.substring(0, span.first).isNotBlank() && template.substring(span.last + 1).isNotBlank()
     }
 
