@@ -49,25 +49,45 @@ object GitHubReleases {
      *                    prerelease/draft target. Null in normal use.
      * @return The release info, or null on any failure (network, parse, no APK asset).
      */
-    fun fetchLatestRelease(overrideUrl: String? = null): ReleaseInfo? = runCatching {
-        val connection = (URL(overrideUrl ?: LATEST_RELEASE_URL).openConnection() as HttpURLConnection).apply {
+    fun fetchLatestRelease(overrideUrl: String? = null, cache: ReleaseEtagCache? = null): ReleaseInfo? {
+        val url = overrideUrl ?: LATEST_RELEASE_URL
+        val body = runCatching { fetchBody(url, cache) }.getOrElse { e ->
+            AppLogger.w(TAG, "Latest-release query failed: ${e.message}")
+            null
+        }
+        return body?.let { parseLatestRelease(it, allowPrerelease = overrideUrl != null) }
+    }
+
+    /**
+     * The release reply as text. With a [cache], sends If-None-Match; a 304 returns the stored body, so the caller
+     * cannot tell it from a fresh reply (review R26). Any other status than 200/304 is a failed check.
+     */
+    private fun fetchBody(url: String, cache: ReleaseEtagCache?): String? {
+        val cached = cache?.get(url)
+        val connection = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = CONNECT_TIMEOUT_MS
             readTimeout = READ_TIMEOUT_MS
             setRequestProperty("Accept", "application/vnd.github+json")
+            if (cached != null) setRequestProperty("If-None-Match", cached.etag)
         }
         try {
-            if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                AppLogger.w(TAG, "Latest-release query failed: HTTP ${connection.responseCode}")
+            val code = connection.responseCode
+            if (code == HttpURLConnection.HTTP_NOT_MODIFIED && cached != null) {
+                AppLogger.d(TAG, "Latest release unchanged (304)")
+                return cached.body
+            }
+            if (code != HttpURLConnection.HTTP_OK) {
+                AppLogger.w(TAG, "Latest-release query failed: HTTP $code")
                 return null
             }
-            connection.inputStream.bufferedReader().use { it.readText() }
+            val text = connection.inputStream.bufferedReader().use { it.readText() }
+            val etag = connection.getHeaderField("ETag")
+            if (cache != null && !etag.isNullOrBlank()) cache.put(url, etag, text)
+            return text
         } finally {
             connection.disconnect()
         }
-    }.getOrElse { e ->
-        AppLogger.w(TAG, "Latest-release query failed: ${e.message}")
-        null
-    }?.let { parseLatestRelease(it, allowPrerelease = overrideUrl != null) }
+    }
 
     /**
      * Parses a GitHub release JSON payload. Drafts and prereleases return null unless

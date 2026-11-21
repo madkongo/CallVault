@@ -31,7 +31,7 @@ object UpdateScheduler {
     private const val WORK_NAME = "cv_update_check"
     private const val CHECK_NOW_WORK_NAME = "cv_update_check_now"
     // Every 6 h, not 24 (2026-09-29): a user who rarely opens the app still learns of a release the
-    // same day. A single conditional GitHub GET, well inside the 60/h anonymous rate limit.
+    // same day. A conditional GitHub GET (If-None-Match; a 304 is free), well inside the 60/h anonymous rate limit.
     private const val PERIOD_HOURS = 6L
 
     /**
