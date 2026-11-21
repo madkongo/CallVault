@@ -74,6 +74,7 @@ class TranscriptionWorker(
         }
         return try {
             val result = runBatch()
+            if (result !is Result.Retry) TranscriptionDeferrals.clear(applicationContext, id)
             journal("transcription run END ${result.javaClass.simpleName} after ${(SystemClock.elapsedRealtime() - started) / 1000}s")
             result
         } catch (e: kotlin.coroutines.cancellation.CancellationException) {
@@ -132,6 +133,8 @@ class TranscriptionWorker(
                 return@withContext Result.success()
             }
         }
+        // Known gap: this only holds a run back. Turning the switch ON again does not release runs deferred here;
+        // they start at their next retry (WorkManager back-off, up to 5 h) or constraint change.
         // The switch can be turned off after this run was queued with "any network" (review R23): look again now.
         if (UnattendedRunPolicy.mustWaitForUnmetered(engine.isCloud, prefs.getTranscriptionCloudMobileData(), isNetworkMetered())) {
             AppLogger.i(TAG, "Cloud run not started: mobile data is not allowed and the network is metered")
@@ -225,7 +228,10 @@ class TranscriptionWorker(
             ?.let { TranscriptionRunner(applicationContext, transcriber = it) }
             ?: TranscriptionRunner(applicationContext)
         // A passing cloud failure (429, 5xx, no network) is retried with back-off, a few times only.
-        val canRetryLater = engine.isCloud && TranscriptionRouting.mayRetryCloud(runAttemptCount)
+        val canRetryLater = engine.isCloud && TranscriptionRouting.mayRetryCloud(
+            // Deferrals (busy, hot, metered, summary) also bump runAttemptCount; only real cloud failures spend the budget.
+            TranscriptionDeferrals.realAttempts(runAttemptCount, TranscriptionDeferrals.count(applicationContext, id))
+        )
         val transcribed = runner.runBatch(
             modelId = engine.modelId,
             modelPath = engine.modelPath,
@@ -258,7 +264,7 @@ class TranscriptionWorker(
 
         // Anything left unfinished stays queued, so a later run resumes rather than restarts.
         when {
-            runner.retryRequested -> retryLater("a passing cloud failure")
+            runner.retryRequested -> retryLater("a passing cloud failure", isDeferral = false)
             // A stopped run's result is ignored by WorkManager, which reschedules a stopped periodic run itself.
             isStopped && transcribed < names.size -> if (isPeriodic) Result.success() else Result.retry()
             else -> Result.success()
@@ -274,8 +280,11 @@ class TranscriptionWorker(
      * N36), so it succeeds and queues a separate one-time retry instead. The only `Result.retry()` in this
      * class outside the stopped case; a source-scan test holds it to that.
      */
-    private fun retryLater(reason: String): Result {
-        if (!isPeriodic) return Result.retry()
+    private fun retryLater(reason: String, isDeferral: Boolean = true): Result {
+        if (!isPeriodic) {
+            if (isDeferral) TranscriptionDeferrals.record(applicationContext, id)
+            return Result.retry()
+        }
         AppLogger.i(TAG, "Nightly run cannot finish now ($reason); queueing a one-time retry")
         com.baba.callvault.system.storage.DriveCopyJournal.record(applicationContext, "transcription sweep: retry queued as one-time work ($reason)")
         TranscriptionScheduler.enqueueSweepRetry(applicationContext)

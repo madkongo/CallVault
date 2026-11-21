@@ -194,4 +194,22 @@ class TranscriptionWorkerPeriodicTest {
 
         assertEquals(ListenableWorker.Result.retry(), result)
     }
+
+    @Test
+    fun deferrals_do_not_spend_the_cloud_retry_budget() {
+        // Six deferrals (another run is going) on one request...
+        assertTrue(TranscriptionRunGate.tryEnter(TranscriptionRunGate.Kind.TAP))
+        val worker = TestListenableWorkerBuilder<TranscriptionWorker>(context)
+            .setInputData(androidx.work.workDataOf(TranscriptionWorker.KEY_DISPLAY_NAME to "call.ogg"))
+            .build()
+        repeat(6) { assertEquals(ListenableWorker.Result.retry(), runBlocking { worker.doWork() }) }
+
+        val deferrals = TranscriptionDeferrals.count(context, worker.id)
+        assertEquals(6, deferrals)
+        // ...leave the budget as if WorkManager had counted none of them: attempt 7 is attempt 0.
+        assertTrue(TranscriptionRouting.mayRetryCloud(TranscriptionDeferrals.realAttempts(6, deferrals)))
+        assertEquals(0, TranscriptionDeferrals.realAttempts(6, deferrals))
+        // Real failures still run out.
+        assertFalse(TranscriptionRouting.mayRetryCloud(TranscriptionDeferrals.realAttempts(10, 6)))
+    }
 }
