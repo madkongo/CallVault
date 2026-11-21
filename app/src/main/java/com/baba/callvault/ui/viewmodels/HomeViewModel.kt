@@ -71,6 +71,7 @@ import com.baba.callvault.integrations.adb.UsbSetResult
 import com.baba.callvault.system.updates.UpdateInstallWorker
 import com.baba.callvault.system.updates.UpdateScheduler
 import androidx.work.WorkManager
+import com.baba.callvault.data.waveform.RecordingExtrasRepository
 import com.baba.callvault.data.waveform.WaveformDrawWorker
 import com.baba.callvault.transcription.TranscriptionEngine
 import kotlinx.coroutines.Job
@@ -424,8 +425,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
-        val filteredRecordings: List<RecordingItem>
-            get() = searchResults.map { it.first }
+        /**
+         * Computed once per state (review C166): every list row and the empty card read these, and each read
+         * used to filter, sort and rank the whole library again. A new state (copy) computes its own.
+         */
+        val filteredRecordings: List<RecordingItem> by lazy { searchResults.map { it.first } }
 
         /** Whether any chip filter (not the search line) is narrowing the list. */
         val hasActiveFilters: Boolean
@@ -433,21 +437,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 dateFilter != null || tagFilter != null || favouritesOnly
 
         /** Which card to show when the list has no rows; see [RecordingsEmptyState]. */
-        val emptyState: RecordingsEmptyState
-            get() = RecordingsEmptyState.of(
+        val emptyState: RecordingsEmptyState by lazy {
+            RecordingsEmptyState.of(
                 totalRecordings = recordings.size,
                 listedRecordings = filteredRecordings.size,
                 searchTyped = contactQuery.isNotBlank(),
                 filtersActive = hasActiveFilters,
             )
+        }
 
         /**
          * Why each listed recording matches the search line (name, tag, summary or transcript), by
          * display name; empty while nothing is typed. The row draws it under its title.
          */
-        val searchReasons: Map<String, RecordingSearch.Why>
-            get() = if (contactQuery.isBlank()) emptyMap()
+        val searchReasons: Map<String, RecordingSearch.Why> by lazy {
+            if (contactQuery.isBlank()) emptyMap()
             else searchResults.associate { (item, why) -> item.displayName to why!! }
+        }
 
         /**
          * The listed recordings with the reason each matched the search line. With nothing typed
@@ -456,34 +462,35 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          * indexes ([contentHits]), ranked in that order; the chosen [sortOrder] still orders the
          * recordings inside each rank. Every recording is in it once, under its best reason.
          */
-        private val searchResults: List<Pair<RecordingItem, RecordingSearch.Why?>>
-            get() {
-                val filtered = recordings.filter { item ->
-                    matchesSource(item) &&
-                        matchesDirection(item) &&
-                        (dateFilter == null || RecordingsRepository.dayKey(item) == dateFilter) &&
-                        (tagFilter == null || tagsByRecording[item.displayName]?.contains(tagFilter) == true) &&
-                        (!favouritesOnly || item.displayName in favourites)
-                }
-                val sorted = when (sortOrder) {
-                    RecordingSort.NEWEST -> filtered
-                    RecordingSort.OLDEST -> filtered.sortedBy { it.startedAtMillis ?: it.lastModified }
-                    RecordingSort.NAME ->
-                        filtered.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { sortName(it) })
-                    // Unknown length (null) sorts last, not as zero.
-                    RecordingSort.LONGEST ->
-                        filtered.sortedByDescending { it.durationSeconds ?: -1L }
-                }
-                if (contactQuery.isBlank()) return sorted.map { it to null }
-                return RecordingSearch.ranked(sorted) { item ->
-                    RecordingSearch.classify(
-                        query = contactQuery,
-                        nameMatches = matchesContact(item),
-                        tags = tagsByRecording[item.displayName],
-                        content = contentHits[item.displayName],
-                    )
-                }
+        private val searchResults: List<Pair<RecordingItem, RecordingSearch.Why?>> by lazy { rankListing() }
+
+        private fun rankListing(): List<Pair<RecordingItem, RecordingSearch.Why?>> {
+            val filtered = recordings.filter { item ->
+                matchesSource(item) &&
+                    matchesDirection(item) &&
+                    (dateFilter == null || RecordingsRepository.dayKey(item) == dateFilter) &&
+                    (tagFilter == null || tagsByRecording[item.displayName]?.contains(tagFilter) == true) &&
+                    (!favouritesOnly || item.displayName in favourites)
             }
+            val sorted = when (sortOrder) {
+                RecordingSort.NEWEST -> filtered
+                RecordingSort.OLDEST -> filtered.sortedBy { it.startedAtMillis ?: it.lastModified }
+                RecordingSort.NAME ->
+                    filtered.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { sortName(it) })
+                // Unknown length (null) sorts last, not as zero.
+                RecordingSort.LONGEST ->
+                    filtered.sortedByDescending { it.durationSeconds ?: -1L }
+            }
+            if (contactQuery.isBlank()) return sorted.map { it to null }
+            return RecordingSearch.ranked(sorted) { item ->
+                RecordingSearch.classify(
+                    query = contactQuery,
+                    nameMatches = matchesContact(item),
+                    tags = tagsByRecording[item.displayName],
+                    content = contentHits[item.displayName],
+                )
+            }
+        }
 
         /** What a NAME sort orders by: the contact, else the number/name slot, else the file name. */
         private fun sortName(item: RecordingItem): String =
@@ -1041,9 +1048,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // minutes to draw (issue #63). The queue runs one at a time, waits out calls and
         // transcriptions, and skips anything already drawn, so queueing again on every resume is
         // cheap. Long calls are no longer skipped: the queue is what makes drawing them affordable.
-        recordings
-            .take(WAVEFORM_PRECOMPUTE_LIMIT)
-            .forEach { WaveformDrawWorker.enqueue(appContext, it.displayName, it.uri) }
+        // Only the ones with no cached shape (R40): every pass used to append all of them, so a phone
+        // whose draws were waiting grew its queue by that many jobs on every Home visit.
+        val newest = recordings.take(WAVEFORM_PRECOMPUTE_LIMIT)
+        viewModelScope.launch(Dispatchers.IO) {
+            newest
+                .filterNot { RecordingExtrasRepository.hasWaveform(appContext, it.displayName) }
+                .forEach { WaveformDrawWorker.enqueue(appContext, it.displayName, it.uri) }
+        }
     }
 
     /**

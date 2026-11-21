@@ -12,6 +12,7 @@ import android.content.Context
 import android.media.AudioManager
 import android.net.Uri
 import androidx.work.BackoffPolicy
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -47,6 +48,12 @@ class WaveformDrawWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             transcribing = TranscriptionEngine.isRunning,
         )
         if (decision == WaveformDrawPolicy.Decision.WAIT) {
+            if (WaveformDrawPolicy.shouldGiveUp(runAttemptCount)) {
+                // The audio mode can stay on "in a call" for hours after the call (Honor #53, POCO #68). Retrying
+                // every 30 s for ever is job churn for nothing; the next Home visit queues the draw again (R40).
+                AppLogger.i(TAG, "Giving up on '$name' for now after $runAttemptCount waits (call or transcription still reported)")
+                return Result.success()
+            }
             AppLogger.i(TAG, "Waiting to draw '$name': a call or a transcription is running")
             return Result.retry()
         }
@@ -71,6 +78,8 @@ class WaveformDrawWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                 val request = OneTimeWorkRequestBuilder<WaveformDrawWorker>()
                     .setInputData(workDataOf(KEY_NAME to displayName, KEY_URI to uri.toString()))
                     .setBackoffCriteria(BackoffPolicy.LINEAR, RETRY_BACKOFF_SECONDS, TimeUnit.SECONDS)
+                    // Background work behind the user's own: not on a low battery (R40).
+                    .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
                     .build()
                 // APPEND_OR_REPLACE: one queue, one draw at a time; a failed or cancelled job ahead
                 // of this one does not leave the queue stuck.
@@ -93,4 +102,12 @@ internal object WaveformDrawPolicy {
      */
     fun decide(callInProgress: Boolean, transcribing: Boolean): Decision =
         if (callInProgress || transcribing) Decision.WAIT else Decision.DRAW
+
+    /**
+     * How many times a draw may wait before it stops retrying. Backoff is linear (30 s, 60 s, ...), so this is
+     * roughly an hour and a half of waiting, longer than any real call; it never draws sooner than before.
+     */
+    const val MAX_WAIT_ATTEMPTS = 12
+
+    fun shouldGiveUp(runAttemptCount: Int): Boolean = runAttemptCount >= MAX_WAIT_ATTEMPTS
 }
