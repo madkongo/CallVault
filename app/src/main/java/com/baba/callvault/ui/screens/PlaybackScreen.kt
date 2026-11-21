@@ -287,12 +287,10 @@ fun PlaybackScreen(
                 expanded = summaryExpanded,
                 onExpandedChange = { summaryExpanded = it },
                 modifier = Modifier.bringIntoViewRequester(summaryInView),
-                // Seek, then play. A jump point that silently moved the cursor without starting
-                // would look like nothing happened.
-                onSeek = { millis ->
-                    onSeek(millis.toInt())
-                    if (!isPlaying) onPlay()
-                }
+                // Play from the stamp, the same call the transcript lines and marked moments use. A seek
+                // followed by play() restarted a fresh player at 0:00 unless the call was already playing,
+                // so the stamp was ignored (review C155).
+                onSeek = { millis -> onPlayFromFlag(millis) }
             )
             // Between the summary and the note: a tag is the shortest thing on the screen and the
             // one most often applied right after listening, so it sits where the thumb already is
