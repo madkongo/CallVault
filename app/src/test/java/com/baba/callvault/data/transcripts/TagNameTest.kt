@@ -88,6 +88,22 @@ class TagNameTest {
     }
 
     @Test
+    fun `turkish case variants of one word are one tag`() {
+        // C148: U+0130 lowercases to i + U+0307 and the dotless U+0131 stays apart from I under
+        // Locale.ROOT, so these pairs counted as different tags and the suggestion chip offered a
+        // tag the call already carried.
+        assertEquals("İnşaat", TagName.canonical("inşaat", existing = listOf("İnşaat")))
+        assertEquals("ılık", TagName.canonical("ILIK", existing = listOf("ılık")))
+        assertTrue(TagName.matches("İNŞAAT", "inşaat"))
+        assertTrue(TagName.matches("ILIK", "ılık"))
+    }
+
+    @Test
+    fun `different words are still different tags`() {
+        assertEquals("home", TagName.canonical("home", existing = listOf("hone")))
+    }
+
+    @Test
     fun `matches reports whether typing this would reuse an existing tag`() {
         assertTrue(TagName.matches("  WORK ", "work"))
     }

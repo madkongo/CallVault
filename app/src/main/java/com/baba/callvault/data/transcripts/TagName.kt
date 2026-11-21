@@ -52,6 +52,13 @@ object TagName {
 
     // Locale.ROOT: a tag is data, and the Turkish dotless i would otherwise make the same two tags
     // compare equal on one phone and not on another.
-    private fun String.equalsIgnoringCase(other: String): Boolean =
-        lowercase(Locale.ROOT) == other.lowercase(Locale.ROOT)
+    private fun String.equalsIgnoringCase(other: String): Boolean = key(this) == key(other)
+
+    /**
+     * The identity of a tag, whatever its case. Lowercase with Locale.ROOT, then fold the two Turkish
+     * i forms the root locale leaves apart: U+0130 lowercases to i plus a combining dot (U+0307),
+     * and the dotless U+0131 stays itself. Also folds U+0131 with i, as the search line already does.
+     */
+    fun key(tag: String): String =
+        tag.lowercase(Locale.ROOT).replace("̇", "").replace('ı', 'i')
 }
