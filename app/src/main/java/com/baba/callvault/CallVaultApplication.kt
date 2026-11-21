@@ -75,6 +75,10 @@ class CallVaultApplication : Application() {
             return
         }
         AppLogger.init(applicationContext)
+        // The system lists app starts only from Android 15; keep our own list so a missed-call cause can tell whether
+        // the app was running again after a stop (review C141). One small prefs write per main-process start.
+        runCatching { com.baba.callvault.system.health.AppStartRing.record(applicationContext) }
+            .onFailure { AppLogger.w(TAG, "Could not record the app start time: ${it.message}") }
 
         // The recording and error channels must exist before any app-call notice or alert uses them, including on a
         // phone that never records a phone call (review N22: a missing channel crashed every app call on a vivo).

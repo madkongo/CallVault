@@ -137,7 +137,8 @@ object AppStopHistory {
     }
 
     private fun starts(context: Context): List<AppStart> {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return emptyList()
+        // Below Android 15 the system keeps no starts; the app's own ring does (empty = unknown, today's behaviour).
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return AppStartRing.starts(context)
         val am = context.getSystemService(ActivityManager::class.java) ?: return emptyList()
         val raw = am.getHistoricalProcessStartReasons(HISTORY)
             .filter { it.processName == context.packageName }
