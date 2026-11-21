@@ -1160,6 +1160,21 @@ fun HomeScreen(
                             }
                         }
                     }
+                    // R5: the same card, amber, when everything is set up but the phone can still stop a call being
+                    // recorded. Only ever in place of "Ready"; a real error or a failed call keeps its own card.
+                    val heroRisk = com.baba.callvault.system.health.RecordingRiskReasons.forHero(
+                        statusIsReady = uiState.status.isReady,
+                        healthIsProblem = uiState.setupHealth.isProblem,
+                        reasons = uiState.riskReasons,
+                    )
+                    if (heroRisk.isNotEmpty()) {
+                        RiskStatusCard(
+                            reasons = heroRisk,
+                            mode = uiState.privilegedMode,
+                            onFix = { com.baba.callvault.system.health.RecordingRiskReasons.launchFix(context, it) },
+                            onSetRecordingState = { viewModel.setRecordingState(it) },
+                        )
+                    } else
                     HeroStatusCard(
                         status = uiState.status,
                         health = uiState.setupHealth,

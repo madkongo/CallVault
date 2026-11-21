@@ -40,6 +40,10 @@ class BootReceiver : BroadcastReceiver() {
         // Persistent anchor: keep the recorder daemon warm from boot onward so calls record instantly
         // (and off-Wi-Fi over binder) without a per-call cold-start. Boot grants the FGS-start exemption.
         startOrLog(context, "keep-alive") { DaemonKeepAliveService.start(context) }
+        // R5: say once if the phone's own settings can stop calls being recorded. Logs its own outcome; never throws.
+        com.baba.callvault.system.health.RecordingRiskNotice.evaluate(
+            context, com.baba.callvault.system.health.RecordingRiskNotice.Trigger.BOOT,
+        )
     }
 
     private fun startOrLog(context: Context, what: String, start: () -> Unit) {

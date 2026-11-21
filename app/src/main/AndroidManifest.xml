@@ -67,6 +67,16 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- R5 fix buttons check these screens exist with resolveActivity; without the entries Android 11+
+             hides them and every fix falls back to the app settings page. -->
+        <intent>
+            <action android:name="android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+            <data android:scheme="package" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.AUTO_REVOKE_PERMISSIONS" />
+            <data android:scheme="package" />
+        </intent>
     </queries>
 
     <!-- Stock Shizuku and most forks ship this applicationId; without the entry Android 11+ filters

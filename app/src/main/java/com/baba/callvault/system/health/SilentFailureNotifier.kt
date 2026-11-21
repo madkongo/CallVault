@@ -68,10 +68,14 @@ object SilentFailureNotifier {
     private const val ID_RETENTION_WAITING_FOR_DRIVE = 4726
     private const val ID_DRIVE_BACKUP_BROKEN = 4727
 
+    /** R5: the one combined "Calls may not be recorded" notice. 4720 is the keep-alive's and is never touched. */
+    private const val ID_RECORDING_AT_RISK = 4734
+
     /** Every id this object posts, for the uniqueness guard test (review C36). */
     internal val ALL_IDS = listOf(
         ID_RECORDER_UNAVAILABLE, ID_SYNC_STALLED, ID_SHIZUKU_STOPPED, ID_PAIRING_LOST, ID_CUT_OFF_SAVED,
         ID_TURNED_OFF_FOR_ANDROID, ID_STOPPED_BY_USER, ID_RETENTION_WAITING_FOR_DRIVE, ID_DRIVE_BACKUP_BROKEN,
+        ID_RECORDING_AT_RISK,
     )
 
     /**
@@ -192,6 +196,22 @@ object SilentFailureNotifier {
         title = LocalizedContext.of(context).getString(R.string.notif_drive_backup_title),
         text = LocalizedContext.of(context).getString(R.string.notif_drive_backup_text, reason),
     )
+
+    /**
+     * Something on the phone may stop calls being recorded (R5; see [RecordingRiskNotice]). One fixed id, so a
+     * later post updates this notice in place. The tap and the [actionLabel] action both open Home.
+     * Returns whether it was actually shown.
+     */
+    fun warnRecordingAtRisk(context: Context, title: String, text: String, actionLabel: String): Boolean = post(
+        context,
+        id = ID_RECORDING_AT_RISK,
+        title = title,
+        text = text,
+        actionLabel = actionLabel,
+    )
+
+    /** No reason holds any more. */
+    fun clearRecordingAtRisk(context: Context) = clear(context, ID_RECORDING_AT_RISK)
 
     /** Drive was reached again. */
     fun clearDriveBackupBroken(context: Context) = clear(context, ID_DRIVE_BACKUP_BROKEN)
@@ -350,6 +370,7 @@ object SilentFailureNotifier {
         info: Boolean = false,
         quietRepeat: Boolean = false,
         publicText: String? = null,
+        actionLabel: String? = null,
     ): Boolean {
         createChannel(context)
         val open = PendingIntent.getActivity(
@@ -389,6 +410,7 @@ object SilentFailureNotifier {
             .setOnlyAlertOnce(true)
             .setPriority(if (info) NotificationCompat.PRIORITY_LOW else NotificationCompat.PRIORITY_DEFAULT)
             .setSilent(!alert)
+        if (actionLabel != null) builder.addAction(0, actionLabel, open)
         if (publicText != null) {
             builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(
                 NotificationCompat.Builder(context, channelId)
