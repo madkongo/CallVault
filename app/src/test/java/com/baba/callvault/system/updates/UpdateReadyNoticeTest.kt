@@ -69,4 +69,17 @@ class UpdateReadyNoticeTest {
         assertTrue(UpdateInstallWorker.isBannerBusy(listOf(WorkInfo.State.RUNNING)))
         assertTrue(UpdateInstallWorker.isBannerBusy(listOf(WorkInfo.State.ENQUEUED)))
     }
+
+    @Test fun `call end never throws when the preferences or the scheduler throw`() {
+        UpdateReadyNotice.runWhenOwed(isPending = { throw IllegalStateException("prefs") }, schedule = { error("no") })
+        UpdateReadyNotice.runWhenOwed(isPending = { true }, schedule = { throw IllegalStateException("work") })
+    }
+
+    @Test fun `scheduling happens only when a notice is owed`() {
+        var scheduled = 0
+        UpdateReadyNotice.runWhenOwed(isPending = { false }, schedule = { scheduled++ })
+        assertEquals(0, scheduled)
+        UpdateReadyNotice.runWhenOwed(isPending = { true }, schedule = { scheduled++ })
+        assertEquals(1, scheduled)
+    }
 }

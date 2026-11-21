@@ -965,8 +965,16 @@ object VoipRecordingCoordinator {
      */
     @Synchronized
     fun onCallEnded(context: Context, neverConnected: Boolean = false) {
-        // C3: an update install held back by this call is announced as ready (one notice, no install).
-        UpdateReadyNotice.onAnyCallEnded(context)
+        try {
+            stopAtCallEnd(context, neverConnected)
+        } finally {
+            // C3: last, after the stop and publish (which can take seconds): an update install held back by this call
+            // is announced as ready (one notice, no install). Never throws.
+            UpdateReadyNotice.onAnyCallEnded(context)
+        }
+    }
+
+    private fun stopAtCallEnd(context: Context, neverConnected: Boolean) {
         if (!recording) {
             takeNotReadyAtEnd(context)
             callEnds++

@@ -63,15 +63,23 @@ class UpdateReadyNotice(
             )
         }
 
-        /** The existing call-ended signals (carrier IDLE, app-call end) call this; cheap when nothing is owed. */
+        /** The existing call-ended signals (carrier IDLE, app-call end) call this; cheap when nothing is owed. Never throws. */
         fun onAnyCallEnded(context: Context) {
-            val app = context.applicationContext
-            if (!AppPreferences(app).isUpdateReadyPending()) return
-            runCatching {
-                val request = OneTimeWorkRequestBuilder<UpdateReadyWorker>()
-                    .setInitialDelay(SETTLE_SECONDS, TimeUnit.SECONDS).build()
-                WorkManager.getInstance(app).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request)
-            }.onFailure { AppLogger.w(TAG, "Could not schedule the update-ready notice: ${it.message}") }
+            runWhenOwed(
+                isPending = { AppPreferences(context.applicationContext).isUpdateReadyPending() },
+                schedule = {
+                    val request = OneTimeWorkRequestBuilder<UpdateReadyWorker>()
+                        .setInitialDelay(SETTLE_SECONDS, TimeUnit.SECONDS).build()
+                    WorkManager.getInstance(context.applicationContext)
+                        .enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request)
+                },
+            )
+        }
+
+        /** The whole of [onAnyCallEnded], with its two reads and writes as seams; any failure is logged, never thrown. */
+        internal fun runWhenOwed(isPending: () -> Boolean, schedule: () -> Unit) {
+            runCatching { if (isPending()) schedule() }
+                .onFailure { AppLogger.w(TAG, "Could not schedule the update-ready notice: ${it.message}") }
         }
     }
 }
