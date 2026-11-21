@@ -87,4 +87,32 @@ class ClipSourceAccessTest {
         assertEquals(null, result)
         assertEquals(0, copies)
     }
+
+    @Test
+    fun `a source the extractor cannot set up on falls back to the copy`() {
+        val source = realFile()
+        val copy = File(tmp.root, ".source.tmp")
+        var runs = 0
+        val result = ClipCutter.withSeekableSource(
+            openDescriptor = { ParcelFileDescriptor.open(source, ParcelFileDescriptor.MODE_READ_ONLY) },
+            copyTo = { it.writeBytes(source.readBytes()) },
+            copyFile = copy,
+            uriForLog = "content://x",
+        ) { if (runs++ == 0) throw ClipCutter.SourceUnreadable(IllegalStateException("no pread")) else "copied" }
+        assertEquals("copied", result)
+        assertEquals(2, runs)
+    }
+
+    @Test
+    fun `an io failure reading the real file also falls back to the copy`() {
+        val source = realFile()
+        var runs = 0
+        val result = ClipCutter.withSeekableSource(
+            openDescriptor = { ParcelFileDescriptor.open(source, ParcelFileDescriptor.MODE_READ_ONLY) },
+            copyTo = { it.writeBytes(source.readBytes()) },
+            copyFile = File(tmp.root, ".source.tmp"),
+            uriForLog = "content://x",
+        ) { if (runs++ == 0) throw IOException("read failed") else 1 }
+        assertEquals(1, result)
+    }
 }

@@ -31,6 +31,11 @@ class ContainerRefusals(
         prefs.edit().putLong(keyOf(endpoint), nowMs()).apply()
     }
 
+    /** The recording's own container was accepted: one unrelated 400 must not keep this service on WAV for a week. */
+    fun noteContainerWorked(endpoint: CloudEndpoint) {
+        if (prefs.contains(keyOf(endpoint))) clear(endpoint)
+    }
+
     fun clear(endpoint: CloudEndpoint) {
         prefs.edit().remove(keyOf(endpoint)).apply()
     }

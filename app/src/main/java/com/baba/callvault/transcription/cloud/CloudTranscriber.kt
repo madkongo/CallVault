@@ -105,7 +105,7 @@ class CloudTranscriber(
             AppLogger.i(TAG, "Sending the recording whole: ${probe.sizeBytes / BYTES_PER_KB} KB as ${format.contentType}")
             try {
                 return client.transcribe(endpoint, key, CloudAudioSource.readAll(context, uri), format, language)
-                    .also { progressPercent = PERCENT }
+                    .also { progressPercent = PERCENT; refusals.noteContainerWorked(endpoint) }
             } catch (e: CloudError) {
                 // Only a refused container (400/415) or size (413) gets WAV passes. Any other refusal, such as a
                 // retired model name, would be refused again, so it is thrown without a second upload (R21).
@@ -142,6 +142,7 @@ class CloudTranscriber(
             val chunk = plan[index]
             val sent = remux?.let { format ->
                 runCatching { sendRemuxed(context, uri, key, language, plan, index, format) }
+                    .onSuccess { refusalsOf(context).noteContainerWorked(endpoint) }
                     .onFailure {
                         // Only a refused container falls back to WAV; any other cloud error is thrown (R21).
                         if (it is CloudError && !it.isFormatRefusal) throw it

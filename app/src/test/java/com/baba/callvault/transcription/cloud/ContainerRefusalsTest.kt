@@ -55,4 +55,16 @@ class ContainerRefusalsTest {
         assertFalse(refusals.isRefused(custom))
         assertEquals(false, prefs.all.isEmpty()) // still stored; expiry is by age, not removal
     }
+
+    @Test
+    fun `a container the service accepted clears an earlier refusal for that service only`() {
+        val refusals = ContainerRefusals(prefs, { 1_000L })
+        val other = custom.copy(model = "other")
+        refusals.markRefused(custom)
+        refusals.markRefused(other)
+        refusals.noteContainerWorked(custom)
+        assertFalse(refusals.isRefused(custom))
+        assertTrue(refusals.isRefused(other))
+        refusals.noteContainerWorked(custom) // nothing stored: harmless
+    }
 }

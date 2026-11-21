@@ -50,7 +50,7 @@ object ClipCutter {
     /** The recording's audio type, or null when it cannot be read. */
     fun mimeOf(context: Context, uri: Uri): String? = runCatching {
         withSource(context, uri) { fd ->
-            val (extractor, format) = MergeFormat.openAudio(fd)
+            val (extractor, format) = openSource(fd)
             extractor.release()
             format.getString(MediaFormat.KEY_MIME)
         }
@@ -71,6 +71,20 @@ object ClipCutter {
             uriForLog = uri.toString(),
             block = block,
         )
+
+    /** The extractor could not be set up on the descriptor (before any of our own cut logic ran). */
+    internal class SourceUnreadable(cause: Throwable) : Exception(cause)
+
+    /** [MergeFormat.openAudio], with a failure of the extractor's own setup marked so [withSeekableSource] can recover. */
+    private fun openSource(fd: java.io.FileDescriptor): Pair<MediaExtractor, MediaFormat> = try {
+        MergeFormat.openAudio(fd)
+    } catch (e: MergeFormat.Incompatible) {
+        throw e
+    } catch (e: java.io.IOException) {
+        throw SourceUnreadable(e)
+    } catch (e: RuntimeException) {
+        throw SourceUnreadable(e)
+    }
 
     /**
      * The decision behind [withSource], with the two ways to reach the bytes passed in so it can be tested. Only OPENING
@@ -95,6 +109,11 @@ object ClipCutter {
                 if (isFile) {
                     try {
                         return block(it.fileDescriptor)
+                    } catch (e: SourceUnreadable) {
+                        // A provider that reports a size but cannot be read by MediaExtractor: the cache copy can.
+                        AppLogger.w(TAG, "Extractor cannot read $uriForLog directly (${e.cause?.javaClass?.simpleName}); copying it first")
+                    } catch (e: java.io.IOException) {
+                        AppLogger.w(TAG, "Reading $uriForLog directly failed (${e.message}); copying it first")
                     } catch (e: Exception) {
                         AppLogger.w(TAG, "Reading $uriForLog failed (${e.javaClass.simpleName}: ${e.message})")
                         throw e
@@ -124,7 +143,7 @@ object ClipCutter {
      */
     fun cut(context: Context, source: Uri, range: ClipRange, output: File): Result = try {
         withSource(context, source) { fd ->
-            val (extractor, format) = MergeFormat.openAudio(fd)
+            val (extractor, format) = openSource(fd)
             try {
                 val mime = format.getString(MediaFormat.KEY_MIME) ?: error("No audio type")
                 require(canClip(mime)) { "Clips cannot be made from $mime" }
