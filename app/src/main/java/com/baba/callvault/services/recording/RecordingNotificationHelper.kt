@@ -25,9 +25,12 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import com.baba.callvault.MainActivity
 import com.baba.callvault.R
+import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.system.LocalizedContext
+import com.baba.callvault.utils.AppLogger
 
 /** One button on the ongoing recording notification. */
 private data class NotificationAction(val icon: Int, val text: String, val intentAction: String)
@@ -44,6 +47,9 @@ class RecordingNotificationHelper(base: Context) {
         const val SERVICE_NOTIFICATION_ID = 1
         const val ERROR_NOTIFICATION_ID = 2
         const val BATTERY_EXEMPTION_NOTIFICATION_ID = 4733
+
+        /** An error notice expires after a day so a stale one never lingers (R29). */
+        const val ERROR_TIMEOUT_MS = 24L * 60 * 60 * 1000
 
         private val channelsEnsured = EnsureOnce()
 
@@ -365,23 +371,56 @@ class RecordingNotificationHelper(base: Context) {
         vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
     }
 
+    /** True while an error notice for exactly this [message] is still on screen. */
+    internal fun isErrorShown(message: String): Boolean = runCatching {
+        context.getSystemService(NotificationManager::class.java).activeNotifications
+            .any { it.id == ERROR_NOTIFICATION_ID && it.tag == errorTag(message) }
+    }.getOrDefault(false)
+
     /**
-     * Posts an error notification visible.
+     * Posts an error notice (R29).
+     *
+     * Each distinct message has its own slot (a tag on the shared id), so a minor error can never replace
+     * "this call is NOT being recorded". The first occurrence is loud; the same message arriving again while it is
+     * still on screen updates it in place without sound or vibration, so a cause that repeats on every call does not
+     * ring every time. A tap opens Home, it clears itself on tap and after [ERROR_TIMEOUT_MS].
      *
      * @param message Human-readable error description to show in the notification body.
      */
     fun showErrorNotification(message: String) {
+        val repeat = isErrorShown(message)
+        val open = PendingIntent.getActivity(
+            context, NotificationDestination.Status.requestCode,
+            Intent(context, MainActivity::class.java).apply {
+                setPackage(context.packageName)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(NotificationDestination.EXTRA, NotificationDestination.Status.key)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_ERROR)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(context.getString(R.string.recording_error_title))
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setAutoCancel(false)
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .setTimeoutAfter(ERROR_TIMEOUT_MS)
+            .setShowWhen(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(repeat)
             .setCategory(NotificationCompat.CATEGORY_ERROR)
             .build()
-        context.getSystemService(NotificationManager::class.java).notify(ERROR_NOTIFICATION_ID, notification)
-        vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
+        context.getSystemService(NotificationManager::class.java)
+            .notify(errorTag(message), ERROR_NOTIFICATION_ID, notification)
+        if (repeat) {
+            AppLogger.d("CV:ErrorNotice", "Error notice posted again without sound: still on screen")
+        } else {
+            vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
+        }
     }
+
+    private fun errorTag(message: String): String = "error:" + message.hashCode()
 
     /**
      * Triggers a vibration if enabled in settings.
