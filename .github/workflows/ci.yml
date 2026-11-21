@@ -1,4 +1,4 @@
-# CI (F1): unit tests and a debug build, started manually for now.
+# CI (F1): unit tests and a debug build on every push to main, every pull request, and on demand.
 #
 # This workflow never signs anything. Release signing stays on the maintainer's machine
 # (signing/callvault-signing.keystore, gitignored), and no secret is available here.
@@ -8,13 +8,16 @@
 #     (tools/ci/versioncode-floor.txt), or the build could never install over a release.
 #   - tools/ci/check-16kb-alignment.sh: our own native libraries must be 16 KB page aligned.
 #
-# TODO before the first push: pin every `uses:` below to a full commit SHA (they are tags now, as in
-# codeql.yml, because SHAs could not be looked up offline).
+# Every `uses:` is pinned to a full commit SHA (tag in the comment), looked up 2026-11-21.
 
 name: CI
 
 on:
-  # Manual only until the owner approves CI on push (decided: yes, after 2.5.2).
+  # Owner approved CI on push 2026-11-21 (takes effect once 2.5.2 reaches main).
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -33,18 +36,18 @@ jobs:
     steps:
       # whisper.cpp and llama.cpp are submodules and the native CMake build reads them directly.
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           submodules: recursive
 
       - name: Setup Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
         with:
           validate-wrappers: true
           cache-provider: basic # DO NOT REMOVE: the default "advanced caching" of v6 is under proprietary terms.
@@ -72,7 +75,7 @@ jobs:
 
       - name: Upload test reports on failure
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: test-and-lint-reports
           path: |
