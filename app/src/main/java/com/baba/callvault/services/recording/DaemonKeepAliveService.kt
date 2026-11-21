@@ -467,6 +467,12 @@ class DaemonKeepAliveService : Service() {
      */
     private val wirelessDebuggingObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
+            // Noted before the mode check, so a value seen while another mode ran is never left stale.
+            val nowOn = AdbShell.isWirelessDebuggingEnabled(applicationContext)
+            val previouslySeenOn = lastSeenWirelessDebuggingOn
+            val msSinceLastOn = lastWirelessDebuggingOnAtMs.takeIf { it != 0L }?.let { SystemClock.elapsedRealtime() - it }
+            lastSeenWirelessDebuggingOn = nowOn
+            if (nowOn) lastWirelessDebuggingOnAtMs = SystemClock.elapsedRealtime()
             if (!usesAdb()) return // Shizuku mode: the switches are not ours to act on
             // Any switch of Wireless debugging gives adbd a new port, so a port search that failed may run again (#65).
             com.baba.callvault.integrations.adb.ConnectPortFinder.onWirelessDebuggingChanged()
@@ -502,9 +508,21 @@ class DaemonKeepAliveService : Service() {
                     wifi = WifiState.of(applicationContext),
                     wifiJustLost = wifiLostRecently(),
                     weJustRestartedAdbd = AdbShell.didWeJustRestartAdbd(),
-                )
+                    msSinceLastOn = msSinceLastOn,
+                    lastSeenOn = previouslySeenOn,
+                ).also {
+                    AppLogger.i(
+                        TAG,
+                        "Wireless debugging off, verdict=$it (ms since last on=$msSinceLastOn, previous value on=$previouslySeenOn, " +
+                            "wifi=${WifiState.of(applicationContext)}, wifi lost recently=${wifiLostRecently()})",
+                    )
+                }
             ) {
                 WirelessDebuggingOffCause.OURS -> Unit
+                WirelessDebuggingOffCause.ANDROID_REVERTED_AN_ON ->
+                    AppLogger.i(TAG, "Wireless debugging went off within ${WirelessDebuggingOffCause.ANDROID_REVERT_WINDOW_MS} ms of being switched on; Android reverting it, not the user's choice")
+                WirelessDebuggingOffCause.OFF_WHILE_ALREADY_OFF ->
+                    AppLogger.i(TAG, "Wireless debugging off event while the last value seen was already off; an on-off pair, not a user action")
                 WirelessDebuggingOffCause.AFTER_OUR_ADBD_RESTART ->
                     AppLogger.i(TAG, "Wireless debugging went off just after CallVault restarted adbd (another app, such as Shizuku, reacting); not the user's")
                 WirelessDebuggingOffCause.ANDROID_NETWORK_CHANGED ->
@@ -576,6 +594,13 @@ class DaemonKeepAliveService : Service() {
             MicOpAutoHeal.onWayBackMayHaveAppeared(applicationContext, MicOpHealPolicy.Trigger.WIFI_JOINED)
         }
     }
+
+    /** The last Wireless-debugging value the observer saw (null before the first), and when it last saw "on". */
+    @Volatile
+    private var lastSeenWirelessDebuggingOn: Boolean? = null
+
+    @Volatile
+    private var lastWirelessDebuggingOnAtMs = 0L
 
     /** When a Wi-Fi network was last lost; tells Android's "Wi-Fi changed" switch-off from the user's. */
     @Volatile
