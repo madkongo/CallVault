@@ -91,10 +91,18 @@ class CutOffRescueWorkerTest {
     }
 
     @Test
-    fun a_merge_temp_is_not_a_reason_to_queue() {
+    fun a_fresh_merge_temp_is_not_a_reason_to_queue() {
         val dir = tmp.newFolder("staging")
         File(dir, "merge_stage_9.tmp").writeText("x")
         assertFalse(CutOffRescueWorker.hasStagedWork(dir))
+    }
+
+    @Test
+    fun a_day_old_merge_temp_is_queued_at_start_so_it_gets_removed() {
+        val dir = tmp.newFolder("staging")
+        File(dir, "merge_stage_9.tmp").writeText("x")
+        val later = System.currentTimeMillis() + StaleTempSweep.MAX_AGE_MS + 1_000
+        assertTrue(CutOffRescueWorker.hasStagedWork(dir, null, later))
     }
 
     // ---- N37 ----

@@ -160,6 +160,10 @@ object SafHelper {
     fun stagingDirOrNull(context: Context): File? =
         File(context.filesDir, STAGING_DIR_NAME).takeIf { it.isDirectory }
 
+    /** A merge's staged file: never published by the rescue, always a copy of parts still in the library (C4). */
+    fun isMergeStaging(file: File): Boolean =
+        file.isFile && file.name.startsWith(NON_RECOVERABLE_TEMP_PREFIX) && file.name.endsWith(STAGING_TEMP_SUFFIX)
+
     /** A call recording's staged file (not a merge, not a note). */
     fun isStagedRecording(file: File): Boolean =
         file.isFile && file.name.startsWith(STAGING_TEMP_PREFIX) && file.name.endsWith(STAGING_TEMP_SUFFIX)
