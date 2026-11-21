@@ -486,6 +486,8 @@ class DaemonKeepAliveService : Service() {
             val prefs = AppPreferences(applicationContext)
             if (on) {
                 // On again, by anyone: nothing left to respect.
+                // Remembered first: a quick revert of this on must put back what the user already had.
+                wdUserFlagTracker.onSwitchedOn(prefs.wasWirelessDebuggingTurnedOffByUser(), SystemClock.elapsedRealtime())
                 prefs.setWirelessDebuggingTurnedOffByUser(false)
                 MicOpAutoHeal.onWayBackMayHaveAppeared(applicationContext, MicOpHealPolicy.Trigger.WIRELESS_DEBUGGING_ON)
                 val alive = isDaemonAlive()
@@ -520,10 +522,14 @@ class DaemonKeepAliveService : Service() {
                 }
             ) {
                 WirelessDebuggingOffCause.OURS -> Unit
-                WirelessDebuggingOffCause.ANDROID_REVERTED_AN_ON ->
+                WirelessDebuggingOffCause.ANDROID_REVERTED_AN_ON -> {
                     AppLogger.i(TAG, "Wireless debugging went off within ${WirelessDebuggingOffCause.ANDROID_REVERT_WINDOW_MS} ms of being switched on; Android reverting it, not the user's choice")
-                WirelessDebuggingOffCause.OFF_WHILE_ALREADY_OFF ->
+                    restoreUserFlagAfterRevert(prefs)
+                }
+                WirelessDebuggingOffCause.OFF_WHILE_ALREADY_OFF -> {
                     AppLogger.i(TAG, "Wireless debugging off event while the last value seen was already off; an on-off pair, not a user action")
+                    restoreUserFlagAfterRevert(prefs)
+                }
                 WirelessDebuggingOffCause.AFTER_OUR_ADBD_RESTART ->
                     AppLogger.i(TAG, "Wireless debugging went off just after CallVault restarted adbd (another app, such as Shizuku, reacting); not the user's")
                 WirelessDebuggingOffCause.ANDROID_NETWORK_CHANGED ->
@@ -560,6 +566,22 @@ class DaemonKeepAliveService : Service() {
      * Left standing, it held recovery back for good: the keep-alive stands down while the user's switch is
      * respected, and nothing but the user switching it on again cleared it.
      */
+    private val wdUserFlagTracker = com.baba.callvault.integrations.adb.WirelessDebuggingUserFlagTracker()
+
+    /**
+     * A revert verdict never removes a flag the user already had: the on that was reverted cleared it, so it is put back.
+     * The relaunch paths read the flag again at the moment they decide to write the switch, so they see it restored.
+     */
+    private fun restoreUserFlagAfterRevert(prefs: AppPreferences) {
+        val before = prefs.wasWirelessDebuggingTurnedOffByUser()
+        val after = wdUserFlagTracker.flagAfterOff(
+            WirelessDebuggingOffCause.ANDROID_REVERTED_AN_ON, before, SystemClock.elapsedRealtime(),
+        )
+        if (after == before) return
+        prefs.setWirelessDebuggingTurnedOffByUser(after)
+        AppLogger.i(TAG, "Restored 'Wireless debugging turned off by the user' = $after: the on just before was reverted")
+    }
+
     private val recheckWirelessDebuggingOffCause = Runnable {
         val prefs = AppPreferences(applicationContext)
         if (!prefs.wasWirelessDebuggingTurnedOffByUser()) return@Runnable
