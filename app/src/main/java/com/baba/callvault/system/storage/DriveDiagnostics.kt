@@ -120,28 +120,8 @@ object DriveDiagnostics {
             .take(limit)
         if (rows.isEmpty()) "no exit record for the copier process"
         else rows.joinToString("; ") {
-            "${stamp.format(Date(it.timestamp))} ${exitReason(it.reason)} status=${it.status} importance=${it.importance} " +
+            "${stamp.format(Date(it.timestamp))} ${com.baba.callvault.system.health.AppStopHistory.exitReasonName(it.reason)} status=${it.status} importance=${it.importance} " +
                 "rss=${it.rss shr 20}MB desc=${it.description ?: "-"}"
         }
     }.getOrElse { "exit records unreadable (${it.javaClass.simpleName}: ${it.message})" }
-
-    private fun exitReason(reason: Int): String = when (reason) {
-        ApplicationExitInfo.REASON_EXIT_SELF -> "EXIT_SELF"
-        ApplicationExitInfo.REASON_SIGNALED -> "SIGNALED"
-        ApplicationExitInfo.REASON_LOW_MEMORY -> "LOW_MEMORY"
-        ApplicationExitInfo.REASON_CRASH -> "CRASH"
-        ApplicationExitInfo.REASON_CRASH_NATIVE -> "CRASH_NATIVE"
-        ApplicationExitInfo.REASON_ANR -> "ANR"
-        ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> "INITIALIZATION_FAILURE"
-        ApplicationExitInfo.REASON_PERMISSION_CHANGE -> "PERMISSION_CHANGE"
-        ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "EXCESSIVE_RESOURCE_USAGE"
-        ApplicationExitInfo.REASON_USER_REQUESTED -> "USER_REQUESTED"
-        ApplicationExitInfo.REASON_USER_STOPPED -> "USER_STOPPED"
-        ApplicationExitInfo.REASON_DEPENDENCY_DIED -> "DEPENDENCY_DIED"
-        ApplicationExitInfo.REASON_OTHER -> "OTHER"
-        ApplicationExitInfo.REASON_FREEZER -> "FREEZER"
-        ApplicationExitInfo.REASON_PACKAGE_STATE_CHANGE -> "PACKAGE_STATE_CHANGE"
-        ApplicationExitInfo.REASON_PACKAGE_UPDATED -> "PACKAGE_UPDATED"
-        else -> "reason#$reason"
-    }
 }

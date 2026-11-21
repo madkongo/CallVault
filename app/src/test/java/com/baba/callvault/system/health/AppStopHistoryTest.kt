@@ -135,4 +135,10 @@ class AppStopHistoryTest {
         )
         assertTrue(line, line.contains("status=9"))
     }
+
+    @Test
+    fun `unknown and unlisted reasons print the same way everywhere`() {
+        assertEquals("UNKNOWN", AppStopHistory.exitReasonName(ApplicationExitInfo.REASON_UNKNOWN))
+        assertEquals("reason 999", AppStopHistory.exitReasonName(999))
+    }
 }
