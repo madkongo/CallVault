@@ -148,6 +148,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          * (review C97). Same words as the notification, so the card and the notification say one thing.
          */
         WD_OFF_BY_USER(R.string.notif_readiness_down_title, R.string.notif_readiness_wd_off_by_user_text),
+        /** [WD_OFF_BY_USER] while USB debugging is already on: the advice must not be "turn on USB debugging". */
+        WD_OFF_BY_USER_USB_ON(R.string.notif_readiness_down_title, R.string.notif_readiness_wd_off_by_user_usb_on_text),
         /**
          * Android refused to start the recording service for a call (review N26): the phone is not exempt from battery
          * optimisation and nothing else lets the app start it from the background. Tapping asks for the exemption.
@@ -1311,7 +1313,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     private fun recorderDownStatus(): HomeStatus? = runCatching {
         if (RecorderConnection.isConnected) return@runCatching null
-        statusForNotice(ReadinessNoticeText.current(appContext, ready = false))
+        val notice = ReadinessNoticeText.current(appContext, ready = false)
+        statusForNotice(
+            notice,
+            usbDebuggingOn = notice == ReadinessNotice.WD_OFF_BY_USER && AdbShell.usbDebuggingState(appContext).isOn,
+        )
     }.getOrNull()
 
     /**
@@ -1620,9 +1626,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         ): HomeStatus =
             recorderDown() ?: battery() ?: if (recoveryStuck()) HomeStatus.RECOVERY_STUCK else HomeStatus.READY
 
-        internal fun statusForNotice(notice: ReadinessNotice): HomeStatus? = when (notice) {
+        internal fun statusForNotice(notice: ReadinessNotice, usbDebuggingOn: Boolean = false): HomeStatus? = when (notice) {
             ReadinessNotice.NEEDS_WIFI, ReadinessNotice.NEEDS_WIFI_TO_RESTART -> HomeStatus.NEEDS_WIFI
-            ReadinessNotice.WD_OFF_BY_USER -> HomeStatus.WD_OFF_BY_USER
+            ReadinessNotice.WD_OFF_BY_USER ->
+                if (usbDebuggingOn) HomeStatus.WD_OFF_BY_USER_USB_ON else HomeStatus.WD_OFF_BY_USER
             else -> null
         }
 

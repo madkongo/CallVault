@@ -32,12 +32,24 @@ enum class WirelessDebuggingOffCause {
      * 2026-10-22: 1.2-1.5 s after each of our `tcpip:` arms, every time; Shizuku's watchdog is the likely writer.
      */
     AFTER_OUR_ADBD_RESTART,
+
+    /**
+     * Wireless debugging went off within [ANDROID_REVERT_WINDOW_MS] of an "on" that anyone made, CallVault or not.
+     * Android reverts an on it does not trust 1.2-1.5 s later (POCO, OP9 C99); a person does not switch it on and
+     * straight off again.
+     */
+    ANDROID_REVERTED_AN_ON,
+
+    /** An "off" arrived while the last value seen was already off: the "on" between them was never delivered. */
+    OFF_WHILE_ALREADY_OFF,
     USER;
 
     companion object {
         /**
          * @param wifiJustLost a Wi-Fi network was lost within the last few seconds.
          * @param weJustRestartedAdbd CallVault opened `tcpip:` or `usb:` within the last few seconds.
+         * @param msSinceLastOn how long ago the last "on" of the switch was seen, by anyone; null if none was.
+         * @param lastSeenOn the value the observer saw last (null if it has seen none yet).
          */
         fun of(
             weJustTurnedItOff: Boolean,
@@ -45,13 +57,20 @@ enum class WirelessDebuggingOffCause {
             wifi: WifiState,
             wifiJustLost: Boolean = false,
             weJustRestartedAdbd: Boolean = false,
+            msSinceLastOn: Long? = null,
+            lastSeenOn: Boolean? = null,
         ): WirelessDebuggingOffCause = when {
             weJustTurnedItOff -> OURS
             weJustTurnedItOn -> ANDROID_REFUSED
             wifi == WifiState.NOT_CONNECTED -> ANDROID_NO_WIFI
             wifiJustLost -> ANDROID_NETWORK_CHANGED
             weJustRestartedAdbd -> AFTER_OUR_ADBD_RESTART
+            msSinceLastOn != null && msSinceLastOn in 0 until ANDROID_REVERT_WINDOW_MS -> ANDROID_REVERTED_AN_ON
+            lastSeenOn == false -> OFF_WHILE_ALREADY_OFF
             else -> USER
         }
+
+        /** About twice the measured reverts (1.2-1.5 s on the POCO and the OP9). */
+        const val ANDROID_REVERT_WINDOW_MS = 3_000L
     }
 }

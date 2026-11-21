@@ -252,7 +252,7 @@ class CallMonitorService : Service() {
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setContentTitle(getString(ReadinessNoticeText.title(notice)))
-            .setContentText(getString(ReadinessNoticeText.text(notice)))
+            .setContentText(getString(ReadinessNoticeText.textNow(this, notice)))
             .setOnlyAlertOnce(true)
             .build()
     }

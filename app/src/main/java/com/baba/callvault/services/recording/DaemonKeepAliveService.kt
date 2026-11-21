@@ -174,7 +174,7 @@ class DaemonKeepAliveService : Service() {
             val reasonRes = when {
                 notice == ReadinessNotice.STARTING || notice == ReadinessNotice.STUCK ->
                     if (shizuku) R.string.notif_health_recorder_text_shizuku else R.string.notif_health_down_generic_text
-                else -> ReadinessNoticeText.text(notice)
+                else -> ReadinessNoticeText.textNow(this, notice)
             }
             RecorderDownAlertRunner.Cause(notice.name, LocalizedContext.of(this).getString(reasonRes), shizuku)
         },
@@ -218,6 +218,7 @@ class DaemonKeepAliveService : Service() {
         ensureOwnChannel()
         runCatching {
             startForeground(NOTIF_ID, buildNotification(ready), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            logNoticePost("re-posted through startForeground")
         }.onFailure {
             AppLogger.w(TAG, "Could not re-post \"Ready\" as the foreground notice (${it.message}); trying notify")
             updateNotification(ready)
@@ -468,6 +469,12 @@ class DaemonKeepAliveService : Service() {
     private val wirelessDebuggingObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
             if (!usesAdb()) return // Shizuku mode: the switches are not ours to act on
+            // What the observer saw before this change; the history starts afresh whenever the observer is registered.
+            val nowOn = AdbShell.isWirelessDebuggingEnabled(applicationContext)
+            val previouslySeenOn = lastSeenWirelessDebuggingOn
+            val msSinceLastOn = lastWirelessDebuggingOnAtMs.takeIf { it != 0L }?.let { SystemClock.elapsedRealtime() - it }
+            lastSeenWirelessDebuggingOn = nowOn
+            if (nowOn) lastWirelessDebuggingOnAtMs = SystemClock.elapsedRealtime()
             // Any switch of Wireless debugging gives adbd a new port, so a port search that failed may run again (#65).
             com.baba.callvault.integrations.adb.ConnectPortFinder.onWirelessDebuggingChanged()
             val on = AdbShell.isWirelessDebuggingEnabled(applicationContext)
@@ -479,6 +486,8 @@ class DaemonKeepAliveService : Service() {
             val prefs = AppPreferences(applicationContext)
             if (on) {
                 // On again, by anyone: nothing left to respect.
+                // Remembered first: a quick revert of this on must put back what the user already had.
+                wdUserFlagTracker.onSwitchedOn(prefs.wasWirelessDebuggingTurnedOffByUser(), SystemClock.elapsedRealtime())
                 prefs.setWirelessDebuggingTurnedOffByUser(false)
                 MicOpAutoHeal.onWayBackMayHaveAppeared(applicationContext, MicOpHealPolicy.Trigger.WIRELESS_DEBUGGING_ON)
                 val alive = isDaemonAlive()
@@ -502,9 +511,25 @@ class DaemonKeepAliveService : Service() {
                     wifi = WifiState.of(applicationContext),
                     wifiJustLost = wifiLostRecently(),
                     weJustRestartedAdbd = AdbShell.didWeJustRestartAdbd(),
-                )
+                    msSinceLastOn = msSinceLastOn,
+                    lastSeenOn = previouslySeenOn,
+                ).also {
+                    AppLogger.i(
+                        TAG,
+                        "Wireless debugging off, verdict=$it (ms since last on=$msSinceLastOn, previous value on=$previouslySeenOn, " +
+                            "wifi=${WifiState.of(applicationContext)}, wifi lost recently=${wifiLostRecently()})",
+                    )
+                }
             ) {
                 WirelessDebuggingOffCause.OURS -> Unit
+                WirelessDebuggingOffCause.ANDROID_REVERTED_AN_ON -> {
+                    AppLogger.i(TAG, "Wireless debugging went off within ${WirelessDebuggingOffCause.ANDROID_REVERT_WINDOW_MS} ms of being switched on; Android reverting it, not the user's choice")
+                    restoreUserFlagAfterRevert(prefs)
+                }
+                WirelessDebuggingOffCause.OFF_WHILE_ALREADY_OFF -> {
+                    AppLogger.i(TAG, "Wireless debugging off event while the last value seen was already off; an on-off pair, not a user action")
+                    restoreUserFlagAfterRevert(prefs)
+                }
                 WirelessDebuggingOffCause.AFTER_OUR_ADBD_RESTART ->
                     AppLogger.i(TAG, "Wireless debugging went off just after CallVault restarted adbd (another app, such as Shizuku, reacting); not the user's")
                 WirelessDebuggingOffCause.ANDROID_NETWORK_CHANGED ->
@@ -541,6 +566,22 @@ class DaemonKeepAliveService : Service() {
      * Left standing, it held recovery back for good: the keep-alive stands down while the user's switch is
      * respected, and nothing but the user switching it on again cleared it.
      */
+    private val wdUserFlagTracker = com.baba.callvault.integrations.adb.WirelessDebuggingUserFlagTracker()
+
+    /**
+     * A revert verdict never removes a flag the user already had: the on that was reverted cleared it, so it is put back.
+     * The relaunch paths read the flag again at the moment they decide to write the switch, so they see it restored.
+     */
+    private fun restoreUserFlagAfterRevert(prefs: AppPreferences) {
+        val before = prefs.wasWirelessDebuggingTurnedOffByUser()
+        val after = wdUserFlagTracker.flagAfterOff(
+            WirelessDebuggingOffCause.ANDROID_REVERTED_AN_ON, before, SystemClock.elapsedRealtime(),
+        )
+        if (after == before) return
+        prefs.setWirelessDebuggingTurnedOffByUser(after)
+        AppLogger.i(TAG, "Restored 'Wireless debugging turned off by the user' = $after: the on just before was reverted")
+    }
+
     private val recheckWirelessDebuggingOffCause = Runnable {
         val prefs = AppPreferences(applicationContext)
         if (!prefs.wasWirelessDebuggingTurnedOffByUser()) return@Runnable
@@ -576,6 +617,13 @@ class DaemonKeepAliveService : Service() {
             MicOpAutoHeal.onWayBackMayHaveAppeared(applicationContext, MicOpHealPolicy.Trigger.WIFI_JOINED)
         }
     }
+
+    /** The last Wireless-debugging value the observer saw (null before the first), and when it last saw "on". */
+    @Volatile
+    private var lastSeenWirelessDebuggingOn: Boolean? = null
+
+    @Volatile
+    private var lastWirelessDebuggingOnAtMs = 0L
 
     /** When a Wi-Fi network was last lost; tells Android's "Wi-Fi changed" switch-off from the user's. */
     @Volatile
@@ -649,6 +697,9 @@ class DaemonKeepAliveService : Service() {
     private fun registerAdbWatchers() {
         // Per successful registration, so a failed one is retried at the next reconcile (the flag stays false until
         // all three have worked; registering an observer twice is harmless, and unregister tolerates a missing one).
+        // No history carries over from before this registration: a value missed while unregistered is not "seen".
+        lastSeenWirelessDebuggingOn = null
+        lastWirelessDebuggingOnAtMs = 0L
         val observers = runCatching {
             contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_enabled"), false, usbDebuggingObserver)
             contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_wifi_enabled"), false, wirelessDebuggingObserver)
@@ -701,6 +752,7 @@ class DaemonKeepAliveService : Service() {
                 ForegroundNoticeChannel.noticeForStart(applicationContext, buildNotification(RecorderConnection.isConnected), ::ensureOwnChannel),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
             )
+            logNoticePost("service start (startForeground)")
         }.onFailure { AppLogger.e(TAG, "keep-alive startForeground failed", it) }.isSuccess
         if (!startedForeground) {
             // Nothing else would start it again (review R3): queue a bounded retry before giving up.
@@ -1044,7 +1096,18 @@ class DaemonKeepAliveService : Service() {
             val posted = runCatching { manager.activeNotifications.firstOrNull { it.id == NOTIF_ID }?.notification }.getOrNull()
             if (!NoticeKey.shouldPost(posted, next)) return@runCatching
             manager.notify(NOTIF_ID, next)
+            logNoticePost(if (posted == null) "nothing was posted under the id" else "content differs from what is posted")
         }
+    }
+
+    private val noticePostLog = NoticePostLog()
+
+    /** Names the notice just built; read by [logNoticePost]. */
+    @Volatile
+    private var lastBuiltNoticeName = "unknown"
+
+    private fun logNoticePost(why: String) {
+        noticePostLog.lineIfChanged(lastBuiltNoticeName, why)?.let { AppLogger.i(TAG, it) }
     }
 
     private fun buildNotification(ready: Boolean): Notification {
@@ -1052,9 +1115,10 @@ class DaemonKeepAliveService : Service() {
         // Text from the app's language, not only the phone's (BabApps item 123); this service lives for days.
         val loc = LocalizedContext.of(this)
         val notice = ReadinessNoticeText.current(this, ready)
+        lastBuiltNoticeName = if (voipRecording) "${notice.name}+VOIP_RECORDING" else notice.name
         val baseText = when {
             voipRecording -> loc.getString(R.string.notif_voip_recording_text)
-            else -> loc.getString(ReadinessNoticeText.text(notice))
+            else -> loc.getString(ReadinessNoticeText.textNow(this, notice))
         }
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)

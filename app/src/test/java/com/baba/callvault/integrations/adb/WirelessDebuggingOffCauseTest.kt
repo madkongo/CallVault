@@ -75,4 +75,53 @@ class WirelessDebuggingOffCauseTest {
         assertEquals(WirelessDebuggingOffCause.USER, WirelessDebuggingOffCause.of(weJustTurnedItOff = false, weJustTurnedItOn = false, wifi = WifiState.CONNECTED))
         assertEquals(WirelessDebuggingOffCause.USER, WirelessDebuggingOffCause.of(weJustTurnedItOff = false, weJustTurnedItOn = false, wifi = WifiState.UNKNOWN))
     }
+
+    private fun cause(
+        msSinceLastOn: Long? = null,
+        lastSeenOn: Boolean? = null,
+        weJustTurnedItOff: Boolean = false,
+        wifi: WifiState = WifiState.CONNECTED,
+    ) = WirelessDebuggingOffCause.of(
+        weJustTurnedItOff = weJustTurnedItOff, weJustTurnedItOn = false, wifi = wifi,
+        msSinceLastOn = msSinceLastOn, lastSeenOn = lastSeenOn,
+    )
+
+    @Test
+    fun `off 1_4 s after an on we did not make is Android's revert, not the user`() {
+        // OP9 C99: the on came from a shell, Wi-Fi read connected, and Android reverted it 1.4 s later.
+        assertEquals(WirelessDebuggingOffCause.ANDROID_REVERTED_AN_ON, cause(msSinceLastOn = 1_400, lastSeenOn = true))
+    }
+
+    @Test
+    fun `off just inside the window is still Android`() {
+        assertEquals(WirelessDebuggingOffCause.ANDROID_REVERTED_AN_ON, cause(msSinceLastOn = 2_999, lastSeenOn = true))
+    }
+
+    @Test
+    fun `off at 3 s or later after an on is the user`() {
+        assertEquals(WirelessDebuggingOffCause.USER, cause(msSinceLastOn = 3_000, lastSeenOn = true))
+        assertEquals(WirelessDebuggingOffCause.USER, cause(msSinceLastOn = 5_000, lastSeenOn = true))
+    }
+
+    @Test
+    fun `off with no on ever seen is the user, as before`() {
+        assertEquals(WirelessDebuggingOffCause.USER, cause())
+        assertEquals(WirelessDebuggingOffCause.USER, cause(lastSeenOn = true))
+    }
+
+    @Test
+    fun `an off while the last seen value was already off is not a user action`() {
+        // The on was coalesced away; there is no switch left for the user to turn off.
+        assertEquals(WirelessDebuggingOffCause.OFF_WHILE_ALREADY_OFF, cause(lastSeenOn = false))
+    }
+
+    @Test
+    fun `our own off still wins over the new rules`() {
+        assertEquals(WirelessDebuggingOffCause.OURS, cause(weJustTurnedItOff = true, msSinceLastOn = 100, lastSeenOn = false))
+    }
+
+    @Test
+    fun `the older named causes keep their reason`() {
+        assertEquals(WirelessDebuggingOffCause.ANDROID_NO_WIFI, cause(msSinceLastOn = 100, lastSeenOn = true, wifi = WifiState.NOT_CONNECTED))
+    }
 }
