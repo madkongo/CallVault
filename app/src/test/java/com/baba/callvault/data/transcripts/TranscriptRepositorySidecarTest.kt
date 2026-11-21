@@ -112,6 +112,27 @@ class TranscriptRepositorySidecarTest {
         verify(exactly = 0) { oldSidecar.delete() }
     }
 
+    @Test
+    fun `the sidecar is rewritten off the calling thread`() = runBlocking<Unit> {
+        val caller = Thread.currentThread()
+        var workerThread: Thread? = null
+        every { folder.findFile("call.md") } answers { workerThread = Thread.currentThread(); oldSidecar }
+
+        TranscriptRepository.deleteSummary(context, CALL)
+
+        assertTrue("folder work must not run on the caller (main) thread", workerThread != null && workerThread !== caller)
+    }
+
+    @Test
+    fun `resetting a transcript for a rerun removes the sidecar instead of writing a title-only stub`() = runBlocking<Unit> {
+        TranscriptDatabase.get(context).summaryDao().deleteFor(CALL)
+
+        TranscriptRepository.resetForRun(context, CALL)
+
+        verify { oldSidecar.delete() }
+        verify(exactly = 0) { folder.createFile(any(), any()) }
+    }
+
     private companion object {
         const val CALL = "call.ogg"
     }

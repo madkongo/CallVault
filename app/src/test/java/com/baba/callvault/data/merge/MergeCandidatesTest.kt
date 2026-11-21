@@ -145,4 +145,13 @@ class MergeCandidatesTest {
         val numeric = parsedCall("20261121_120000.100+0200_out_44.ogg")
         assertEquals(emptyList<String>(), MergeCandidates.of(a, listOf(a, numeric)).map { it.displayName })
     }
+
+    @Test
+    fun `two Private or Unknown files are not candidates for each other`() {
+        listOf("Private", "Unknown", "Anonymous", "Hidden").forEach { word ->
+            val a = parsedCall("20261121_111219.379+0200_in_$word.ogg")
+            val b = parsedCall("20261121_120000.100+0200_out_$word.ogg")
+            assertEquals(word, emptyList<String>(), MergeCandidates.of(a, listOf(a, b)).map { it.displayName })
+        }
+    }
 }

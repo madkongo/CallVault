@@ -20,6 +20,7 @@ import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
 import com.baba.callvault.system.storage.StorageRouter
 import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -106,7 +107,8 @@ object TranscriptSidecar {
      * leaves the file matching the database. Never throws; a no-op when the setting is off.
      */
     suspend fun refresh(context: Context, displayName: String) {
-        withContext(NonCancellable) {
+        // IO as well: callers include UI code on the main thread, and the folder calls below are SAF round trips.
+        withContext(Dispatchers.IO + NonCancellable) {
             if (!writeOrClear(context, displayName)) return@withContext
             runCatching {
                 StorageRouter.routeSidecar(context, displayName, sidecarNameFor(displayName), FORMAT.mimeType)
@@ -162,7 +164,8 @@ object TranscriptSidecar {
         val labels = labelsFor(context)
         // exportDocument already folds in the note (and summary) when a transcript or summary exists.
         val doc = LibraryText.exportDocument(context, displayName, title, speakerNames = null)
-        if (doc != null) return TranscriptExport.render(FORMAT, doc, labels).takeIf { it.isNotBlank() }
+        // A QUEUED/empty transcript row has no words and no summary: that is "nothing", not a title-only file.
+        if (doc != null && (doc.segments.isNotEmpty() || doc.summary != null)) return TranscriptExport.render(FORMAT, doc, labels).takeIf { it.isNotBlank() }
         // Note-only recording (no transcript, no summary): still worth a small notes file.
         val note = RecordingExtrasRepository.note(context, displayName).first()
         if (note.isBlank()) return null
