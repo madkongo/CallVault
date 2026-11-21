@@ -105,9 +105,6 @@ object VoipRecordingCoordinator {
 
     @Volatile private var recording = false
 
-    /** How long the read for the first answered read keeps going; it only feeds a log line. */
-    private const val DIRECTION_LOG_MAX_MS = 60_000L
-
     /** How long a ring that is not yet answered is given to turn into the answer that started this call. */
     private const val RING_ANSWER_WAIT_MS = VoipDirection.RING_ANSWER_WAIT_MS
 
@@ -291,13 +288,16 @@ object VoipRecordingCoordinator {
         // Best-effort; a missing app or name just drops out of the filename.
         // The app comes from the audio stream we are about to record, so it cannot be the wrong app;
         // the caller is then looked up scoped to THAT package, never across all notifications.
+        val lookupStart = android.os.SystemClock.elapsedRealtime()
         val callPackage = resolveCallPackage(context, service, "start")
         val appLabel = callPackage?.let { appLabelFor(context, it) }
+        val appLookupDone = android.os.SystemClock.elapsedRealtime()
         val caller = callPackage?.let {
             runCatching { service.voipCallerName(it) }
                 .onFailure { AppLogger.d(TAG, "caller lookup failed: ${it.message}") }
                 .getOrNull()
         }
+        val callerLookupDone = android.os.SystemClock.elapsedRealtime()
         // The user's per-app choice, checked before anything is created OR reported. Not later:
         // creating the file first and deleting it would put a recording of an excluded app on disk,
         // however briefly, leaving a window where a sync tool could take a copy of it — and reporting
@@ -417,6 +417,8 @@ object VoipRecordingCoordinator {
                 "voip", codec.cliKey,
             )
         )
+        // C108: how long the lookups ran before the capture opened (measured, so the change can be judged on real phones).
+        CallEndLog.record(context, VoipStartTiming.line(appLookupDone - lookupStart, callerLookupDone - appLookupDone))
         lateCaller = null
         lateCallerJob?.cancel()
         lateAppLabel = null
@@ -520,7 +522,6 @@ object VoipRecordingCoordinator {
      */
     private fun readDirection(callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
         val startedAt = System.currentTimeMillis()
-        var first: VoipCallFacts? = null
         // What the ring listener heard BEFORE the pickup, asked once and at once: an incoming call's
         // ringing notification is gone by the time the audio mode flips. A recording that starts late into its
         // call (an "Ask me" tap) reads it as of the call's start instead (C20): by now it has forgotten.
@@ -573,35 +574,22 @@ object VoipRecordingCoordinator {
             }
             val facts = VoipCallFacts.parse(line)
             val elapsed = System.currentTimeMillis() - startedAt
-            if (first == null) {
-                if (facts == null) {
-                    if (elapsed >= VoipAnswerHold.NOTIFICATION_GRACE_MS) {
-                        AppLogger.i(TAG, "App-call direction: $callPackage has no call-like notification (no call category, CallStyle type or timer flag) after ${elapsed}ms; direction ${direction.get()?.token ?: "unknown"}")
-                        return@launch
-                    }
-                } else {
-                    first = facts
-                    val decided = VoipDirection.decide(facts, ring, listening, absence)
-                    if (isActive && recording) direction.compareAndSet(null, decided)
-                    AppLogger.i(
-                        TAG,
-                        "App-call direction at the first read ($callPackage, ${elapsed}ms in): ${facts.describe()} " +
-                            "-> ${direction.get()?.token ?: "unknown"}"
-                    )
-                    // An app that sets no call timer never reports an answer; nothing more to learn.
-                    if (facts.showChronometer == null) return@launch
-                }
-            }
-            if (first != null && facts?.showChronometer == true) {
-                // Once: the first answered read. The direction is not touched here, only logged.
+            if (facts != null) {
+                // The first read is the only one that matters, so it is the last (C128): the direction never changes after
+                // it, and reading again cost a recorder dump every 500 ms for a minute. An answer is logged by the ring listener.
+                val decided = VoipDirection.decide(facts, ring, listening, absence)
+                if (isActive && recording) direction.compareAndSet(null, decided)
                 AppLogger.i(
                     TAG,
-                    "App-call direction at the first answered read ($callPackage, ${elapsed}ms in): ${facts.describe()} " +
-                        "-> kept ${direction.get()?.token ?: "unknown"}"
+                    "App-call direction at the first read ($callPackage, ${elapsed}ms in): ${facts.describe()} " +
+                        "-> ${direction.get()?.token ?: "unknown"}"
                 )
                 return@launch
             }
-            if (elapsed >= DIRECTION_LOG_MAX_MS) return@launch
+            if (!VoipDirection.readAgain(hasFirstRead = false, elapsedMs = elapsed)) {
+                AppLogger.i(TAG, "App-call direction: $callPackage has no call-like notification (no call category, CallStyle type or timer flag) after ${elapsed}ms; direction ${direction.get()?.token ?: "unknown"}")
+                return@launch
+            }
             delay(VoipAnswerHold.POLL_MS)
         }
     }
