@@ -64,10 +64,18 @@ object ShizukuLifecycleWatcher {
     private fun onReceived(context: Context) {
         if (!inShizukuMode(context)) return
         AppLogger.i(TAG, "Shizuku is running")
-        SilentFailureNotifier.clearRecorderUnavailable(context)
+        // Not cleared yet: Shizuku being up says nothing about our recorder having bound. The warning goes only when a
+        // recorder is actually there, and stays (or returns) when it is not (C68).
         Thread {
-            runCatching { RecorderBackend.ensureRunning(context) }
+            val up = runCatching { RecorderBackend.ensureRunning(context) }
                 .onFailure { AppLogger.w(TAG, "Could not start the recorder after Shizuku returned: ${it.message}") }
+                .getOrDefault(false)
+            if (up) {
+                SilentFailureNotifier.clearRecorderUnavailable(context)
+            } else {
+                AppLogger.w(TAG, "Shizuku is running but no recorder bound; the warning stays")
+                SilentFailureNotifier.warnRecorderUnavailable(context)
+            }
         }.apply { isDaemon = true; name = "cv-shizuku-back" }.start()
     }
 }

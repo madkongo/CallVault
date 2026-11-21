@@ -130,11 +130,22 @@ object RecorderBackend {
                 ) {
                     RecorderServerLauncher.launchCaller = caller
                     RecorderServerLauncher.launchedThisRun = false
-                    RecorderServerLauncher.ensureServerRunning(context, timeoutMs).also { up ->
+                    val launched = RecorderServerLauncher.ensureServerRunning(context, timeoutMs)
+                    // The launch can take many seconds. If the user moved to Shizuku meanwhile, this bring-up served the
+                    // mode they left: its cleanup below would kill the Shizuku recorder (C107).
+                    val stillStandalone = runCatching {
+                        BackendChoice.of(AppPreferences(context).getPrivilegedMode()) == BackendChoice.ADB
+                    }.getOrDefault(true)
+                    if (!stillStandalone) {
+                        AppLogger.w(TAG, "The mode changed to Shizuku while a standalone launch ran; its result is not used")
+                        TransportTimeline.event(context, "recorder bring-up by $caller: mode changed during the launch; its result is not used")
+                        false
+                    } else {
                         // Symmetric with the Shizuku branch: our daemon clears any Shizuku-hosted recorder left
                         // over from a previous mode. Shizuku's own removal cannot reach a service started by an
                         // older app version (its args no longer match), so this is the only thing that can.
-                        if (up) clearStaleRecorders(context, caller, withProcessList = RecorderServerLauncher.launchedThisRun)
+                        if (launched) clearStaleRecorders(context, caller, withProcessList = RecorderServerLauncher.launchedThisRun)
+                        launched
                     }
                 }
             }
@@ -462,7 +473,9 @@ object RecorderBackend {
 
     private fun ensureShizukuRunningLocked(context: Context): Boolean {
         val installedApk = context.applicationInfo.sourceDir
-        if (RecorderConnection.isConnected && !retireIfStale(installedApk)) {
+        // retireIfStale also drops a holder whose binder is already dead, and answers "not stale" for it; so the
+        // connection is asked again after it, or a call starting at that instant was told a recorder was up (C66).
+        if (RecorderConnection.isConnected && !retireIfStale(installedApk) && RecorderConnection.isConnected) {
             AppLogger.d(TAG, "Recorder already connected; reusing existing binder")
             return true
         }
