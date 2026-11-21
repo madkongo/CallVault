@@ -281,10 +281,7 @@ class TranscriptionWorker(
      * class outside the stopped case; a source-scan test holds it to that.
      */
     private fun retryLater(reason: String, isDeferral: Boolean = true): Result {
-        if (!isPeriodic) {
-            if (isDeferral) TranscriptionDeferrals.record(applicationContext, id)
-            return Result.retry()
-        }
+        if (!isPeriodic) return Result.retry().also { if (isDeferral) TranscriptionDeferrals.record(applicationContext, id) }
         AppLogger.i(TAG, "Nightly run cannot finish now ($reason); queueing a one-time retry")
         com.baba.callvault.system.storage.DriveCopyJournal.record(applicationContext, "transcription sweep: retry queued as one-time work ($reason)")
         TranscriptionScheduler.enqueueSweepRetry(applicationContext)
