@@ -18,6 +18,8 @@ enum class DetectionKind {
     PROBE,
     /** Only brand, ROM or Android version tells; used for wording or a case that cannot be probed. */
     IDENTITY,
+    /** Another app's package is present, from a fixed list of known conflicting packages (read-only lookup). */
+    PACKAGE_LIST,
     /** Applies to every phone; nothing to detect. */
     ALWAYS_ON,
     /** Only a report can show it; [PhoneRule.reason] says why. */
@@ -90,6 +92,19 @@ object PhoneRules {
         probe("U6"),
         setting("U7"),
         none("U8", "Superseded by Q68."),
+    )
+
+    private fun pkg(id: String) = PhoneRule(id, DetectionKind.PACKAGE_LIST)
+
+    /**
+     * Other-app conflicts A1-A19 (device-quirks.md section F). Kept apart from [entries] so the Q/U set stays as it was.
+     * PACKAGE_LIST = a fixed package list in [KnownConflictingApps]; PROBE = needs a runtime probe on the phone (not built
+     * yet); SETTING = a secure setting or role holder tells. None needs a network call.
+     */
+    val appEntries: List<PhoneRule> = listOf(
+        pkg("A1"), pkg("A2"), pkg("A3"), pkg("A4"), pkg("A5"), probe("A6"), probe("A7"), pkg("A8"), probe("A9"),
+        pkg("A10"), pkg("A11"), probe("A12"), probe("A13"), pkg("A14"), pkg("A15"), setting("A16"), pkg("A17"),
+        probe("A18"), setting("A19"),
     )
 
     val ids: Set<String> = entries.map { it.id }.toSet()

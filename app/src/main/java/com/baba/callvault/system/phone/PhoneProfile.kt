@@ -77,6 +77,8 @@ data class PhoneProfile(
     val blockedChannels: List<String>,
     /** The Default USB Configuration as last cached by the app (UNKNOWN name when never read). */
     val usbDefault: String,
+    /** Package names (only) of installed apps from the fixed [KnownConflictingApps] list, sorted. Never the app list. */
+    val conflictingApps: List<String> = emptyList(),
 ) {
     /** One line, no personal data; the always-on log and the report both use it. */
     fun logLine(): String =
@@ -84,7 +86,8 @@ data class PhoneProfile(
             "mode=${mode?.key ?: "?"} calls=${phoneCallsOn.label} appcalls=${appCallsOn.label} " +
             "exempt=${batteryExempt.label} restricted=${backgroundRestricted.label} bucket=${standbyBucket.label} " +
             "hib=${hibernation.label} notif=${notificationsEnabled.label} " +
-            "blockedch=${blockedChannels.joinToString(",").ifEmpty { "-" }} usb=${usbDefault}"
+            "blockedch=${blockedChannels.joinToString(",").ifEmpty { "-" }} usb=${usbDefault} " +
+            "apps=${conflictingApps.joinToString(",").ifEmpty { "-" }}"
 
     /** Short stable id of [logLine]: the log is written only when this changes. */
     fun hash(): String = Integer.toHexString(logLine().hashCode())

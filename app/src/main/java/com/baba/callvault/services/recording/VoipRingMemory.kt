@@ -140,6 +140,16 @@ object VoipRingMemory {
 
     private fun isRinging(e: Entry, now: Long): Boolean = e.ringActive && now - e.lastRingAt <= MAX_RING_MS
 
+    /**
+     * Whether any app is ringing right now, or was answered so recently that its recording has not started yet (review
+     * C54): the audio mode is still NORMAL and nothing records during either, so callers that must not disturb the
+     * recorder during a call (the stuck-microphone heal) cannot see it any other way. A declined or missed ring is over.
+     */
+    @Synchronized
+    fun anyRingActive(now: Long): Boolean = entries.values.any { e ->
+        isRinging(e, now) || (e.answeredAt in 1L..now && now - e.answeredAt <= ANSWER_FRESH_MS)
+    }
+
     /** A notification of [pkg] was removed. Removing the ringing one ends the ring. */
     @Synchronized
     fun onRemoved(pkg: String, key: String, now: Long) {
