@@ -69,13 +69,25 @@ interface RecordingDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(entries: List<RecordingEntry>)
 
-    /** Stamp the Drive copy onto an existing row (post-call copy / scheduled sweep). No-op if absent. */
-    @Query("UPDATE recordings SET driveUri = :driveUri, driveSizeBytes = :driveSizeBytes WHERE displayName = :displayName")
-    suspend fun setDrive(displayName: String, driveUri: String, driveSizeBytes: Long?)
+    /**
+     * Stamp the Drive copy onto an existing row (post-call copy / scheduled sweep). No-op if absent.
+     *
+     * Writes only when something differs (R50): every write to the table wakes Home's catalog watcher, which
+     * re-lists the whole library, so a sweep re-stamping thousands of unchanged rows cost minutes of CPU. `IS NOT`
+     * compares NULLs as values. Returns how many rows changed.
+     */
+    @Query(
+        "UPDATE recordings SET driveUri = :driveUri, driveSizeBytes = :driveSizeBytes WHERE displayName = :displayName " +
+            "AND (driveUri IS NOT :driveUri OR driveSizeBytes IS NOT :driveSizeBytes)"
+    )
+    suspend fun setDrive(displayName: String, driveUri: String, driveSizeBytes: Long?): Int
 
-    /** Clear the local copy after a DRIVE-only sync deletes it on device. */
-    @Query("UPDATE recordings SET localUri = NULL, localSizeBytes = NULL WHERE displayName = :displayName")
-    suspend fun clearLocal(displayName: String)
+    /** Clear the local copy after a DRIVE-only sync deletes it on device. Writes only if a local copy is recorded (R50). */
+    @Query(
+        "UPDATE recordings SET localUri = NULL, localSizeBytes = NULL WHERE displayName = :displayName " +
+            "AND (localUri IS NOT NULL OR localSizeBytes IS NOT NULL)"
+    )
+    suspend fun clearLocal(displayName: String): Int
 
     /** Clear the Drive copy (e.g. the Drive copy alone was deleted). */
     @Query("UPDATE recordings SET driveUri = NULL, driveSizeBytes = NULL WHERE displayName = :displayName")

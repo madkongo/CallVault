@@ -52,6 +52,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         // nothing here could ever save it (C2). Stopped when its call is over; kept when it may be live (Q25).
         runCatching { com.baba.callvault.services.recording.OrphanRecorderSession.settle(applicationContext, "rescue check") }
             .onFailure { AppLogger.e(TAG, "Orphan recorder check failed: ${it.message}", it) }
+        sweepStaleTemps(applicationContext)
         val dir = SafHelper.stagingDirOrNull(applicationContext) ?: return Result.success()
         val files = dir.listFiles().orEmpty()
         // A note whose recording is gone was left by a normal finish (callers delete only the staged file).
@@ -152,9 +153,33 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                 }
         }
 
-        /** Whether the staging folder holds anything the rescue could act on: a staged recording or a leftover note. */
-        internal fun hasStagedWork(stagingDir: File?): Boolean =
-            stagingDir?.listFiles().orEmpty().any { SafHelper.isStagedRecording(it) || it.name.endsWith(StagingNote.SUFFIX) }
+        /**
+         * Whether the staging folder holds anything the rescue could act on: a staged recording, a leftover note, or
+         * (R34) a merge temp old enough to remove, in staging or in [mergeTempDir].
+         */
+        internal fun hasStagedWork(stagingDir: File?, mergeTempDir: File? = null, nowMs: Long = System.currentTimeMillis()): Boolean =
+            stagingDir?.listFiles().orEmpty().any { SafHelper.isStagedRecording(it) || it.name.endsWith(StagingNote.SUFFIX) } ||
+                StaleTempSweep.hasStale(stagingDir, mergeTempDir, nowMs)
+
+        /** What the sweep leaves behind a killed merge, and the always-on line saying what it did (R34). Never throws. */
+        internal fun sweepStaleTemps(context: Context) {
+            runCatching {
+                val r = StaleTempSweep.run(SafHelper.stagingDirOrNull(context), mergeTempDir(context), System.currentTimeMillis())
+                if (r.anythingToSay) {
+                    CallEndLog.record(
+                        context,
+                        "temp sweep: removed ${r.mergeStageDeleted} merge temp(s) from staging and ${r.mergeTempDeleted} merge download(s) " +
+                            "from cache (${r.bytesFreed} bytes); ${r.noteLessStagedCount} staged recording(s) with no note kept " +
+                            "(${r.noteLessStagedBytes} bytes)",
+                    )
+                }
+            }.onFailure {
+                CallEndLog.record(context, "temp sweep FAILED ${CallEndLog.describe(it)}")
+                AppLogger.w(TAG, "Temp sweep failed: ${it.message}")
+            }
+        }
+
+        private fun mergeTempDir(context: Context): File? = File(context.cacheDir, "merge-temp").takeIf { it.isDirectory }
 
         /**
          * App start (review R17): queue the rescue only when something is staged. Queuing it unconditionally made a
@@ -163,7 +188,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
          * as before.
          */
         fun scheduleAtStartIfNeeded(context: Context) {
-            val needed = runCatching { hasStagedWork(SafHelper.stagingDirOrNull(context)) }.getOrDefault(true)
+            val needed = runCatching { hasStagedWork(SafHelper.stagingDirOrNull(context), mergeTempDir(context)) }.getOrDefault(true)
             if (needed) schedule(context) else AppLogger.d(TAG, "Nothing staged at start; rescue check not queued")
         }
 
