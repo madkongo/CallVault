@@ -80,7 +80,14 @@ class PhoneNumberManager private constructor(context: Context) {
          */
         fun normalisePhoneNumber(phoneNumber: String): String {
             val trimmed = phoneNumber.trim()
-            val digits  = trimmed.filter { it.isDigit() }
+            // Every Unicode decimal digit (Persian, Arabic-Indic, Bengali...) is mapped to its ASCII value, so a contact
+            // saved with such digits equals the ASCII number telephony reports (C81). Non-digits are dropped.
+            val digits = buildString {
+                for (c in trimmed) {
+                    val d = Character.digit(c, 10)
+                    if (d >= 0) append('0' + d)
+                }
+            }
             return if (trimmed.startsWith("+")) "+$digits" else digits
         }
     }

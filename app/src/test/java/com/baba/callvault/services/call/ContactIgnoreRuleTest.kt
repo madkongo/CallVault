@@ -80,6 +80,56 @@ class ContactIgnoreRuleTest {
     }
 
     @Test
+    fun `mode SELECTED matches a contact saved in national form against the international caller (C45)`() {
+        // The address book has "050-000 0000"; telephony reports "+972500000000". Missing this match
+        // records a call the user asked to ignore.
+        assertTrue(
+            ContactIgnoreRule.shouldIgnore(
+                "+972500000000", IgnoreContactsMode.SELECTED, setOf("050-000 0000"), neverAContact,
+            )
+        )
+        assertTrue(
+            ContactIgnoreRule.shouldIgnore(
+                "0500000000", IgnoreContactsMode.SELECTED, setOf("+972 50-000-0000"), neverAContact,
+            )
+        )
+    }
+
+    @Test
+    fun `mode SELECTED does not match a different number or a short code by its tail (C45)`() {
+        assertFalse(
+            ContactIgnoreRule.shouldIgnore(
+                "+972500000001", IgnoreContactsMode.SELECTED, setOf("050-000 0000"), neverAContact,
+            )
+        )
+        assertFalse(
+            ContactIgnoreRule.shouldIgnore("1234", IgnoreContactsMode.SELECTED, setOf("+97221234"), neverAContact)
+        )
+        assertTrue(
+            ContactIgnoreRule.shouldIgnore("1234", IgnoreContactsMode.SELECTED, setOf("1234"), neverAContact)
+        )
+    }
+
+    @Test
+    fun `a contact saved with Persian or Arabic-Indic digits matches the ASCII caller (C81)`() {
+        val persian = "۰۵۰-۰۰۰ ۰۰۰۰" // 050-000 0000
+        val arabicIndic = "+٩٧٢ ٥٠٠٠٠٠٠٠٠"
+        assertTrue(ContactIgnoreRule.shouldIgnore("+972500000000", IgnoreContactsMode.SELECTED, setOf(persian), neverAContact))
+        assertTrue(ContactIgnoreRule.shouldIgnore("+972500000000", IgnoreContactsMode.SELECTED, setOf(arabicIndic), neverAContact))
+        assertFalse(
+            ContactIgnoreRule.shouldIgnore(
+                "+972500000000", IgnoreContactsMode.ONLY_SELECTED, emptySet(), neverAContact, recordOnlyNumbers = setOf(persian),
+            )
+        )
+    }
+
+    @Test
+    fun `sameNumber maps Unicode digits on both sides (C81)`() {
+        // The app-call path hands sameNumber a caller that was never normalised.
+        assertTrue(ContactIgnoreRule.sameNumber("+972500000000", "۹۷۲۵۰۰۰۰۰۰۰۰"))
+    }
+
+    @Test
     fun `mode SELECTED does not consult the contacts provider at all`() {
         // A list of numbers is a list of numbers; touching contacts here would be a needless
         // permission dependency and a second way to throw.

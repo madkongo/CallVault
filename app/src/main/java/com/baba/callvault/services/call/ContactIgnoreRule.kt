@@ -62,7 +62,7 @@ object ContactIgnoreRule {
             // reaching for the provider here would add both a permission dependency and a second way
             // to throw.
             IgnoreContactsMode.SELECTED ->
-                ignoredNumbers.any { normalisePhoneNumber(it) == normalisedNumber }
+                ignoredNumbers.any { sameNumber(it, normalisedNumber) }
         }
     }
 
@@ -72,8 +72,9 @@ object ContactIgnoreRule {
      * full-length number also matches on its last [TAIL_DIGITS] digits. Short codes must match exactly.
      */
     internal fun sameNumber(listed: String, normalisedCaller: String): Boolean {
+        // Both sides through the one ASCII-digit normaliser: the app-call caller reaches here un-normalised (C81).
         val a = normalisePhoneNumber(listed).filter { it.isDigit() }
-        val b = normalisedCaller.filter { it.isDigit() }
+        val b = normalisePhoneNumber(normalisedCaller).filter { it.isDigit() }
         if (a.isEmpty() || b.isEmpty()) return false
         if (a == b) return true
         return a.length >= TAIL_DIGITS && b.length >= TAIL_DIGITS && a.takeLast(TAIL_DIGITS) == b.takeLast(TAIL_DIGITS)
