@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -28,8 +29,6 @@ import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.system.AppLock
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.ui.navigation.NotificationDestination
-import com.baba.callvault.ui.navigation.OpenRecordingRequest
-import com.baba.callvault.ui.navigation.OpenTranscriptRequest
 import com.baba.callvault.ui.screens.AppLockScreen
 import com.baba.callvault.ui.screens.AppLockUi
 import com.baba.callvault.ui.screens.appLockUi
@@ -65,6 +64,9 @@ class MainActivity : AppCompatActivity() {
      * it flash on open.
      */
     private var promptDismissed by mutableStateOf(false)
+
+    /** [AppLock.isEnabled] as observable state, so switching the lock on redraws the root (C76). */
+    private var lockEnabled by mutableStateOf(false)
 
     /**
      * What the notification that opened this visit was about, or [NotificationDestination.None].
@@ -104,26 +106,34 @@ class MainActivity : AppCompatActivity() {
         // rather than through onNewIntent whenever the Activity is not already on top, because the
         // launch mode is `standard`: CLEAR_TOP with no SINGLE_TOP destroys the existing instance and
         // builds a new one with the new Intent. Both paths are handled; neither can be assumed.
-        notificationDestination = destinationOf(intent)
-        openRecording = recordingOf(intent)
-        openTranscript = transcriptOf(intent)
+        // C160: only a first creation reads the launch Intent; a recreation (rotation, theme or language
+        // switch, process restore) restores what was still waiting, because the Intent keeps the
+        // request that was already acted on. C75: the read is guarded against hostile extras.
+        applyRequests(LaunchRequests.forCreate(savedInstanceState, intent))
         // Carry an unlock across an Activity recreation — see [onSaveInstanceState] for why this is
         // only ever set for a configuration change. Read before setContent so the first composition
         // draws the app rather than the lock screen and then swaps.
         isUnlocked = savedInstanceState?.getBoolean(KEY_IS_UNLOCKED) == true
+        // Seeded before setContent so the first composition already reads the real value (C76).
+        lockEnabled = AppLock.isEnabled(this)
         enableEdgeToEdge()
         setContent {
-            when (appLockUi(AppLock.isEnabled(this), isUnlocked, promptDismissed)) {
-                AppLockUi.APP -> AppNavigationScreen(
-                    notificationDestination = notificationDestination,
-                    onNotificationDestinationHandled = {
-                        notificationDestination = NotificationDestination.None
-                    },
-                    openRecording = openRecording,
-                    onOpenRecordingHandled = { openRecording = null },
-                    openTranscript = openTranscript,
-                    onOpenTranscriptHandled = { openTranscript = null }
-                )
+            // Held above the lock swap (C157): the lock surface replaces the app subtree, and without
+            // this the open recording, reading view and Settings page are forgotten on every unlock.
+            val appState = rememberSaveableStateHolder()
+            when (appLockUi(lockEnabled, isUnlocked, promptDismissed)) {
+                AppLockUi.APP -> appState.SaveableStateProvider(APP_STATE_KEY) {
+                    AppNavigationScreen(
+                        notificationDestination = notificationDestination,
+                        onNotificationDestinationHandled = {
+                            notificationDestination = NotificationDestination.None
+                        },
+                        openRecording = openRecording,
+                        onOpenRecordingHandled = { openRecording = null },
+                        openTranscript = openTranscript,
+                        onOpenTranscriptHandled = { openTranscript = null }
+                    )
+                }
                 // Background only. The prompt is coming or already up, so there is nothing to act on
                 // — drawing the door here is what flashed an "Unlock" card on every open.
                 AppLockUi.WAITING -> AppLockScreen(onUnlock = ::promptForUnlock, showDoor = false)
@@ -146,53 +156,18 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        notificationDestination = destinationOf(intent)
-        openRecording = recordingOf(intent)
-        openTranscript = transcriptOf(intent)
+        applyRequests(LaunchRequests.fromIntent(intent))
     }
 
-    /**
-     * Reads the requested destination off an incoming Intent.
-     *
-     * The history flag is passed through rather than checked in Compose: reopening from the recents
-     * list re-delivers the Intent the task was started with, extras included, so a single tap on
-     * "recording is broken" would otherwise re-navigate on every later return to the app.
-     */
-    private fun destinationOf(intent: Intent?): NotificationDestination =
-        NotificationDestination.fromIntentExtra(
-            key = intent?.getStringExtra(NotificationDestination.EXTRA),
-            relaunchedFromHistory =
-                (intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
-        )
-
-    /**
-     * Reads a "land on this recording" request off an incoming Intent.
-     *
-     * The history flag matters here exactly as it does above: without it, one shared voice note
-     * would re-open itself on every later return from the recents list.
-     */
-    private fun recordingOf(intent: Intent?): String? =
-        OpenRecordingRequest.fromIntentExtra(
-            name = intent?.getStringExtra(OpenRecordingRequest.EXTRA),
-            relaunchedFromHistory =
-                (intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
-        )
-
-    /**
-     * Reads a "land on this transcript" request off an incoming Intent.
-     *
-     * The history flag matters here exactly as it does above: without it, one tap on "Transcript
-     * ready" would re-open that transcript on every later return from the recents list.
-     */
-    private fun transcriptOf(intent: Intent?): String? =
-        OpenTranscriptRequest.fromIntentExtra(
-            name = intent?.getStringExtra(OpenTranscriptRequest.EXTRA),
-            relaunchedFromHistory =
-                (intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
-        )
+    private fun applyRequests(requests: LaunchRequests) {
+        notificationDestination = requests.destination
+        openRecording = requests.recording
+        openTranscript = requests.transcript
+    }
 
     override fun onStart() {
         super.onStart()
+        lockEnabled = AppLock.isEnabled(this)
         applySecureFlag()
         if (AppLock.isEnabled(this) && !isUnlocked) promptForUnlock()
     }
@@ -249,6 +224,8 @@ class MainActivity : AppCompatActivity() {
      */
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        // Requests not yet acted on (for instance waiting behind the lock) outlive the recreation (C160).
+        LaunchRequests(notificationDestination, openRecording, openTranscript).writeTo(outState)
         if (isChangingConfigurations) outState.putBoolean(KEY_IS_UNLOCKED, isUnlocked)
     }
 
@@ -272,6 +249,19 @@ class MainActivity : AppCompatActivity() {
      * as a thumbnail in the app switcher is not a lock, and nobody who wanted the first would decline
      * the second.
      */
+    /**
+     * Called by the Settings toggle after it has written the preference (C76).
+     *
+     * The root composition reads [lockEnabled], so the lock takes hold at once instead of at the next
+     * restart. Turning it on is done by someone looking at the open app, so this visit counts as
+     * authenticated rather than prompting over their own screen; the next visit asks.
+     */
+    fun onAppLockChanged() {
+        lockEnabled = AppLock.isEnabled(this)
+        isUnlocked = AppLock.unlockedAfterToggle(lockEnabled, isUnlocked)
+        applySecureFlag()
+    }
+
     fun applySecureFlag() {
         // The lock hides content from screenshots and the recents thumbnail — unless the owner has
         // opted to allow screenshots of their own app, which clears the flag (and with it the recents
@@ -329,6 +319,9 @@ class MainActivity : AppCompatActivity() {
     private companion object {
         /** Survives an Activity recreation only; never written when the process is going away. */
         const val KEY_IS_UNLOCKED = "is_unlocked"
+
+        /** Key of the app subtree's saved state while the lock surface is up (C157). */
+        const val APP_STATE_KEY = "app_navigation"
 
         /** Request code of [requestOutgoingCallsPermissionOnce]; its result needs no handling. */
         const val REQUEST_OUTGOING_CALLS = 4401

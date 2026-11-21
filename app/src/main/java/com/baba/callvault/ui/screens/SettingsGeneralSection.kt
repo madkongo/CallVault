@@ -63,8 +63,9 @@ internal fun PrivacySubSection(preferences: AppPreferences, updateTrigger: Int) 
             enabled = it
             preferences.setAppLockEnabled(it)
             // The secure flag is derived from the lock being on; re-apply so turning the lock off also
-            // lifts the screenshot block straight away rather than on the next visit.
-            (context as? com.baba.callvault.MainActivity)?.applySecureFlag()
+            // lifts the screenshot block straight away rather than on the next visit. The activity also
+            // makes the lock take hold now rather than at the next restart (C76).
+            (context as? com.baba.callvault.MainActivity)?.onAppLockChanged()
         },
         // Disabled rather than hidden when the phone has no screen lock: hiding it would leave
         // someone looking for a feature they have read about with no idea why it is absent.
