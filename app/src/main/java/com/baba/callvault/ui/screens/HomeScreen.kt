@@ -461,6 +461,23 @@ fun HomeScreen(
     // hundredth call and opened it came back to the top of the list; hoisted, their place survives
     // both, and a rotation besides (rememberLazyListState is itself saveable).
     val listState = rememberLazyListState()
+    // "All calls" has its own place: it used to share listState with Recordings, so switching view (now a
+    // swipe) while scrolled kept the other list's anchor (review C183).
+    val callsListState = rememberLazyListState()
+    // Back to the top of the recordings list when the USER changes what it shows (search, filters, sort),
+    // not on a background reload, a refresh or a rotation: the key is compared with the one last seen, and a
+    // fresh composition starts from the current key, so only a real change scrolls.
+    val listingKey = listOf(
+        uiState.contactQuery, uiState.sourceFilter, uiState.directionFilter, uiState.dateFilter,
+        uiState.tagFilter, uiState.favouritesOnly, uiState.sortOrder,
+    )
+    val lastListingKey = remember { mutableStateOf(listingKey) }
+    LaunchedEffect(listingKey) {
+        if (listingKey != lastListingKey.value) {
+            lastListingKey.value = listingKey
+            listState.scrollToItem(0)
+        }
+    }
     val hubGridState = rememberLazyGridState()
     val transcriptsListState = rememberLazyListState()
     val summariesListState = rememberLazyListState()
@@ -1545,7 +1562,7 @@ fun HomeScreen(
             modifier = Modifier.weight(1f),
         ) {
             LazyColumn(
-                state = listState,
+                state = if (uiState.callsView) callsListState else listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = 20.dp,
@@ -1669,7 +1686,7 @@ fun HomeScreen(
         // Back to the top from anywhere, without flinging. Appears only once scrolling has actually
         // buried the top of the list, so a short library never carries a control it does not need.
         androidx.compose.animation.AnimatedVisibility(
-            visible = listState.firstVisibleItemIndex > 3,
+            visible = (if (uiState.callsView) callsListState else listState).firstVisibleItemIndex > 3,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier
@@ -1677,7 +1694,9 @@ fun HomeScreen(
                 .padding(top = 12.dp)
         ) {
             FilledTonalButton(
-                onClick = { listScope.launch { listState.animateScrollToItem(0) } },
+                onClick = {
+                    listScope.launch { (if (uiState.callsView) callsListState else listState).animateScrollToItem(0) }
+                },
                 // Stated, not defaulted. FilledTonalButton takes secondaryContainer, which in this
                 // scheme is CoralDeep — so the default renders a red button in a teal app. The same
                 // trap has been hit here before; see the M3-defaults note.
@@ -2087,7 +2106,10 @@ fun HomeScreen(
     }
 
     confirmDeleteFor?.let { displayName ->
-        val row = uiState.recordings.firstOrNull { it.displayName == displayName }
+        // The combined list, not uiState.recordings: a transcribe-only import is deliberately not in the
+        // latter, so Delete on its own playback screen found no row and silently did nothing (review C156).
+        // The delete itself already stops its transcription and removes its rows (TranscriptCascade).
+        val row = libraryRecordings.firstOrNull { it.displayName == displayName }
         if (row == null) {
             confirmDeleteFor = null
         } else {
