@@ -87,7 +87,9 @@ object CloudAudioSource {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { extractor.setDataSource(it.fileDescriptor) }
             val track = audioTrack(extractor) ?: return null
             extractor.selectTrack(track)
-            extractor.seekTo(fromMs * US_PER_MS, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+            com.baba.callvault.transcription.SeekAtOrBefore.seek(
+                com.baba.callvault.transcription.ExtractorTrack(extractor), fromMs * US_PER_MS,
+            )
             val muxer = MediaMuxer(out.absolutePath, outputFormat)
             var firstUs = -1L
             try {

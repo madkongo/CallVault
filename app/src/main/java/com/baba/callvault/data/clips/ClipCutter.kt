@@ -16,6 +16,8 @@ import android.media.MediaMuxer
 import android.net.Uri
 import com.baba.callvault.data.merge.MergeFormat
 import com.baba.callvault.data.merge.MergeFormat.optInt
+import com.baba.callvault.transcription.ExtractorTrack
+import com.baba.callvault.transcription.SeekAtOrBefore
 import com.baba.callvault.utils.AppLogger
 import java.io.File
 import java.nio.ByteBuffer
@@ -48,7 +50,7 @@ object ClipCutter {
     /** The recording's audio type, or null when it cannot be read. */
     fun mimeOf(context: Context, uri: Uri): String? = runCatching {
         withSource(context, uri) { fd ->
-            val (extractor, format) = MergeFormat.openAudio(fd)
+            val (extractor, format) = openSource(fd)
             extractor.release()
             format.getString(MediaFormat.KEY_MIME)
         }
@@ -58,21 +60,73 @@ object ClipCutter {
      * Runs [block] on a seekable descriptor of [uri]. A Drive-only recording comes through a provider that may hand back
      * a pipe, which MediaExtractor cannot seek; then the recording is copied to the cache first and read from there.
      */
-    private fun <T> withSource(context: Context, uri: Uri, block: (java.io.FileDescriptor) -> T): T {
-        val direct = runCatching {
-            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+    private fun <T> withSource(context: Context, uri: Uri, block: (java.io.FileDescriptor) -> T): T =
+        withSeekableSource(
+            openDescriptor = { context.contentResolver.openFileDescriptor(uri, "r") },
+            copyTo = { copy ->
+                context.contentResolver.openInputStream(uri)?.use { input -> copy.outputStream().use { input.copyTo(it) } }
+                    ?: error("Cannot open the recording")
+            },
+            copyFile = File(ClipFiles.directory(context), ".source.tmp"),
+            uriForLog = uri.toString(),
+            block = block,
+        )
+
+    /** The extractor could not be set up on the descriptor (before any of our own cut logic ran). */
+    internal class SourceUnreadable(cause: Throwable) : Exception(cause)
+
+    /** [MergeFormat.openAudio], with a failure of the extractor's own setup marked so [withSeekableSource] can recover. */
+    private fun openSource(fd: java.io.FileDescriptor): Pair<MediaExtractor, MediaFormat> = try {
+        MergeFormat.openAudio(fd)
+    } catch (e: MergeFormat.Incompatible) {
+        throw e
+    } catch (e: java.io.IOException) {
+        throw SourceUnreadable(e)
+    } catch (e: RuntimeException) {
+        throw SourceUnreadable(e)
+    }
+
+    /**
+     * The decision behind [withSource], with the two ways to reach the bytes passed in so it can be tested. Only OPENING
+     * the descriptor and asking whether it is a pipe may fall back to the cache copy; a failure inside [block] on a real
+     * file is the cut's own and propagates, logged once (review 2026-11-20, C167: it used to be swallowed and the whole
+     * recording copied and cut a second time).
+     */
+    internal fun <T> withSeekableSource(
+        openDescriptor: () -> android.os.ParcelFileDescriptor?,
+        copyTo: (File) -> Unit,
+        copyFile: File,
+        uriForLog: String,
+        block: (java.io.FileDescriptor) -> T,
+    ): T {
+        val pfd = runCatching { openDescriptor() }
+            .onFailure { AppLogger.w(TAG, "Could not open $uriForLog directly (${it.javaClass.simpleName}); copying it first") }
+            .getOrNull()
+        if (pfd != null) {
+            pfd.use {
                 // A pipe has no size; a real file does.
-                if (pfd.statSize <= 0L) null else block(pfd.fileDescriptor)
+                val isFile = runCatching { it.statSize > 0L }.getOrDefault(false)
+                if (isFile) {
+                    try {
+                        return block(it.fileDescriptor)
+                    } catch (e: SourceUnreadable) {
+                        // A provider that reports a size but cannot be read by MediaExtractor: the cache copy can.
+                        AppLogger.w(TAG, "Extractor cannot read $uriForLog directly (${e.cause?.javaClass?.simpleName}); copying it first")
+                    } catch (e: java.io.IOException) {
+                        AppLogger.w(TAG, "Reading $uriForLog directly failed (${e.message}); copying it first")
+                    } catch (e: Exception) {
+                        AppLogger.w(TAG, "Reading $uriForLog failed (${e.javaClass.simpleName}: ${e.message})")
+                        throw e
+                    }
+                }
             }
-        }.getOrNull()
-        if (direct != null) return direct
-        val copy = File(ClipFiles.directory(context), ".source.tmp").apply { parentFile?.mkdirs() }
+        }
+        copyFile.apply { parentFile?.mkdirs() }
         try {
-            context.contentResolver.openInputStream(uri)?.use { input -> copy.outputStream().use { input.copyTo(it) } }
-                ?: error("Cannot open the recording")
-            return java.io.FileInputStream(copy).use { block(it.fd) }
+            copyTo(copyFile)
+            return java.io.FileInputStream(copyFile).use { block(it.fd) }
         } finally {
-            copy.delete()
+            copyFile.delete()
         }
     }
 
@@ -89,7 +143,7 @@ object ClipCutter {
      */
     fun cut(context: Context, source: Uri, range: ClipRange, output: File): Result = try {
         withSource(context, source) { fd ->
-            val (extractor, format) = MergeFormat.openAudio(fd)
+            val (extractor, format) = openSource(fd)
             try {
                 val mime = format.getString(MediaFormat.KEY_MIME) ?: error("No audio type")
                 require(canClip(mime)) { "Clips cannot be made from $mime" }
@@ -146,7 +200,7 @@ object ClipCutter {
         var baseUs = -1L
         var written = 0
         try {
-            seekAtOrBefore(extractor, fromUs)
+            SeekAtOrBefore.seek(ExtractorTrack(extractor), fromUs)
             while (true) {
                 val size = extractor.readSampleData(buffer, 0)
                 if (size < 0) break
@@ -171,28 +225,6 @@ object ClipCutter {
         }
         return baseUs.coerceAtLeast(0L)
     }
-
-    /**
-     * Puts [extractor] at or before [targetUs]. Every Opus and AAC frame is a sync frame, but Android's Ogg seek is by
-     * page bisection and can land seconds AFTER the target in a long file — measured on the OP9 2026-11-04: a 30 s
-     * part of a 57-minute call came out 24.5 s, its first 5.5 s missing. So step back until the first frame is not
-     * later than the target; the copy then skips forward frame by frame to the exact start.
-     */
-    private fun seekAtOrBefore(extractor: MediaExtractor, targetUs: Long) {
-        var backUs = 0L
-        while (true) {
-            val at = (targetUs - backUs).coerceAtLeast(0L)
-            extractor.seekTo(at, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
-            val landed = extractor.sampleTime
-            if (landed in 0..targetUs || at == 0L) {
-                if (backUs > 0) AppLogger.i(TAG, "Seek landed late; stepped back ${backUs / 1000} ms to reach the start")
-                return
-            }
-            backUs = if (backUs == 0L) SEEK_STEP_US else backUs * 2
-        }
-    }
-
-    private const val SEEK_STEP_US = 5_000_000L
 
     /** A frame starting up to this much before the requested start still counts as "at" it (one 20–23 ms frame). */
     private const val FRAME_SLACK_US = 25_000L
