@@ -124,34 +124,44 @@ class MergeCandidatesTest {
         assertEquals(listOf(b.displayName), MergeCandidates.of(a, listOf(a, b, c)).map { it.displayName })
     }
 
-    @Test
-    fun `contact name template calls from one contact are candidates for each other`() {
-        val a = parsedCall("20261121_111219.379+0200_in_[C:4a4b].ogg")
-        val b = parsedCall("20261121_120000.100+0200_out_[C:4a4b].ogg")
-        assertEquals(listOf(b.displayName), MergeCandidates.of(a, listOf(a, b)).map { it.displayName })
-    }
+    private fun named(contact: String, time: String = "111219.379") =
+        parsedCall("20261121_$time+0200_in_$contact.ogg")
+
+    private fun pairs(a: RecordingItem, b: RecordingItem) =
+        MergeCandidates.of(a, listOf(a, b)).map { it.displayName } == listOf(b.displayName)
 
     @Test
-    fun `contact name template never joins two different contacts whose tokens share digits`() {
-        val a = parsedCall("20261121_111219.379+0200_in_[C:4a4b].ogg")
-        val other = parsedCall("20261121_120000.100+0200_out_[C:9a4b].ogg")
-        val named = parsedCall("20261121_121000.100+0200_out_Dana Levi.ogg")
-        assertEquals(emptyList<String>(), MergeCandidates.of(a, listOf(a, other, named)).map { it.displayName })
-    }
-
-    @Test
-    fun `a name where the number should be does not match a number made of its digits`() {
-        val a = parsedCall("20261121_111219.379+0200_in_[C:4a4b].ogg")
-        val numeric = parsedCall("20261121_120000.100+0200_out_44.ogg")
-        assertEquals(emptyList<String>(), MergeCandidates.of(a, listOf(a, numeric)).map { it.displayName })
-    }
-
-    @Test
-    fun `two Private or Unknown files are not candidates for each other`() {
-        listOf("Private", "Unknown", "Anonymous", "Hidden").forEach { word ->
-            val a = parsedCall("20261121_111219.379+0200_in_$word.ogg")
-            val b = parsedCall("20261121_120000.100+0200_out_$word.ogg")
-            assertEquals(word, emptyList<String>(), MergeCandidates.of(a, listOf(a, b)).map { it.displayName })
+    fun `real names written by the contact_name template pair with themselves in any script`() {
+        listOf("פרוזה", "Dana Levi", "বাংলা নাম", "Mom 2", "Joe \uD83D\uDE00", "Zoë").forEach { who ->
+            assertTrue(who, pairs(named(who), named(who, "120000.100")))
         }
+    }
+
+    @Test
+    fun `names match regardless of case and Unicode composition`() {
+        assertTrue(pairs(named("DANA levi"), named("dana Levi", "120000.100")))
+        assertTrue(pairs(named("Zo\u00EB"), named("Zoe\u0308", "120000.100")))
+    }
+
+    @Test
+    fun `different names are not candidates`() {
+        assertFalse(pairs(named("פרוזה"), named("פרוזה 2", "120000.100")))
+        assertFalse(pairs(named("Mom 2"), named("Mom 3", "120000.100")))
+    }
+
+    @Test
+    fun `a name never matches a number made of its digits`() {
+        assertFalse(pairs(named("Mom 2"), named("2", "120000.100")))
+    }
+
+    @Test
+    fun `labels for unknown or hidden callers are never a shared key`() {
+        listOf("Private", "unknown", "ANONYMOUS", "Hidden", "Restricted", "Withheld", "Voicemail").forEach { w ->
+            assertFalse(w, pairs(named(w), named(w, "120000.100")))
+        }
+        // The label the phone's own language writes is passed in by the caller.
+        val a = named("\u05DE\u05E1\u05E4\u05E8 \u05D7\u05E1\u05D5\u05DD")
+        val b = named("\u05DE\u05E1\u05E4\u05E8 \u05D7\u05E1\u05D5\u05DD", "120000.100")
+        assertTrue(MergeCandidates.of(a, listOf(a, b), setOf("\u05DE\u05E1\u05E4\u05E8 \u05D7\u05E1\u05D5\u05DD")).isEmpty())
     }
 }
