@@ -106,6 +106,21 @@ internal object RecordingPolicy {
      * @param modeIsInCommunication the audio mode says an app call, covering the ~230 ms in which
      *                              telephony fires before the app call has been detected.
      */
+    /**
+     * Review N29: with app-call recording OFF, whether this phone-call start is for a call that looks self-managed
+     * (Meet, Slack, WhatsApp on One UI): Telecom is readable and reports no managed call, yet the audio mode is
+     * the app-call one. Only ever NAMED, in the always-on log; the carrier recording still starts. Standing down
+     * would lose a real carrier call on any phone whose Telecom answers wrongly at the instant of the off-hook,
+     * which cannot be ruled out without testing on many phones. The recording that results is judged by the
+     * silence check (N28), so a silent one is flagged rather than stored as Verified.
+     */
+    fun startsForSelfManagedCall(
+        voipEnabled: Boolean,
+        telecomReadable: Boolean,
+        managedCallUp: Boolean,
+        modeIsInCommunication: Boolean,
+    ): Boolean = !voipEnabled && telecomReadable && !managedCallUp && modeIsInCommunication
+
     fun standsDownForAppCall(
         voipEnabled: Boolean,
         voipRecording: Boolean,

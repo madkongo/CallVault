@@ -254,6 +254,32 @@ class RecordingForegroundService : Service() {
         }.getOrDefault(false)
     )
 
+    /**
+     * Review N29: with app-call recording off, a self-managed call (Meet and the like) raises OFFHOOK and a phone-call
+     * recording starts for it anyway. That is deliberate (not suppressed, so no real carrier call can be lost); the
+     * recording will probably be silent, which the end-of-call silence check flags. This only says so in the
+     * always-on log, so the later "silent call" notice can be explained.
+     */
+    private fun logSelfManagedStart(manual: Boolean) {
+        runCatching {
+            val managed = VoipTelephonyGate.managedCallOrNull(this)
+            val mode = getSystemService(AudioManager::class.java)?.mode
+            if (RecordingPolicy.startsForSelfManagedCall(
+                    voipEnabled = AppPreferences(this).isVoipRecordingEnabled(),
+                    telecomReadable = managed != null,
+                    managedCallUp = managed == true,
+                    modeIsInCommunication = mode == AudioManager.MODE_IN_COMMUNICATION,
+                )
+            ) {
+                CallEndLog.record(
+                    applicationContext,
+                    "phone-call recording started for what looks like a self-managed app call (Telecom: no managed call, " +
+                        "audio mode in-communication, app-call recording off, manual=$manual); it is probably silent and will be flagged if so",
+                )
+            }
+        }
+    }
+
     /** True only if the pipeline is actively reading and capturing audio. */
     private val isCurrentlyRecording: Boolean
         get() = (currentState as? RecordingServiceState.Active)?.engine?.let { e ->
@@ -369,6 +395,8 @@ class RecordingForegroundService : Service() {
                     return START_NOT_STICKY
                 }
 
+
+                logSelfManagedStart(action == ACTION_MANUAL_START)
 
                 // At this point, we should already have the metadata from the intents, if it's missing, there's a logic error to be fixed.
                 if (currentMeta == null) {
