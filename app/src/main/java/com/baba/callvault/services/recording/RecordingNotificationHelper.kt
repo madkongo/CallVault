@@ -25,9 +25,12 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import com.baba.callvault.MainActivity
 import com.baba.callvault.R
+import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.system.LocalizedContext
+import com.baba.callvault.utils.AppLogger
 
 /** One button on the ongoing recording notification. */
 private data class NotificationAction(val icon: Int, val text: String, val intentAction: String)
@@ -44,6 +47,19 @@ class RecordingNotificationHelper(base: Context) {
         const val SERVICE_NOTIFICATION_ID = 1
         const val ERROR_NOTIFICATION_ID = 2
         const val BATTERY_EXEMPTION_NOTIFICATION_ID = 4733
+
+        /** An error notice expires after a day so a stale one never lingers (R29). */
+        const val ERROR_TIMEOUT_MS = 24L * 60 * 60 * 1000
+
+        /** A non-critical notice posted again within this long of the same one stays quiet (R29). */
+        const val QUIET_REPEAT_MS = 2L * 60 * 1000
+
+        private val lastPosted = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+        /** Test hook: a fixed clock for the quiet-repeat window. */
+        internal var clockForTest: (() -> Long)? = null
+
+        internal fun resetErrorHistoryForTest() = lastPosted.clear()
 
         private val channelsEnsured = EnsureOnce()
 
@@ -366,22 +382,63 @@ class RecordingNotificationHelper(base: Context) {
     }
 
     /**
-     * Posts an error notification visible.
+     * True when this [message] is one of the few notices that may repeat quietly. Everything else, including any
+     * text not listed here, is treated as "this call was NOT recorded (or stopped early)" and always alerts.
+     */
+    private fun mayRepeatQuietly(message: String): Boolean = listOf(
+        R.string.recording_error_drive_copy_failed, // the file is safe on the phone
+        R.string.wifi_call_far_unknown, // recorded, only unverified
+        R.string.wifi_call_switch_failed, // recorded the usual way
+    ).any { context.getString(it) == message }
+
+    /**
+     * Posts an error notice (R29).
+     *
+     * Each distinct message has its own slot (a tag on the shared id), so a minor error can never replace
+     * "this call is NOT being recorded". Notices that say a call was not recorded always alert, stay until swiped,
+     * and a tap only opens Home. The few non-critical ones clear on tap and after [ERROR_TIMEOUT_MS], and posted
+     * again within [QUIET_REPEAT_MS] of the same notice they update in place without sound or vibration.
      *
      * @param message Human-readable error description to show in the notification body.
      */
     fun showErrorNotification(message: String) {
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID_ERROR)
+        val tag = errorTag(message)
+        val now = (clockForTest ?: System::currentTimeMillis)()
+        val minor = mayRepeatQuietly(message)
+        val last = lastPosted[tag]
+        val repeat = minor && last != null && now - last in 0..QUIET_REPEAT_MS
+        lastPosted[tag] = now
+        val open = PendingIntent.getActivity(
+            context, NotificationDestination.Status.requestCode,
+            Intent(context, MainActivity::class.java).apply {
+                setPackage(context.packageName)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(NotificationDestination.EXTRA, NotificationDestination.Status.key)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID_ERROR)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(context.getString(R.string.recording_error_title))
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setAutoCancel(false)
+            .setContentIntent(open)
+            .setShowWhen(true)
             .setCategory(NotificationCompat.CATEGORY_ERROR)
-            .build()
-        context.getSystemService(NotificationManager::class.java).notify(ERROR_NOTIFICATION_ID, notification)
-        vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
+        if (minor) {
+            builder.setAutoCancel(true).setTimeoutAfter(ERROR_TIMEOUT_MS).setOnlyAlertOnce(true).setSilent(repeat)
+        } else {
+            builder.setAutoCancel(false).setOnlyAlertOnce(false)
+        }
+        context.getSystemService(NotificationManager::class.java).notify(tag, ERROR_NOTIFICATION_ID, builder.build())
+        if (repeat) {
+            AppLogger.d("CV:ErrorNotice", "Non-critical error notice posted again without sound (within the quiet window)")
+        } else {
+            vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
+        }
     }
+
+    private fun errorTag(message: String): String = "error:" + message.hashCode()
 
     /**
      * Triggers a vibration if enabled in settings.
