@@ -44,6 +44,8 @@ object RecordingSwitch {
     }
 
     private fun tearDown(context: Context) {
+        // A "cannot record" warning from before the stop would outlive the reason for it: recording is off by choice (C61).
+        runCatching { com.baba.callvault.system.health.SilentFailureNotifier.clearRecorderUnavailable(context) }
         // Stop the watchdog FIRST, synchronously, so a binder death from the teardown below cannot be
         // caught and answered with an immediate relaunch (the same ordering the mode switch relies on).
         runCatching { DaemonKeepAliveService.stop(context) }

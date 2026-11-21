@@ -52,6 +52,11 @@ object SilentFailureNotifier {
     private const val TAG = "CV:SilentFailure"
     private const val CHANNEL_ID = "health_warnings"
 
+    /** Good news and information: quiet, so the loud channel above is kept for "nothing is being recorded" (review R31). */
+    private const val INFO_CHANNEL_ID = "health_info"
+
+    private const val ALERTS_PREFS = "cv_health_alerts"
+
     /** Distinct IDs: the two conditions are independent and either may be true alone. */
     private const val ID_RECORDER_UNAVAILABLE = 4716
     private const val ID_SYNC_STALLED = 4717
@@ -79,6 +84,12 @@ object SilentFailureNotifier {
      * a ten-second fix sound like a trip home.
      */
     fun warnRecorderUnavailable(context: Context) {
+        // Recording switched off is the user's own choice, and the recorder is down by design: nothing is wrong, so
+        // nothing is said. Without this every reboot with recording off posted "cannot record" (C61).
+        if (AppPreferences(context).getRecordingState() == com.baba.callvault.data.RecordingState.STOPPED) {
+            AppLogger.i(TAG, "Not warning that the recorder is unavailable: recording is switched off by the user")
+            return
+        }
         // The advice has to match the mode, the same rule the empty-file warning already follows.
         // Telling a Shizuku user to join a Wi-Fi network sends them to a setting they have never
         // touched and do not need, and away from the one thing that is actually actionable: whether
@@ -134,6 +145,7 @@ object SilentFailureNotifier {
     fun noteCutOffRecordingSaved(context: Context, fileName: String) = post(
         context,
         id = ID_CUT_OFF_SAVED,
+        info = true,
         title = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_title),
         text = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text, fileName),
     )
@@ -147,6 +159,7 @@ object SilentFailureNotifier {
     fun noteTurnedOffForAndroidVersion(context: Context, settingLabels: List<String>) = post(
         context,
         id = ID_TURNED_OFF_FOR_ANDROID,
+        info = true,
         title = LocalizedContext.of(context).getString(R.string.notif_turned_off_for_android_title),
         text = LocalizedContext.of(context).getString(
             R.string.notif_turned_off_for_android_text,
@@ -199,6 +212,7 @@ object SilentFailureNotifier {
     fun warnShizukuStopped(context: Context) = post(
         context,
         id = ID_SHIZUKU_STOPPED,
+        quietRepeat = true,
         title = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_stopped_title),
         text = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_stopped_text),
     )
@@ -215,6 +229,7 @@ object SilentFailureNotifier {
     fun noteShizukuRestarted(context: Context) = post(
         context,
         id = ID_SHIZUKU_STOPPED,
+        info = true,
         title = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_restarted_title),
         text = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_restarted_text),
     )
@@ -229,6 +244,7 @@ object SilentFailureNotifier {
     fun warnShizukuRestartFailed(context: Context) = post(
         context,
         id = ID_SHIZUKU_STOPPED,
+        quietRepeat = true,
         title = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_restart_failed_title),
         text = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_restart_failed_text),
     )
@@ -283,6 +299,7 @@ object SilentFailureNotifier {
             post(
                 context,
                 id = ID_SYNC_STALLED,
+                quietRepeat = true,
                 title = LocalizedContext.of(context).getString(R.string.notif_health_sync_title),
                 // No count in the text, deliberately. It would need per-locale plural rules to
                 // read properly, and it invites the wrong question — "is three bad?" — when the only
@@ -304,6 +321,7 @@ object SilentFailureNotifier {
                 post(
                     context,
                     id = ID_RETENTION_WAITING_FOR_DRIVE,
+                    info = true,
                     title = localized.resources.getQuantityString(
                         R.plurals.notif_retention_waiting_for_drive_title, action.count, action.count,
                     ),
@@ -322,7 +340,14 @@ object SilentFailureNotifier {
     // Returns whether the notification was actually handed to the system: false without POST_NOTIFICATIONS or
     // when notify() threw (logged). Callers that remember "the user was told" must check it.
     @SuppressLint("MissingPermission")
-    private fun post(context: Context, id: Int, title: String, text: String): Boolean {
+    private fun post(
+        context: Context,
+        id: Int,
+        title: String,
+        text: String,
+        info: Boolean = false,
+        quietRepeat: Boolean = false,
+    ): Boolean {
         createChannel(context)
         val open = PendingIntent.getActivity(
             context,
@@ -343,7 +368,12 @@ object SilentFailureNotifier {
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+        // A warning posted again inside the quiet window (the user swiped it, the next app start or sweep re-posts it)
+        // appears without a sound; the time of the last real alert is kept in this object's own small preferences (R31).
+        val alerts = context.getSharedPreferences(ALERTS_PREFS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val alert = !quietRepeat || HealthAlertPolicy.shouldAlert(alerts.getLong("alert_$id", 0L), now)
+        val notification = NotificationCompat.Builder(context, if (info) INFO_CHANNEL_ID else CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_warning)
             .setContentTitle(title)
             .setContentText(text)
@@ -353,15 +383,21 @@ object SilentFailureNotifier {
             .setContentIntent(open)
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(if (info) NotificationCompat.PRIORITY_LOW else NotificationCompat.PRIORITY_DEFAULT)
+            .setSilent(!alert)
             .build()
         if (!PermissionChecks.hasNotificationPermission(context)) {
             AppLogger.w(TAG, "Health notification $id not shown: notification permission is not granted")
             return false
         }
-        return runCatching { NotificationManagerCompat.from(context).notify(id, notification) }
+        val shown = runCatching { NotificationManagerCompat.from(context).notify(id, notification) }
             .onFailure { AppLogger.w(TAG, "Failed to post health notification: ${it.message}") }
             .isSuccess
+        if (shown && quietRepeat) {
+            if (alert) alerts.edit().putLong("alert_$id", now).apply()
+            else AppLogger.d(TAG, "Health notification $id posted again without a sound: it alerted less than a day ago")
+        }
+        return shown
     }
 
     private fun clear(context: Context, id: Int) {
@@ -374,6 +410,14 @@ object SilentFailureNotifier {
             LocalizedContext.of(context).getString(R.string.notif_health_channel),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply { setShowBadge(true) }
-        context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(channel)
+        manager.createNotificationChannel(
+            NotificationChannel(
+                INFO_CHANNEL_ID,
+                LocalizedContext.of(context).getString(R.string.notif_info_channel),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply { setShowBadge(false) },
+        )
     }
 }
