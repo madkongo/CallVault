@@ -18,7 +18,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.AndroidViewModel
 import com.baba.callvault.BuildConfig
 import com.baba.callvault.services.debug.DebugNotificationHelper
-import com.baba.callvault.services.recording.VoipRingListenerAccess
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.server.RecorderBackend
@@ -424,8 +423,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val voipBefore = preferences.isVoipRecordingEnabled()
         val applied = preferences.importFromJson(json)
         if (applied >= 0) refresh()
-        // A file that turns app calls on or off brings the ring listener's approval with it (review C19).
-        if (preferences.isVoipRecordingEnabled() != voipBefore) VoipRingListenerAccess.requestSync(getApplication())
+        // Preferences alone change nothing that is already running: replay what the toggles do (review C96).
+        // This includes the ring listener's approval for an app-calls change (review C19).
+        if (applied > 0) SettingsReconcile.afterImport(voipBefore, SettingsReconcile.effectsFor(getApplication()))
         return applied
     }
 
