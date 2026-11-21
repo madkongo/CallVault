@@ -40,13 +40,15 @@ internal class CaptureDiagnosticsSlot(
     }
 
     /** A stop tore [session] down. With no session there is nothing new to say, so a start failure stays readable. */
-    fun sessionEnded(session: RecordingSession?) {
+    fun sessionEnded(session: RecordingSession?, routeLine: String = "") {
         if (session == null) return
         val health = runCatching { session.captureDiagnostics() }.getOrElse {
             AppLogger.w(TAG, "Could not read the capture's health: ${it.message}")
             ""
         }
-        value = CaptureRecoveryLog.append(health, recovery.drain())
+        // The route leads (review C131); the capture's own health follows it unchanged.
+        val withRoute = listOf(routeLine, health).filter { it.isNotEmpty() }.joinToString("\n")
+        value = CaptureRecoveryLog.append(withRoute, recovery.drain())
     }
 
     private companion object {

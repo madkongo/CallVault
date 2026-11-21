@@ -90,8 +90,21 @@ internal class VoipCaptureSession(
     /** The sync summary of the finished capture, for the app's log; empty until the loop ends. */
     @Volatile private var syncSummary: String = ""
 
+    /**
+     * What went wrong inside the capture (review C38): a side that stopped reading, or the capture thread dying. One line
+     * each, in the order they happened. Empty on a clean call.
+     */
+    private val faultLines = java.util.concurrent.CopyOnWriteArrayList<String>()
+
+    /** Says a fault where the app will read it: the capture health, and the always-on summary an app call carries. */
+    private fun reportFault(line: String) {
+        faultLines.add(line)
+        AppLogger.w(TAG, line)
+        runCatching { CaptureRecoveryLog.current.note("capture fault", line) }
+    }
+
     override fun captureDiagnostics(): String =
-        listOf(syncSummary, contentionEvidence).filter { it.isNotBlank() }.joinToString("\n")
+        (listOf(syncSummary) + faultLines + listOf(contentionEvidence)).filter { it.isNotBlank() }.joinToString("\n")
 
     /**
      * Review N30: the first time the call app's own capture was found silenced right after our mic re-take, as the
@@ -200,7 +213,10 @@ internal class VoipCaptureSession(
 
         muxThread = Thread {
             runCatching { captureLoop(enc, mux) }
-                .onFailure { AppLogger.w(TAG, "VoIP capture loop ended: ${it.message}") }
+                .onFailure {
+                    AppLogger.w(TAG, "VoIP capture loop ended: ${it.message}")
+                    reportFault(CaptureFaultLines.threadFailed("VoIP capture loop", it.message))
+                }
         }.apply { isDaemon = true; name = "voip-capture" }.also { it.start() }
     }
 
@@ -521,7 +537,9 @@ internal class VoipCaptureSession(
                     // A failed read while suspending is the record being released underneath us, not
                     // a fault. Go back to waiting instead of ending the thread for good.
                     if (suspended.get() || stopRequested.get() || yielded.get()) { interrupted = true; break }
-                    AppLogger.d(TAG, "$tag read=$r, feeder ending")
+                    // Said in the capture health and the always-on summary, not only at debug level: from here to the end
+                    // of the call this side is silence in the file, and a report must be able to say why.
+                    reportFault(CaptureFaultLines.voipSideEnded(tag, r, (System.nanoTime() - startedNanos) / 1_000_000L))
                     return@Thread
                 }
                 off += r

@@ -87,8 +87,22 @@ internal class DirectAudioRecorderSession(
     /** What the capture measured, published as the encode loop ends (review N28); read after [stop] joined it. */
     @Volatile private var captureLevelsLine: String = ""
 
+    /**
+     * What went wrong inside the capture (review C38): reads that failed, or a thread that died. Empty on a clean call.
+     * Kept apart from [captureDiagnosticsLine], which only exists once the reader has left its loop normally.
+     */
+    @Volatile private var readFaultLine: String = ""
+    @Volatile private var threadFailureLine: String = ""
+
+    /** Says a fault where the app will read it: the capture health, and the always-on summary an app call carries. */
+    private fun reportFault(line: String) {
+        AppLogger.w(TAG, line)
+        runCatching { CaptureRecoveryLog.current.note("capture fault", line) }
+    }
+
     override fun captureDiagnostics(): String =
-        listOf(captureDiagnosticsLine, captureLevelsLine).filter { it.isNotEmpty() }.joinToString("\n")
+        listOf(captureDiagnosticsLine, readFaultLine, threadFailureLine, captureLevelsLine)
+            .filter { it.isNotEmpty() }.joinToString("\n")
 
     override fun start() {
         try {
@@ -154,12 +168,22 @@ internal class DirectAudioRecorderSession(
 
         val finalEncodeChannels = encodeChannels
         encodeThread = Thread { runCatching { encodeLoop(queue, enc, mux, captureChannels, finalEncodeChannels) }
-            .onFailure { AppLogger.w(TAG, "Direct encode loop ended: ${it.message}") } }
+            .onFailure {
+                AppLogger.w(TAG, "Direct encode loop ended: ${it.message}")
+                threadFailureLine = CaptureFaultLines.threadFailed("direct encode", it.message)
+                reportFault(threadFailureLine)
+            } }
             .apply { isDaemon = true; name = "direct-capture-encode" }
             .also { it.start() }
 
         readThread = Thread { runCatching { readLoop(record, queue, captureChannels) }
-            .onFailure { AppLogger.w(TAG, "Direct capture loop ended: ${it.message}") } }
+            .onFailure {
+                AppLogger.w(TAG, "Direct capture loop ended: ${it.message}")
+                if (threadFailureLine.isEmpty()) {
+                    threadFailureLine = CaptureFaultLines.threadFailed("direct capture read", it.message)
+                    reportFault(threadFailureLine)
+                }
+            } }
             .apply { isDaemon = true; name = "direct-capture-read" }
             .also { it.start() }
     }
@@ -253,17 +277,29 @@ internal class DirectAudioRecorderSession(
         val startNanos = System.nanoTime()
         var framesRead = 0L
         var sinceSample = 0
+        // Counts failed reads and says the first; it never waits and never ends the loop, so the capture behaves as before.
+        val faults = ReadFaultTally()
 
-        while (!stopRequested.get()) {
-            val read = record.read(pcm, 0, pcm.size)
-            if (read <= 0) continue
-            framesRead += read / captureBytesPerFrame
-            queue.offer(pcm, read) // counted inside; never blocks
+        try {
+            while (!stopRequested.get()) {
+                val read = record.read(pcm, 0, pcm.size)
+                if (faults.onRead(read)) {
+                    AppLogger.w(TAG, "Direct capture read failed: $read (${CaptureFaultLines.codeName(read)}); further failures are counted, not logged")
+                }
+                if (read <= 0) continue
+                framesRead += read / captureBytesPerFrame
+                queue.offer(pcm, read) // counted inside; never blocks
 
-            if (++sinceSample < LEDGER_SAMPLE_CHUNKS) continue
-            sinceSample = 0
-            if (ledger.sample(framesRead, System.nanoTime() - startNanos)) {
-                AppLogger.w(TAG, "Capture fell behind: ${ledger.lostMillis} ms of audio lost so far to ring overrun")
+                if (++sinceSample < LEDGER_SAMPLE_CHUNKS) continue
+                sinceSample = 0
+                if (ledger.sample(framesRead, System.nanoTime() - startNanos)) {
+                    AppLogger.w(TAG, "Capture fell behind: ${ledger.lostMillis} ms of audio lost so far to ring overrun")
+                }
+            }
+        } finally {
+            faults.summary()?.let { line ->
+                readFaultLine = line
+                reportFault("direct capture read faults: $line")
             }
         }
 

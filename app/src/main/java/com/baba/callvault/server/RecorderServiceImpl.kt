@@ -59,7 +59,13 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
      * Speaker turns from the last finished recording, retained because the app asks for them after
      * [stopRecording] has already discarded the session.
      */
-    @Volatile private var lastSpeakerTurns: String = ""
+    private val speakerTurnsHold = SpeakerTurnsHold()
+
+    /**
+     * Which capture path the last carrier call took (review C131), the first line of what [captureDiagnostics] answers.
+     * Written and read on the worker thread only.
+     */
+    private var captureRoute: String = ""
     /** What [captureDiagnostics] answers: the last capture's health, or why the last app-call start failed. */
     private val captureHealth = CaptureDiagnosticsSlot()
 
@@ -109,6 +115,11 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         return super.onTransact(code, data, reply, flags)
     }
 
+    /** Posts [job] to the worker with a clean interrupt flag, so one stop's interrupt cannot reach the next job (review C171). */
+    private fun postJob(job: () -> Unit) {
+        workerHandler.post(InterruptSafeJob.wrap(job))
+    }
+
     override fun startRecording(
         source: String?,
         codec: String?,
@@ -137,9 +148,11 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         }
 
         AppLogger.i(TAG, "startRecording source=$source codec=$codec bitRate=$bitRate stereo=$stereo")
+        // Nothing the previous call left may be read as this call's turns (review C60).
+        speakerTurnsHold.beginCall()
 
         // Heavy work (AudioRecord/encoder init or scrcpy launch) OFF the binder thread.
-        workerHandler.post {
+        postJob {
             val active = runCatching { startWithFallback(sourceEnum, codecEnum, bitRate, outFd, stereo) }
                 .onFailure { AppLogger.e(TAG, "startRecording failed (all paths): ${it.message}", it) }
                 .getOrNull()
@@ -167,17 +180,20 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         // app could move/read a truncated recording (the daemon's MediaMuxer.close happens in
         // session.stop). session.stop has its own internal grace/joins (~up to 4s).
         val done = CountDownLatch(1)
-        workerHandler.post {
+        postJob {
             runCatching { session?.stop() }
                 .onFailure { AppLogger.w(TAG, "stopRecording teardown error: ${it.message}") }
             // Collect the speaker turns before dropping the session — the app queries them after
             // this call returns, by which point there is nothing left to ask.
-            lastSpeakerTurns = runCatching { session?.speakerTurns().orEmpty() }.getOrElse {
-                AppLogger.w(TAG, "Could not read speaker turns: ${it.message}")
-                ""
-            }
+            speakerTurnsHold.store(
+                runCatching { session?.speakerTurns().orEmpty() }.getOrElse {
+                    AppLogger.w(TAG, "Could not read speaker turns: ${it.message}")
+                    ""
+                },
+            )
             // A stop that finds no session (the app stopped while a VoIP start was still failing) keeps that reason.
-            captureHealth.sessionEnded(session)
+            // An app-call session has no route line: only the carrier path chooses between direct and scrcpy.
+            captureHealth.sessionEnded(session, if (session is VoipCaptureSession) "" else captureRoute)
             session = null
             done.countDown()
         }
@@ -207,6 +223,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     override fun startHandoff(source: String?, sampleRate: Int, channels: Int): Boolean {
         if (source == null) { AppLogger.e(TAG, "startHandoff: null source"); return false }
         AppLogger.i(TAG, "startHandoff source=$source rate=$sampleRate channels=$channels")
+        speakerTurnsHold.beginCall() // a handoff call has no daemon turns; the last daemon call's are not its own (review C60)
         // Loaded lazily (not at daemon boot): a user who never enables Resilient recording should
         // not pay for the dlopen, and daemon boot is on the critical path of a call that is already
         // ringing. Idempotent, and cheap once loaded.
@@ -279,7 +296,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
      * any (a mono route, or the scrcpy fallback). Read after [stopRecording], which is why the
      * value is kept rather than asked of a session that no longer exists.
      */
-    override fun speakerTurns(): String = lastSpeakerTurns
+    override fun speakerTurns(): String = speakerTurnsHold.value
 
     override fun captureDiagnostics(): String = captureHealth.value
 
@@ -314,13 +331,14 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             return false
         }
         AppLogger.i(TAG, "startVoipRecording codec=$codec bitRate=$bitRate stereo=$stereo")
+        speakerTurnsHold.beginCall() // review C60
         // So voipFarPartyHeard can never answer for a previous call if this one fails to open, and so a pause the
         // app sends before the worker has built the session is queued for it (C49).
         voipSlot.beginStart()
         // Nothing an earlier call left may be read as this call's (review N21).
         captureHealth.startAccepted()
         // Heavy setup off the binder thread, matching startRecording.
-        workerHandler.post {
+        postJob {
             val started = runCatching {
                 // Published with any queued pause applied before it starts (review C49).
                 voipSlot.publishThenStart(VoipCaptureSession(codecEnum, bitRate, outFd, keepStereo = stereo)) { it.start() }
@@ -348,6 +366,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     // just frees the daemon's now-unneeded input so the next call can create a fresh one).
     override fun startHandoffHeld(source: String?, sampleRate: Int, channels: Int): Boolean {
         AppLogger.i(TAG, "startHandoffHeld source=$source rate=$sampleRate channels=$channels")
+        speakerTurnsHold.beginCall() // review C60
         // Same lazy load the normal handoff does — the binder + cblk extraction is native, and
         // without this the whole path fails with UnsatisfiedLinkError at the first native call.
         if (!AudioHandoffNative.ensureLoadedFromApk(apkPath)) {
@@ -548,15 +567,18 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         outFd: ParcelFileDescriptor,
         stereo: Boolean,
     ): RecordingSession {
+        captureRoute = CaptureRoute.scrcpyDirectUnsupported()
         if (DirectAudioRecorderSession.supports(source, codec)) {
             val direct = DirectAudioRecorderSession(source, codec, bitRate, outFd, keepStereo = stereo)
-            if (runCatching { direct.start() }
-                    .onFailure { AppLogger.w(TAG, "Direct capture unavailable, falling back to scrcpy: ${it.message}") }
-                    .isSuccess
-            ) {
+            val directStart = runCatching { direct.start() }
+                .onFailure { AppLogger.w(TAG, "Direct capture unavailable, falling back to scrcpy: ${it.message}") }
+            if (directStart.isSuccess) {
                 AppLogger.i(TAG, "Recording via DIRECT AudioRecord — source=${source.cliKey} codec=${codec.cliKey}")
+                captureRoute = CaptureRoute.direct()
                 return direct
             }
+            // Said where the app's log can show it: the daemon's own ring only reaches a report if debug was on (review C131).
+            captureRoute = CaptureRoute.scrcpyAfterDirectFailure(directStart.exceptionOrNull() ?: IllegalStateException("no reason"))
         }
         // Checked before the extractor opens it as a zip. A `daemon(true)` Shizuku service outlives the
         // app, and an app update moves the APK to a new hashed directory — so a surviving service holds
@@ -574,7 +596,14 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         // fallback is not the starved file #74 exists to avoid; otherwise leave it exactly as it was.
         val scrcpyRate = StereoBitRate.requestedRate(codec, bitRate, if (stereo) StereoBitRate.STEREO else StereoBitRate.MONO)
         val scrcpy = RecorderSession(source, codec, scrcpyRate, outFd, freshJar)
-        scrcpy.start()
+        try {
+            scrcpy.start()
+        } catch (t: Throwable) {
+            // A child that was launched before the start failed is still holding the audio source; end it now (review C131).
+            AppLogger.w(TAG, "scrcpy start failed (${t.message}); ending its child before giving up")
+            runCatching { scrcpy.stop() }
+            throw t
+        }
         AppLogger.i(TAG, "Recording via scrcpy — source=${source.cliKey} codec=${codec.cliKey}")
         return scrcpy
     }
