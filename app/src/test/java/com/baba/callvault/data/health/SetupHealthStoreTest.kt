@@ -237,4 +237,17 @@ class SetupHealthStoreTest {
         store.recordCutOff(atMillis = 9_000L, callStartedAt = 7_000L, callEndedAt = 8_000L, label = "Bob")
         assertEquals(5_000L, store.read().lastGapAt)
     }
+
+    // C139: stores are built wherever needed; the read-then-write sections must exclude each other across instances.
+    @Test
+    fun `two stores on the same file exclude each other while one is inside a read-then-write`() {
+        val other = SetupHealthStore(ApplicationProvider.getApplicationContext())
+        val done = java.util.concurrent.CountDownLatch(2)
+        synchronized(SetupHealthStore.LOCK) {
+            Thread { store.observeCall(1_000L); done.countDown() }.start()
+            Thread { other.observationWindowStart(isReady = true, nowMillis = 2_000L); done.countDown() }.start()
+            assertTrue("both must wait for the shared lock", !done.await(300, java.util.concurrent.TimeUnit.MILLISECONDS))
+        }
+        assertTrue(done.await(5, java.util.concurrent.TimeUnit.SECONDS))
+    }
 }

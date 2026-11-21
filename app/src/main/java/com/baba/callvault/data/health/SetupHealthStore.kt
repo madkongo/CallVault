@@ -174,8 +174,7 @@ class SetupHealthStore(context: Context) {
      * racing here could drop an entry — which reads as a false CallNotRecorded alarm rather than a
      * merely-missed one, exactly what this feature must never do.
      */
-    @Synchronized
-    fun observeCall(endedAtMillis: Long) {
+    fun observeCall(endedAtMillis: Long) = synchronized(LOCK) {
         val ends = (listOf(endedAtMillis) + readRing()).distinct().sortedDescending().take(RING_SIZE)
         prefs.edit { putString(KEY_OBSERVED_ENDS, ends.joinToString(",")) }
     }
@@ -197,16 +196,15 @@ class SetupHealthStore(context: Context) {
      * Synchronized for the same reason as [observeCall]: this is a read-then-maybe-write, and two
      * racing callers could otherwise commit two different window starts.
      */
-    @Synchronized
-    fun observationWindowStart(isReady: Boolean, nowMillis: Long): Long {
+    fun observationWindowStart(isReady: Boolean, nowMillis: Long): Long = synchronized(LOCK) {
         if (!isReady) {
             prefs.edit { putLong(KEY_WINDOW_START, nowMillis) }
-            return nowMillis
+            return@synchronized nowMillis
         }
         val existing = prefs.getLong(KEY_WINDOW_START, 0L)
-        if (existing != 0L) return existing
+        if (existing != 0L) return@synchronized existing
         prefs.edit { putLong(KEY_WINDOW_START, nowMillis) }
-        return nowMillis
+        nowMillis
     }
 
     private fun readRing(): List<Long> =
@@ -217,6 +215,12 @@ class SetupHealthStore(context: Context) {
             .orEmpty()
 
     companion object {
+        /**
+         * One lock for every instance: the facts live in one shared preferences file but the store is built
+         * wherever it is needed, so an instance lock (the old `@Synchronized`) excluded nothing (review C139).
+         */
+        internal val LOCK = Any()
+
         /**
          * How many of the newest observed call ends [observeCall] keeps; the sweep's eviction
          * horizon. Public so callers of [CallGapDetector.sweep] can pass it as `ringCapacity`.
