@@ -562,8 +562,12 @@ class DaemonKeepAliveService : Service() {
         override fun onAvailable(network: Network) {
             if (!usesAdb()) return
             // Let Android finish its own "Wi-Fi changed" handling of the switch first.
+            // Never sooner than 30 s after the last approval began (R16); a join inside that window is delayed, not dropped.
             watchdogHandler.removeCallbacks(approveJoinedWifi)
-            watchdogHandler.postDelayed(approveJoinedWifi, WIFI_JOIN_SETTLE_MS)
+            watchdogHandler.postDelayed(
+                approveJoinedWifi,
+                WifiApprovalSpacing.delayMs(SystemClock.elapsedRealtime(), lastApprovalStartedAtMs, WIFI_JOIN_SETTLE_MS),
+            )
             MicOpAutoHeal.onWayBackMayHaveAppeared(applicationContext, MicOpHealPolicy.Trigger.WIFI_JOINED)
         }
     }
@@ -575,8 +579,13 @@ class DaemonKeepAliveService : Service() {
     private fun wifiLostRecently(): Boolean =
         lastWifiLostAtMs != 0L && SystemClock.elapsedRealtime() - lastWifiLostAtMs < WIFI_LOST_WINDOW_MS
 
+    /** When the last approval began (elapsed realtime), for [WifiApprovalSpacing]; null before the first. */
+    @Volatile
+    private var lastApprovalStartedAtMs: Long? = null
+
     private val approveJoinedWifi = Runnable {
         if (!usesAdb() || !AppPreferences(applicationContext).isWifiNetworkAutoApproveEnabled()) return@Runnable
+        lastApprovalStartedAtMs = SystemClock.elapsedRealtime()
         Thread {
             if (!usesAdb()) return@Thread
             runCatching {
