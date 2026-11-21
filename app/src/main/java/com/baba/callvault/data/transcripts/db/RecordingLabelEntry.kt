@@ -49,4 +49,8 @@ interface RecordingLabelDao {
 
     @Upsert
     suspend fun upsertAll(entries: List<RecordingLabelEntry>)
+
+    /** Drops the label of a recording that has been deleted (R48): it holds the contact name and date. */
+    @Query("DELETE FROM recording_labels WHERE displayName = :displayName")
+    suspend fun deleteFor(displayName: String)
 }

@@ -9,6 +9,7 @@
 package com.baba.callvault.data.transcripts
 
 import android.content.Context
+import androidx.room.withTransaction
 import kotlinx.coroutines.flow.combine
 import com.baba.callvault.data.merge.HiddenMergeParts
 import com.baba.callvault.data.transcripts.db.RecordingTagEntry
@@ -17,8 +18,6 @@ import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.summary.CallSummary
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 
 /**
  * The user's own labels on their recordings.
@@ -37,22 +36,21 @@ object TagRepository {
     private fun dao(context: Context) = TranscriptDatabase.get(context).tagDao()
 
     /** The tags on one recording. */
-    fun tagsFor(context: Context, displayName: String): Flow<List<String>> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
-        return dao(context).observeFor(displayName)
-    }
+    fun tagsFor(context: Context, displayName: String): Flow<List<String>> =
+        onceTranscriptsExist(context, emptyList()) { it.tagDao().observeFor(displayName) }
 
     /** Every tag in use, most-used first — the filter row. */
-    fun allTags(context: Context): Flow<List<TagCount>> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
-        // Counted here rather than in SQL so a merged-away part's kept tags (hidden for un-merge, N2) do not count.
-        return dao(context).observeAllAssignments().combine(HiddenMergeParts.observe(context)) { rows, hidden ->
-            rows.filterNot { it.displayName in hidden }
-                .groupingBy { it.tag }.eachCount()
-                .map { (tag, count) -> TagCount(tag, count) }
-                .sortedWith(compareByDescending<TagCount> { it.count }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.tag })
+    fun allTags(context: Context): Flow<List<TagCount>> =
+        // The empty answer until the database exists, then the live query (C164). Counted here rather
+        // than in SQL so a merged-away part's kept tags (hidden for un-merge, N2) do not count.
+        onceTranscriptsExist(context, emptyList()) { db ->
+            db.tagDao().observeAllAssignments().combine(HiddenMergeParts.observe(context)) { rows, hidden ->
+                rows.filterNot { it.displayName in hidden }
+                    .groupingBy { it.tag }.eachCount()
+                    .map { (tag, count) -> TagCount(tag, count) }
+                    .sortedWith(compareByDescending<TagCount> { it.count }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.tag })
+            }
         }
-    }
 
     /**
      * Which tags each recording carries, for Home's filter facet.
@@ -60,20 +58,20 @@ object TagRepository {
      * A map rather than a query per tag so the list filtering stays a pure function of state, like
      * the contact and date facets it sits beside.
      */
-    fun assignments(context: Context): Flow<Map<String, Set<String>>> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(emptyMap())
-        return dao(context).observeAllAssignments().combine(HiddenMergeParts.observe(context)) { rows, hidden ->
-            rows.filterNot { it.displayName in hidden }.groupBy { it.displayName }
-                .mapValues { (_, entries) -> entries.map { it.tag }.toSet() }
+    fun assignments(context: Context): Flow<Map<String, Set<String>>> =
+        onceTranscriptsExist(context, emptyMap()) { db ->
+            db.tagDao().observeAllAssignments().combine(HiddenMergeParts.observe(context)) { rows, hidden ->
+                rows.filterNot { it.displayName in hidden }.groupBy { it.displayName }
+                    .mapValues { (_, entries) -> entries.map { it.tag }.toSet() }
+            }
         }
-    }
 
     /** The recordings carrying [tag], for filtering the list. */
-    fun taggedWith(context: Context, tag: String): Flow<List<String>> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
-        return dao(context).observeTagged(tag)
-            .combine(HiddenMergeParts.observe(context)) { names, hidden -> names.filterNot { it in hidden } }
-    }
+    fun taggedWith(context: Context, tag: String): Flow<List<String>> =
+        onceTranscriptsExist(context, emptyList()) { db ->
+            db.tagDao().observeTagged(tag)
+                .combine(HiddenMergeParts.observe(context)) { names, hidden -> names.filterNot { it in hidden } }
+        }
 
     /**
      * Applies [input] to [displayName], and returns the tag as it was actually stored.
@@ -133,10 +131,15 @@ object TagRepository {
      */
     suspend fun dismissSuggestion(context: Context, displayName: String, tag: String) {
         runCatching {
-            val summaries = TranscriptDatabase.get(context).summaryDao()
-            val entry = summaries.summary(displayName) ?: return
-            val parsed = CallSummary.parse(entry.document) ?: return
-            summaries.upsert(entry.copy(document = parsed.withDismissed(tag).toJson()))
+            val db = TranscriptDatabase.get(context)
+            val summaries = db.summaryDao()
+            // Read, change and write as one step: two quick dismissals otherwise both read the same old
+            // row and the second write undoes the first (C174). Room runs transactions one at a time.
+            db.withTransaction {
+                val entry = summaries.summary(displayName) ?: return@withTransaction
+                val parsed = CallSummary.parse(entry.document) ?: return@withTransaction
+                summaries.upsert(entry.copy(document = parsed.withDismissed(tag).toJson()))
+            }
         }.onFailure { AppLogger.w(TAG, "Could not dismiss a suggested tag: ${it.message}") }
     }
 

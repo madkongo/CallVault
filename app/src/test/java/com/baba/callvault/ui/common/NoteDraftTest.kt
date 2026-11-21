@@ -78,4 +78,35 @@ class NoteDraftTest {
         draft.stored("typing")
         assertEquals("typing", draft.text)
     }
+    @Test
+    fun `the last save of a draft goes to its own recording after the screen moved on`() {
+        // C121: A's draft is flushed when the screen switches to B; the latest callback already
+        // writes under B, so it must not be the one used.
+        val writes = mutableListOf<String>()
+        val saveA: (String) -> Unit = { writes += "A:$it" }
+        val saveB: (String) -> Unit = { writes += "B:$it" }
+        var currentKey: Any? = "A"
+        var latest = saveA
+        val draftSave = ownerBoundSave("A", { currentKey }, saveA) { latest }
+
+        currentKey = "B"
+        latest = saveB
+        draftSave("note about the first call")
+
+        assertEquals(listOf("A:note about the first call"), writes)
+    }
+
+    @Test
+    fun `while the recording is still shown the newest callback is used`() {
+        val writes = mutableListOf<String>()
+        val first: (String) -> Unit = { writes += "first:$it" }
+        val second: (String) -> Unit = { writes += "second:$it" }
+        var latest = first
+        val draftSave = ownerBoundSave("A", { "A" }, first) { latest }
+
+        latest = second
+        draftSave("x")
+
+        assertEquals(listOf("second:x"), writes)
+    }
 }
