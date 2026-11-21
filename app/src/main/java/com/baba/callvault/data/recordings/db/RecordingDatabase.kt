@@ -30,7 +30,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * every recording, so a drop turns the first launch after an update into the slowest one — the exact
  * complaint [MIGRATION_1_2] exists to end.
  */
-@Database(entities = [RecordingEntry::class, MergePartEntry::class], version = 3, exportSchema = false)
+@Database(entities = [RecordingEntry::class, MergePartEntry::class], version = RecordingDatabase.SCHEMA_VERSION, exportSchema = true)
 abstract class RecordingDatabase : RoomDatabase() {
 
     abstract fun recordingDao(): RecordingDao
@@ -38,6 +38,13 @@ abstract class RecordingDatabase : RoomDatabase() {
     abstract fun mergePartDao(): MergePartDao
 
     companion object {
+
+        /**
+         * The schema version. Bumping it requires a migration from the previous version in
+         * [ALL_MIGRATIONS]; RecordingDatabaseMigrationChainTest fails otherwise, because the
+         * destructive fallback below would drop the merge manifests (C136).
+         */
+        const val SCHEMA_VERSION = 3
 
         /**
          * Adds the remembered length. Additive and nullable, so every existing row keeps its URIs,
@@ -79,6 +86,9 @@ abstract class RecordingDatabase : RoomDatabase() {
             }
         }
 
+        /** Every migration the builder registers, in one place so the chain test can read it. */
+        val ALL_MIGRATIONS: List<Migration> = listOf(MIGRATION_1_2, MIGRATION_2_3)
+
         @Volatile
         private var INSTANCE: RecordingDatabase? = null
 
@@ -88,7 +98,7 @@ abstract class RecordingDatabase : RoomDatabase() {
                     context.applicationContext,
                     RecordingDatabase::class.java,
                     "recordings.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                ).addMigrations(*ALL_MIGRATIONS.toTypedArray())
                     .fallbackToDestructiveMigration(dropAllTables = true)
                     .build().also { INSTANCE = it }
             }

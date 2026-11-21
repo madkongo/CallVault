@@ -1,0 +1,146 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "65d51fea3f15d35bff8d4a895b4a6f9f",
+    "entities": [
+      {
+        "tableName": "recordings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`displayName` TEXT NOT NULL, `localUri` TEXT, `driveUri` TEXT, `localSizeBytes` INTEGER, `driveSizeBytes` INTEGER, `lastModified` INTEGER NOT NULL, `durationSeconds` INTEGER, PRIMARY KEY(`displayName`))",
+        "fields": [
+          {
+            "fieldPath": "displayName",
+            "columnName": "displayName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localUri",
+            "columnName": "localUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "driveUri",
+            "columnName": "driveUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "localSizeBytes",
+            "columnName": "localSizeBytes",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "driveSizeBytes",
+            "columnName": "driveSizeBytes",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastModified",
+            "columnName": "lastModified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationSeconds",
+            "columnName": "durationSeconds",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "displayName"
+          ]
+        }
+      },
+      {
+        "tableName": "merge_parts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mergedName` TEXT NOT NULL, `position` INTEGER NOT NULL, `partName` TEXT NOT NULL, `frameStart` INTEGER NOT NULL, `frameCount` INTEGER NOT NULL, `startTimeUs` INTEGER NOT NULL, `durationUs` INTEGER NOT NULL, `originalLastModified` INTEGER NOT NULL, `encoderDelayUs` INTEGER NOT NULL, `encoderPaddingUs` INTEGER NOT NULL, PRIMARY KEY(`mergedName`, `position`))",
+        "fields": [
+          {
+            "fieldPath": "mergedName",
+            "columnName": "mergedName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "partName",
+            "columnName": "partName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameStart",
+            "columnName": "frameStart",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameCount",
+            "columnName": "frameCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startTimeUs",
+            "columnName": "startTimeUs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationUs",
+            "columnName": "durationUs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originalLastModified",
+            "columnName": "originalLastModified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "encoderDelayUs",
+            "columnName": "encoderDelayUs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "encoderPaddingUs",
+            "columnName": "encoderPaddingUs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "mergedName",
+            "position"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_merge_parts_partName",
+            "unique": false,
+            "columnNames": [
+              "partName"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_merge_parts_partName` ON `${TABLE_NAME}` (`partName`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '65d51fea3f15d35bff8d4a895b4a6f9f')"
+    ]
+  }
+}
