@@ -1401,7 +1401,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * the parts it consumed, so a row offered here by mistake is audio the user does not get back.
      */
     fun mergeCandidates(primary: RecordingItem): List<RecordingItem> =
-        MergeCandidates.of(primary, _uiState.value.recordings)
+        MergeCandidates.of(
+            primary,
+            _uiState.value.recordings,
+            // The voicemail label in the phone's language, which the file-name formatter writes for voicemail.
+            setOf(appContext.getString(R.string.voicemail_contact_label)),
+        )
 
     /**
      * How many calls each merged recording holds, as one query.

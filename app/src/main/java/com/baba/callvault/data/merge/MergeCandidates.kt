@@ -10,6 +10,7 @@ package com.baba.callvault.data.merge
 
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
+import com.baba.callvault.utils.RecordingFileNameFormatter
 
 /**
  * Which recordings a merge may join, kept away from the view model because a merge deletes the parts
@@ -37,13 +38,18 @@ object MergeCandidates {
      * said "no other calls with this number". The merge itself downloads a Drive-only part before
      * joining. Unbounded by date on purpose — a cut-off can only ever hide the row someone came looking for.
      */
-    fun of(primary: RecordingItem, all: List<RecordingItem>): List<RecordingItem> {
+    fun of(
+        primary: RecordingItem,
+        all: List<RecordingItem>,
+        extraNoPartyLabels: Set<String> = emptySet(),
+    ): List<RecordingItem> {
+        val noParty = NO_PARTY_LABELS + extraNoPartyLabels.map(::fold)
         if (!canMerge(primary)) return emptyList()
-        val key = mergeKey(primary) ?: return emptyList()
+        val key = mergeKey(primary, noParty) ?: return emptyList()
         return all.filter { other ->
             other.displayName != primary.displayName &&
                 canMerge(other) &&
-                mergeKey(other) == key
+                mergeKey(other, noParty) == key
         }
     }
 
@@ -53,19 +59,37 @@ object MergeCandidates {
      * "079…" to the same person match even when contact lookup missed and the raw strings differ. A
      * short code (fewer than [TAIL_DIGITS] digits) must match in full. Mirrors ContactIgnoreRule.
      */
-    private fun mergeKey(item: RecordingItem): String? {
-        item.contactName?.let { return it }
+    private fun mergeKey(item: RecordingItem, noParty: Set<String>): String? {
+        item.contactName?.takeIf { it.isNotBlank() }?.let { return fold(it).takeUnless { k -> isNoParty(k, noParty) } }
         val raw = item.number?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        // A {contact_name} template writes either a name or an opaque `[C:<hex>]` token where a number
-        // would be. Only the token is a safe key; any other word ("Private", "Unknown") is shared by
-        // strangers, and digits pulled out of a token ("4a4b" -> 44) would join them, so neither is used.
-        if (CONTACT_TOKEN.matches(raw)) return raw
+        // A {contact_name} template writes the contact's real name (any script) where a number would be.
+        // A name is the key, compared whole; digits are never pulled out of it ("Mom 2" is not "2").
+        if (raw.any { it.isLetter() }) return fold(raw).takeUnless { isNoParty(it, noParty) }
         if (raw.any { !it.isDigit() && it !in NUMBER_PUNCTUATION }) return null
-        val digits = raw.filter { it.isDigit() }.takeIf { it.isNotEmpty() } ?: return null
+        // Fewer digits than a dialled number has is a placeholder ("-1"), not a party.
+        val digits = raw.filter { it.isDigit() }.takeIf { it.length >= RecordingFileNameFormatter.MIN_DIALLED_DIGITS } ?: return null
         return if (digits.length >= TAIL_DIGITS) digits.takeLast(TAIL_DIGITS) else digits
     }
 
-    private val CONTACT_TOKEN = Regex("\\[C:[0-9a-f]+]")
+    /**
+     * True when [key] IS a no-party label or starts with one as a whole word ("unknown 5"). A real contact
+     * called "Hidden Valley Pizza" is missed this way: a missed match is harmless, a false merge deletes audio.
+     */
+    private fun isNoParty(key: String, noParty: Set<String>): Boolean =
+        noParty.any { key == it || (key.startsWith(it) && !key[it.length].isLetterOrDigit()) }
+
+    /** NFC-normalised, trimmed and case-folded, so "Zoë"/"ZOË" written differently are one name. */
+    private fun fold(name: String): String =
+        java.text.Normalizer.normalize(name.trim(), java.text.Normalizer.Form.NFC).lowercase(java.util.Locale.ROOT)
+
+    /**
+     * Labels that name no one party, so sharing one proves nothing: the words phones and carriers use for a
+     * withheld caller, and the label the file-name formatter writes for voicemail. The phone's own-language
+     * voicemail label is passed in by the caller ([of]'s `extraNoPartyLabels`).
+     */
+    private val NO_PARTY_LABELS = setOf(
+        "private", "unknown", "anonymous", "hidden", "restricted", "withheld", "voicemail", "unavailable",
+    )
 
     /** What a phone number may carry besides digits. */
     private const val NUMBER_PUNCTUATION = "+-() ."
