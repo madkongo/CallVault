@@ -27,6 +27,7 @@
 
 #include "llama.h"
 #include "ggml.h"
+#include "jni_utf8.h"
 
 #define TAG "CV:llamacv"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,  TAG, __VA_ARGS__)
@@ -101,6 +102,7 @@ Java_com_baba_callvault_summary_LlamaNative_initContext(JNIEnv *env, jobject /* 
     env->ReleaseStringUTFChars(lib_dir, c_dir);
 
     const char *c_path = env->GetStringUTFChars(path, nullptr);
+    if (c_path == nullptr) return 0;
     llama_model_params params = llama_model_default_params();
     // CPU only. A phone's GPU/NPU is not reliably reachable from an app process, and the point of
     // this spike is what an ordinary device can do without one.
@@ -128,6 +130,7 @@ Java_com_baba_callvault_summary_LlamaNative_countTokens(JNIEnv *env, jobject /* 
     const llama_vocab *vocab = llama_model_get_vocab(model);
 
     const char *c_text = env->GetStringUTFChars(text, nullptr);
+    if (c_text == nullptr) return -1;   // out of memory: a pending exception, nothing to release
     const int n = -llama_tokenize(vocab, c_text, (int32_t) strlen(c_text), nullptr, 0, true, true);
     env->ReleaseStringUTFChars(text, c_text);
     return n;
@@ -176,6 +179,7 @@ Java_com_baba_callvault_summary_LlamaNative_generate(
     const llama_vocab *vocab = llama_model_get_vocab(model);
 
     const char *c_prompt = env->GetStringUTFChars(prompt, nullptr);
+    if (c_prompt == nullptr) return env->NewStringUTF("");
 
     // Wrap the prompt in the model's own chat template.
     //
@@ -314,5 +318,7 @@ Java_com_baba_callvault_summary_LlamaNative_generate(
     llama_sampler_free(sampler);
     llama_free(ctx);
 
-    return env->NewStringUTF(out.c_str());
+    // Never NewStringUTF the raw bytes: the token loop can stop mid-character, and an invalid
+    // sequence aborts the process (C47).
+    return env->NewStringUTF(to_modified_utf8(out.c_str()).c_str());
 }
