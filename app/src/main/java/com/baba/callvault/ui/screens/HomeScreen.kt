@@ -131,7 +131,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -335,7 +335,7 @@ fun HomeScreen(
     // the user's finger instead of on the next recomposition that happens to come along.
     val preferences = remember(context) { AppPreferences(context) }
     var communityTucked by rememberSaveable { mutableStateOf(preferences.isCommunityTucked()) }
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     /**
      * Every file the app can resolve a name to, including the transcribe-only imports the recordings
@@ -354,7 +354,7 @@ fun HomeScreen(
     // What each recording was last called, for a library row whose recording is not in the list
     // yet — the list is a scan with a contact lookup per file, and for the seconds it takes on a
     // cold start a row titled by its file name reads as a date and time.
-    val libraryLabels by remember { LibraryLabels.observe(context) }.collectAsState(initial = emptyMap())
+    val libraryLabels by remember { LibraryLabels.observe(context) }.collectAsStateWithLifecycle(initialValue = emptyMap())
 
     /**
      * What a library row is called, the same way every list and dialog names the same call.
@@ -376,8 +376,8 @@ fun HomeScreen(
     val librarySpeakerLabels = rememberLibrarySpeakerLabels()
     val libraryExportLabels = rememberExportLabels()
 
-    val playback by viewModel.playback.collectAsState()
-    val isPullRefreshing by viewModel.isPullRefreshing.collectAsState()
+    val playback by viewModel.playback.collectAsStateWithLifecycle()
+    val isPullRefreshing by viewModel.isPullRefreshing.collectAsStateWithLifecycle()
 
     // Two separate flags, not one: the chooser is opened by the user tapping Support, the appeal
     // arrives on its own after a release note. Sharing a flag would let dismissing one suppress the
@@ -397,7 +397,7 @@ fun HomeScreen(
     val listedNames = uiState.filteredRecordings.map { it.displayName }
     val transcriptStatuses by remember(listedNames) {
         TranscriptRepository.statusesFor(context, listedNames)
-    }.collectAsState(initial = emptyMap())
+    }.collectAsStateWithLifecycle(initialValue = emptyMap())
 
     /** Which recording's transcript is open **as a sheet**, over the list or the playback screen. */
     var transcriptFor by rememberSaveable { mutableStateOf<String?>(null) }
@@ -946,22 +946,22 @@ fun HomeScreen(
             }
             val note by remember(displayName) {
                 RecordingExtrasRepository.note(context, displayName)
-            }.collectAsState(initial = "")
+            }.collectAsStateWithLifecycle(initialValue = "")
 
             val summaryState by rememberSummaryState(displayName)
 
             val tags by remember(displayName) {
                 TagRepository.tagsFor(context, displayName)
-            }.collectAsState(initial = emptyList())
+            }.collectAsStateWithLifecycle(initialValue = emptyList())
             val knownTags by remember {
                 TagRepository.allTags(context)
-            }.collectAsState(initial = emptyList())
+            }.collectAsStateWithLifecycle(initialValue = emptyList())
             val isFavourite by remember(displayName) {
                 FavouriteRepository.isFavourite(context, displayName)
-            }.collectAsState(initial = false)
+            }.collectAsStateWithLifecycle(initialValue = false)
             val flags by remember(displayName) {
                 FlagRepository.flagsFor(context, displayName)
-            }.collectAsState(initial = emptyList())
+            }.collectAsStateWithLifecycle(initialValue = emptyList())
 
             PlaybackScreen(
                 item = openItem,
@@ -1059,7 +1059,7 @@ fun HomeScreen(
             }
             val clipFlags by remember(displayName) {
                 FlagRepository.flagsFor(context, displayName)
-            }.collectAsState(initial = emptyList())
+            }.collectAsStateWithLifecycle(initialValue = emptyList())
             ShareClipScreen(
                 item = clipItem,
                 initialPositionMs = clipFromMs.takeIf { it >= 0 },
@@ -1121,9 +1121,9 @@ fun HomeScreen(
         // app was restarted. Keyed on the section, so every visit to the hub asks again — and the
         // hub is the only thing that asks at all.
         val transcriptsCount by remember(section) { LibraryCounts.transcribed(context) }
-            .collectAsState(initial = 0)
+            .collectAsStateWithLifecycle(initialValue = 0)
         val summariesCount by remember(section) { LibraryCounts.summarised(context) }
-            .collectAsState(initial = 0)
+            .collectAsStateWithLifecycle(initialValue = 0)
 
         HubScreen(
             modifier = modifier,
@@ -1235,7 +1235,7 @@ fun HomeScreen(
         // guard inside LibraryCounts answers "is there a transcripts database?" when it is called,
         // and a flow remembered before the user's first transcription would answer empty for ever.
         val entries by remember(section) { LibraryCounts.transcripts(context) }
-            .collectAsState(initial = emptyList())
+            .collectAsStateWithLifecycle(initialValue = emptyList())
         // The transcribe-only imports go in as well, so one that nothing else is accounting for —
         // a stopped run, a refusal, a process death before the queue heard about it — is listed
         // here rather than existing on disk and in no list at all. See TranscriptsPage.Groups.waiting.
@@ -1316,14 +1316,14 @@ fun HomeScreen(
         // database?" when it is called, and a flow remembered before the user's first summary would
         // answer empty for ever.
         val names by remember(section) { LibraryCounts.summarisedNames(context) }
-            .collectAsState(initial = emptyList())
+            .collectAsStateWithLifecycle(initialValue = emptyList())
         // The queue, for the whole page at once. rememberSummaryState is per-recording: asked on a
         // row it would put one WorkManager observer and two database observers behind every visible
         // line of the list.
         val workManager = remember(context) { WorkManager.getInstance(context) }
         val workInfos by remember(workManager) {
             workManager.getWorkInfosForUniqueWorkFlow(SummaryScheduler.WORK_NAME)
-        }.collectAsState(initial = emptyList())
+        }.collectAsStateWithLifecycle(initialValue = emptyList())
         val search = rememberPageSearch(TranscriptRepository.PageIndex.SUMMARIES, version = names)
         val groups = remember(names, workInfos, search.query, search.excerpts) {
             val all = SummariesPage.group(names, SummariesPage.jobsOf(workInfos))
@@ -1881,7 +1881,7 @@ fun HomeScreen(
         // leaves the summary behind.
         val read by remember(displayName) {
             TranscriptRepository.transcript(context, displayName)
-        }.collectAsState(initial = TranscriptRepository.TranscriptRead.Unread)
+        }.collectAsStateWithLifecycle(initialValue = TranscriptRepository.TranscriptRead.Unread)
         val transcript = (read as? TranscriptRepository.TranscriptRead.Read)?.transcript
 
         val row = libraryRecordings.firstOrNull { it.displayName == displayName }
@@ -1925,10 +1925,10 @@ fun HomeScreen(
         // the sheet stays a pure rendering of what it is handed, like everything else it shows.
         val sheetNote by remember(displayName) {
             RecordingExtrasRepository.note(context, displayName)
-        }.collectAsState(initial = "")
+        }.collectAsStateWithLifecycle(initialValue = "")
         val sheetTags by remember(displayName) {
             TagRepository.tagsFor(context, displayName)
-        }.collectAsState(initial = emptyList())
+        }.collectAsStateWithLifecycle(initialValue = emptyList())
 
         // Resolved here because onExport runs from a click, outside composition, where
         // stringResource cannot be called. Without this the Markdown export writes its headings in
@@ -3938,7 +3938,7 @@ private fun RecordingRow(
     // Cached and off the main thread: ContactPhotos asks the contacts provider at most twice at a
     // time and remembers every answer, and this effect is cancelled when the row scrolls away.
     // Keyed on the contacts version too (C149): when the address book changes, a row looks its contact up again.
-    val contactsVersion by ContactsChanges.version.collectAsState()
+    val contactsVersion by ContactsChanges.version.collectAsStateWithLifecycle()
     val contact by produceState<ContactPhotos.Info?>(
         initialValue = number?.let { ContactPhotos.peek(it) }, number, contactsVersion, item.contactName
     ) {

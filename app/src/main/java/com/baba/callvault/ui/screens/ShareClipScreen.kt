@@ -39,7 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -144,7 +144,7 @@ internal fun ShareClipScreen(
     // The call's own transcript, with who-is-who resolved the way exports do it.
     val transcript by remember(item.displayName) {
         TranscriptRepository.transcript(context, item.displayName)
-    }.collectAsState(initial = TranscriptRepository.TranscriptRead.Unread)
+    }.collectAsStateWithLifecycle(initialValue = TranscriptRepository.TranscriptRead.Unread)
     val callLines by produceState(emptyList<ClipLine>(), transcript) {
         val read = transcript as? TranscriptRepository.TranscriptRead.Read
         val segments = read?.transcript?.segments.orEmpty()

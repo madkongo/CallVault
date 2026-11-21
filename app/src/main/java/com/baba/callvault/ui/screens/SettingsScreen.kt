@@ -59,6 +59,7 @@ import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.system.storage.FolderOverlap
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.takePersistableFolderPermission
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.baba.callvault.ui.common.ContactSelectionDialog
 import com.baba.callvault.ui.common.CvCard
@@ -151,11 +152,11 @@ fun SettingsScreen(
     }
 
     // Trigger recomposition when settings change by viewmodel.refresh()
-    val updateTrigger by viewModel.updateTrigger.collectAsState()
+    val updateTrigger by viewModel.updateTrigger.collectAsStateWithLifecycle()
 
     // ContactPickerViewModel owns the contact-loading logic and dialog state.
     val contactPickerViewModel: ContactPickerViewModel = viewModel()
-    val contactPickerState by contactPickerViewModel.contactPickerState.collectAsState()
+    val contactPickerState by contactPickerViewModel.contactPickerState.collectAsStateWithLifecycle()
 
     // Folder picker — PersistentFolderPickerContract keeps access alive after a reboot.
     val folderPickerLauncher = rememberLauncherForActivityResult(PersistentFolderPickerContract()) { uri ->
