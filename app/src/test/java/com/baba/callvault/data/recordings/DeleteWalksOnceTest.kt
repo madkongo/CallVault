@@ -93,7 +93,7 @@ class DeleteWalksOnceTest {
 
     private fun item(name: String) = RecordingsRepository.RecordingItem(
         uri = "content://$AUTHORITY/tree/root/document/$name".toUri(), displayName = name, sizeBytes = 100L,
-        lastModified = 1_000L, direction = null, displayDate = null, startedAtMillis = null,
+        lastModified = 1_000L, direction = null, displayDate = null, startedAtMillis = null, number = null,
     )
 
     @Test
