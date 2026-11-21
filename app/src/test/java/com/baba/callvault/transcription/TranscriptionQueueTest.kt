@@ -10,7 +10,13 @@ package com.baba.callvault.transcription
 
 import android.content.Context
 import androidx.core.net.toUri
+import android.util.Log
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
+import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.TranscriptionMode
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
@@ -161,6 +167,50 @@ class TranscriptionQueueTest {
         } finally {
             AfterCallDecisions.release(context, "held.ogg")
         }
+    }
+
+    // -- releaseStaleWork (C95) --
+
+    private fun startTestWorkManager() = WorkManagerTestInitHelper.initializeTestWorkManager(
+        context,
+        Configuration.Builder().setMinimumLoggingLevel(Log.DEBUG).setExecutor(SynchronousExecutor()).build(),
+    )
+
+    @Test
+    fun a_stale_running_row_with_no_work_behind_it_is_still_released() = runBlocking {
+        startTestWorkManager()
+        state("stale.ogg", TranscriptState.RUNNING)
+
+        val released = TranscriptionQueue.releaseStaleWork(context)
+
+        assertTrue(released >= 1)
+        assertEquals(null, TranscriptDatabase.get(context).transcriptDao().findTranscript("stale.ogg"))
+    }
+
+    @Test
+    fun rows_of_a_run_that_is_still_waiting_in_workmanager_are_left_alone() = runBlocking {
+        // After a kill, WorkManager restarts the persisted run in the same process that is cleaning up: restoring or
+        // deleting its rows then threw away a "transcribe again" that was about to finish (C95).
+        startTestWorkManager()
+        TranscriptionScheduler.runNow(context, "live.ogg", requiresCharging = true, userRequested = true)
+        state("live.ogg", TranscriptState.QUEUED)
+
+        val released = TranscriptionQueue.releaseStaleWork(context)
+
+        assertEquals(0, released)
+        assertEquals(TranscriptState.QUEUED, TranscriptDatabase.get(context).transcriptDao().findTranscript("live.ogg")!!.state)
+    }
+
+    @Test
+    fun the_daily_sweep_waiting_for_tonight_does_not_hold_stale_rows_back() = runBlocking {
+        // The periodic sweep is ENQUEUED almost all the time; counting it would make the cleanup never run.
+        startTestWorkManager()
+        AppPreferences(context).setTranscriptionMode(TranscriptionMode.AUTOMATIC)
+        TranscriptionScheduler.apply(context)
+        state("stale2.ogg", TranscriptState.RUNNING)
+
+        TranscriptionQueue.releaseStaleWork(context)
+        assertEquals(null, TranscriptDatabase.get(context).transcriptDao().findTranscript("stale2.ogg"))
     }
 
     private suspend fun catalogued(name: String, lastModified: Long) {
