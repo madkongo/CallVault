@@ -310,6 +310,22 @@ class VoipDirectionTest {
         assertEquals(carrier, VoipLateCaller.withDirection(carrier, "out"))
     }
 
+    // C128: the notification is read for the direction once; nothing is asked of the recorder after the first read.
+    @Test
+    fun `no more reads once the first read has decided the direction`() {
+        assertEquals(false, VoipDirection.readAgain(hasFirstRead = true, elapsedMs = 600L))
+    }
+
+    @Test
+    fun `reads continue until the first notification is found, within the grace`() {
+        assertEquals(true, VoipDirection.readAgain(hasFirstRead = false, elapsedMs = 600L))
+    }
+
+    @Test
+    fun `reads stop when no call notification appears within the grace`() {
+        assertEquals(false, VoipDirection.readAgain(hasFirstRead = false, elapsedMs = VoipAnswerHold.NOTIFICATION_GRACE_MS))
+    }
+
     @Test
     fun `a name with a direction is still an app call, never a carrier call`() {
         val name = "${stamp}_out_voip-WhatsApp_Dana.ogg"

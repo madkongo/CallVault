@@ -115,6 +115,14 @@ object VoipDirection {
         f.callType == CALL_TYPE_INCOMING || f.incomingFlag == true ||
             (f.category == "call" && f.actionCount >= 2 && !f.ongoing && f.showChronometer != true)
 
+    /**
+     * Whether the calling app's notification is read from the recorder again (review C128): only while the first
+     * call-like notification has not been found, and only within the grace. The direction is decided at the first
+     * read and never changes after it, so a later read only cost a recorder dump every 500 ms for a minute.
+     */
+    fun readAgain(hasFirstRead: Boolean, elapsedMs: Long): Boolean =
+        !hasFirstRead && elapsedMs < VoipAnswerHold.NOTIFICATION_GRACE_MS
+
     /** A direction is only ever set once, and never replaced by a later (weaker) read. */
     fun keepFirst(current: RecordingDirection?, candidate: RecordingDirection?): RecordingDirection? =
         current ?: candidate
