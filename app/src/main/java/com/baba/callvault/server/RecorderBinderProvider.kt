@@ -153,6 +153,16 @@ class RecorderBinderProvider : ContentProvider() {
             return
         }
 
+        // Only our standalone daemon delivers through this provider (Shizuku's recorder is bound by ShizukuBackend). One
+        // that arrives in Shizuku mode is a launch that was still running when the user switched: it must neither become
+        // the recorder nor stay up to clear the Shizuku one (C107). A failed read of the mode keeps the old behaviour.
+        if (!isForCurrentMode()) {
+            AppLogger.w(TAG, "sendBinder: a standalone daemon arrived while in Shizuku mode; refusing it and telling it to exit")
+            runCatching { IRecorderService.Stub.asInterface(binder).destroy() }
+                .onFailure { AppLogger.w(TAG, "Could not stop the refused daemon: ${it.message}") }
+            return
+        }
+
         // A daemon that was already running handed its binder over because our process started (BabApps item 115).
         // Take it only when it is the right recorder for this phone; otherwise leave it, and the launcher replaces it.
         if (extras.getBoolean(EXTRA_REDELIVERY, false) && !acceptRedelivery(binder, extras.getString(EXTRA_HOST_APK))) return
@@ -168,6 +178,13 @@ class RecorderBinderProvider : ContentProvider() {
         runCatching {
             binder.linkToDeath(RecorderConnection.deathRecipient, 0)
         }.onFailure { AppLogger.w(TAG, "linkToDeath failed (binder may already be dead): ${it.message}") }
+    }
+
+    private fun isForCurrentMode(): Boolean {
+        val ctx = context ?: return true
+        return runCatching {
+            BackendChoice.of(com.baba.callvault.data.AppPreferences(ctx).getPrivilegedMode()) == BackendChoice.ADB
+        }.getOrDefault(true)
     }
 
     /** Decides a hand-over from a live daemon; every refusal is logged, so a report shows why it was not reused. */
