@@ -83,6 +83,23 @@ class AfterCallOverlayTest {
         assertFalse(AfterCallOverlay.isCallInProgress(TelephonyManager.CALL_STATE_IDLE, AudioManager.MODE_NORMAL, false))
     }
 
+    @Test
+    fun `aside on weak evidence for longer than the limit hands the question to the notification`() {
+        val limit = AfterCallOverlay.WEAK_EVIDENCE_ASIDE_LIMIT_MS
+        assertFalse(AfterCallOverlay.shouldHandToNotification(asideForMs = limit - 1, audioModeIsCall = false))
+        assertTrue(AfterCallOverlay.shouldHandToNotification(asideForMs = limit, audioModeIsCall = false))
+    }
+
+    @Test
+    fun `a call audio mode keeps the pop-up aside however long the call lasts`() {
+        assertFalse(AfterCallOverlay.shouldHandToNotification(asideForMs = 3_600_000L, audioModeIsCall = true))
+    }
+
+    @Test
+    fun `the weak evidence limit is minutes, not the day-long clock`() {
+        assertTrue(AfterCallOverlay.WEAK_EVIDENCE_ASIDE_LIMIT_MS in 60_000L..600_000L)
+    }
+
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
 
     /** The refresh reads on Dispatchers.IO and lands on the main looper; give it a bounded moment. */

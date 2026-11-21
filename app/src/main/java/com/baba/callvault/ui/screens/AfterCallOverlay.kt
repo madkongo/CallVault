@@ -79,6 +79,17 @@ internal object AfterCallOverlay {
 
     private val main = Handler(Looper.getMainLooper())
 
+    /**
+     * How long the pop-up may stay aside when only the weaker signs say a call is on (the telephony state or the
+     * VoIP recorder flag, with the audio mode normal). Either can get stuck, and the question would then stay
+     * hidden until the day-long clock; after this it moves to the notification instead, where nothing is lost (C79).
+     * A call audio mode is reliable and keeps the pop-up aside for the whole call.
+     */
+    internal const val WEAK_EVIDENCE_ASIDE_LIMIT_MS = 3 * 60_000L
+
+    internal fun shouldHandToNotification(asideForMs: Long, audioModeIsCall: Boolean): Boolean =
+        !audioModeIsCall && asideForMs >= WEAK_EVIDENCE_ASIDE_LIMIT_MS
+
     /** How often a shown pop-up checks whether a call has started or ended. */
     private const val CALL_CHECK_MS = 500L
 
@@ -187,11 +198,24 @@ internal object AfterCallOverlay {
          * Read from the telephony state, the audio mode and the VoIP recorder (see [isCallInProgress]); polled.
          */
         private suspend fun stepAsideDuringCalls() {
+            var weakAsideSinceMs: Long? = null
             while (true) {
                 val inCall = isInCall()
                 if (inCall && isOnScreen) {
                     takeOffScreen()
+                }
+                if (inCall && !isOnScreen) {
+                    val now = SystemClock.elapsedRealtime()
+                    val modeIsCall = isCallAudioModeNow()
+                    weakAsideSinceMs = if (modeIsCall) null else (weakAsideSinceMs ?: now)
+                    val since = weakAsideSinceMs
+                    if (since != null && shouldHandToNotification(now - since, audioModeIsCall = modeIsCall)) {
+                        AppLogger.w(TAG, "Pop-up aside ${(now - since) / 1000} s on telephony/VoIP signs alone with a normal audio mode; asking by notification instead (C79)")
+                        AfterCallOverlay.closeUnanswered(context)
+                        return
+                    }
                 } else if (!inCall && !isOnScreen) {
+                    weakAsideSinceMs = null
                     val isBack = runCatching { putOnScreen() }
                         .onFailure { AppLogger.w(TAG, "Could not bring the keep-or-delete pop-up back; asking by notification: ${it.message}") }
                         .isSuccess
@@ -205,6 +229,10 @@ internal object AfterCallOverlay {
         }
 
         private fun isInCall(): Boolean = isCallInProgress(context)
+
+        private fun isCallAudioModeNow(): Boolean = runCatching {
+            AfterCallPolicy.isCallAudioMode(context.getSystemService(AudioManager::class.java)?.mode ?: AudioManager.MODE_NORMAL)
+        }.getOrDefault(false)
 
         private fun putOnScreen() {
             windowManager.addView(root, layoutParams())
