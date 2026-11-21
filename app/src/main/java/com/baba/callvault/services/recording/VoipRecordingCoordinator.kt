@@ -288,13 +288,16 @@ object VoipRecordingCoordinator {
         // Best-effort; a missing app or name just drops out of the filename.
         // The app comes from the audio stream we are about to record, so it cannot be the wrong app;
         // the caller is then looked up scoped to THAT package, never across all notifications.
+        val lookupStart = android.os.SystemClock.elapsedRealtime()
         val callPackage = resolveCallPackage(context, service, "start")
         val appLabel = callPackage?.let { appLabelFor(context, it) }
+        val appLookupDone = android.os.SystemClock.elapsedRealtime()
         val caller = callPackage?.let {
             runCatching { service.voipCallerName(it) }
                 .onFailure { AppLogger.d(TAG, "caller lookup failed: ${it.message}") }
                 .getOrNull()
         }
+        val callerLookupDone = android.os.SystemClock.elapsedRealtime()
         // The user's per-app choice, checked before anything is created OR reported. Not later:
         // creating the file first and deleting it would put a recording of an excluded app on disk,
         // however briefly, leaving a window where a sync tool could take a copy of it — and reporting
@@ -414,6 +417,8 @@ object VoipRecordingCoordinator {
                 "voip", codec.cliKey,
             )
         )
+        // C108: how long the lookups ran before the capture opened (measured, so the change can be judged on real phones).
+        CallEndLog.record(context, VoipStartTiming.line(appLookupDone - lookupStart, callerLookupDone - appLookupDone))
         lateCaller = null
         lateCallerJob?.cancel()
         lateAppLabel = null
