@@ -145,12 +145,17 @@ class RecordingNotificationHelper(base: Context) {
                     )
                 } else {
                     titleRes = R.string.recording_notification_title
-                    contentRes = R.string.recording_notification_press_to_pause
-                    actions += NotificationAction(
-                        R.drawable.ic_mic,
-                        context.getString(R.string.general_pause),
-                        RecordingForegroundService.ACTION_PAUSE_RECORDING
-                    )
+                    // Pause only where it really stops the audio (review C44); elsewhere the text names no action.
+                    if (state.engine.supportsPause) {
+                        contentRes = R.string.recording_notification_press_to_pause
+                        actions += NotificationAction(
+                            R.drawable.ic_mic,
+                            context.getString(R.string.general_pause),
+                            RecordingForegroundService.ACTION_PAUSE_RECORDING
+                        )
+                    } else {
+                        contentRes = R.string.recording_notification_recording
+                    }
                 }
                 // Marking a moment sits between Pause and Stop. It is the action most likely to be
                 // pressed mid-sentence, without looking, while the phone is against an ear.

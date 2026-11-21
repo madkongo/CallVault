@@ -264,6 +264,16 @@ class AudioRecordingEngine {
     val isLocalFallback: Boolean
         get() = !daemonMode && !handoffMode
 
+    /** Review C44: whether Pause really stops the audio on this capture path. */
+    val supportsPause: Boolean
+        get() = isLocalFallback
+
+    /** Test hook: sets the capture mode flags that [startPipeline] sets. */
+    internal fun setCaptureModesForTest(daemon: Boolean, handoff: Boolean) {
+        daemonMode = daemon
+        handoffMode = handoff
+    }
+
     /**
      * Fired at most once per session when the liveness watch finds the daemon's binder dead while a
      * daemon-mode recording is supposed to be live (observed when Developer options is off: the

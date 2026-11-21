@@ -459,6 +459,11 @@ class RecordingForegroundService : Service() {
 
             ACTION_PAUSE_RECORDING -> {
                 (currentState as? RecordingServiceState.Active)?.let {
+                    if (!PausePolicy.accepts(it.engine.supportsPause)) {
+                        // A stale notification button: Pause would only change the wording, the audio would go on.
+                        AppLogger.w(TAG, "Pause ignored: this capture path cannot pause, the recording continues")
+                        return START_NOT_STICKY
+                    }
                     it.engine.isPaused = true
                     currentState = it.copy(isPaused = true)
                     // The clock has to follow, or every mark placed after a pause lands late in the

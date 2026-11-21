@@ -1172,4 +1172,6 @@
     <!-- batch B4 -->
     <string name="offline_failed_recording">A call is being recorded right now. Switching this on restarts Android\'s debugging service and would end it. Try again after the call.</string>
     <string name="carrier_call_silent">No sound was captured on this call. The file is kept in case you want to check it. If it keeps happening on calls that connected, tell us your phone model.</string>
+    <!-- batch B26 -->
+    <string name="recording_notification_recording">This call is being recorded</string>
 </resources>
