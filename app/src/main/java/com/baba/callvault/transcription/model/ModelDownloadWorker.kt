@@ -109,7 +109,14 @@ class ModelDownloadWorker(
                 Outcome.STOPPED -> return Result.retry()
                 // The server continued from the wrong place; the leftover is gone, start again from nothing.
                 Outcome.RESTART -> continue
-                Outcome.COMPLETE -> Unit
+                Outcome.COMPLETE -> ModelResumeRestarts.reset(applicationContext, model.id)
+                // The server keeps answering a resume with the whole file, so every stop would throw the
+                // banked bytes away and start again for ever (R27). Say so instead of looping.
+                Outcome.NO_RESUME -> {
+                    ModelResumeRestarts.reset(applicationContext, model.id)
+                    AppLogger.w(TAG, "${model.id}: the server answered ${ModelDownloadPolicy.MAX_RESTARTS_ON_RESUME} resumes in a row with the whole file; giving up")
+                    return Result.failure(workDataOf(KEY_ERROR to ERROR_NO_RESUME, KEY_FINISHED_AT to System.currentTimeMillis()))
+                }
             }
             if (ModelRepository.finalizeDownload(dir, model)) return Result.success()
             // Digest mismatch: finalizeDownload has already deleted the file. One clean download from
@@ -125,7 +132,7 @@ class ModelDownloadWorker(
     }
 
     /** How one pass over the network ended. */
-    private enum class Outcome { COMPLETE, STOPPED, RESTART }
+    private enum class Outcome { COMPLETE, STOPPED, RESTART, NO_RESUME }
 
     /**
      * The model this request is for, assembled from the work's own input.
@@ -181,8 +188,22 @@ class ModelDownloadWorker(
             AppLogger.i(TAG, ModelDownloadPolicy.attemptStartLine(
                 model.id, runAttemptCount + 1, resumeFrom, model.sizeBytes, status, connection.getHeaderField("Content-Range"),
             ))
-            val append = when (ModelDownloadPolicy.reply(status, resumeFrom, connection.getHeaderField("Content-Range"))) {
-                ModelDownloadPolicy.Reply.APPEND -> true
+            val reply = ModelDownloadPolicy.reply(status, resumeFrom, connection.getHeaderField("Content-Range"))
+            if (ModelDownloadPolicy.isRestartOfResume(reply, resumeFrom)) {
+                val restarts = ModelResumeRestarts.recordRestart(applicationContext, model.id)
+                AppLogger.w(TAG, "${model.id}: asked to resume at ${ModelDownloadPolicy.mb(resumeFrom)} and got the whole file (restart $restarts in a row)")
+                if (ModelDownloadPolicy.shouldGiveUpOnResume(restarts)) {
+                    part.delete()
+                    why = "the server does not support resuming"
+                    return@coroutineScope Outcome.NO_RESUME
+                }
+            }
+            val append = when (reply) {
+                ModelDownloadPolicy.Reply.APPEND -> {
+                    // The server continued properly, so an earlier whole-file reply was a one-off.
+                    ModelResumeRestarts.reset(applicationContext, model.id)
+                    true
+                }
                 // A server that ignores the Range header replies 200 with the whole file, so anything
                 // already written has to go or the two would be concatenated into garbage.
                 ModelDownloadPolicy.Reply.START_OVER -> { part.delete(); false }
@@ -283,6 +304,9 @@ class ModelDownloadWorker(
         /** There was not enough free space, so nothing was fetched. */
         const val ERROR_NO_SPACE = "insufficient-storage"
 
+        /** The server answered resumes with the whole file twice in a row, so the download cannot finish in pieces. */
+        const val ERROR_NO_RESUME = "server-cannot-resume"
+
         private const val CONNECT_TIMEOUT_MS = 30_000
         private const val READ_TIMEOUT_MS = 60_000
         private const val BUFFER_BYTES = 1 shl 16
@@ -326,7 +350,9 @@ class ModelDownloadWorker(
                 .setConstraints(
                     Constraints.Builder()
                         .setRequiredNetworkType(network.networkType)
-                        .setRequiresStorageNotLow(true)
+                        // No storage-not-low constraint (C163): it left a download silently "waiting" with
+                        // no reason on a full phone. The worker checks the room itself before fetching and
+                        // fails with ERROR_NO_SPACE, which the row says in words.
                         .build()
                 )
                 .build()
