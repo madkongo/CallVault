@@ -115,4 +115,24 @@ class UserStopNoticeTest {
         val wake = AppStart(atWallMillis = call - 2_000, afterForceStop = false)
         assertTrue(AppStopHistory.wasStoppedByUserDuring(listOf(stopApp), listOf(wake), call))
     }
+
+    // C142: Android 11-13 records the installer's kill during an update as USER_REQUESTED "stop ... installPackageLI".
+    private val installKill = ExitRecord(now - hour, ApplicationExitInfo.REASON_USER_REQUESTED, "stop com.baba.callvault due to installPackageLI")
+
+    @Test
+    fun `a stop recorded at the moment of an update is the installer's, not the user's`() {
+        val kept = AppStopHistory.withoutInstallKills(listOf(installKill), lastUpdateMillis = installKill.atMillis + 5_000)
+        assertNull(AppStopHistory.latestUserStop(kept))
+    }
+
+    @Test
+    fun `a stop an hour after the update still counts`() {
+        val kept = AppStopHistory.withoutInstallKills(listOf(stopApp), lastUpdateMillis = stopApp.atMillis - hour)
+        assertEquals(stopApp, AppStopHistory.latestUserStop(kept))
+    }
+
+    @Test
+    fun `an unknown install time filters nothing`() {
+        assertEquals(listOf(installKill), AppStopHistory.withoutInstallKills(listOf(installKill), lastUpdateMillis = 0))
+    }
 }
