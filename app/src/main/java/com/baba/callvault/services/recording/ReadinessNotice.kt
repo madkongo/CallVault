@@ -130,6 +130,15 @@ object ReadinessNoticeText {
         )
     }
 
+    /** [text] for the notice as it stands now: reads USB debugging only for the one notice whose words depend on it. */
+    @StringRes
+    fun textNow(context: Context, notice: ReadinessNotice): Int =
+        if (notice == ReadinessNotice.WD_OFF_BY_USER) {
+            text(notice, usbDebuggingOn = runCatching { AdbShell.usbDebuggingState(context).isOn }.getOrDefault(false))
+        } else {
+            text(notice)
+        }
+
     @StringRes
     fun title(notice: ReadinessNotice): Int = when (notice) {
         ReadinessNotice.READY, ReadinessNotice.READY_OFFLINE_PAUSED -> R.string.notif_readiness_ready_title
@@ -143,10 +152,13 @@ object ReadinessNoticeText {
     }
 
     @StringRes
-    fun text(notice: ReadinessNotice): Int = when (notice) {
+    fun text(notice: ReadinessNotice, usbDebuggingOn: Boolean = false): Int = when (notice) {
         ReadinessNotice.READY -> R.string.notif_readiness_ready_text
         ReadinessNotice.READY_OFFLINE_PAUSED -> R.string.notif_readiness_offline_paused_text
-        ReadinessNotice.WD_OFF_BY_USER -> R.string.notif_readiness_wd_off_by_user_text
+        // With USB debugging already on, "turn on USB debugging" is no fix: the way back is the switch itself, or
+        // "Keep recording off Wi-Fi" (which lets CallVault borrow it). Text only; no relaunch rule reads this.
+        ReadinessNotice.WD_OFF_BY_USER ->
+            if (usbDebuggingOn) R.string.notif_readiness_wd_off_by_user_usb_on_text else R.string.notif_readiness_wd_off_by_user_text
         ReadinessNotice.STARTING -> R.string.notif_readiness_starting_text
         ReadinessNotice.NO_DEBUGGING -> R.string.notif_readiness_no_debugging_text
         ReadinessNotice.NEEDS_WIFI -> R.string.notif_readiness_needs_wifi_text

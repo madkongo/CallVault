@@ -62,6 +62,18 @@ class HomeStatusNeedsWifiTest {
     }
 
     @Test
+    fun wirelessDebuggingOffByTheUserWithUsbDebuggingAlreadyOnDoesNotTellThemToTurnUsbOn() {
+        val s = HomeViewModel.statusForNotice(ReadinessNotice.WD_OFF_BY_USER, usbDebuggingOn = true)
+        assertEquals(HomeViewModel.HomeStatus.WD_OFF_BY_USER_USB_ON, s)
+        assertFalse(s!!.isReady)
+        assertEquals(
+            HomeViewModel.HomeStatus.WD_OFF_BY_USER,
+            HomeViewModel.statusForNotice(ReadinessNotice.WD_OFF_BY_USER, usbDebuggingOn = false),
+        )
+        assertEquals(null, HomeViewModel.statusForNotice(ReadinessNotice.STARTING, usbDebuggingOn = true))
+    }
+
+    @Test
     fun wifiUpIsNotFlagged() {
         assertEquals(null, status(notice(WifiState.CONNECTED)))
     }

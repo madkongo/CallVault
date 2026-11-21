@@ -199,4 +199,25 @@ class ReadinessNoticeTest {
     fun `no Wi-Fi is said first, because pairing again needs Wi-Fi`() {
         assertEquals(ReadinessNotice.NEEDS_WIFI, of(usbOn = false, wifi = WifiState.NOT_CONNECTED, pairingLost = true))
     }
+
+    @Test
+    fun `the user-off text names the real fix for the state of USB debugging`() {
+        assertEquals(
+            com.baba.callvault.R.string.notif_readiness_wd_off_by_user_text,
+            ReadinessNoticeText.text(ReadinessNotice.WD_OFF_BY_USER),
+        )
+        assertEquals(
+            com.baba.callvault.R.string.notif_readiness_wd_off_by_user_text,
+            ReadinessNoticeText.text(ReadinessNotice.WD_OFF_BY_USER, usbDebuggingOn = false),
+        )
+        assertEquals(
+            com.baba.callvault.R.string.notif_readiness_wd_off_by_user_usb_on_text,
+            ReadinessNoticeText.text(ReadinessNotice.WD_OFF_BY_USER, usbDebuggingOn = true),
+        )
+        // Other notices ignore USB state.
+        assertEquals(
+            ReadinessNoticeText.text(ReadinessNotice.STUCK),
+            ReadinessNoticeText.text(ReadinessNotice.STUCK, usbDebuggingOn = true),
+        )
+    }
 }

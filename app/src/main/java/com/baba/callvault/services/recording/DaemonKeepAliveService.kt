@@ -174,7 +174,7 @@ class DaemonKeepAliveService : Service() {
             val reasonRes = when {
                 notice == ReadinessNotice.STARTING || notice == ReadinessNotice.STUCK ->
                     if (shizuku) R.string.notif_health_recorder_text_shizuku else R.string.notif_health_down_generic_text
-                else -> ReadinessNoticeText.text(notice)
+                else -> ReadinessNoticeText.textNow(this, notice)
             }
             RecorderDownAlertRunner.Cause(notice.name, LocalizedContext.of(this).getString(reasonRes), shizuku)
         },
@@ -1054,7 +1054,7 @@ class DaemonKeepAliveService : Service() {
         val notice = ReadinessNoticeText.current(this, ready)
         val baseText = when {
             voipRecording -> loc.getString(R.string.notif_voip_recording_text)
-            else -> loc.getString(ReadinessNoticeText.text(notice))
+            else -> loc.getString(ReadinessNoticeText.textNow(this, notice))
         }
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
