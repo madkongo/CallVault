@@ -16,6 +16,7 @@ import com.baba.callvault.data.transcripts.db.TranscriptSearchHit
 import com.baba.callvault.data.transcripts.db.TranscriptState
 import com.baba.callvault.data.transcripts.db.TranscriptWithSegments
 import com.baba.callvault.summary.CallSummary
+import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.transcription.TranscriptionScheduler
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.Flow
@@ -147,12 +148,16 @@ object TranscriptRepository {
                 updatedAt = System.currentTimeMillis()
             )
         )
+        // The old words are gone; a run that then fails must not leave them in the .md (C112).
+        TranscriptSidecar.refresh(context, displayName)
     }
 
     /** Removes a transcript, leaving the recording. Someone may want the audio but not the text. */
     suspend fun delete(context: Context, displayName: String) {
         TranscribeAgainBackup.clear(context, displayName)
         dao(context).deleteFor(displayName)
+        // The .md beside the audio mirrors what was just deleted; rewrite it from what remains (C112).
+        TranscriptSidecar.refresh(context, displayName)
     }
 
     /**
@@ -170,6 +175,7 @@ object TranscriptRepository {
     suspend fun deleteSummary(context: Context, displayName: String) {
         if (!TranscriptDatabase.exists(context)) return
         TranscriptDatabase.get(context).summaryDao().deleteFor(displayName)
+        TranscriptSidecar.refresh(context, displayName)
     }
 
     /**
