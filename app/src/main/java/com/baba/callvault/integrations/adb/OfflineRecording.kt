@@ -11,6 +11,8 @@ package com.baba.callvault.integrations.adb
 import android.content.Context
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderBackend
+import com.baba.callvault.server.RecorderConnection
+import com.baba.callvault.services.recording.SharedStatusNotice
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -19,7 +21,8 @@ import com.baba.callvault.utils.AppLogger
  * sets the preference AND arms/disarms the loopback listener.
  *
  * The loopback port works OFF-WiFi (127.0.0.1 is always up), letting a call record with no network —
- * but arming it opens a local, RSA-gated debugging port, which is why it is opt-in behind a warning.
+ * but arming it opens a debugging port that listens on every network the phone joins until the next reboot
+ * (gated only by the phone's debugging key), which is why it is opt-in behind a warning.
  * All methods do blocking ADB I/O — call OFF the main thread.
  */
 object OfflineRecording {
@@ -38,6 +41,13 @@ object OfflineRecording {
      * It used to print "connect to Wi-Fi once, then try from Settings" for every one of them.
      */
     fun enable(context: Context): LoopbackArm {
+        // Arming restarts adbd, and a restart ends the call being recorded (C35). Only this button asks here;
+        // the recorder launcher re-arms through AdbShell directly and is never refused.
+        if (!OfflineToggleGuard.mayRestartAdbd(isRecordingLive())) {
+            TransportTimeline.event(context, "off-Wi-Fi recording not switched on: a call is being recorded (arming restarts adbd)")
+            AppLogger.i(TAG, "Not arming off-Wi-Fi recording: a call is being recorded")
+            return LoopbackArm.BUSY_RECORDING
+        }
         // It cannot work without USB debugging: the listener lives inside adbd, and Android stops adbd off
         // Wi-Fi when USB debugging is off. Arming anyway would also restart adbd for nothing, which kills a
         // running Shizuku server (S1a, OP9, 2026-09-14).
@@ -48,10 +58,18 @@ object OfflineRecording {
             AppLogger.i(TAG, "Not arming off-Wi-Fi recording: USB debugging is off")
             return LoopbackArm.NEEDS_USB_DEBUGGING
         }
-        AppPreferences(context).setOfflineRecordingEnabled(true)
-        // The user pressed the button, so Wireless debugging may be switched on for it even if they had
-        // turned it off.
-        val result = AdbShell.asUserRequest { AdbShell.armLoopbackIfNeededWithReason(context) }
+        // Set BEFORE arming (arming borrows Wireless debugging only while it is on), and put back when the
+        // listener did not come up, so the stored opt-in and the toggle agree (C56).
+        val prefs = AppPreferences(context)
+        val result = enableWithOptIn(
+            wasOn = prefs.isOfflineRecordingEnabled(),
+            setOptIn = { prefs.setOfflineRecordingEnabled(it) },
+            arm = {
+                // The user pressed the button, so Wireless debugging may be switched on for it even if they
+                // had turned it off.
+                AdbShell.asUserRequest { AdbShell.armLoopbackIfNeededWithReason(context) }
+            },
+        )
         if (result == LoopbackArm.ARMED) {
             runCatching { RecorderBackend.ensureRunning(context) }
                 .onFailure { AppLogger.w(TAG, "re-warm after enable failed: ${it.message}") }
@@ -63,10 +81,47 @@ object OfflineRecording {
 
     /** Turns offline recording OFF: clears the opt-in and closes the loopback port (best-effort). */
     fun disable(context: Context) {
-        AppPreferences(context).setOfflineRecordingEnabled(false)
-        // Under the lease, like arming: disarming needs the connection alive to send `usb:`, and
-        // another ADB user finishing meanwhile could switch Wireless debugging off underneath it.
-        runCatching { AdbShell.asAdbUser(context, "disabling offline recording") { AdbShell.disarmLoopback(context) } }
-            .onFailure { AppLogger.d(TAG, "disarmLoopback on disable ignored: ${it.message}") }
+        disableInOrder(
+            mayDisarm = OfflineToggleGuard.mayRestartAdbd(isRecordingLive()),
+            disarm = {
+                // Under the lease, like arming: disarming needs the connection alive to send `usb:`.
+                runCatching { AdbShell.asAdbUser(context, "disabling offline recording") { AdbShell.disarmLoopback(context) } }
+                    .onFailure { AppLogger.w(TAG, "disarmLoopback on disable failed: ${it.message}") }
+            },
+            skipped = {
+                // Closing the listener restarts adbd and would end the call being recorded (C35).
+                TransportTimeline.event(context, "off-Wi-Fi listener left open: a call is being recorded (it closes on reboot)")
+                AppLogger.i(TAG, "Not closing the off-Wi-Fi listener: a call is being recorded")
+            },
+            clearOptIn = { AppPreferences(context).setOfflineRecordingEnabled(false) },
+        )
     }
+
+    /** The C56 ordering for enabling, free of Android so it is tested: opt-in on, arm, put back unless armed. */
+    internal fun enableWithOptIn(wasOn: Boolean, setOptIn: (Boolean) -> Unit, arm: () -> LoopbackArm): LoopbackArm {
+        setOptIn(true)
+        val result = try {
+            arm()
+        } catch (e: Exception) {
+            setOptIn(OfflineToggleGuard.optInAfterEnable(wasOn, LoopbackArm.NO_ADB_SERVICE))
+            AppLogger.w(TAG, "Arming off-Wi-Fi recording threw; opt-in put back: ${e.message}")
+            throw e
+        }
+        setOptIn(OfflineToggleGuard.optInAfterEnable(wasOn, result))
+        return result
+    }
+
+    /** The C56 ordering for disabling: disarm (or skip) FIRST, and clear the opt-in whatever happens. */
+    internal fun disableInOrder(mayDisarm: Boolean, disarm: () -> Unit, skipped: () -> Unit, clearOptIn: () -> Unit) {
+        try {
+            if (mayDisarm) disarm() else skipped()
+        } finally {
+            clearOptIn()
+        }
+    }
+
+    /** A call is being recorded: the daemon says so, or a recording owns the shared notification (VoIP or carrier). */
+    private fun isRecordingLive(): Boolean =
+        runCatching { RecorderConnection.service?.isRecording == true }.getOrDefault(false) ||
+            SharedStatusNotice.isHeldByRecording
 }

@@ -443,11 +443,19 @@ object AdbShell {
             AdbdRevival.CYCLE_WIRELESS_DEBUGGING -> {
                 AppLogger.i(TAG, "adbd is stopped after $reason although Wireless debugging reads on; switching it off and on")
                 val ours = AppPreferences(context).wasWirelessDebuggingEnabledByUs()
+                // It reads on right now, so a saved "the user turned it off" is stale; left set, the enable below
+                // is refused and the cycle ends with adbd stopped (C99).
+                if (StaleWdOffFlag.shouldClear(AppPreferences(context).wasWirelessDebuggingTurnedOffByUser(), isWirelessDebuggingEnabled(context))) {
+                    AppPreferences(context).setWirelessDebuggingTurnedOffByUser(false)
+                    AppLogger.i(TAG, "Cleared a stale 'the user turned Wireless debugging off' flag: the switch reads on")
+                }
                 markOwnWirelessDebuggingWrite(0)
                 runCatching { android.provider.Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 0) }
                     .onFailure { AppLogger.w(TAG, "Could not switch Wireless debugging off to restart adbd: ${it.message}") }
                 Thread.sleep(WD_CYCLE_OFF_MS)
-                enableWirelessDebugging(context)
+                if (!enableWirelessDebugging(context)) {
+                    AppLogger.w(TAG, "The Wireless-debugging cycle could not switch it back on after $reason; adbd stays stopped")
+                }
                 // enableWirelessDebugging records the switch as ours; it was not necessarily.
                 AppPreferences(context).setWirelessDebuggingEnabledByUs(ours)
             }
@@ -669,7 +677,11 @@ object AdbShell {
             runCatching {
                 val s = openShell(context, "echo $SHELL_PROBE_TOKEN")
                 streamRef.set(s)
-                s.use { if (it.openInputStream().bufferedReader().use { r -> r.readText() }.contains(SHELL_PROBE_TOKEN)) ok.set(true) }
+                // Read piece by piece and stop at the token: libadb 3.1.1 ends this read with "Stream closed."
+                // (dropping the echo) or never ends it, so waiting for end-of-file called healthy shells not ready (C80).
+                s.use {
+                    if (ShellOutputRead.readInto(it.openInputStream(), StringBuffer()) { text -> text.contains(SHELL_PROBE_TOKEN) }) ok.set(true)
+                }
             }
         }.apply { isDaemon = true; name = "cv-shell-probe" }
         t.start()
@@ -895,6 +907,11 @@ object AdbShell {
         // Read the port itself: offline mode is already off by now, so isLoopbackArmed would not see it.
         if (LoopbackPorts.isListening(adbdTcpPort()) && !isOwnLoopbackArmed(context)) {
             AppLogger.i(TAG, "disarmLoopback: adbd's tcp listener was armed by another app; leaving it")
+            return@synchronized
+        }
+        // Nothing is listening: `usb:` would restart adbd for no reason, and that stops a running Shizuku (C35).
+        if (!LoopbackPorts.isListening(adbdTcpPort())) {
+            AppLogger.i(TAG, "disarmLoopback: adbd has no tcp listener; nothing to close, adbd left alone")
             return@synchronized
         }
         val mgr = AdbConnectionManager.getInstance(context)
@@ -1212,6 +1229,34 @@ object AdbShell {
         }
     }
 
+    /** How long the `pm grant` read may take; the grant is best-effort and runs inside the connect lock (C103). */
+    private const val GRANT_READ_CAP_MS = 4_000L
+
+    /**
+     * Runs `pm grant` and returns what it printed, bounded. The unbounded read to end-of-file either threw and lost
+     * the refusal text or never ended, parking the connect lock (C103). What arrived before a cap or an exception is
+     * kept; a stream that never answers gives "" exactly as a failed open always did.
+     */
+    private fun readGrantOutputBounded(context: Context): String {
+        val sink = StringBuffer()
+        val streamRef = java.util.concurrent.atomic.AtomicReference<AdbStream?>()
+        val t = Thread {
+            runCatching {
+                val s = openShell(context, "pm grant ${context.packageName} android.permission.WRITE_SECURE_SETTINGS")
+                streamRef.set(s)
+                s.use { ShellOutputRead.readInto(it.openInputStream(), sink) }
+            }.onFailure { AppLogger.w(TAG, "Self-grant of WRITE_SECURE_SETTINGS failed: ${it.message}") }
+        }.apply { isDaemon = true; name = "cv-grant-read" }
+        t.start()
+        t.join(GRANT_READ_CAP_MS)
+        if (t.isAlive) {
+            AppLogger.w(TAG, "Self-grant of WRITE_SECURE_SETTINGS: no end of output after ${GRANT_READ_CAP_MS}ms; going on with what arrived")
+            runCatching { streamRef.get()?.close() }
+            t.interrupt()
+        }
+        return sink.toString()
+    }
+
     /**
      * While connected, grant ourselves WRITE_SECURE_SETTINGS via our own ADB shell so we can
      * re-enable Wireless debugging on future boots. Idempotent; no-op once already granted.
@@ -1221,13 +1266,7 @@ object AdbShell {
         // READ the command's output, don't just drain it: several OEMs refuse a grant from the shell, and the
         // refusal arrives as a SecurityException on this stream. Without it, a user whose phone blocks the
         // grant saw "setup done" and a recorder that never worked, with nothing anywhere naming the cause.
-        val output = runCatching {
-            val pkg = context.packageName
-            openShell(context, "pm grant $pkg android.permission.WRITE_SECURE_SETTINGS").use { s ->
-                s.openInputStream().bufferedReader().use { it.readText() }
-            }
-        }.onFailure { AppLogger.w(TAG, "Self-grant of WRITE_SECURE_SETTINGS failed: ${it.message}") }
-            .getOrDefault("")
+        val output = readGrantOutputBounded(context)
         // The read-back is the only proof: a grant can print nothing and still not land (reported on HyperOS).
         val held = hasWriteSecureSettings(context)
         val state = ShellGrantGate.fromGrantAttempt(output, held)
