@@ -22,8 +22,6 @@ import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -54,8 +52,29 @@ class TranscriptionWorker(
         val started = SystemClock.elapsedRealtime()
         val journal = { line: String -> com.baba.callvault.system.storage.DriveCopyJournal.record(applicationContext, line) }
         journal("transcription run START (attempt ${runAttemptCount + 1}, userRequested=${inputData.getBoolean(KEY_USER_REQUESTED, false)}, named=${inputData.getString(KEY_DISPLAY_NAME) != null})")
+        // An after-call run is its own unique work (review C124), so two runs can now be scheduled at once;
+        // the gate keeps an unattended one from decoding on top of another. Refused means try again soon.
+        val kind = runKind()
+        // Summaries already wait for a transcription; this is the other half. Both models in the main process
+        // are ~2.5 GB and 12 threads, slower and hotter, and the same pairing can crash (review R38, C83).
+        if (isSummaryRunning()) {
+            journal("transcription run DEFERRED: a summary is running")
+            return retryLater("a summary is running")
+        }
+        // Only automatic runs: a tap is the user's own choice. Checked at the start of a run, not mid-recording
+        // (the runner's stop hook would cut a decode short); a hot phone is asked again after the back-off.
+        val thermal = thermalStatusOverride?.invoke() ?: readThermalStatus()
+        if (UnattendedRunPolicy.shouldDefer(userRequested = kind == TranscriptionRunGate.Kind.TAP, thermalStatus = thermal)) {
+            journal("transcription run DEFERRED: the phone is hot (thermal status $thermal)")
+            return retryLater("the phone is hot (thermal status $thermal)")
+        }
+        if (!TranscriptionRunGate.tryEnter(kind)) {
+            journal("transcription run DEFERRED: another transcription is running (kind=$kind)")
+            return retryLater("another transcription is running")
+        }
         return try {
             val result = runBatch()
+            if (result !is Result.Retry) TranscriptionDeferrals.clear(applicationContext, id)
             journal("transcription run END ${result.javaClass.simpleName} after ${(SystemClock.elapsedRealtime() - started) / 1000}s")
             result
         } catch (e: kotlin.coroutines.cancellation.CancellationException) {
@@ -64,7 +83,16 @@ class TranscriptionWorker(
         } catch (t: Throwable) {
             journal("transcription run CRASHED after ${(SystemClock.elapsedRealtime() - started) / 1000}s: ${t.javaClass.simpleName}: ${t.message}")
             throw t
+        } finally {
+            TranscriptionRunGate.leave(kind)
         }
+    }
+
+    /** What this run is, for [TranscriptionRunGate]: a tap, an unattended after-call run, or a queue drain. */
+    private fun runKind(): TranscriptionRunGate.Kind = when {
+        inputData.getBoolean(KEY_USER_REQUESTED, false) -> TranscriptionRunGate.Kind.TAP
+        inputData.getString(KEY_DISPLAY_NAME) != null -> TranscriptionRunGate.Kind.AFTER_CALL
+        else -> TranscriptionRunGate.Kind.SWEEP
     }
 
     private suspend fun runBatch(): Result = withContext(Dispatchers.IO) {
@@ -97,13 +125,21 @@ class TranscriptionWorker(
             // once it lands instead of the user having to ask again.
             TranscriptionEngineChoice.WaitForModel -> {
                 AppLogger.i(TAG, "Model ${model.id} is not installed yet; will retry")
-                return@withContext Result.retry()
+                return@withContext retryLater("model ${model.id} not installed")
             }
             // A sweep with no key set up would mark every waiting call failed; it waits instead.
             TranscriptionEngineChoice.CloudNotSetUp -> {
                 AppLogger.i(TAG, "Cloud transcription is chosen but not set up; nothing transcribed")
                 return@withContext Result.success()
             }
+        }
+        // Known gap: this only holds a run back. Turning the switch ON again does not release runs deferred here;
+        // they start at their next retry (WorkManager back-off, up to 5 h) or constraint change.
+        // The switch can be turned off after this run was queued with "any network" (review R23): look again now.
+        if (UnattendedRunPolicy.mustWaitForUnmetered(engine.isCloud, prefs.getTranscriptionCloudMobileData(), isNetworkMetered())) {
+            AppLogger.i(TAG, "Cloud run not started: mobile data is not allowed and the network is metered")
+            com.baba.callvault.system.storage.DriveCopyJournal.record(applicationContext, "transcription run DEFERRED: cloud upload on a metered network is not allowed")
+            return@withContext retryLater("mobile data is not allowed for cloud transcription")
         }
         val names = if (single != null) {
             listOf(single)
@@ -147,7 +183,12 @@ class TranscriptionWorker(
         // starting over (issue #34). See [TranscriptionProgressTracker].
         val progress = TranscriptionProgressTracker()
 
+        // Every setProgress is a database write that wakes every observer, and the figure is a whole percent
+        // sampled every 400 ms, so most samples repeat the last (review R41). Only a different one is written.
+        val publishGate = ProgressPublishGate()
+
         suspend fun publishProgress(percent: Int) {
+            if (!publishGate.shouldPublish(latestCompleted, latestTotal, latestCurrent, percent)) return
             setProgress(
                 workDataOf(
                     KEY_COMPLETED to latestCompleted,
@@ -158,32 +199,39 @@ class TranscriptionWorker(
             )
         }
 
+        // Set just before the normal end of the batch, so the watcher's own cancellation then is not read as a stop.
+        var finishedNormally = false
         val abortWatcher = launch {
-            while (isActive) {
-                if (isStopped) {
-                    AppLogger.i(TAG, "Stopped; asking whisper to abort")
-                    TranscriptionEngine.requestAbort()
-                    break
-                }
+            runAbortWatch(
+                isStopped = { isStopped },
                 // Republish on the same tick. The percentage lives in native memory and changes
                 // continuously, so it can only reach the UI by being sampled — and this loop was
                 // already running, so it costs nothing to add. Whisper reports only at chunk
                 // boundaries, so the tracker fills the long gaps between its anchors.
-                publishProgress(
-                    progress.percent(
-                        reportedPercent = engine.progressPercent(),
-                        nowMs = SystemClock.elapsedRealtime(),
+                sample = {
+                    publishProgress(
+                        progress.percent(
+                            reportedPercent = engine.progressPercent(),
+                            nowMs = SystemClock.elapsedRealtime(),
+                        )
                     )
-                )
-                delay(ABORT_POLL_MS)
-            }
+                },
+                requestAbort = { TranscriptionEngine.requestAbort() },
+                ownsEngine = { TranscriptionRunGate.isOnlyRun() },
+                finishedNormally = { finishedNormally },
+                onAbort = { AppLogger.i(TAG, it) },
+                pollMs = ABORT_POLL_MS,
+            )
         }
 
         val runner = engine.transcriber
             ?.let { TranscriptionRunner(applicationContext, transcriber = it) }
             ?: TranscriptionRunner(applicationContext)
         // A passing cloud failure (429, 5xx, no network) is retried with back-off, a few times only.
-        val canRetryLater = engine.isCloud && TranscriptionRouting.mayRetryCloud(runAttemptCount)
+        val canRetryLater = engine.isCloud && TranscriptionRouting.mayRetryCloud(
+            // Deferrals (busy, hot, metered, summary) also bump runAttemptCount; only real cloud failures spend the budget.
+            TranscriptionDeferrals.realAttempts(runAttemptCount, TranscriptionDeferrals.count(applicationContext, id))
+        )
         val transcribed = runner.runBatch(
             modelId = engine.modelId,
             modelPath = engine.modelPath,
@@ -211,14 +259,33 @@ class TranscriptionWorker(
             }
         )
 
+        finishedNormally = true
         abortWatcher.cancel()
 
         // Anything left unfinished stays queued, so a later run resumes rather than restarts.
         when {
-            runner.retryRequested -> Result.retry()
-            isStopped && transcribed < names.size -> Result.retry()
+            runner.retryRequested -> retryLater("a passing cloud failure", isDeferral = false)
+            // A stopped run's result is ignored by WorkManager, which reschedules a stopped periodic run itself.
+            isStopped && transcribed < names.size -> if (isPeriodic) Result.success() else Result.retry()
             else -> Result.success()
         }
+    }
+
+    /** True for the nightly sweep (tagged by [TranscriptionScheduler.apply]), false for every one-time run. */
+    private val isPeriodic: Boolean get() = tags.contains(TranscriptionScheduler.TAG_PERIODIC)
+
+    /**
+     * Retry, the way this run may. One-time work returns retry (WorkManager's backoff is what we want there).
+     * Periodic work never does: it would run on the backoff rather than its schedule, up to 5 h late (review
+     * N36), so it succeeds and queues a separate one-time retry instead. The only `Result.retry()` in this
+     * class outside the stopped case; a source-scan test holds it to that.
+     */
+    private fun retryLater(reason: String, isDeferral: Boolean = true): Result {
+        if (!isPeriodic) return Result.retry().also { if (isDeferral) TranscriptionDeferrals.record(applicationContext, id) }
+        AppLogger.i(TAG, "Nightly run cannot finish now ($reason); queueing a one-time retry")
+        com.baba.callvault.system.storage.DriveCopyJournal.record(applicationContext, "transcription sweep: retry queued as one-time work ($reason)")
+        TranscriptionScheduler.enqueueSweepRetry(applicationContext)
+        return Result.success()
     }
 
     /**
@@ -248,8 +315,28 @@ class TranscriptionWorker(
         )
     }
 
+    private fun isNetworkMetered(): Boolean =
+        isNetworkMeteredOverride?.invoke() ?: runCatching {
+            (applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager)
+                .isActiveNetworkMetered
+        }.getOrDefault(false) // unreadable: do not hold the run back on a guess
+
+    private fun readThermalStatus(): Int =
+        runCatching {
+            (applicationContext.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).currentThermalStatus
+        }.getOrDefault(android.os.PowerManager.THERMAL_STATUS_NONE)
+
     companion object {
         private const val TAG = "CV:TranscriptionWorker"
+
+        /** A test's stand-in for "is the active network metered"; null reads the real one. */
+        internal var isNetworkMeteredOverride: (() -> Boolean)? = null
+
+        /** A test's stand-in for the phone's thermal status; null reads the real one. */
+        internal var thermalStatusOverride: (() -> Int)? = null
+
+        /** Whether a summary is running; a seam so a test can say yes (the engine's flag is private-set). */
+        internal var isSummaryRunning: () -> Boolean = { com.baba.callvault.summary.SummaryEngine.isRunning }
 
         /** How often the abort watcher checks for a stop. Cheap, and a stop should feel instant. */
         private const val ABORT_POLL_MS = 400L
