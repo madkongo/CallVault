@@ -43,7 +43,23 @@ class CloudError(
 
     val isRetryable: Boolean get() = kind.isRetryable
 
+    /**
+     * Whether the service refused the recording's container (Ogg or M4A) rather than the request: 400 or 415 only.
+     * A 404 or 422 is usually a model the service does not have, which WAV would not fix (review 2026-11-20, R21).
+     */
+    val isFormatRefusal: Boolean
+        get() = kind == Kind.REJECTED && (httpStatus == HTTP_BAD_REQUEST || httpStatus == HTTP_UNSUPPORTED_MEDIA)
+
+    /** How long a 429 or 503 asked us to wait (its Retry-After header), when it said. */
+    var retryAfterMs: Long? = null
+        private set
+
+    /** This error carrying the wait the service asked for. */
+    fun withRetryAfter(ms: Long?): CloudError = apply { retryAfterMs = ms }
+
     companion object {
+        private const val HTTP_BAD_REQUEST = 400
+        private const val HTTP_UNSUPPORTED_MEDIA = 415
         private const val HTTP_UNAUTHORIZED = 401
         private const val HTTP_FORBIDDEN = 403
         private const val HTTP_TOO_LARGE = 413

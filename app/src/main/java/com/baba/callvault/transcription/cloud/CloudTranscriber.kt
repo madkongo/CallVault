@@ -93,6 +93,12 @@ class CloudTranscriber(
         durationMs: Long,
         probe: CloudAudioSource.Probe,
     ): List<TranscriptSegment> {
+        val refusals = refusalsOf(context)
+        if (refusals.isRefused(endpoint)) {
+            // This service already refused the container once (R21): straight to WAV, no whole upload first.
+            AppLogger.i(TAG, "${endpoint.label} refused the recording's container before; sending WAV passes")
+            return inPasses(context, uri, key, language, durationMs, remuxAs = null)
+        }
         if (UploadFormat.sendsWhole(probe.fileName, probe.sizeBytes, durationMs)) {
             val format = requireNotNull(UploadFormat.forFileName(probe.fileName))
             // Sizes only — never words, never the key.
@@ -101,14 +107,19 @@ class CloudTranscriber(
                 return client.transcribe(endpoint, key, CloudAudioSource.readAll(context, uri), format, language)
                     .also { progressPercent = PERCENT }
             } catch (e: CloudError) {
-                // A service that does not take this container (400/415) or this size (413) gets WAV passes.
-                if (e.kind != CloudError.Kind.REJECTED && e.kind != CloudError.Kind.TOO_LARGE) throw e
+                // Only a refused container (400/415) or size (413) gets WAV passes. Any other refusal, such as a
+                // retired model name, would be refused again, so it is thrown without a second upload (R21).
+                if (!e.isFormatRefusal && e.kind != CloudError.Kind.TOO_LARGE) throw e
+                if (e.isFormatRefusal) refusals.markRefused(endpoint)
                 AppLogger.w(TAG, "${endpoint.label} refused the recording as it is (${e.httpStatus}); sending WAV passes")
                 return inPasses(context, uri, key, language, durationMs, remuxAs = null)
             }
         }
         return inPasses(context, uri, key, language, durationMs, remuxAs = UploadFormat.forRemuxedCodec(probe.trackMime))
     }
+
+    private fun refusalsOf(context: Context) =
+        ContainerRefusals(context.getSharedPreferences(ContainerRefusals.PREFS_NAME, Context.MODE_PRIVATE))
 
     /**
      * Passes of five minutes with a [CloudSeam.CLOUD_OVERLAP_MS] run-up, joined by [CloudSeam]. Each is
@@ -132,7 +143,9 @@ class CloudTranscriber(
             val sent = remux?.let { format ->
                 runCatching { sendRemuxed(context, uri, key, language, plan, index, format) }
                     .onFailure {
-                        if (it is CloudError && it.kind != CloudError.Kind.REJECTED) throw it
+                        // Only a refused container falls back to WAV; any other cloud error is thrown (R21).
+                        if (it is CloudError && !it.isFormatRefusal) throw it
+                        if (it is CloudError) refusalsOf(context).markRefused(endpoint)
                         AppLogger.w(TAG, "Pass ${index + 1}: remuxed upload failed (${it.javaClass.simpleName}); using WAV")
                         remux = null
                     }.getOrNull()
@@ -156,7 +169,10 @@ class CloudTranscriber(
             ?: error("No audio track")
         if (cut.bytes.isEmpty()) return cut.startMs to emptyList()
         AppLogger.i(TAG, "Pass ${index + 1}/${plan.size}: uploading ${cut.bytes.size / BYTES_PER_KB} KB from ${cut.startMs} ms")
-        return cut.startMs to shift(client.transcribe(endpoint, key, cut.bytes, format, language), cut.startMs)
+        val segments = PassRetry.run("Pass ${index + 1}/${plan.size}", { TranscriptionEngine.wasAborted() }) {
+            client.transcribe(endpoint, key, cut.bytes, format, language)
+        }
+        return cut.startMs to shift(segments, cut.startMs)
     }
 
     /** One pass decoded to WAV — the fallback for containers that cannot be remuxed or were refused. */
@@ -168,7 +184,10 @@ class CloudTranscriber(
         if (slice.audio.isEmpty()) return slice.startMs to emptyList()
         val wav = WavEncoder.encode(slice.audio)
         AppLogger.i(TAG, "Pass ${index + 1}/${plan.size}: uploading ${wav.size / BYTES_PER_KB} KB of WAV")
-        return slice.startMs to shift(client.transcribe(endpoint, key, wav, language), slice.startMs)
+        val segments = PassRetry.run("Pass ${index + 1}/${plan.size}", { TranscriptionEngine.wasAborted() }) {
+            client.transcribe(endpoint, key, wav, language)
+        }
+        return slice.startMs to shift(segments, slice.startMs)
     }
 
     /** Decodes the recording only to hand its channels to the speaker labeller; the audio is dropped. */

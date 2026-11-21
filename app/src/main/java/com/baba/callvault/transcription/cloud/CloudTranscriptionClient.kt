@@ -14,7 +14,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /** The answer to one POST: its status and, when it succeeded, its body. */
-data class HttpReply(val status: Int, val body: String)
+data class HttpReply(val status: Int, val body: String, val retryAfter: String? = null)
 
 /** One HTTPS POST. Substituted in tests, which must never reach a real service. */
 fun interface HttpPoster {
@@ -107,7 +107,7 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
         } catch (e: IOException) {
             throw CloudError.network(endpoint.label, e)
         }
-        if (reply.status !in HTTP_OK_RANGE) throw CloudError.forHttpStatus(reply.status, endpoint.label)
+        if (reply.status !in HTTP_OK_RANGE) throw CloudError.forHttpStatus(reply.status, endpoint.label).withRetryAfter(PassRetry.parseRetryAfter(reply.retryAfter))
         return reply.body
     }
 
@@ -160,7 +160,8 @@ class UrlConnectionPoster(
                 // Discarded unread: never surfaced — see CloudError — and of no use to us.
                 ""
             }
-            return HttpReply(status, text)
+            val retryAfter = if (status in 200..299) null else connection.getHeaderField("Retry-After")
+            return HttpReply(status, text, retryAfter)
         } finally {
             connection.disconnect()
         }
