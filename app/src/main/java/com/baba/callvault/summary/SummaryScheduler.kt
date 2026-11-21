@@ -32,6 +32,11 @@ object SummaryScheduler {
     /** What marks a job as ours. See [tagFor] and [displayNameOfTag]. */
     private const val TAG_PREFIX = "cv_summary:"
 
+    private val requests = SummaryRequestGuard()
+
+    /** The worker calls this when a run for [displayName] has ended, so a retry is not held back. */
+    internal fun requestFinished(displayName: String) = requests.release(displayName)
+
     /** Unique work for the summary queue. One name, so two taps queue rather than collide. */
     const val WORK_NAME = "cv_summary_now"
 
@@ -47,6 +52,12 @@ object SummaryScheduler {
      * mutex, and two models will not fit in memory together.
      */
     fun runNow(context: Context, displayName: String, model: SummaryModel = SummaryModel.DEFAULT) {
+        // A quick second tap arrives before WorkManager's flow has told the screen the first one is queued,
+        // and would queue the same call twice (C175). Decided here, synchronously, so no screen can race it.
+        if (!requests.tryAcquire(displayName, System.currentTimeMillis())) {
+            AppLogger.i(TAG, "Summary already requested a moment ago for this recording; ignoring the repeat tap")
+            return
+        }
         val request = OneTimeWorkRequestBuilder<SummaryWorker>()
             .setInputData(
                 workDataOf(
@@ -72,6 +83,7 @@ object SummaryScheduler {
      * as whisper — a cancelled worker left the phone at full CPU until the call finished on its own.
      */
     fun stopNow(context: Context) {
+        requests.clear()
         SummaryEngine.requestAbort()
         WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
         AppLogger.i(TAG, "Summary stopped")
@@ -109,4 +121,36 @@ object SummaryScheduler {
     /** How far through, 0-100, or null when nothing has been reported yet. */
     fun percentOf(progress: Data): Int? =
         progress.getInt(SummaryWorker.KEY_PERCENT, -1).takeIf { it >= 0 }
+}
+
+/**
+ * Remembers which recordings were just asked to be summarised, so a repeat tap inside [WINDOW_MS] is dropped.
+ *
+ * In memory and time-limited on purpose: a stale entry can never block a summary for longer than the window,
+ * and it is cleared when the run ends or is stopped. The screens hide the button once WorkManager reports the
+ * job, so the window only has to cover the gap before that.
+ */
+internal class SummaryRequestGuard {
+    private val askedAt = HashMap<String, Long>()
+
+    /** True if this request should go ahead; false for a repeat inside the window. */
+    @Synchronized
+    fun tryAcquire(displayName: String, now: Long): Boolean {
+        val previous = askedAt[displayName]
+        if (previous != null && now - previous in 0 until WINDOW_MS) return false
+        askedAt[displayName] = now
+        return true
+    }
+
+    @Synchronized
+    fun release(displayName: String) {
+        askedAt.remove(displayName)
+    }
+
+    @Synchronized
+    fun clear() = askedAt.clear()
+
+    companion object {
+        const val WINDOW_MS = 30_000L
+    }
 }

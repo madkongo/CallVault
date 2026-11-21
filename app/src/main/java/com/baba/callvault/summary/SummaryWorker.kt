@@ -162,6 +162,8 @@ class SummaryWorker(
         }.onFailure { AppLogger.w(TAG, "Summarising failed: ${it.message}") }.getOrNull()
 
         ticker.cancel()
+        // The run is over, so a retry after a failure is a new request, not a double tap (C175).
+        SummaryScheduler.requestFinished(displayName)
 
         when {
             summary != null -> Result.success()
