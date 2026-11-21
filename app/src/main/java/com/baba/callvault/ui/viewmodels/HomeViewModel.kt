@@ -370,7 +370,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         /** Whether [item]'s contact key contains what is typed; every recording for nothing typed. */
         private fun matchesContact(item: RecordingItem): Boolean {
             val typed = contactQuery.trim()
-            return typed.isEmpty() || contactKey(item).contains(typed, ignoreCase = true)
+            return typed.isEmpty() || contactKey(item).contains(typed, ignoreCase = true) || numberMatches(item.number, typed)
+        }
+
+        /**
+         * The stored number as a second way in once a contact has a name (the key is then the name only). Dialler
+         * punctuation in what was typed is ignored; punctuation alone matches nothing.
+         */
+        private fun numberMatches(number: String?, typed: String): Boolean {
+            if (number.isNullOrBlank()) return false
+            if (number.contains(typed, ignoreCase = true)) return true
+            val typedDigits = typed.filter { it.isDigit() }
+            return typedDigits.isNotEmpty() && typed.all { it.isDigit() || it in "+-() ." } &&
+                number.filter { it.isDigit() }.contains(typedDigits)
         }
 
         /**

@@ -62,6 +62,33 @@ class HomeContactSearchTest {
     }
 
     @Test
+    fun `a recording with a contact name is still found by its number`() {
+        val named = listOf(item("5.m4a", contactName = "SecondTester", number = "0540000201"), item("6.m4a", contactName = "Other", number = "0541111111"))
+
+        val state = HomeViewModel.HomeUiState(recordings = named, contactQuery = "0540000201")
+
+        assertEquals(listOf("5.m4a"), state.filteredRecordings.map { it.displayName })
+    }
+
+    @Test
+    fun `a typed number with spaces or dashes finds the stored number`() {
+        val named = listOf(item("5.m4a", contactName = "SecondTester", number = "0540000201"))
+
+        val state = HomeViewModel.HomeUiState(recordings = named, contactQuery = "054-000 0201")
+
+        assertEquals(listOf("5.m4a"), state.filteredRecordings.map { it.displayName })
+    }
+
+    @Test
+    fun `punctuation alone does not match every number`() {
+        val named = listOf(item("5.m4a", contactName = "SecondTester", number = "0540000201"))
+
+        val state = HomeViewModel.HomeUiState(recordings = named, contactQuery = "()")
+
+        assertEquals(emptyList<String>(), state.filteredRecordings.map { it.displayName })
+    }
+
+    @Test
     fun `spaces around the query do not count`() {
         val state = HomeViewModel.HomeUiState(recordings = recordings, contactQuery = "  Daniel ")
 
