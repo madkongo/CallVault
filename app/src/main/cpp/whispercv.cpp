@@ -151,7 +151,9 @@ Java_com_baba_callvault_transcription_WhisperNative_requestAbort(JNIEnv *, jobje
     g_abort.store(true, std::memory_order_relaxed);
 }
 
-JNIEXPORT void JNICALL
+// Returns whisper_full's code: 0 when the pass was decoded, non-zero when it was not (and when it was
+// aborted). Kotlin tells those two apart by its own abort flag -- see WhisperResult (C42).
+JNIEXPORT jint JNICALL
 Java_com_baba_callvault_transcription_WhisperNative_transcribe(
         JNIEnv *env, jobject, jlong ptr, jfloatArray audio, jint threads, jstring language,
         jstring prompt, jstring vad_model_path, jint beam_size, jint max_text_ctx) {
@@ -329,6 +331,7 @@ Java_com_baba_callvault_transcription_WhisperNative_transcribe(
     // Released only after whisper_full returns: params.vad_model_path is a borrowed pointer, and
     // whisper reads it during the run rather than copying it at assignment.
     if (vad_path != nullptr) env->ReleaseStringUTFChars(vad_model_path, vad_path);
+    return static_cast<jint>(rc);
 }
 
 // How many stretches of speech the VAD kept, for the run that just finished. 0 when VAD was off.
@@ -372,10 +375,10 @@ Java_com_baba_callvault_transcription_WhisperNative_segmentEndMs(JNIEnv *, jobje
 
 // The i-th segment's words, one per line as "<start in ms>\t<word>\n".
 //
-// Times are on the VAD's COMPRESSED timeline when VAD is on -- the audio whisper actually decoded, with
-// the silence taken out -- which is exactly what SpeakerSeamSplit wants: it places each word in a kept
-// stretch by that time. Measured with whisper-cli -ojf on a real call: 0.01 -> 4.74 s for one speaker,
-// 5.07 -> 8.53 s for the other, the seam between the two kept stretches exactly in the gap.
+// Times are in ORIGINAL audio time (C151): whisper_full_get_token_t0 maps a token's time on the VAD's
+// compressed timeline back over each kept stretch's exact bounds, and snaps a time in a removed gap to
+// the nearer stretch. SpeakerSeamSplit therefore no longer rebuilds whisper's layout itself (it used to
+// assume 100 ms between stretches; whisper puts its sample overlap plus 100 ms).
 //
 // Words are assembled HERE, not in Kotlin, because a token is a run of bytes and not a run of characters:
 // a Hebrew word is several tokens and a character can straddle two of them. A token starting with a space
@@ -398,7 +401,7 @@ Java_com_baba_callvault_transcription_WhisperNative_segmentWords(JNIEnv *env, jo
         const char *text = whisper_full_get_token_text(ctx, i, j);
         if (text == nullptr || text[0] == '\0') continue;
         if (text[0] == ' ') flush();
-        if (word.empty()) word_t0 = whisper_full_get_token_data(ctx, i, j).t0;
+        if (word.empty()) word_t0 = whisper_full_get_token_t0(ctx, i, j);
         for (const char *c = text; *c != '\0'; ++c) {
             // The separators of this format must not appear inside a word.
             if (*c != '\t' && *c != '\n' && !(word.empty() && *c == ' ')) word += *c;

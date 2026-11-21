@@ -20,7 +20,8 @@ import org.junit.Test
  *
  * The numbers in the first test are the OP9's 12:25 call of 2026-09-20, as measured: B talks 4.9–8.7 s,
  * A talks 11–15 s, the VAD kept one stretch for each, and whisper — in Hebrew — returned a single segment
- * 4.50 → 15.20 s whose tokens sit on the VAD's compressed timeline, 0.01 → 4.74 s and 5.07 → 8.53 s.
+ * 4.50 → 15.20 s. Word times are in ORIGINAL audio time: the native layer asks whisper.cpp for the token
+ * time already mapped back over each kept stretch (C151), so nothing here rebuilds whisper's layout.
  */
 class SpeakerSeamSplitTest {
 
@@ -34,8 +35,8 @@ class SpeakerSeamSplitTest {
     )
     private val shared = TranscriptSegment(4_500, 15_200, "בדיקה, זה 1+12, בדיקה, זה 1+9.")
     private val words = listOf(
-        Word("בדיקה,", 10), Word("זה", 2_820), Word("1+12,", 3_180),
-        Word("בדיקה,", 5_070), Word("זה", 6_920), Word("1+9.", 7_230),
+        Word("בדיקה,", 4_510), Word("זה", 7_320), Word("1+12,", 7_680),
+        Word("בדיקה,", 10_870), Word("זה", 12_720), Word("1+9.", 13_030),
     )
 
     @Test
@@ -83,24 +84,37 @@ class SpeakerSeamSplitTest {
     }
 
     @Test
-    fun `counts whisper's bridge between stretches when placing a word`() {
-        // Stretch 1 is 4.6 s long, so stretch 2 begins at 4.6 s + the 100 ms whisper puts between kept
-        // stretches. A word at 4.65 s is still in the bridge and belongs with what came before it.
-        val onTheSeam = listOf(Word("first", 10), Word("late", 4_650), Word("second", 5_070))
+    fun `a word timed inside a removed pause goes to the nearer stretch`() {
+        // The pause runs 9.1 s to 10.6 s. 9.3 s is nearer the end of the first stretch; 10.4 s is nearer
+        // the start of the second.
+        val inThePause = listOf(Word("first", 4_510), Word("late", 9_300), Word("early", 10_400), Word("second", 10_870))
 
-        val pieces = SpeakerSeamSplit.split(shared, onTheSeam, speech, turns)
+        val pieces = SpeakerSeamSplit.split(shared, inThePause, speech, turns)
 
-        assertEquals(listOf("first late", "second"), pieces.map { it.text })
+        assertEquals(listOf("first late", "early second"), pieces.map { it.text })
     }
 
     @Test
     fun `a word timed past the last stretch lands in the last piece rather than nowhere`() {
-        // Both stretches together are 9.2 s of compressed time; whisper's token times can overshoot it.
-        val overshoot = listOf(Word("first", 10), Word("second", 5_070), Word("stray", 9_900))
+        val overshoot = listOf(Word("first", 4_510), Word("second", 10_870), Word("stray", 15_900))
 
         val pieces = SpeakerSeamSplit.split(shared, overshoot, speech, turns)
 
         assertEquals(listOf("first", "second stray"), pieces.map { it.text })
+    }
+
+    @Test
+    fun `every word of a call with many stretches lands in its own stretch`() {
+        // Whisper keeps 0.1 s of overlap plus 0.1 s of silence after every stretch but the last. A
+        // rebuild that assumed 0.1 s drifted 0.1 s further with each one and was a stretch out by the 30th.
+        val many = (0 until 40).map { Speech(it * 3_000L, it * 3_000L + 2_000L) }
+        val spoken = many.mapIndexed { i, stretch -> Word("w$i", stretch.startMs + 1_000) }
+        val line = TranscriptSegment(0, 120_000, spoken.joinToString(" ") { it.text })
+
+        val offered = SpeakerSeamSplit.atSeams(line, spoken, many)
+
+        assertEquals(spoken.map { it.text }, offered.parts.map { it.text })
+        assertEquals(many.map { it.startMs }, offered.parts.map { it.startMs })
     }
 
     @Test
@@ -110,7 +124,7 @@ class SpeakerSeamSplitTest {
             SpeakerTurn(0, SpeakerChannel.A), SpeakerTurn(3_500, SpeakerChannel.B), SpeakerTurn(6_500, SpeakerChannel.A),
         )
         val line = TranscriptSegment(1_000, 9_000, "one two three")
-        val spoken = listOf(Word("one", 100), Word("two", 2_200), Word("three", 4_300))
+        val spoken = listOf(Word("one", 1_500), Word("two", 4_500), Word("three", 7_500))
 
         val pieces = SpeakerSeamSplit.split(line, spoken, three, swapping)
 
@@ -144,7 +158,7 @@ class SpeakerSeamSplitTest {
     }
 
     @Test
-    fun `reads the native layer's words, one per line as milliseconds and text`() {
+    fun `reads the native layer's words, one per line as original-time milliseconds and text`() {
         assertEquals(
             listOf(Word("בדיקה,", 10), Word("זה", 2_820)),
             SpeakerSeamSplit.parseWords("10\tבדיקה,\n2820\tזה\n"),
@@ -162,7 +176,7 @@ class SpeakerSeamSplitTest {
             SpeakerTurn(0, SpeakerChannel.B), SpeakerTurn(3_500, SpeakerChannel.BOTH), SpeakerTurn(6_500, SpeakerChannel.A),
         )
         val line = TranscriptSegment(1_000, 9_000, "one two three")
-        val spoken = listOf(Word("one", 100), Word("two", 2_200), Word("three", 4_300))
+        val spoken = listOf(Word("one", 1_500), Word("two", 4_500), Word("three", 7_500))
 
         val pieces = SpeakerSeamSplit.split(line, spoken, three, withDoubleTalk)
 

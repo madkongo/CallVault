@@ -55,6 +55,7 @@ object WhisperNative {
      *   Present, the non-speech is trimmed and what remains is concatenated — it does **not**
      *   re-segment, and must never be turned into something that does.
      * @param beamSize beam width, or 1 for greedy. See [DecodeSettings.beamSize].
+     * @return whisper's return code: 0 when the pass was decoded (an abort also returns non-zero; see [WhisperResult]).
      * @param maxTextCtx cap on rolling text conditioning, 0 to disable, or -1 to leave whisper's own
      *   default alone. See [DecodeSettings.maxTextCtx].
      */
@@ -67,7 +68,7 @@ object WhisperNative {
         vadModelPath: String?,
         beamSize: Int,
         maxTextCtx: Int
-    )
+    ): Int
 
     /**
      * How many stretches of speech the VAD kept in the run that just finished; 0 when it was off.
@@ -123,8 +124,8 @@ object WhisperNative {
     external fun segmentText(ptr: Long, index: Int): String
 
     /**
-     * The i-th segment's words, one per line as `<start in ms>\t<word>`, on the VAD's compressed
-     * timeline. Parsed by [SpeakerSeamSplit.parseWords]; see the native side for why words are assembled
+     * The i-th segment's words, one per line as `<start in ms>\t<word>`, in original audio
+     * time (whisper maps it back over the VAD's stretches, C151). Parsed by [SpeakerSeamSplit.parseWords]; see the native side for why words are assembled
      * there rather than here.
      */
     external fun segmentWords(ptr: Long, index: Int): String

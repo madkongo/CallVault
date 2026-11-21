@@ -191,6 +191,14 @@ object TranscriptionEngine {
         abortRequested.set(false)
     }
 
+    /** Throws when whisper failed a pass nobody asked to stop; logs why first (C42). */
+    private fun checkPass(rc: Int, pass: Int, passes: Int) {
+        runCatching { WhisperResult.check(rc, abortRequested.get(), pass, passes) }.onFailure {
+            AppLogger.w(TAG, "${it.message}; the transcript is not stored as complete")
+            throw it
+        }
+    }
+
     /**
      * Transcribes [uri] using the model at [modelPath].
      *
@@ -226,10 +234,11 @@ object TranscriptionEngine {
     ): List<TranscriptSegment> {
         whisperActive = true
         try {
-            WhisperNative.transcribe(
+            val rc = WhisperNative.transcribe(
                 ptr, audio, preferredThreadCount(), language, prompt,
                 vadModelPath, settings.beamSize, settings.maxTextCtx,
             )
+            checkPass(rc, 1, 1)
         } finally {
             whisperActive = false
         }
@@ -324,7 +333,11 @@ object TranscriptionEngine {
         // once, whatever the length of the call.
         lastSetupMs = 0L
         val setupStartedAt = SystemClock.elapsedRealtime()
-        val ptr = WhisperNative.initContext(modelPath, context.applicationInfo.nativeLibraryDir)
+        val libDir = context.applicationInfo.nativeLibraryDir
+        // systemInfo loads the ggml backends under the shared gate, so a summary starting at the same
+        // moment cannot register them at the same time (C83).
+        NativeBackendGate.shared.ensureLoaded("whisper") { WhisperNative.systemInfo(libDir) }
+        val ptr = WhisperNative.initContext(modelPath, libDir)
         if (ptr == 0L) error("Could not load whisper model at $modelPath")
         try {
             val threads = preferredThreadCount()
@@ -360,10 +373,11 @@ object TranscriptionEngine {
                 // still holds whatever the previous run left behind.
                 whisperActive = true
                 try {
-                    WhisperNative.transcribe(
+                    val rc = WhisperNative.transcribe(
                         ptr, slice.audio, threads, language, prompt,
                         vadModelPath, settings.beamSize, settings.maxTextCtx,
                     )
+                    checkPass(rc, index + 1, plan.size)
                 } finally {
                     whisperActive = false
                 }

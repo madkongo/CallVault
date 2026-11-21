@@ -197,6 +197,10 @@ Java_com_baba_callvault_summary_LlamaNative_generate(
                 llama_chat_apply_template(tmpl, &msg, 1, true, buf.data(), (int32_t) buf.size());
         if (written > 0 && written <= (int32_t) buf.size()) {
             templated.assign(buf.data(), written);
+        } else {
+            // Not an error to llama.cpp, but it means this run uses the bare prompt: say so, because the
+            // pinned llama.cpp does not recognise Gemma 4's template (C125, parked until measured).
+            LOGW("chat template not applied (%d); using the bare prompt", written);
         }
     }
     if (templated.empty()) templated = c_prompt;

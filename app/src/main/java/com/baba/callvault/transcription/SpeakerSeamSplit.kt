@@ -23,9 +23,9 @@ import com.baba.callvault.transcription.SpeechGapSnap.Speech
  * ## Only at a pause the VAD already found, and only between two named, different speakers
  *
  * Whisper's own length split (`max_len`) was measured first and cuts by character count: 13.3 s and
- * 7.7 s on that call, nowhere near the change at 9–11 s. Its token times, though, are accurate — on
- * the VAD's *compressed* timeline, where the silence has been removed. So each word is placed in the
- * kept stretch its time falls in, and a line is cut at the seam between two stretches **when the
+ * 7.7 s on that call, nowhere near the change at 9–11 s. Its token times, though, are accurate, and
+ * whisper.cpp maps them back to original time itself. So each word is placed in the kept stretch its
+ * time falls in (or the nearer one, for a word timed inside a removed pause), and a line is cut at the seam between two stretches **when the
  * labeller names a different side for each**.
  *
  * Deliberately not per-word labelling. A seam is a pause of at least the VAD's minimum silence, which is
@@ -38,13 +38,12 @@ import com.baba.callvault.transcription.SpeechGapSnap.Speech
 object SpeakerSeamSplit {
 
     /**
-     * What whisper.cpp puts between two kept stretches when it rebuilds the audio. Hardcoded there, so it
-     * is a constant here; the same 100 ms [SpeechGapSnap] exists to undo for whole segments.
+     * One word of a segment, with when it starts in ORIGINAL audio time. The native layer reads it with
+     * `whisper_full_get_token_t0`, which maps the VAD's compressed time back over each kept stretch's exact
+     * bounds, so nothing here has to re-derive whisper's layout (C151: the old rebuild assumed 100 ms
+     * between stretches where whisper puts its sample overlap plus 100 ms, and drifted).
      */
-    private const val BRIDGE_MS = 100L
-
-    /** One word of a segment, with when it starts on the VAD's compressed timeline. */
-    data class Word(val text: String, val compressedStartMs: Long)
+    data class Word(val text: String, val startMs: Long)
 
     /**
      * [segment] as one piece per run of stretches a single speaker held, or unchanged.
@@ -53,7 +52,7 @@ object SpeakerSeamSplit {
      * as its two halves, [atSeams] in the engine and [joinSameSpeaker] in the runner, because the engine
      * decodes chunk by chunk before the speaker turns exist.
      *
-     * @param words the segment's words in order, on the compressed timeline. Empty when token times
+     * @param words the segment's words in order, in original time. Empty when token times
      *   are unavailable, which leaves the segment alone.
      * @param speech what the VAD kept, in ORIGINAL time. Fewer than two leaves nothing to cut at.
      * @param turns who was talking when, in original time.
@@ -73,7 +72,7 @@ object SpeakerSeamSplit {
         if (words.isEmpty() || speech.size < 2) return segment
 
         val ordered = speech.sortedBy { it.startMs }
-        val byStretch = words.groupBy { stretchIndexAt(it.compressedStartMs, ordered) }.toSortedMap()
+        val byStretch = words.groupBy { stretchIndexAt(it.startMs, ordered) }.toSortedMap()
         if (byStretch.size < 2) return segment
 
         val parts = byStretch.map { (index, spoken) ->
@@ -106,7 +105,7 @@ object SpeakerSeamSplit {
         return if (pieces.size == 1) listOf(whole) else pieces
     }
 
-    /** Parses the native layer's words: one per line, `<compressed start in ms>\t<text>`. Bad lines are skipped. */
+    /** Parses the native layer's words: one per line, `<original start in ms>\t<text>`. Bad lines are skipped. */
     fun parseWords(encoded: String): List<Word> =
         encoded.lineSequence().mapNotNull { line ->
             val tab = line.indexOf('\t')
@@ -129,18 +128,16 @@ object SpeakerSeamSplit {
         before != null && after != null && before != after
 
     /**
-     * Which kept stretch a compressed-timeline moment falls in.
-     *
-     * The bridge after a stretch belongs to that stretch: a word whisper timed inside it was spoken at
-     * the end of what came before, not at the start of what comes next.
+     * Which kept stretch an original-time moment falls in: the one containing it, else the nearer one
+     * (the earlier on a tie). Past either end it is the first or last.
      */
-    private fun stretchIndexAt(compressedMs: Long, speech: List<Speech>): Int {
-        var stretchStart = 0L
-        speech.forEachIndexed { index, stretch ->
-            val nextStart = stretchStart + (stretch.endMs - stretch.startMs) + BRIDGE_MS
-            if (compressedMs < nextStart) return index
-            stretchStart = nextStart
-        }
-        return speech.lastIndex
-    }
+    private fun stretchIndexAt(ms: Long, speech: List<Speech>): Int =
+        speech.indices.minByOrNull { i ->
+            val stretch = speech[i]
+            when {
+                ms < stretch.startMs -> stretch.startMs - ms
+                ms > stretch.endMs -> ms - stretch.endMs
+                else -> 0L
+            }
+        } ?: 0
 }
