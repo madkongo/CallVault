@@ -50,6 +50,7 @@ import com.baba.callvault.system.storage.StorageRouter
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.HONOR_DIALER_TEMPLATE
 import com.baba.callvault.utils.HonorCallStart
+import com.baba.callvault.utils.LateNumberFromLog
 import com.baba.callvault.utils.PhoneNumberManager
 import com.baba.callvault.utils.RedirectedCall
 import com.baba.callvault.system.permissions.PermissionChecks
@@ -94,6 +95,8 @@ class RecordingForegroundService : Service() {
         private const val HONOR_LOG_RETRY_MS = 500L
         /** Tries at [HONOR_LOG_RETRY_MS] for this call's entry: it is written as the call ends, normally within a second. */
         private const val REDIRECT_LOG_ATTEMPTS = 6
+        /** Tries at [HONOR_LOG_RETRY_MS] for a late-number lookup: as many as the old lookup's 4 × 400 ms, rounded up. */
+        private const val LATE_NUMBER_LOG_ATTEMPTS = 4
 
         /** Slack for a switch queued inside [WifiCallRoute.SWITCH_WINDOW_MS] to reach the release. */
         private const val SWITCH_QUEUE_GRACE_MS = 1_000L
@@ -203,6 +206,10 @@ class RecordingForegroundService : Service() {
      */
     @Volatile
     private var daemonLossNotified: Boolean = false
+
+    /** The "capture never started" notice has been shown for this session, so the end-of-call check does not repeat it. */
+    @Volatile
+    private var captureNeverStartedNotified: Boolean = false
 
     // ── Wi-Fi call route (#45) ─────────────────────────────────────────────────────
 
@@ -371,8 +378,14 @@ class RecordingForegroundService : Service() {
 
         when (action) {
             ACTION_START_RECORDING, ACTION_MANUAL_START -> {
-                if (hasSession || isCurrentlyRecording) {
-                    AppLogger.w(TAG, "Start request ignored. A session is already on-going.")
+                if (RecordingCommandPolicy.isDuplicateStart(
+                        hasSession = hasSession,
+                        isCurrentlyRecording = isCurrentlyRecording,
+                        isStarting = currentState is RecordingServiceState.Starting,
+                        stopRequested = stopRequested,
+                    )
+                ) {
+                    AppLogger.w(TAG, "Start request ignored. A session is already on-going or still starting.")
                     return START_NOT_STICKY
                 }
 
@@ -453,6 +466,11 @@ class RecordingForegroundService : Service() {
 
             ACTION_PAUSE_RECORDING -> {
                 (currentState as? RecordingServiceState.Active)?.let {
+                    if (!PausePolicy.accepts(it.engine.supportsPause)) {
+                        // A stale notification button: Pause would only change the wording, the audio would go on.
+                        AppLogger.w(TAG, "Pause ignored: this capture path cannot pause, the recording continues")
+                        return START_NOT_STICKY
+                    }
                     it.engine.isPaused = true
                     currentState = it.copy(isPaused = true)
                     // The clock has to follow, or every mark placed after a pause lands late in the
@@ -561,6 +579,7 @@ class RecordingForegroundService : Service() {
         // 1. Create a new session (declared here to allow cleanup if startPipeline fails)
         val activeSession = newEngine()
         daemonLossNotified = false
+        captureNeverStartedNotified = false
         // A fresh timeline and a fresh mark buffer for this call. beginCall() also drops anything a
         // previous call left behind after ending badly, so marks can never spill onto the next one.
         recordingClock.start()
@@ -574,7 +593,7 @@ class RecordingForegroundService : Service() {
             //    aborts before touching the daemon if the call already ended — preventing a mic that
             //    turns on after the call with nothing to stop it.
             val wanted = runCatching {
-                routeDecision("start", engineCanSwitch = true, forced = false, msSinceCaptureStart = 0).route
+                routeDecision("start", engineCanSwitch = true, msSinceCaptureStart = 0).route
             }.onFailure { AppLogger.w(WifiCallRoute.TAG, "route check at start failed: ${it.message}") }
                 .getOrDefault(WifiCallRoute.Route.CALL_SOURCE)
             val started = activeSession.startPipeline(this, metadata, { stopRequested }, wanted)
@@ -640,6 +659,7 @@ class RecordingForegroundService : Service() {
         // refuses. Not routed through daemonLossNotified, because the daemon is alive and the two
         // messages say different things.
         onCaptureNeverStarted = {
+            captureNeverStartedNotified = true
             notificationHelper.showErrorNotification(getString(R.string.recording_error_capture_never_started))
         }
     }
@@ -650,11 +670,10 @@ class RecordingForegroundService : Service() {
     private fun routeDecision(
         where: String,
         engineCanSwitch: Boolean,
-        forced: Boolean,
         msSinceCaptureStart: Long,
     ): WifiCallRoute.Decision {
         val (raw, seen) = WifiCallRoute.snapshot(
-            this, switchedToMix, forced, appPreferences.isVoipRecordingEnabled(), msSinceCaptureStart
+            this, switchedToMix, appPreferences.isVoipRecordingEnabled(), msSinceCaptureStart
         )
         if (raw.mode == android.media.AudioManager.MODE_IN_CALL) inCallSeenThisCall = true
         val inputs = raw.copy(
@@ -694,7 +713,7 @@ class RecordingForegroundService : Service() {
         if (stopRequested || isShuttingDown) return
         val sinceStart = android.os.SystemClock.elapsedRealtime() - captureStartedAt
         val decision = routeDecision(
-            "change", engineCanSwitch = !active.engine.isLocalFallback, forced = false, msSinceCaptureStart = sinceStart
+            "change", engineCanSwitch = !active.engine.isLocalFallback, msSinceCaptureStart = sinceStart
         )
         if (decision.reason == WifiCallRoute.Reason.WINDOW_PASSED) {
             // Never switches after the window, so stop watching.
@@ -895,6 +914,8 @@ class RecordingForegroundService : Service() {
             AppLogger.e(TAG, "The waiting recording is empty (0 bytes) — capture never ran. Notifying instead of keeping it.")
             notifyEmptyCapture()
             recordHealth(0L, "the waiting recording", mix.healthFarHeard, null)
+        } else if (finished == null) {
+            reportNoFile(activeSession, mix)
         }
 
         // If the initialization metadata do not contain a phone number, we attempt to query the call log as a fallback.
@@ -906,7 +927,7 @@ class RecordingForegroundService : Service() {
             // Android gives the process some time to live, so this is safe for a few seconds.
             CoroutineScope(Dispatchers.IO).launch {
                 val rawNumber =
-                    tryGetFinalNumberFromLog(applicationContext, originalMetadata.direction)
+                    tryGetFinalNumberFromLog(applicationContext, originalMetadata.direction, startedAt)
                 val sanitizedRaw = PhoneNumberManager.sanitizeOemNumber(rawNumber) ?: ""
 
                 val finalNumber = if (sanitizedRaw.isNotBlank()) {
@@ -1081,39 +1102,23 @@ class RecordingForegroundService : Service() {
         }.orEmpty()
 
     /**
-     * Tries to query the call log for the most recent call matching the given direction, and returns the associated phone number.
-     * @return The phone number from the most recent call log entry matching the direction, or null if no valid entry is found after multiple attempts.
+     * The number of the call that just ended, from the call log, for a recording that started without one (review C59).
+     * Only a call that began within [HonorCallStart.MAX_RING_MS] before this recording counts: the entry is written after the
+     * call ends, and while it is late the newest older call used to be taken, naming this recording after another person.
+     * Null when no row belongs to this call (the name is kept) or when the recording's start is unknown.
      */
     private suspend fun tryGetFinalNumberFromLog(
         context: Context,
-        direction: RecordingDirection?
+        direction: RecordingDirection?,
+        startedAt: Date?,
     ): String? {
-        val typeSelection = when (direction) {
-            // We do not want to include missed or rejected calls here since they are useless to us, and in a Dual-call scenario could lead to picking the wrong number.
-            RecordingDirection.INCOMING -> "${CallLog.Calls.TYPE} = ${CallLog.Calls.INCOMING_TYPE}"
-            RecordingDirection.OUTGOING -> "${CallLog.Calls.TYPE} = ${CallLog.Calls.OUTGOING_TYPE}"
-            else -> null
+        if (direction == null || startedAt == null || !PermissionChecks.hasCallLogPermission(context)) return null
+        val start = startedAt.time
+        val number = pollCallLog(context, LateNumberFromLog.since(start), LATE_NUMBER_LOG_ATTEMPTS) { rows ->
+            LateNumberFromLog.pick(rows.map { LateNumberFromLog.Row(it.date, it.number, it.direction) }, direction, start)
         }
-        // Try multiples times with a delay in case the OS didn't write the call log entry yet (only written after the call ended).
-        for (i in 1..4) {
-            try {
-                val cursor = context.contentResolver.query(
-                    CallLog.Calls.CONTENT_URI,
-                    arrayOf(CallLog.Calls.NUMBER),
-                    typeSelection, null,
-                    "${CallLog.Calls.DATE} DESC"
-                )
-                cursor?.use {
-                    if (it.moveToFirst()) {
-                        return it.getString(0)
-                    }
-                }
-            } catch (e: Exception) {
-                AppLogger.w(TAG, "Failed to query call log for fallback number", e)
-            }
-            if (i < 4) delay(400)
-        }
-        return null
+        if (number == null) AppLogger.d(TAG, "No call-log entry matched this recording; keeping its name")
+        return number
     }
 
     /**
@@ -1210,6 +1215,10 @@ class RecordingForegroundService : Service() {
                 // Deliberately no notification. The whole point of the setting is not being told
                 // about a misdial; a user who turned it on has already said they do not want these.
                 // It is logged, so a support question about a missing recording is still answerable.
+                // And noted as seen (review C113): a call the user's own setting discarded is not one the call-log
+                // sweep may report as "not recorded".
+                runCatching { SetupHealthStore(applicationContext).observeCall(System.currentTimeMillis()) }
+                    .onFailure { AppLogger.w(TAG, "Could not note the discarded call as seen: ${it.message}") }
                 return
             }
         }
@@ -1284,6 +1293,24 @@ class RecordingForegroundService : Service() {
         }
         recordHealth(sizeBytes, name, mix.healthFarHeard, mix.healthHeardAnything)
         if (!isHeld) StorageRouter.route(applicationContext, uri, name, mimeType)
+    }
+
+    /**
+     * Review C37: a capture that left no file to route (the staged recording held no audio) is told to the user and
+     * counted, once; a publish that failed with the file kept for rescue is only written to the always-on log, as the
+     * recording is not lost. Reporting only, after the stop.
+     */
+    private fun reportNoFile(engine: AudioRecordingEngine, mix: MixResult) {
+        val capturedMs = android.os.SystemClock.elapsedRealtime() - captureStartedAt
+        val plan = NoFileReport.plan(engine.capturedNothing, captureNeverStartedNotified, capturedMs)
+        CallEndLog.record(
+            applicationContext,
+            "carrier call ended with no file: capturedNothing=${engine.capturedNothing} ran=${capturedMs}ms " +
+                "daemonLossNotified=$daemonLossNotified neverStartedNotified=$captureNeverStartedNotified " +
+                "-> notify=${plan.notify} health=${plan.recordHealth}",
+        )
+        if (plan.notify) notifyEmptyCapture()
+        if (plan.recordHealth) recordHealth(0L, "the empty capture", mix.healthFarHeard, null)
     }
 
     /**

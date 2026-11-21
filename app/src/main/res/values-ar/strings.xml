@@ -1006,4 +1006,6 @@
     <string name="permission_battery_hint_vivo">Battery exemption set. On this App info page, tap \"Battery\" and choose \"Allow background activity\" (or \"No restriction\"). Also allow CallVault under \"Autostart\" and \"High background power consumption\". More: dontkillmyapp.com/vivo</string>
     <string name="permission_battery_hint_oppo_realme">Battery exemption set. On this App info page, tap \"Battery usage\" and choose \"Allow background activity\", then also turn on \"Allow auto launch\". More: dontkillmyapp.com/oppo</string>
     <string name="permission_battery_hint_other">Battery exemption set. On this App info page, open the battery setting and choose \"Unrestricted\" or \"Allow background activity\". If your phone has \"Autostart\" or \"Sleeping apps\", allow CallVault there too. More: dontkillmyapp.com</string>
+    <!-- batch B26: English fallback, pending translation -->
+    <string name="recording_notification_recording">This call is being recorded</string>
 </resources>

@@ -169,6 +169,10 @@ class AudioRecordingEngine {
     var waitingEmpty = false
         private set
 
+    /** After [release]: the staged recording held no audio, so nothing was published (review C37). */
+    var capturedNothing = false
+        private set
+
     /**
      * The exact number of audio bytes captured this session, when known reliably — set only after a
      * STAGED recording is successfully copied to its destination (we measured the internal temp before
@@ -263,6 +267,16 @@ class AudioRecordingEngine {
     /** True when neither the daemon nor the handoff carries this recording (local scrcpy over ADB). */
     val isLocalFallback: Boolean
         get() = !daemonMode && !handoffMode
+
+    /** Review C44: whether Pause really stops the audio on this capture path. */
+    val supportsPause: Boolean
+        get() = isLocalFallback
+
+    /** Test hook: sets the capture mode flags that [startPipeline] sets. */
+    internal fun setCaptureModesForTest(daemon: Boolean, handoff: Boolean) {
+        daemonMode = daemon
+        handoffMode = handoff
+    }
 
     /**
      * Fired at most once per session when the liveness watch finds the daemon's binder dead while a
@@ -1100,6 +1114,7 @@ class AudioRecordingEngine {
             // produced no audio leaves no misleading file behind.
             AppLogger.w(TAG, "Staged recording is empty — publishing nothing (capture never produced audio)")
             runCatching { temp.delete() }
+            capturedNothing = true
             return
         }
 

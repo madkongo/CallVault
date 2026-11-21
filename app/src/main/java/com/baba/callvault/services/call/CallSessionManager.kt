@@ -134,6 +134,9 @@ class CallSessionManager private constructor(context: Context) {
          */
         var wasRecordingServiceStartIntentSend: Boolean = false
 
+        /** The user's own settings kept this call from being recorded (review C113); it is noted as seen when it ends. */
+        var wasDeliberatelySkipped: Boolean = false
+
         /**
          * Indicates whether we are currently in an active call session (i.e., we've seen a non-IDLE state and haven't reset yet).
          * This also means that the [currentMetadata] field is locked until [clear] is called.
@@ -148,6 +151,7 @@ class CallSessionManager private constructor(context: Context) {
         fun clear() {
             currentMetadata = null
             wasRecordingServiceStartIntentSend = false
+            wasDeliberatelySkipped = false
             // We clear the temporary cache to prevent any stale data from being used in future sessions
             temporaryCache.clear()
         }
@@ -162,7 +166,8 @@ class CallSessionManager private constructor(context: Context) {
 
     private val temporaryCache = CallSessionTemporaryCache(appContext)
 
-    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // The handler (review C40): an exception nobody caught here used to crash the app at the start or end of a call.
+    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Main + CallSessionErrors.handler(appContext, "call session"))
 
     /**
      * The number the user dialled, from the last [Intent.ACTION_NEW_OUTGOING_CALL], and when it arrived
@@ -260,6 +265,7 @@ class CallSessionManager private constructor(context: Context) {
             if (session.isSessionActive) {
                 AppLogger.d(TAG, "Phone state is now idle (call ended). Sending stop INTENT for ${session.currentMetadata?.direction} call to RecordingForegroundService.")
                 sendServiceCommand(RecordingForegroundService.ACTION_STOP_RECORDING)
+                if (session.wasDeliberatelySkipped) noteSkippedCallSeen()
                 session.clear()
             }
             return
@@ -419,11 +425,22 @@ class CallSessionManager private constructor(context: Context) {
             }
 
             RecordingPolicy.CarrierAction.OFFER -> {
+                session.wasDeliberatelySkipped = ExcludedCallPolicy.isDeliberateSkip(RecordingPolicy.CarrierAction.OFFER)
                 AppLogger.i(TAG, "Sending standby INTENT for ${sessionMetadata.direction} call to RecordingForegroundService.")
                 sendServiceCommand(RecordingForegroundService.ACTION_STANDBY, sessionMetadata)
             }
         }
         session.wasRecordingServiceStartIntentSend = true
+    }
+
+    /**
+     * Review C113: a call the user's settings kept from being recorded (and not recorded by pressing Record either, which
+     * notes it itself) is noted as seen, so the call-log sweep never says "a call was not recorded" for it. Reporting only;
+     * wrapped, so a failure here cannot reach the stop that was just sent.
+     */
+    private fun noteSkippedCallSeen() {
+        runCatching { SetupHealthStore(appContext).observeCall(System.currentTimeMillis()) }
+            .onFailure { AppLogger.w(TAG, "Could not note the skipped call as seen: ${it.message}") }
     }
 
     /**

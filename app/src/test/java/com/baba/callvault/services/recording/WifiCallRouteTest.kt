@@ -26,7 +26,6 @@ class WifiCallRouteTest {
         daemonConnected = true,
         alreadySwitched = false,
         appCallHeld = false,
-        forced = false,
         msSinceCaptureStart = 400,
         isSamsung = true,
     )
@@ -62,7 +61,7 @@ class WifiCallRouteTest {
         // Galaxy Z Fold2 (SM-F976B, Android 17): the far side plays from a native VOIP_RX track inside
         // system_server, which is not a player, so vcPlay=0 for the whole call; voiceNet even says LTE.
         // The only marker is the mode flipping to IN_COMMUNICATION ~0.4 s into a carrier call. The
-        // app-call capture records both sides there (tester, with the forced route, 2026-11-04).
+        // app-call capture records both sides there (tester, with the since-removed forced route, 2026-11-04).
         val d = decide(wifiCall.copy(voiceCallPlayers = 0, inCallSeenFirst = true))
         assertEquals(Route.APP_CALL_MIX, d.route)
         assertEquals(Reason.WIFI_CALL, d.reason)
@@ -85,7 +84,7 @@ class WifiCallRouteTest {
 
     @Test
     fun `without a voice player other makers still only log`() {
-        // OnePlus/Qualcomm Wi-Fi calls run in IN_CALL and record fine on the call source; a forced
+        // OnePlus/Qualcomm Wi-Fi calls run in IN_CALL and record fine on the call source; a
         // switch there loses the far side (measured on the OP9). The Samsung gate keeps them out.
         assertEquals(Reason.NOT_SAMSUNG, decide(wifiCall.copy(voiceCallPlayers = 0, inCallSeenFirst = true, isSamsung = false)).reason)
     }
@@ -126,25 +125,6 @@ class WifiCallRouteTest {
     }
 
     @Test
-    fun `the latch wins over the debug force`() {
-        assertEquals(Route.CALL_SOURCE, decide(wifiCall.copy(alreadySwitched = true, forced = true)).route)
-    }
-
-    @Test
-    fun `the debug force skips the mode and player checks`() {
-        val d = decide(wifiCall.copy(mode = AudioManager.MODE_IN_CALL, voiceCallPlayers = 0, forced = true))
-        assertEquals(WifiCallRoute.Decision(Route.APP_CALL_MIX, Reason.FORCED), d)
-    }
-
-    @Test
-    fun `the debug force still needs a carrier call, app calls on and a daemon`() {
-        val forced = wifiCall.copy(mode = AudioManager.MODE_IN_CALL, voiceCallPlayers = 0, forced = true)
-        assertEquals(Route.CALL_SOURCE, decide(forced.copy(managedCall = false)).route)
-        assertEquals(Route.CALL_SOURCE, decide(forced.copy(voipArmed = false)).route)
-        assertEquals(Route.CALL_SOURCE, decide(forced.copy(daemonConnected = false)).route)
-    }
-
-    @Test
     fun `full truth table switches only on a ready Samsung carrier call in IN_COMMUNICATION`() {
         val bools = listOf(false, true)
         val modes = listOf(AudioManager.MODE_NORMAL, AudioManager.MODE_IN_CALL, AudioManager.MODE_IN_COMMUNICATION)
@@ -152,7 +132,7 @@ class WifiCallRouteTest {
         for (mode in modes) for (managed in bools) for (players in listOf(0, 2)) for (armed in bools)
             for (daemon in bools) for (switched in bools) for (held in bools) for (seen in bools) {
                 val d = decide(
-                    WifiCallRoute.Inputs(mode, managed, players, armed, daemon, switched, held, forced = false,
+                    WifiCallRoute.Inputs(mode, managed, players, armed, daemon, switched, held,
                         msSinceCaptureStart = 400, isSamsung = true, inCallSeenFirst = seen)
                 )
                 if (d.route == Route.APP_CALL_MIX) {
@@ -178,12 +158,6 @@ class WifiCallRouteTest {
     }
 
     @Test
-    fun `the debug force is bound by the window too`() {
-        val d = decide(wifiCall.copy(forced = true, msSinceCaptureStart = WifiCallRoute.SWITCH_WINDOW_MS + 1))
-        assertEquals(Reason.WINDOW_PASSED, d.reason)
-    }
-
-    @Test
     fun `other makers only log what would have happened`() {
         assertEquals(WifiCallRoute.Decision(Route.CALL_SOURCE, Reason.NOT_SAMSUNG), decide(wifiCall.copy(isSamsung = false)))
     }
@@ -193,11 +167,6 @@ class WifiCallRouteTest {
         assertEquals(Reason.MODE_NOT_IN_COMMUNICATION,
             decide(wifiCall.copy(isSamsung = false, mode = AudioManager.MODE_IN_CALL)).reason)
         assertEquals(Reason.APP_CALLS_OFF, decide(wifiCall.copy(isSamsung = false, voipArmed = false)).reason)
-    }
-
-    @Test
-    fun `the debug force works on any maker`() {
-        assertEquals(Route.APP_CALL_MIX, decide(wifiCall.copy(isSamsung = false, forced = true)).route)
     }
 
     @Test

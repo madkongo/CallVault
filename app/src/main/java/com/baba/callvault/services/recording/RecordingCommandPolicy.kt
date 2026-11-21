@@ -54,4 +54,13 @@ object RecordingCommandPolicy {
 
         else -> if (hasCall) Handling.HANDLE_ONLY else Handling.END_ORPHAN
     }
+
+    /**
+     * Whether a START / MANUAL_START is a repeat of one already under way (review C86). [isStarting] is the Starting
+     * state: the first start is still opening the recorder, which can take seconds, and a second one would run a second
+     * session. Not a repeat once a STOP has been asked ([stopRequested]): that start is being aborted, and a start that
+     * follows it belongs to the next call, which must not be dropped.
+     */
+    fun isDuplicateStart(hasSession: Boolean, isCurrentlyRecording: Boolean, isStarting: Boolean, stopRequested: Boolean): Boolean =
+        hasSession || isCurrentlyRecording || (isStarting && !stopRequested)
 }

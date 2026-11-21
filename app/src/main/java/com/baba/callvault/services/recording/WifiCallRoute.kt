@@ -42,7 +42,6 @@ object WifiCallRoute {
 
     enum class Reason {
         WIFI_CALL,
-        FORCED,
         ALREADY_SWITCHED,
         NOT_MANAGED,
         WINDOW_PASSED,
@@ -71,8 +70,6 @@ object WifiCallRoute {
         val alreadySwitched: Boolean,
         /** An app call is held open behind this phone call; the daemon is busy with it. */
         val appCallHeld: Boolean,
-        /** Debug switch: skip the mode and maker checks. */
-        val forced: Boolean,
         /** Time since the carrier capture started; 0 at START. */
         val msSinceCaptureStart: Long,
         val isSamsung: Boolean,
@@ -90,17 +87,17 @@ object WifiCallRoute {
         // from a native track inside system_server that is never listed as a player (vcPlay=0 all call),
         // yet the app-call capture records both sides there. The S24/S25 do list one; both now switch.
         // voiceCallPlayers stays an input for the log line only.
-        if (!i.forced && i.mode != AudioManager.MODE_IN_COMMUNICATION) return stay(Reason.MODE_NOT_IN_COMMUNICATION)
+        if (i.mode != AudioManager.MODE_IN_COMMUNICATION) return stay(Reason.MODE_NOT_IN_COMMUNICATION)
         // Without a player, the mode must have FLIPPED: IN_CALL first, then IN_COMMUNICATION, as the Fold2's
         // Wi-Fi calls do (~0.6 s in). An app call that is up but not recorded (ignored caller, unanswered
         // "Ask me") holds IN_COMMUNICATION from before the phone call; switching then would cost the phone
         // call its far side. Review 2026-11-08, HIGH-2.
-        if (!i.forced && i.voiceCallPlayers < 1 && !i.inCallSeenFirst) return stay(Reason.NO_IN_CALL_BEFORE)
+        if (i.voiceCallPlayers < 1 && !i.inCallSeenFirst) return stay(Reason.NO_IN_CALL_BEFORE)
         if (i.appCallHeld) return stay(Reason.APP_CALL_HELD)
         if (!i.voipArmed) return stay(Reason.APP_CALLS_OFF)
         if (!i.daemonConnected) return stay(Reason.DAEMON_DOWN)
-        if (!i.forced && !i.isSamsung) return stay(Reason.NOT_SAMSUNG)
-        return Decision(Route.APP_CALL_MIX, if (i.forced) Reason.FORCED else Reason.WIFI_CALL)
+        if (!i.isSamsung) return stay(Reason.NOT_SAMSUNG)
+        return Decision(Route.APP_CALL_MIX, Reason.WIFI_CALL)
     }
 
     /** A decision and what it was made from, as logged. */
@@ -112,7 +109,6 @@ object WifiCallRoute {
     fun snapshot(
         context: Context,
         alreadySwitched: Boolean,
-        forced: Boolean,
         voipEnabled: Boolean,
         msSinceCaptureStart: Long,
     ): Pair<Inputs, String> {
@@ -126,7 +122,6 @@ object WifiCallRoute {
             daemonConnected = RecorderConnection.isConnected,
             alreadySwitched = alreadySwitched,
             appCallHeld = VoipRecordingCoordinator.isRecording,
-            forced = forced,
             msSinceCaptureStart = msSinceCaptureStart,
             isSamsung = Build.MANUFACTURER.equals("samsung", ignoreCase = true),
         )

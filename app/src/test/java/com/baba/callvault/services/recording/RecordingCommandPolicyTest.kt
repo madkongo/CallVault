@@ -70,4 +70,31 @@ class RecordingCommandPolicyTest {
             null,
         ).forEach { action -> assertEquals("$action", Handling.END_ORPHAN, handling(action, hasCall = false)) }
     }
+
+    // ── C86: a second start while the first is still Starting ──────────────────────────
+
+    @Test
+    fun a_second_start_while_the_first_is_still_starting_is_a_duplicate() {
+        assertEquals(true, RecordingCommandPolicy.isDuplicateStart(
+            hasSession = false, isCurrentlyRecording = false, isStarting = true, stopRequested = false))
+    }
+
+    @Test
+    fun a_start_after_a_stop_is_the_next_call_and_is_never_dropped() {
+        // The first start is being aborted by the STOP; the START that follows belongs to the next call.
+        assertEquals(false, RecordingCommandPolicy.isDuplicateStart(
+            hasSession = false, isCurrentlyRecording = false, isStarting = true, stopRequested = true))
+    }
+
+    @Test
+    fun a_start_with_nothing_under_way_is_not_a_duplicate() {
+        assertEquals(false, RecordingCommandPolicy.isDuplicateStart(
+            hasSession = false, isCurrentlyRecording = false, isStarting = false, stopRequested = false))
+    }
+
+    @Test
+    fun a_start_over_a_session_or_a_live_recording_is_still_a_duplicate() {
+        assertEquals(true, RecordingCommandPolicy.isDuplicateStart(true, false, false, false))
+        assertEquals(true, RecordingCommandPolicy.isDuplicateStart(false, true, false, false))
+    }
 }
