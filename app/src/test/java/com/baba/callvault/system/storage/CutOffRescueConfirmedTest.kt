@@ -101,16 +101,65 @@ class CutOffRescueConfirmedTest {
     }
 
     @Test
-    fun `another fresh staged file still waits for the call to be over while a stopped one is published`() {
+    fun `another fresh staged file still waits for quiet while a stopped one is published`() {
         val stopped = stage("stopped", ageMs = 2 * guardMs, stop = OrphanStop.CALL_ENDED)
-        val other = stage("other", ageMs = CutOffRescuePolicy.QUIET_MS + 60_000L, stop = OrphanStop.NONE)
-        (context.getSystemService(AudioManager::class.java)).mode = AudioManager.MODE_IN_CALL // another call is up
+        val other = stage("other", ageMs = 10_000L, stop = OrphanStop.NONE)
 
         run()
 
         assertEquals(listOf("stopped.ogg"), published.toList())
         assertFalse(stopped.exists())
-        assertTrue("an unmarked file is untouched while a call is up", other.exists())
+        assertTrue("an unmarked file that is not quiet yet is untouched", other.exists())
+    }
+
+    @Test
+    fun `no marked file is published, handed off or announced while a call is up`() {
+        val handOffs = mutableListOf<String>()
+        CutOffRescueWorker.handOffs = { _, name, _, _ -> handOffs += name }
+        val full = stage("full2", ageMs = 2 * guardMs, stop = OrphanStop.CALL_ENDED)
+        (context.getSystemService(AudioManager::class.java)).mode = AudioManager.MODE_IN_CALL
+
+        run()
+
+        assertTrue(published.isEmpty() && handOffs.isEmpty())
+        assertTrue(full.exists())
+    }
+
+    private fun workStates(name: String) =
+        androidx.work.WorkManager.getInstance(context).getWorkInfosForUniqueWork(name).get().map { it.state }
+
+    private fun markedWaitingFile() = stage("busy", ageMs = 2 * guardMs, stop = OrphanStop.CALL_ENDED).also {
+        (context.getSystemService(AudioManager::class.java)).mode = AudioManager.MODE_IN_CALL
+    }
+
+    @Test
+    fun `an ordinary quiet-wait run never restarts the 15 s chain for a marked file that still waits`() {
+        androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        markedWaitingFile()
+
+        run() // no attempt in its input: the ordinary request
+
+        assertTrue("no confirmed chain", workStates("cut_off_rescue_confirmed").isEmpty())
+        assertEquals(1, workStates("cut_off_rescue").size)
+    }
+
+    @Test
+    fun `a confirmed run re-queues itself, and after the cap hands over to the ordinary request once`() {
+        androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        markedWaitingFile()
+        val attempt = { n: Int -> androidx.work.Data.Builder().putInt("attempt", n).build() }
+
+        runBlocking { TestListenableWorkerBuilder<CutOffRescueWorker>(context).setInputData(attempt(0)).build().doWork() }
+        assertEquals(1, workStates("cut_off_rescue_confirmed").size)
+        assertTrue(workStates("cut_off_rescue").isEmpty())
+
+        androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        runBlocking {
+            TestListenableWorkerBuilder<CutOffRescueWorker>(context)
+                .setInputData(attempt(CutOffRescuePolicy.CONFIRMED_MAX_RECHECKS - 1)).build().doWork()
+        }
+        assertTrue("the chain ends at the cap", workStates("cut_off_rescue_confirmed").isEmpty())
+        assertEquals(1, workStates("cut_off_rescue").size)
     }
 
     @Test

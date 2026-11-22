@@ -74,6 +74,8 @@ class OrphanRecorderSessionTest {
         val rescuedNow = mutableListOf<File>()
         override fun orphanStagingFile(exclude: File?): File? = stagingFile
         override fun scheduleRescueNow(file: File) { rescuedNow += file }
+        var laterCall: Boolean? = false
+        override fun callLoggedAfter(sinceMillis: Long): Boolean? = laterCall
         val marks = mutableListOf<Pair<File, Boolean>>()
         var markWorks = true
         override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean { marks += file to callEnded; return markWorks }
@@ -427,6 +429,20 @@ class OrphanRecorderSessionTest {
         OrphanRecorderSession.resolve(recorder, env, "call start, /x")
 
         assertEquals(listOf(File("/staging/call1.ogg") to false), env.marks)
+    }
+
+    @Test
+    fun `a later call in the call log downgrades saved-in-full, since the file may span two calls`() {
+        listOf<Boolean?>(true, null).forEach { later ->
+            val recorder = FakeRecorder().apply { start("call1") }
+            val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 1)
+                .apply { stagingFile = File("/staging/call1.ogg"); laterCall = later }
+
+            OrphanRecorderSession.resolve(recorder, env, "app start")
+
+            assertEquals("later=$later", listOf(File("/staging/call1.ogg") to false), env.marks)
+            assertTrue(env.lines.any { it.contains("not marked saved-in-full") })
+        }
     }
 
     @Test

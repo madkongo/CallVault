@@ -49,6 +49,9 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
     override suspend fun doWork(): Result {
         inputData.getString(KEY_OBSERVE_NAME)?.let { return retryObserve(it) }
         val requestedPath = inputData.getString(KEY_CONFIRMED_FILE)
+        // Only a request made by scheduleConfirmed carries KEY_ATTEMPT. The ordinary quiet-wait request does not, and must
+        // never restart the 15 s chain (that made an endless cycle through a long next call).
+        val confirmedRun = inputData.keyValueMap.containsKey(KEY_ATTEMPT)
         val attempt = inputData.getInt(KEY_ATTEMPT, 0)
         // N37: an app idle in the rare or restricted bucket can lose network, loopback included. Say which bucket the
         // job ran in, so a report of a rescue that could not reach the recorder host can be read against it.
@@ -76,7 +79,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         var waiting = false
         var markedWaiting = false
         staged.forEach { file ->
-            val result = rescue(file, callActive)
+            val result = rescue(file, callActive, logDeferral = confirmedRun && attempt == 0)
             if (result.decision == RescueDecision.WAIT) if (result.marked) markedWaiting = true else waiting = true
             // Outside the lock: the library entry, Drive copy and transcription may be slow and need no exclusion.
             result.published?.let { p -> afterPublished(applicationContext, p.fileName, p.uri, p.mimeType, p.bytes, p.startedAt, p.cutAt, p.savedInFull) }
@@ -84,11 +87,13 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         // Something may still be in use; look again once it has had time to go quiet.
         if (waiting) schedule(applicationContext)
         if (markedWaiting) {
-            if (CutOffRescuePolicy.handOverToQuietWait(attempt)) {
-                CallEndLog.record(applicationContext, "cut-off rescue: a stopped recording still looks busy after ${attempt + 1} re-checks; the ordinary quiet-wait rescue takes over")
-                schedule(applicationContext)
-            } else {
-                scheduleConfirmed(applicationContext, null, attempt + 1)
+            when {
+                !confirmedRun -> schedule(applicationContext) // an ordinary run only ever queues the ordinary request
+                CutOffRescuePolicy.handOverToQuietWait(attempt) -> {
+                    CallEndLog.record(applicationContext, "cut-off rescue: a stopped recording still looks busy after ${attempt + 1} re-checks; the ordinary quiet-wait rescue takes over")
+                    schedule(applicationContext)
+                }
+                else -> scheduleConfirmed(applicationContext, null, attempt + 1)
             }
         }
         return Result.success()
@@ -124,19 +129,19 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
      * Check, publish and delete of one file, one run at a time: the instant request and the quiet-wait one may run side
      * by side and the same file must never be published twice. Only this step is locked, never the hand-offs.
      */
-    private suspend fun rescue(file: File, callActive: Boolean): RescueResult {
+    private suspend fun rescue(file: File, callActive: Boolean, logDeferral: Boolean): RescueResult {
         if (!runLock.tryLock()) {
             CallEndLog.record(applicationContext, "cut-off rescue: waiting for another rescue run to finish with ${CallEndLog.safeName(file.name)}")
             runLock.lock()
         }
         try {
-            return rescueLocked(file, callActive)
+            return rescueLocked(file, callActive, logDeferral)
         } finally {
             runLock.unlock()
         }
     }
 
-    private suspend fun rescueLocked(file: File, callActive: Boolean): RescueResult {
+    private suspend fun rescueLocked(file: File, callActive: Boolean, logDeferral: Boolean): RescueResult {
         if (!file.exists()) return RescueResult(RescueDecision.DISCARD_EMPTY, marked = false) // published by the other run
         val noteFile = StagingNote.fileFor(file)
         val note = noteFile.takeIf { it.exists() }?.let { runCatching { StagingNote.decode(it.readText()) }.getOrNull() }
@@ -150,7 +155,6 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             callActive = callActive,
             ownedByLiveRecording = owned,
             confirmedStopped = marked,
-            stopProvesCallOver = note?.orphanStop == OrphanStop.CALL_ENDED,
         )
         var published: Published? = null
         when (decision) {
@@ -160,10 +164,14 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                     if (owned) "${file.name} belongs to a recording still running here (paused, or a call with no call mode); leaving it"
                     else "${file.name} may still be in use; looking again later",
                 )
-                if (marked) CallEndLog.record(
+                // Once per confirmed chain: every re-check logging it would push a live call's lines out of the log.
+                if (marked && logDeferral) CallEndLog.record(
                     applicationContext,
-                    "cut-off rescue: the stopped recording ${CallEndLog.safeName(file.name)} is deferred " +
-                        (if (owned) "because a live recording here owns it" else "until it has been quiet ${CutOffRescuePolicy.CONFIRMED_QUIET_MS / 1000} s (quiet ${ageMs / 1000} s so far)"),
+                    "cut-off rescue: the stopped recording ${CallEndLog.safeName(file.name)} is deferred " + when {
+                        owned -> "because a live recording here owns it"
+                        callActive -> "because a call is up"
+                        else -> "until it has been quiet ${CutOffRescuePolicy.CONFIRMED_QUIET_MS / 1000} s (quiet ${ageMs / 1000} s so far)"
+                    },
                 )
             }
             RescueDecision.DISCARD_EMPTY -> {
@@ -311,7 +319,8 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                         if (completeCall) "; saved in full, so the status card gets no update for it yet" else "",
                 )
                 // The call log may lag the call's end: look again a few times (saved in full only; the cut-off path is as before).
-                if (completeCall) scheduleObserve(context, fileName, startedAt, cutAt, 1)
+                // Not for an old file (a rescue long after its call): log lag is minutes, a re-check could not match it.
+                if (completeCall && System.currentTimeMillis() - cutAt <= OBSERVE_MAX_AGE_MS) scheduleObserve(context, fileName, startedAt, cutAt, 1)
             }
             val callEndedAt = call?.let { it.startedAt + it.durationSeconds * 1_000L }
             runCatching {
@@ -334,6 +343,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         private const val KEY_OBSERVE_CUT = "observe_cut"
         private const val OBSERVE_MAX_ATTEMPTS = 3
         private const val OBSERVE_RETRY_MS = 2 * 60_000L
+        private const val OBSERVE_MAX_AGE_MS = 30 * 60_000L
         private const val WORK_NAME_CONFIRMED = "cut_off_rescue_confirmed"
         private const val KEY_CONFIRMED_FILE = "confirmed_file"
         private val runLock = Mutex()
@@ -365,6 +375,8 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                 builder.setInputData(data.build())
                 WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME_CONFIRMED, ExistingWorkPolicy.APPEND_OR_REPLACE, builder.build())
             }.onFailure {
+                // Enqueue failures are mostly asynchronous (they never reach here); the stop path has already queued the
+                // quiet-wait run, so this synchronous fallback is only a second line of defence. Kept simple on purpose.
                 CallEndLog.record(context, "cut-off rescue: could not queue the instant rescue ${CallEndLog.describe(it)}; the ordinary quiet-wait rescue is queued instead")
                 AppLogger.w(TAG, "Could not schedule the instant rescue: ${it.message}")
                 schedule(context)

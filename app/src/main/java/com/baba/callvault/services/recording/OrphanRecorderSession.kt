@@ -85,6 +85,11 @@ object OrphanRecorderSession {
         fun markOrphanStopped(file: File, callEnded: Boolean): Boolean = false
         /** Queue the short-guard rescue of the marked [file]: published once it has been quiet for a few seconds. */
         fun scheduleRescueNow(file: File) = scheduleRescue()
+        /**
+         * Whether the call log has a call that began after [sinceMillis] (an orphan's start plus the ring slack), i.e.
+         * another call the file may span. Null when the log cannot be read. Used only to downgrade a "saved in full".
+         */
+        fun callLoggedAfter(sinceMillis: Long): Boolean? = null
         fun record(line: String)
     }
 
@@ -137,7 +142,17 @@ object OrphanRecorderSession {
                     if (stagingFile != null) {
                         // Evidence, not the trigger's name: no call at all now, and the orphan's call known to be over
                         // (a call-free moment after it started). A new call being up (N4, ADOPT spans) leaves it STOPPED.
-                        val callEnded = !inCall && ended
+                        var callEnded = !inCall && ended
+                        // Downgrade only (it can never cut a live call): a call logged after the orphan began means the file
+                        // may span two calls (call B's start went unseen); then it is not "the whole call". Unreadable log: same.
+                        if (callEnded && startedAt != null) {
+                            val other = env.callLoggedAfter(startedAt + OrphanSessionPolicy.SAME_CALL_LOG_SLACK_MS)
+                            if (other != false) {
+                                callEnded = false
+                                env.record("orphan session [$trigger]: not marked saved-in-full, " +
+                                    if (other == true) "a later call is in the call log (the file may span two calls)" else "the call log could not be read")
+                            }
+                        }
                         if (env.markOrphanStopped(stagingFile, callEnded)) {
                             env.record("orphan session [$trigger]: instant rescue queued for ${CallEndLog.safeName(stagingFile.name)} (savedInFull=$callEnded)")
                             env.scheduleRescueNow(stagingFile)
@@ -309,6 +324,11 @@ object OrphanRecorderSession {
             }
             if (why != null) record("orphan session: no instant rescue, $why; the quiet-wait rescue covers it")
             return if (why == null) file else null
+        }
+
+        override fun callLoggedAfter(sinceMillis: Long): Boolean? {
+            if (!com.baba.callvault.system.permissions.PermissionChecks.hasCallLogPermission(context)) return null
+            return runCatching { com.baba.callvault.data.health.CallLogReader.entriesSince(context, sinceMillis).isNotEmpty() }.getOrNull()
         }
 
         override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean =

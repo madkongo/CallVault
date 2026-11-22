@@ -139,11 +139,9 @@ class CutOffRescueTest {
         callActive: Boolean = false,
         ownedByLiveRecording: Boolean = false,
         confirmedStopped: Boolean = false,
-        stopProvesCallOver: Boolean = false,
     ) = CutOffRescuePolicy.decide(
         hasNote = hasNote, sizeBytes = sizeBytes, ageMs = ageMs, callActive = callActive,
         ownedByLiveRecording = ownedByLiveRecording, confirmedStopped = confirmedStopped,
-        stopProvesCallOver = stopProvesCallOver,
     )
 
     // A file the recorder confirmed stopped skips the 90 s wait and the call-up check, but not a short quiet guard:
@@ -151,14 +149,15 @@ class CutOffRescueTest {
     private val guard = CutOffRescuePolicy.CONFIRMED_QUIET_MS
 
     @Test
-    fun `a confirmed-stopped file is saved once it has been quiet for the short guard, even with another call up when its stop proved its call over`() {
-        assertEquals(RescueDecision.SAVE_NAMED, decide(ageMs = guard, callActive = true, confirmedStopped = true, stopProvesCallOver = true))
+    fun `a confirmed-stopped file is saved once it has been quiet for the short guard, and only when no call is up`() {
+        assertEquals(RescueDecision.SAVE_NAMED, decide(ageMs = guard, callActive = false, confirmedStopped = true))
+        assertEquals(RescueDecision.WAIT, decide(ageMs = guard, callActive = true, confirmedStopped = true))
     }
 
     @Test
     fun `a stopped file whose call end is not proven waits for the call to be over, like any other`() {
-        assertEquals(RescueDecision.WAIT, decide(ageMs = 10 * guard, callActive = true, confirmedStopped = true, stopProvesCallOver = false))
-        assertEquals(RescueDecision.SAVE_NAMED, decide(ageMs = guard, callActive = false, confirmedStopped = true, stopProvesCallOver = false))
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 10 * guard, callActive = true, confirmedStopped = true))
+        assertEquals(RescueDecision.SAVE_NAMED, decide(ageMs = guard, callActive = false, confirmedStopped = true))
     }
 
     @Test

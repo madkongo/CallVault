@@ -59,11 +59,9 @@ object CutOffRescuePolicy {
     /**
      * @param ownedByLiveRecording a recording in this process still owns the file ([LiveStagingFiles]): a paused
      *   recording is quiet for as long as the pause lasts, and a LINE call shows no call mode (review C12).
-     * @param stopProvesCallOver the stop came at a moment with no call at all, after the file's own call ended
-     *   ([OrphanStop.CALL_ENDED]): a call that is up now is another one, and does not hold this file back.
      * @param confirmedStopped the recorder was asked to stop this very file and confirmed it no longer records
-     *   ([com.baba.callvault.services.recording.OrphanRecorderSession]). The 90 s quiet wait and the call-up check,
-     *   which only exist to guess that, do not apply; the short [CONFIRMED_QUIET_MS] does. A live recording here wins.
+     *   ([com.baba.callvault.services.recording.OrphanRecorderSession]). The 90 s quiet wait,
+     *   which only exists to guess that, does not apply; the short [CONFIRMED_QUIET_MS] does. A live recording here wins.
      */
     fun decide(
         hasNote: Boolean,
@@ -72,12 +70,10 @@ object CutOffRescuePolicy {
         callActive: Boolean,
         ownedByLiveRecording: Boolean = false,
         confirmedStopped: Boolean = false,
-        stopProvesCallOver: Boolean = false,
     ): RescueDecision = when {
         ownedByLiveRecording -> RescueDecision.WAIT
-        // A stop that only says "the recorder stopped" (the next call's start, N4) leaves another call possibly up:
-        // publishing would start Whisper and the Drive copy under it, so the call-up check stays for it.
-        callActive && !(confirmedStopped && stopProvesCallOver) -> RescueDecision.WAIT
+        // A call that is up holds even a stopped file back: publishing would start Whisper and the Drive copy under it.
+        callActive -> RescueDecision.WAIT
         !confirmedStopped && ageMs < QUIET_MS -> RescueDecision.WAIT
         // The recorder answers "not recording" before the muxer's trailer is written (stopRecording returns after
         // its 6 s wait even if teardown still runs). A short quiet guard keeps a truncated copy from being published.
