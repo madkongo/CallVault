@@ -323,6 +323,38 @@ class LogRedactionTest {
         assertEquals("Number: [PHONE_REDACTED]", redact("Number: 0544557278"))
     }
 
+    // N12: a number named by its key (initialDelayMs=3600000) or carrying a short unit (4096000B) is a measurement.
+
+    @Test
+    fun `numbers after a measurement key are kept`() {
+        for (line in listOf(
+            "SyncScheduler enqueued initialDelayMs=3600000",
+            "size=12345678 name x", "bytes=1234567", "elapsed=1234567", "pid=1234567", "version=2050200",
+            "uid: 1234567", "timeoutMs=1200000", "durationMs=9876543", "frameCount=4685000", "length=1234567",
+        )) assertEquals(line, redact(line))
+    }
+
+    @Test
+    fun `numbers with an attached B or s unit are kept`() {
+        assertEquals("copy 4096000B total", redact("copy 4096000B total"))
+        assertEquals("took 1234567s", redact("took 1234567s"))
+    }
+
+    @Test
+    fun `a real number is still redacted next to key-like words`() {
+        assertEquals("number=[PHONE_REDACTED]", redact("number=0544557278"))
+        assertEquals("phone: [PHONE_REDACTED]", redact("phone: 0544557278"))
+        assertEquals("from=[PHONE_REDACTED] size=1234567", redact("from=+972544557278 size=1234567"))
+        assertEquals("Called [PHONE_REDACTED] then", redact("Called +972 54-455-7278 then"))
+        assertEquals("[PHONE_REDACTED] sent", redact("0544557278 sent"))
+    }
+
+    @Test
+    fun `a number that only starts with a measurement word is still redacted`() {
+        assertEquals("sizeable=[PHONE_REDACTED]", redact("sizeable=0544557278"))
+        assertEquals("caller_size_of=[PHONE_REDACTED]", redact("caller_size_of=0544557278"))
+    }
+
     // -------- Names that come BEFORE the date (the contact-first presets added in 2.4.5)
     //
     // "{contact_name}_{phone_number}_{date}" and its siblings put the person first. The rule used to
