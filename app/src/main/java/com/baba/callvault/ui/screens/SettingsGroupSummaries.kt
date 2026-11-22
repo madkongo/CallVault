@@ -43,6 +43,13 @@ fun countSummary(switches: List<SwitchSummaryInput>): CountSummary {
     return CountSummary(on = usable.count { it.isOn }, total = usable.size)
 }
 
+/**
+ * The "Stay paired" switch as the Connection count sees it: shown (so counted) in standalone mode, and in
+ * Shizuku mode only when CallVault set it, matching [KeepPairedToggle].
+ */
+fun keepPairedSummaryInput(isOn: Boolean, usesEmbeddedAdb: Boolean, isSetByCallVault: Boolean) =
+    SwitchSummaryInput(isOn, isAvailable = usesEmbeddedAdb || isSetByCallVault)
+
 /** Joins the non-blank parts of a summary into one line. */
 fun joinSummary(parts: List<String?>): String =
     parts.filterNot { it.isNullOrBlank() }.joinToString(SUMMARY_SEPARATOR)

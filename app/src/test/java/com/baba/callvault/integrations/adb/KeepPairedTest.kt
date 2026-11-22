@@ -273,4 +273,54 @@ class KeepPairedTest {
         assertEquals(777L, memory.storedOriginal)
         assertTrue(logs.any { "Shizuku" in it })
     }
+
+    // ---- log lines survive the phone-number redactor ----
+
+    private fun assertSurvivesRedaction() {
+        assertTrue(logs.isNotEmpty())
+        logs.forEach {
+            val redacted = com.baba.callvault.utils.LogRedaction.redact(it, "salt")
+            assertFalse("redactor ate a value in: $it -> $redacted", "[PHONE_REDACTED]" in redacted)
+        }
+    }
+
+    @Test
+    fun `restore log keeps the millisecond values after redaction`() {
+        val limit = FakeLimit(0L)
+        val memory = FakeMemory(KeepPairedAnswer.STAY_PAIRED, storedOriginal = KeepPaired.ANDROID_DEFAULT_MS)
+        KeepPaired.restore(limit, memory, log)
+        assertSurvivesRedaction()
+        assertTrue(logs.any { "604800000 ms" in it && "now reads 604800000 ms" in it })
+    }
+
+    @Test
+    fun `every stay paired log keeps its values after redaction`() {
+        val ok = FakeLimit(KeepPaired.ANDROID_DEFAULT_MS)
+        KeepPaired.stayPaired(ok, FakeMemory(), log)
+        val refused = FakeLimit(KeepPaired.ANDROID_DEFAULT_MS, writable = false)
+        KeepPaired.stayPaired(refused, FakeMemory(), log)
+        assertSurvivesRedaction()
+    }
+
+    @Test
+    fun `restore changed elsewhere and left as is logs keep values after redaction`() {
+        val elsewhere = FakeLimit(604_800_000L)
+        KeepPaired.restore(elsewhere, FakeMemory(KeepPairedAnswer.STAY_PAIRED, storedOriginal = 777L), log)
+        KeepPaired.logLeftAsIs(FakeLimit(604_800_000L), FakeMemory(), log)
+        assertSurvivesRedaction()
+        assertTrue(logs.any { "reads 604800000 ms" in it })
+    }
+
+    // ---- confirm only when the limit still reads 0 ----
+
+    @Test
+    fun `restore needs a confirm only while the setting still reads zero`() {
+        assertTrue(KeepPaired.needsRestoreConfirm(FakeLimit(0L)))
+        assertFalse(KeepPaired.needsRestoreConfirm(FakeLimit(604_800_000L)))
+    }
+
+    @Test
+    fun `restore confirm is kept when the setting cannot be read`() {
+        assertTrue(KeepPaired.needsRestoreConfirm(FakeLimit(null)))
+    }
 }
