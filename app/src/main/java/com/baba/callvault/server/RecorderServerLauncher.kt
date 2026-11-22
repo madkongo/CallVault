@@ -91,6 +91,9 @@ object RecorderServerLauncher {
     private const val KILL_STALE_CMD =
         "p=\$(pgrep -f 'com.baba.callvault.server.Recorder[S]erver' 2>/dev/null); [ -n \"\$p\" ] && kill \$p 2>/dev/null; true"
 
+    /** Same scan as [KILL_STALE_CMD] without the kill: prints the daemon pids, used to tell whether one is running during a call. */
+    private const val LIST_DAEMONS_CMD = "pgrep -f 'com.baba.callvault.server.Recorder[S]erver' 2>/dev/null; true"
+
     /** Drain cap for [killStaleDaemons]; the command isn't backgrounded, so it usually EOFs sooner. */
     private const val KILL_DRAIN_MS = 1500L
 
@@ -242,7 +245,14 @@ object RecorderServerLauncher {
                 return@repeat
             }
 
-            launchOnce(context, apk, n)
+            if (launchOnce(context, apk, n)) {
+                // A daemon is recording the call in progress and was left alone (see launchOnce). Launching another
+                // would put two recorders on the audio input, so stop here; its hand-over may still be on its way.
+                val ok = pollConnected(DaemonReuse.REDELIVERY_GRACE_MS)
+                AppLogger.w(TAG, "Left a running recorder alone during a call; no second one launched; connected=$ok")
+                if (ok) applyWdPolicy(context)
+                return ok
+            }
 
             if (pollConnected(perAttemptMs)) {
                 AppLogger.i(TAG, "Recorder daemon connected on attempt $n; binder available")
@@ -323,19 +333,19 @@ object RecorderServerLauncher {
      * A "Stream closed" on the drain thread is expected (the `&`-backgrounded launcher shell exits at
      * once and the daemon's own stdio is /dev/null), so failures are logged at debug, not error.
      */
-    private fun launchOnce(context: Context, apk: String, attempt: Int) {
+    private fun launchOnce(context: Context, apk: String, attempt: Int): Boolean {
         // A daemon from an earlier attempt (or a slow cold start) may have delivered its binder while this attempt was
         // connecting. Killing "stale" daemons now would kill that one, and the launch below would start a second (C39).
         if (RecorderConnection.isConnected) {
             AppLogger.i(TAG, "Attempt $attempt: the recorder's binder arrived while preparing; not clearing or launching again")
-            return
+            return false
         }
         // Clear any stale/orphaned daemon (e.g. old code surviving a reinstall) before launching fresh,
         // so at most one daemon — matching the installed code — is ever running. Skipped shortly after
         // boot: a reboot already cleared every process, so the scan can only cost time on the
         // latency-critical first post-boot launch.
         if (SystemClock.elapsedRealtime() > RECENT_BOOT_GRACE_MS) {
-            killStaleDaemons(context)
+            if (!clearStaleDaemons(context)) return true
         } else {
             AppLogger.d(TAG, "Recent boot (uptime < ${RECENT_BOOT_GRACE_MS}ms); skipping killStaleDaemons — reboot already cleared any stale daemon")
         }
@@ -367,10 +377,11 @@ object RecorderServerLauncher {
         while (System.currentTimeMillis() < deadline) {
             if (RecorderConnection.isConnected) {
                 AppLogger.d(TAG, "Attempt $attempt: binder arrived during launch; not waiting out keep-alive")
-                return
+                return false
             }
             runCatching { Thread.sleep(POLL_INTERVAL_MS) }
         }
+        return false
     }
 
     /**
@@ -379,17 +390,46 @@ object RecorderServerLauncher {
      * self-exclusion detail. The command is not backgrounded, so the shell EOFs when the scan finishes.
      */
     private fun killStaleDaemons(context: Context) {
-        runCatching {
-            AdbShell.openShell(context, KILL_STALE_CMD).use { shell ->
+        runShell(context, KILL_STALE_CMD)
+    }
+
+    /**
+     * Clears stale daemons before a launch, except one that is recording a call: with a call in progress the daemon
+     * list is read first, and if one is there (or the read failed) nothing is killed and false is returned, so the
+     * caller launches nothing either (see [DaemonReuse.staleAction]). Outside a call this is the old single kill.
+     */
+    private fun clearStaleDaemons(context: Context): Boolean {
+        val inCall = runCatching {
+            DaemonReuse.isCallAudioMode((context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager).mode)
+        }.getOrDefault(false)
+        val running = if (inCall) runShell(context, LIST_DAEMONS_CMD)?.let(DaemonReuse::pgrepFoundDaemon) else null
+        return when (DaemonReuse.staleAction(inCall, running)) {
+            DaemonReuse.StaleAction.SPARE -> {
+                AppLogger.w(TAG, "A call is in progress and a recorder daemon is running (probe=$running): not killing it, not launching another")
+                false
+            }
+            DaemonReuse.StaleAction.LAUNCH -> true
+            DaemonReuse.StaleAction.KILL_THEN_LAUNCH -> { killStaleDaemons(context); true }
+        }
+    }
+
+    /** Runs [command] over the embedded shell and returns what it printed, or null when the shell failed. */
+    private fun runShell(context: Context, command: String): String? {
+        val out = StringBuilder()
+        val failed = runCatching {
+            AdbShell.openShell(context, command).use { shell ->
                 val deadline = System.currentTimeMillis() + KILL_DRAIN_MS
                 shell.openInputStream().use { input ->
                     val buf = ByteArray(128)
                     while (System.currentTimeMillis() < deadline) {
-                        if (input.read(buf) < 0) break
+                        val n = input.read(buf)
+                        if (n < 0) break
+                        out.append(String(buf, 0, n))
                     }
                 }
             }
-        }.onFailure { AppLogger.d(TAG, "killStaleDaemons ended: ${it.message}") }
+        }.onFailure { AppLogger.d(TAG, "shell command ended: ${it.message}") }.isFailure
+        return if (failed && out.isEmpty()) null else out.toString()
     }
 
     /** Polls [RecorderConnection.isConnected] up to [waitMs]. Returns true as soon as connected. */

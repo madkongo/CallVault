@@ -115,9 +115,9 @@ object RecorderConnection {
             AppLogger.i(TAG, "A previous recorder's binder died; the current one is alive - keeping it")
             return
         }
+        if (DaemonReuse.recorderDeathEarned(heldABinder = current != null)) sawRecorderDie = true
         this.service = null
         _connected.value = false
-        sawRecorderDie = true
         runCatching { onDeath?.invoke() }.onFailure { AppLogger.w(TAG, "onDeath hook failed: ${it.message}") }
     }
 

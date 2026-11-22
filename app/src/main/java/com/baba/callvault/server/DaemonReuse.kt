@@ -69,4 +69,34 @@ object DaemonReuse {
         hostApkPath != installedApkPath -> Verdict.STALE_APK
         else -> Verdict.ACCEPT
     }
+
+    /**
+     * Whether a recorder death was seen by THIS process, i.e. we held a binder and it died. The flag it feeds skips
+     * the hand-over wait, so it must not be set by a cleanup that merely found nothing to clean: a restarted app
+     * runs `ShizukuBackend.stop()` in standalone mode, holds no binder, and used to set the flag 15 ms after its
+     * start, which hid the running daemon's hand-over and let the launcher kill a recorder mid-call (2026-11-22).
+     */
+    fun recorderDeathEarned(heldABinder: Boolean): Boolean = heldABinder
+
+    /** What the launcher does about daemons it finds before launching its own. */
+    enum class StaleAction { KILL_THEN_LAUNCH, LAUNCH, SPARE }
+
+    /**
+     * A daemon found while a call is in progress is assumed to be recording it: killing it loses the rest of the
+     * call (the staging file stops growing), and launching a second one beside it would put two recorders on the
+     * audio input. So with a call going and a daemon present (or the probe failed, [daemonRunning] null) the launcher
+     * touches nothing: no kill and no launch. With no call, stale daemons are replaced as always. With a call and
+     * no daemon there is nothing to spare, and the launch is the call's only way to be recorded.
+     */
+    fun staleAction(callInProgress: Boolean, daemonRunning: Boolean?): StaleAction = when {
+        !callInProgress -> StaleAction.KILL_THEN_LAUNCH
+        daemonRunning == false -> StaleAction.LAUNCH
+        else -> StaleAction.SPARE
+    }
+
+    /** AudioManager.MODE_IN_CALL (carrier) and MODE_IN_COMMUNICATION (VoIP): the app-visible truth about a live call. */
+    fun isCallAudioMode(mode: Int): Boolean = mode == 2 || mode == 3
+
+    /** True when `pgrep` printed at least one pid. */
+    fun pgrepFoundDaemon(output: String): Boolean = output.lineSequence().any { line -> line.trim().let { it.isNotEmpty() && it.all(Char::isDigit) } }
 }
