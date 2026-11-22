@@ -165,6 +165,30 @@ class AfterCallSimGateTest {
     }
 
     @Test
+    fun a_row_found_only_through_ring_time_never_skips() = runTest {
+        // Coordinator, after re-review #A: an older row accepted only on the last try may be a previous call.
+        val fake = oneSim(FakeSources(both))
+        fake.byAttempt = { _, ringTime -> if (ringTime) CallSim("2", 1) else null }
+        val outcome = AfterCallSimGate.evaluate(context, carrierName)
+        assertEquals(Reason.RING_TIME_ONLY, outcome.reason)
+        assertFalse(outcome.verdict.skip)
+    }
+
+    @Test
+    fun a_row_found_only_through_ring_time_may_still_confirm_the_chosen_sim() = runTest {
+        val fake = oneSim(FakeSources(both))
+        fake.byAttempt = { _, ringTime -> if (ringTime) CallSim("4", 2) else null }
+        assertEquals(Reason.CHOSEN, AfterCallSimGate.evaluate(context, carrierName).reason)
+    }
+
+    @Test
+    fun a_near_row_on_the_last_try_still_skips_the_other_sim() = runTest {
+        val fake = oneSim(FakeSources(both))
+        fake.byAttempt = { attempt, _ -> if (attempt >= 7) CallSim("2", 1) else null }
+        assertEquals(Reason.OTHER, AfterCallSimGate.evaluate(context, carrierName).reason)
+    }
+
+    @Test
     fun the_choice_is_not_carried_by_a_settings_export() {
         // Review: an imported sub:N would silently pick a different SIM on another phone.
         assertFalse("transcription_after_call_sim" in AppPreferences.EXPORTABLE_KEYS)

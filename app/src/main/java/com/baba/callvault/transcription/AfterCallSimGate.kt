@@ -90,7 +90,7 @@ object AfterCallSimGate {
             .getOrDefault(false)
 
     /** Why the SIM rule transcribed or skipped; logged, and read by tests. */
-    internal enum class Reason { ALL_SIMS, NOT_AFTER_CALL_MODE, CHOSEN_ABSENT, NO_CALL_LOG_PERMISSION, APP_CALL, NO_START_TIME, NO_ROW, ROW_WITHOUT_ACCOUNT, UNRECOGNISED_ACCOUNT, CHOSEN, OTHER }
+    internal enum class Reason { ALL_SIMS, NOT_AFTER_CALL_MODE, CHOSEN_ABSENT, NO_CALL_LOG_PERMISSION, APP_CALL, NO_START_TIME, NO_ROW, ROW_WITHOUT_ACCOUNT, UNRECOGNISED_ACCOUNT, RING_TIME_ONLY, CHOSEN, OTHER }
 
     internal data class Outcome(val verdict: Verdict, val reason: Reason)
 
@@ -113,11 +113,13 @@ object AfterCallSimGate {
         val startedAt = RecordingsRepository.parseName(displayName).startedAtMillis
             ?: return Outcome(Verdict.UNKNOWN, Reason.NO_START_TIME)
         if (!sources.canReadCallLog(context)) return Outcome(Verdict.UNKNOWN, Reason.NO_CALL_LOG_PERMISSION)
-        val call = waitForRow(context, startedAt) ?: return Outcome(Verdict.UNKNOWN, Reason.NO_ROW)
+        val (call, ringTimeOnly) = waitForRow(context, startedAt) ?: return Outcome(Verdict.UNKNOWN, Reason.NO_ROW)
         if (call.accountId == null && call.slot == null) return Outcome(Verdict.UNKNOWN, Reason.ROW_WITHOUT_ACCOUNT)
         if (!SimMatch.recognised(call, cards)) return Outcome(Verdict.UNKNOWN, Reason.UNRECOGNISED_ACCOUNT)
         return when (verdict(choice, cards, call)) {
-            Verdict.OTHER -> Outcome(Verdict.OTHER, Reason.OTHER)
+            // A row found only through the ring-time allowance may be a previous call: it can confirm, never skip.
+            Verdict.OTHER ->
+                if (ringTimeOnly) Outcome(Verdict.UNKNOWN, Reason.RING_TIME_ONLY) else Outcome(Verdict.OTHER, Reason.OTHER)
             else -> Outcome(Verdict.CHOSEN, Reason.CHOSEN)
         }
     }
@@ -134,6 +136,7 @@ object AfterCallSimGate {
             Reason.NO_ROW -> "No call-log row for this call after $ATTEMPTS tries; transcribing (choice=$key)"
             Reason.ROW_WITHOUT_ACCOUNT -> "Call-log row has no phone account; transcribing (choice=$key)"
             Reason.UNRECOGNISED_ACCOUNT -> "Call-log account matches no SIM in this phone; transcribing (choice=$key)"
+            Reason.RING_TIME_ONLY -> "Only an older ring-time row found; not skipping on a guess, transcribing (choice=$key)"
             Reason.ALL_SIMS, Reason.NOT_AFTER_CALL_MODE -> return
         }
         AppLogger.i(TAG, line)
@@ -153,13 +156,17 @@ object AfterCallSimGate {
         }
     }
 
-    /** This call's call-log account, waiting briefly while Android writes the row. Null when it never appears. */
-    private suspend fun waitForRow(context: Context, startedAt: Long): CallSim? {
+    /**
+     * This call's call-log account, waiting briefly while Android writes the row, and whether it was found only
+     * through the ring-time allowance (start more than 25 s before the recording). Every try asks for a row near the
+     * recording start; only the last also accepts an older ring-time row, because until this call's own row is
+     * written an older row may be a previous call on another SIM (re-review #A). Null when no row is found.
+     */
+    private suspend fun waitForRow(context: Context, startedAt: Long): Pair<CallSim, Boolean>? {
         repeat(ATTEMPTS) { attempt ->
-            // Only the last try accepts a ring-time (older) row: until this call's own row is written, an older row
-            // may be a previous call on another SIM (re-review #A).
-            sources.callAt(context, startedAt, allowRingTime = attempt == ATTEMPTS - 1)?.let { return it }
-            if (attempt < ATTEMPTS - 1) delay(RETRY_MS)
+            sources.callAt(context, startedAt, allowRingTime = false)?.let { return it to false }
+            if (attempt == ATTEMPTS - 1) return sources.callAt(context, startedAt, allowRingTime = true)?.let { it to true }
+            delay(RETRY_MS)
         }
         return null
     }
