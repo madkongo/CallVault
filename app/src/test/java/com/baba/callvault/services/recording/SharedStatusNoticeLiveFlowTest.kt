@@ -47,4 +47,20 @@ class SharedStatusNoticeLiveFlowTest {
         SharedStatusNotice.resetForTest()
         assertEquals(SharedStatusNotice.Live.NONE, SharedStatusNotice.live)
     }
+
+    @Test
+    fun `an active carrier session is recording or paused`() {
+        assertEquals(SharedStatusNotice.Live.RECORDING, SharedStatusNotice.carrierLive(true, false, false))
+        assertEquals(SharedStatusNotice.Live.PAUSED, SharedStatusNotice.carrierLive(true, true, false))
+    }
+
+    @Test
+    fun `a lost recorder or a capture that never started is not live, so the state setter cannot flip it back`() {
+        assertEquals(SharedStatusNotice.Live.NONE, SharedStatusNotice.carrierLive(true, false, true))
+        assertEquals(SharedStatusNotice.Live.NONE, SharedStatusNotice.carrierLive(true, true, true))
+    }
+
+    @Test
+    fun `a session that is not active is not live`() =
+        assertEquals(SharedStatusNotice.Live.NONE, SharedStatusNotice.carrierLive(false, false, false))
 }

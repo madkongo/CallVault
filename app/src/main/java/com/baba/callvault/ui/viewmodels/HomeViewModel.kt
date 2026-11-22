@@ -1308,7 +1308,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             RecordingState.ACTIVE -> Unit
         }
         // A call is being recorded: that is the truth to show, whatever the setup checks below would say.
-        statusForLive(SharedStatusNotice.live)?.let { return it }
+        statusForLive(SharedStatusNotice.live, RecorderConnection.isConnected)?.let { return it }
         // Just turned on and still warming up past the grace: say "Starting up…" honestly rather than
         // claiming Ready. A fast warm-up (~1s) never crosses STARTING_GRACE_MS, so this never flashes for
         // the common case; capped at STARTING_MAX_MS so a long-settled daemon that later drops is left to
@@ -1700,8 +1700,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         ): HomeStatus =
             recorderDown() ?: battery() ?: if (recoveryStuck()) HomeStatus.RECOVERY_STUCK else HomeStatus.READY
 
-        /** The card for a live recording (UI-1), or null when none is running and the normal checks decide. */
-        internal fun statusForLive(live: SharedStatusNotice.Live): HomeStatus? = when (live) {
+        /**
+         * The card for a live recording (UI-1), or null when none is running and the normal checks decide. Only while the
+         * recorder is connected: a recorder that died mid-call must show as down, not as recording.
+         */
+        internal fun statusForLive(live: SharedStatusNotice.Live, recorderConnected: Boolean): HomeStatus? = when {
+            !recorderConnected -> null
+            else -> statusForLiveState(live)
+        }
+
+        private fun statusForLiveState(live: SharedStatusNotice.Live): HomeStatus? = when (live) {
             SharedStatusNotice.Live.NONE -> null
             SharedStatusNotice.Live.RECORDING -> HomeStatus.RECORDING
             SharedStatusNotice.Live.PAUSED -> HomeStatus.RECORDING_PAUSED

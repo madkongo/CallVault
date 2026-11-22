@@ -17,15 +17,21 @@ class HomeStatusRecordingTest {
 
     @Test
     fun `a live recording is the recording status`() =
-        assertEquals(HomeViewModel.HomeStatus.RECORDING, HomeViewModel.statusForLive(SharedStatusNotice.Live.RECORDING))
+        assertEquals(HomeViewModel.HomeStatus.RECORDING, HomeViewModel.statusForLive(SharedStatusNotice.Live.RECORDING, true))
 
     @Test
     fun `a paused recording is the paused status`() =
-        assertEquals(HomeViewModel.HomeStatus.RECORDING_PAUSED, HomeViewModel.statusForLive(SharedStatusNotice.Live.PAUSED))
+        assertEquals(HomeViewModel.HomeStatus.RECORDING_PAUSED, HomeViewModel.statusForLive(SharedStatusNotice.Live.PAUSED, true))
 
     @Test
     fun `no live recording leaves the normal checks to decide, so a down recorder still shows`() =
-        assertNull(HomeViewModel.statusForLive(SharedStatusNotice.Live.NONE))
+        assertNull(HomeViewModel.statusForLive(SharedStatusNotice.Live.NONE, true))
+
+    @Test
+    fun `a recorder that is not connected is never shown as recording`() {
+        assertNull(HomeViewModel.statusForLive(SharedStatusNotice.Live.RECORDING, false))
+        assertNull(HomeViewModel.statusForLive(SharedStatusNotice.Live.PAUSED, false))
+    }
 
     @Test
     fun `the recording status reuses the notification wording`() {

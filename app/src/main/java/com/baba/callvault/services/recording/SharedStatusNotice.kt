@@ -72,6 +72,16 @@ object SharedStatusNotice {
      */
     val liveFlow: StateFlow<Live> get() = liveState
 
+    /**
+     * What the carrier service's state means for Home's card: RECORDING/PAUSED only for an Active session whose recorder
+     * has not been lost and whose capture did start; a lost recorder or a capture that never started is NONE.
+     */
+    fun carrierLive(isActive: Boolean, isPaused: Boolean, recorderLostOrNeverStarted: Boolean): Live = when {
+        !isActive || recorderLostOrNeverStarted -> Live.NONE
+        isPaused -> Live.PAUSED
+        else -> Live.RECORDING
+    }
+
     /** The live state now. */
     val live: Live get() = liveState.value
 
