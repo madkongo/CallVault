@@ -169,6 +169,11 @@ internal object AppStartBinderSender {
                     return
                 }
                 OrphanWatch.Action.SELF_STOP -> {
+                    // The app may have come back during this very tick: never stop a recording it now owns.
+                    if (lastClientCallAt >= diedAt) {
+                        AppLogger.i(TAG, "The app called this daemon just before the self-stop; leaving the recording to it")
+                        return
+                    }
                     AppLogger.i(TAG, "the call ended with no app attached; stopping and finalising the recording myself (audio mode $mode)")
                     runCatching { ctx.stopRecording() }.onFailure { AppLogger.e(TAG, "Self-stop failed: ${it.message}", it) }
                     AppLogger.i(TAG, "Self-stop done; recording=${runCatching { ctx.isRecording() }.getOrDefault(true)}")

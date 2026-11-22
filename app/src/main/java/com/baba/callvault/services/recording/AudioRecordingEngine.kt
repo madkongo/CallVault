@@ -661,6 +661,21 @@ class AudioRecordingEngine {
     }
 
     /**
+     * A running daemon was left alone because it is recording the call in progress and its binder did not come back.
+     * Nothing else may capture this call: no local ADB path and no handoff (a second voice capture drops the user's own
+     * side). Aborts the start (nothing to record here), loudly.
+     */
+    private fun abortIfDaemonSpared(connected: Boolean) {
+        if (connected || !RecorderBackend.recordingDaemonSpared()) return
+        AppLogger.e(TAG, "A recorder daemon is already recording this call and cannot be reached; NOT starting a second capture " +
+            "(no local fallback, no handoff). The daemon's own recording is the call's recording")
+        runCatching { outputPfd?.close() }
+        stagingFile?.let { runCatching { it.delete() } }
+        stagingFile = null
+        throw CancellationException("Recording aborted: a recorder daemon already records this call")
+    }
+
+    /**
      * Persistent-server pipeline: ensure the privileged daemon is running (which also turns Wireless
      * debugging back OFF once connected), then hand it the already-opened SAF output fd + resolved
      * source/codec/bitRate. The daemon owns scrcpy + muxing into [outputPfd]; the engine creates NO
@@ -679,6 +694,7 @@ class AudioRecordingEngine {
     ): Boolean {
         AppLogger.i(TAG, "Ensuring recorder daemon is running")
         val connected = RecorderBackend.ensureRunning(context)
+        abortIfDaemonSpared(connected)
         // ensureServerRunning can block for tens of seconds cold-starting the daemon; the call may have
         // ENDED in the meantime. Abort BEFORE startRecording so we never start capture after the call
         // (the stuck-mic bug). Throw (not return false) so the caller does NOT fall back to the local
@@ -762,6 +778,7 @@ class AudioRecordingEngine {
         val t0 = System.currentTimeMillis()
         val connected = RecorderBackend.ensureRunning(context)
         AppLogger.i(TAG, "Handoff: ensureServerRunning=$connected in ${System.currentTimeMillis() - t0}ms")
+        abortIfDaemonSpared(connected)
         // Same cold-start abort as the daemon path: if the call ended while the daemon was coming up,
         // abort before creating any capture so the mic never turns on after the call (stuck-mic bug).
         if (isCancelled()) {

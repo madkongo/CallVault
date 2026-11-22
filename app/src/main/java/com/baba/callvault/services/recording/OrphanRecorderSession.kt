@@ -234,6 +234,12 @@ object OrphanRecorderSession {
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_SESSION_STAGING, null)
     }.getOrNull()
 
+    /** Whether the staged session's own call is over (read by the daemon launcher before it spares a daemon). */
+    fun sessionCallEnded(context: Context): Boolean = runCatching {
+        val env = AndroidEnvironment(context.applicationContext)
+        OrphanSessionPolicy.orphanCallEnded(env.orphanStartedAt(null), env.lastNoCallAt(), env.liveCallBeganAt())
+    }.getOrDefault(false)
+
     /** The app handed [staging] to the recorder for a session it now owns. */
     fun noteSessionStarted(context: Context, staging: File?, isAppCall: Boolean = false) {
         synchronized(sessionRecordLock) {

@@ -31,15 +31,22 @@ object StaleDaemonClearing {
         /** False once a spare has been withdrawn (see [SpareMemory]). */
         fun spareAllowed(inCall: Boolean?): Boolean
         fun noteSpared()
+
+        /** The staged session belongs to a call that is over (a later call began, or a call-free moment followed it). */
+        fun orphanCallEnded(): Boolean
     }
 
     /** True when the caller may launch a recorder; false when a recording daemon was left alone and nothing may be launched. */
     fun clear(env: Env): Boolean {
         val staging = env.staging()
-        val inCall = env.inCall()
-        if (staging.growing && inCall == null) env.log("call state unreadable; treating a growing session as a call in progress")
+        val callUp = env.inCall()
+        // A call is up, but the daemon's file is an EARLIER call's: sparing it would put this call into that file.
+        val orphanEnded = staging.growing && callUp == true && env.orphanCallEnded()
+        val inCall = if (orphanEnded) false else callUp
+        if (orphanEnded) env.warn("The growing session belongs to a call that is over; a different call is up now")
+        if (staging.growing && callUp == null) env.log("call state unreadable; treating a growing session as a call in progress")
         val probe = if (staging.growing) StaleDaemonPolicy.parseProbe(env.probeOutput()) else StaleDaemonPolicy.Probe.Unknown
-        val facts = "inCall=${inCall ?: "unknown"} staging=${staging.path ?: "none"} (${staging.detail}) hosts=$probe"
+        val facts = "inCall=${callUp ?: "unknown"} orphanCallEnded=$orphanEnded staging=${staging.path ?: "none"} (${staging.detail}) hosts=$probe"
         val action = StaleDaemonPolicy.decide(staging.growing, probe, inCall)
         if (action == StaleDaemonPolicy.Action.SPARE && !env.spareAllowed(inCall)) {
             env.warn("Not sparing the recording daemon any more (its hand-over was refused or never came); killing it, its file may be unfinalised; $facts")

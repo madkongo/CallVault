@@ -42,6 +42,14 @@ object RecorderServerLauncher {
     @Volatile
     internal var launchCaller: String = "unknown"
 
+    /**
+     * True when the last launch found a daemon recording the call in progress and left it alone (see
+     * [clearStaleDaemons]). The caller must then record NOTHING more for that call: no local capture beside it.
+     */
+    @Volatile
+    var lastLaunchSparedDaemon: Boolean = false
+        private set
+
     /** Set when a run really tried to launch the daemon (not when it found it up); read by [RecorderBackend]. */
     @Volatile
     internal var launchedThisRun: Boolean = false
@@ -174,6 +182,7 @@ object RecorderServerLauncher {
         }
 
     private fun ensureServerRunningLocked(context: Context, timeoutMs: Long): Boolean {
+        lastLaunchSparedDaemon = false
         if (RecorderConnection.isConnected) {
             AppLogger.d(TAG, "Recorder daemon already connected; reusing existing binder")
             // On a phone seen pausing the app, skip the advisory USB-default refresh: this is the start of a
@@ -263,7 +272,9 @@ object RecorderServerLauncher {
                 // A daemon is recording the call in progress and was left alone (see clearStaleDaemons). Launching another
                 // would put two recorders on the audio input, so stop here; its hand-over may still be on its way, and
                 // the daemon sends it again when it sees this app's process die while recording.
+                lastLaunchSparedDaemon = true
                 val ok = pollConnected(SPARED_WAIT_MS)
+                if (ok) lastLaunchSparedDaemon = false
                 AppLogger.w(TAG, "Attempt $n: left a recording daemon alone, no second one launched; its binder ${if (ok) "arrived" else "has NOT arrived yet"}")
                 if (ok) applyWdPolicy(context)
                 return ok
@@ -450,6 +461,7 @@ object RecorderServerLauncher {
         override fun log(line: String) = AppLogger.i(TAG, line)
         override fun warn(line: String) = AppLogger.w(TAG, line)
         override fun spareAllowed(inCall: Boolean?) = SpareMemory.shared.stillAllowed(SystemClock.elapsedRealtime(), inCall)
+        override fun orphanCallEnded(): Boolean = OrphanRecorderSession.sessionCallEnded(context)
         override fun noteSpared() = SpareMemory.shared.noteSpared(SystemClock.elapsedRealtime())
     })
 

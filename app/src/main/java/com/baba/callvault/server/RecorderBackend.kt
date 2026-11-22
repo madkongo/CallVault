@@ -107,6 +107,9 @@ object RecorderBackend {
      * @return true when a binder is available, false when it could not be obtained — a normal outcome
      *   for Shizuku mode on a phone where Shizuku is not running, and never an exception.
      */
+    /** True when the last bring-up left a daemon that is recording the call alone: nothing else may record that call. */
+    fun recordingDaemonSpared(): Boolean = RecorderServerLauncher.lastLaunchSparedDaemon
+
     fun ensureRunning(context: Context, timeoutMs: Long = 24_000): Boolean {
         val prefs = AppPreferences(context)
         // STOPPED is the user's master switch off: no proactive path — app start, boot, the startup
