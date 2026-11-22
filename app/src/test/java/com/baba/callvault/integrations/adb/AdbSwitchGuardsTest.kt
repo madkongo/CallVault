@@ -108,4 +108,14 @@ class OfflineRecordingOrderTest {
         OfflineRecording.disableInOrder(false, { order += "disarm" }, { order += "skip" }) { order += "clear" }
         assertEquals(listOf("skip", "clear"), order)
     }
+
+    @Test
+    fun `disable says the listener was left open when a call is being recorded`() {
+        assertEquals(false, OfflineRecording.disableInOrder(false, { }, { }) { })
+    }
+
+    @Test
+    fun `disable says it closed the listener when nothing is recording`() {
+        assertEquals(true, OfflineRecording.disableInOrder(true, { }, { }) { })
+    }
 }

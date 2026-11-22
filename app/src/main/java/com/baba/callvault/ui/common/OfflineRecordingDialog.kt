@@ -41,7 +41,7 @@ import kotlinx.coroutines.withContext
 /** Whether the dialog is turning off-Wi-Fi recording ON (with a warning gate) or OFF. */
 enum class OfflineDialogMode { ENABLE, DISABLE }
 
-private enum class OfflinePhase { WARNING, WORKING, SUCCESS, FAILED }
+private enum class OfflinePhase { WARNING, WORKING, SUCCESS, FAILED, LEFT_OPEN }
 
 private const val SUCCESS_AUTO_CLOSE_MS = 3_000L
 
@@ -79,9 +79,10 @@ fun OfflineRecordingDialog(
     // DISABLE has no warning gate — start the work immediately and close when it's done.
     LaunchedEffect(Unit) {
         if (mode == OfflineDialogMode.DISABLE) {
-            withContext(Dispatchers.IO) { OfflineRecording.disable(context) }
+            val closed = withContext(Dispatchers.IO) { OfflineRecording.disable(context) }
             onResult(false)
-            onClose()
+            // A call is being recorded, so the listener stays open until the phone restarts: say so (UI-2).
+            if (closed) onClose() else phase = OfflinePhase.LEFT_OPEN
         }
     }
 
@@ -123,6 +124,7 @@ fun OfflineRecordingDialog(
                 OfflinePhase.SUCCESS -> Text(stringResource(R.string.offline_recording_on))
                 // The reason, not a guess: see LoopbackArm.
                 OfflinePhase.FAILED -> Text(stringResource(failure.messageRes()))
+                OfflinePhase.LEFT_OPEN -> Text(stringResource(R.string.offline_left_open_recording))
             }
         },
         confirmButton = {
@@ -136,7 +138,7 @@ fun OfflineRecordingDialog(
                         phase = if (result == LoopbackArm.ARMED) OfflinePhase.SUCCESS else OfflinePhase.FAILED
                     }
                 }) { Text(stringResource(R.string.offline_recording_warning_continue)) }
-                OfflinePhase.SUCCESS, OfflinePhase.FAILED ->
+                OfflinePhase.SUCCESS, OfflinePhase.FAILED, OfflinePhase.LEFT_OPEN ->
                     TextButton(onClick = onClose) { Text(stringResource(R.string.general_ok)) }
                 OfflinePhase.WORKING -> Unit // no button while the work is in flight
             }

@@ -79,8 +79,14 @@ object OfflineRecording {
         return result
     }
 
-    /** Turns offline recording OFF: clears the opt-in and closes the loopback port (best-effort). */
-    fun disable(context: Context) {
+    /**
+     * Turns offline recording OFF: clears the opt-in and closes the loopback port (best-effort).
+     *
+     * Returns false when the listener was LEFT OPEN because a call is being recorded (closing it restarts adbd and
+     * would end the call, C35). Nothing closes it afterwards: it stays until the phone restarts (UI-2), so the
+     * screen must say so rather than let the switch look fully off.
+     */
+    fun disable(context: Context): Boolean =
         disableInOrder(
             mayDisarm = OfflineToggleGuard.mayRestartAdbd(isRecordingLive()),
             disarm = {
@@ -95,7 +101,6 @@ object OfflineRecording {
             },
             clearOptIn = { AppPreferences(context).setOfflineRecordingEnabled(false) },
         )
-    }
 
     /** The C56 ordering for enabling, free of Android so it is tested: opt-in on, arm, put back unless armed. */
     internal fun enableWithOptIn(wasOn: Boolean, setOptIn: (Boolean) -> Unit, arm: () -> LoopbackArm): LoopbackArm {
@@ -111,13 +116,17 @@ object OfflineRecording {
         return result
     }
 
-    /** The C56 ordering for disabling: disarm (or skip) FIRST, and clear the opt-in whatever happens. */
-    internal fun disableInOrder(mayDisarm: Boolean, disarm: () -> Unit, skipped: () -> Unit, clearOptIn: () -> Unit) {
+    /**
+     * The C56 ordering for disabling: disarm (or skip) FIRST, and clear the opt-in whatever happens.
+     * True when the disarm was attempted, false when it was skipped and the listener stays open.
+     */
+    internal fun disableInOrder(mayDisarm: Boolean, disarm: () -> Unit, skipped: () -> Unit, clearOptIn: () -> Unit): Boolean {
         try {
             if (mayDisarm) disarm() else skipped()
         } finally {
             clearOptIn()
         }
+        return mayDisarm
     }
 
     /** A call is being recorded: the daemon says so, or a recording owns the shared notification (VoIP or carrier). */
