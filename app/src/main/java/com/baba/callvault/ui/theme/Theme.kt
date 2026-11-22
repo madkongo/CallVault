@@ -38,10 +38,16 @@ data class CvBrandColors(
     val info: Color,
     val accent: Color,
     val highlight: Color,
+    /** The live-recording red: dot, bars. Stated outright; never an M3 default (they render coral here). */
+    val recording: Color,
+    /** The recording card's tinted background. */
+    val recordingContainer: Color,
+    /** The recording card's subtitle. */
+    val onRecordingMuted: Color,
 )
 
 val LocalCvBrand = staticCompositionLocalOf {
-    CvBrandColors(success = Success, warning = Warning, info = Sky, accent = Teal, highlight = Coral)
+    CvBrandColors(success = Success, warning = Warning, info = Sky, accent = Teal, highlight = Coral, recording = RecordingRed, recordingContainer = RecordingRedContainer, onRecordingMuted = RecordingRedMuted)
 }
 
 private val DarkColors = darkColorScheme(
@@ -107,8 +113,8 @@ private val LightColors = lightColorScheme(
     onErrorContainer = Color(0xFF410005),
 )
 
-private val DarkBrand = CvBrandColors(success = Success, warning = Warning, info = Sky, accent = Teal, highlight = Coral)
-private val LightBrand = CvBrandColors(success = SuccessOnLight, warning = WarningOnLight, info = Color(0xFF0C6E9E), accent = TealOnLight, highlight = CoralOnLight)
+private val DarkBrand = CvBrandColors(success = Success, warning = Warning, info = Sky, accent = Teal, highlight = Coral, recording = RecordingRed, recordingContainer = RecordingRedContainer, onRecordingMuted = RecordingRedMuted)
+private val LightBrand = CvBrandColors(success = SuccessOnLight, warning = WarningOnLight, info = Color(0xFF0C6E9E), accent = TealOnLight, highlight = CoralOnLight, recording = RecordingRedOnLight, recordingContainer = RecordingRedContainerLight, onRecordingMuted = RecordingRedMutedLight)
 
 @Composable
 fun CallVaultTheme(

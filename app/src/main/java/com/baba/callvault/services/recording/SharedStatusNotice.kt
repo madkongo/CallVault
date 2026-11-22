@@ -9,6 +9,9 @@
 package com.baba.callvault.services.recording
 
 import android.app.Notification
+import android.os.SystemClock
+import com.baba.callvault.utils.AppLogger
+import kotlin.math.abs
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +35,7 @@ import kotlinx.coroutines.flow.StateFlow
  * Both services run on the main thread of the same process; the fields are volatile for the rare off-thread reader.
  */
 object SharedStatusNotice {
+    private const val TAG = "CV:SharedStatusNotice"
 
     /** The keep-alive's existing id, so a notification already on a user's phone stays the same one. */
     const val ID = 4720
@@ -82,11 +86,94 @@ object SharedStatusNotice {
         else -> Live.RECORDING
     }
 
+    // How long the live recording has really run, pausing excluded (the Home card's timer). Guarded by liveByOwner.
+    private var runningSinceMs = NOT_RUNNING
+    private var bankedMs = 0L
+    private var startedWallMs = 0L
+
+    /** What the clock persists so a process kill mid-call does not restart the timer at 00:00. */
+    data class SavedClock(val runningSinceMs: Long, val bankedMs: Long, val bootWallMs: Long, val savedWallMs: Long, val startedWallMs: Long)
+
+    /** Where the clock is persisted; null (tests, the shell process) means no persistence. */
+    interface ClockStore {
+        fun load(): SavedClock?
+        fun save(clock: SavedClock?)
+
+        /** The last wall-clock moment the phone was seen with no call at all (0 if never); a call-free moment ends any call. */
+        fun lastNoCallAt(): Long
+
+        /** When the call in progress began ringing or was dialled, as CallVault saw it (0 if unknown). */
+        fun liveCallBeganAt(): Long
+    }
+
+    @Volatile
+    var clockStore: ClockStore? = null
+
+    /**
+     * Milliseconds the current recording has been actively recording at [nowMs] (the same clock [setLive] reads,
+     * SystemClock.elapsedRealtime): frozen while paused, 0 when nothing is live.
+     */
+    fun liveElapsedMs(nowMs: Long): Long = synchronized(liveByOwner) {
+        bankedMs + if (runningSinceMs == NOT_RUNNING) 0L else (nowMs - runningSinceMs).coerceAtLeast(0L)
+    }
+
+    /**
+     * A saved clock is trusted only when it was written in this same boot (elapsedRealtime is comparable then),
+     * recently enough to be one call, and is not from the future. Anything else is a different call: start at zero.
+     */
+    internal fun restorable(saved: SavedClock, nowMs: Long, wallMs: Long, lastNoCallAt: Long = 0L, liveCallBeganAt: Long = 0L): Boolean =
+        lastNoCallAt <= saved.startedWallMs &&
+            // A call that began after the saved clock started is another call, whatever the clock says.
+            (liveCallBeganAt <= 0L || liveCallBeganAt <= saved.startedWallMs + CALL_BEGAN_TOLERANCE_MS) &&
+            abs((wallMs - nowMs) - saved.bootWallMs) <= BOOT_TOLERANCE_MS &&
+            wallMs - saved.savedWallMs in 0..MAX_RESTORE_AGE_MS &&
+            saved.runningSinceMs <= nowMs
+
+    private fun trackClock(state: Live, nowMs: Long, wallMs: Long) {
+        val store = clockStore
+        when (state) {
+            Live.NONE -> {
+                runningSinceMs = NOT_RUNNING; bankedMs = 0L; startedWallMs = 0L
+                store?.save(null)
+                return
+            }
+            Live.RECORDING -> {
+                if (runningSinceMs == NOT_RUNNING && bankedMs == 0L) {
+                    // A fresh process joining a call that was already being timed?
+                    store?.load()?.takeIf { restorable(it, nowMs, wallMs, store.lastNoCallAt(), store.liveCallBeganAt()) }?.let {
+                        runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs; startedWallMs = it.startedWallMs
+                    }
+                }
+                if (runningSinceMs == NOT_RUNNING) runningSinceMs = nowMs
+            }
+            Live.PAUSED -> {
+                if (runningSinceMs == NOT_RUNNING && bankedMs == 0L) {
+                    store?.load()?.takeIf { restorable(it, nowMs, wallMs, store.lastNoCallAt(), store.liveCallBeganAt()) }?.let {
+                        runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs; startedWallMs = it.startedWallMs
+                    }
+                }
+                if (runningSinceMs != NOT_RUNNING) {
+                    bankedMs += (nowMs - runningSinceMs).coerceAtLeast(0L)
+                    runningSinceMs = NOT_RUNNING
+                }
+            }
+        }
+        // The call's first start: kept from a restored clock, else now.
+        val startedWall = startedWallMs.takeIf { it > 0L } ?: wallMs
+        startedWallMs = startedWall
+        store?.save(SavedClock(runningSinceMs, bankedMs, wallMs - nowMs, wallMs, startedWall))
+    }
+
+    private const val NOT_RUNNING = -1L
+    private const val BOOT_TOLERANCE_MS = 5_000L
+    private const val CALL_BEGAN_TOLERANCE_MS = 10_000L
+    private const val MAX_RESTORE_AGE_MS = 2 * 60 * 60 * 1000L
+
     /** The live state now. */
     val live: Live get() = liveState.value
 
     /** [owner] is recording ([paused] false) or holding a paused recording; [Live.NONE] clears it. */
-    fun setLive(owner: Owner, state: Live) {
+    fun setLive(owner: Owner, state: Live, nowMs: Long = SystemClock.elapsedRealtime(), wallMs: Long = System.currentTimeMillis()) {
         synchronized(liveByOwner) {
             if (state == Live.NONE) liveByOwner.remove(owner) else liveByOwner[owner] = state
             // Recording wins over paused when two calls overlap.
@@ -95,6 +182,9 @@ object SharedStatusNotice {
                 liveByOwner.containsValue(Live.PAUSED) -> Live.PAUSED
                 else -> Live.NONE
             }
+            // The timer is decoration: it must never be able to throw on the recording path.
+            runCatching { trackClock(liveState.value, nowMs, wallMs) }
+                .onFailure { AppLogger.w(TAG, "Live clock update failed: ${it.message}") }
         }
     }
 
@@ -153,6 +243,9 @@ object SharedStatusNotice {
         synchronized(claims) { claims.clear() }
         synchronized(liveByOwner) { liveByOwner.clear() }
         liveState.value = Live.NONE
+        // The saved clock is left alone on purpose: this is how a test simulates a process kill.
+        synchronized(liveByOwner) { runningSinceMs = NOT_RUNNING; bankedMs = 0L; startedWallMs = 0L }
+        clockStore = null
         onReleased = null
         foregroundPoster = null
     }

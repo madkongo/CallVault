@@ -49,9 +49,9 @@ object OrphanRecorderSession {
 
     /** The trigger of the settle that follows a phone call ending. Only a name for the log: "saved in full" is decided from the call state at stop time. */
     const val TRIGGER_PHONE_CALL_ENDED = "phone call ended"
-    private const val PREFS = "orphan_session"
-    private const val KEY_LAST_NO_CALL_AT = "last_no_call_at"
-    private const val KEY_LIVE_CALL_BEGAN_AT = "live_call_began_at"
+    internal const val PREFS = "orphan_session"
+    internal const val KEY_LAST_NO_CALL_AT = "last_no_call_at"
+    internal const val KEY_LIVE_CALL_BEGAN_AT = "live_call_began_at"
     private const val KEY_SESSION_STAGING = "session_staging"
     private const val KEY_SESSION_APP_CALL = "session_app_call"
     private const val KEY_LAST_NO_SESSION_AT = "last_no_session_at"

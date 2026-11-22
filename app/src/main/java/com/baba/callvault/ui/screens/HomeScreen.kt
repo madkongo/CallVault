@@ -2830,6 +2830,11 @@ private fun HeroStatusCard(
     suggestionOverride: String? = null,
     onSetRecordingState: ((RecordingState) -> Unit)? = null,
 ) {
+    // A live recording gets its own red, animated card (design B); everything else is the normal hero.
+    if (status == HomeViewModel.HomeStatus.RECORDING || status == HomeViewModel.HomeStatus.RECORDING_PAUSED) {
+        com.baba.callvault.ui.common.RecordingStatusCard(status, mode, onAction, onSetRecordingState)
+        return
+    }
     val brand = LocalCvBrand.current
     // Off is the user's own choice, not a fault — show it calmly (neutral), never as a warning.
     val isUserOff = status == HomeViewModel.HomeStatus.STOPPED
