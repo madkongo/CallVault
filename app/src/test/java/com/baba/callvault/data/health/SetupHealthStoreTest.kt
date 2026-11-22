@@ -267,4 +267,37 @@ class SetupHealthStoreTest {
         store.recordSavedInFull(callStartedAt = 7_000L, callEndedAt = 8_000L)
         assertEquals(5_000L, store.read().lastGapAt)
     }
+
+    @Test
+    fun `a newer call saved in full replaces an older cut-off failure`() {
+        store.recordCutOff(10_000L, callStartedAt = 5_000L, callEndedAt = 9_000L, label = "Anne")
+        store.recordSavedInFull(callStartedAt = 20_000L, callEndedAt = 30_000L)
+        val facts = store.read()
+        assertNull(facts.lastFailureReason)
+        assertEquals(0L, facts.lastFailureAt)
+        assertNull(facts.lastFailureLabel)
+    }
+
+    @Test
+    fun `a newer call saved in full replaces any older failure reason`() {
+        store.recordFailure(10_000L, FailureReason.NO_AUDIO, "Bob")
+        store.recordSavedInFull(callStartedAt = 20_000L, callEndedAt = 30_000L)
+        assertNull(store.read().lastFailureReason)
+    }
+
+    @Test
+    fun `an older call saved in full never clears a newer failure`() {
+        store.recordFailure(50_000L, FailureReason.CUT_OFF, "Carl")
+        store.recordSavedInFull(callStartedAt = 20_000L, callEndedAt = 30_000L)
+        val facts = store.read()
+        assertEquals(FailureReason.CUT_OFF, facts.lastFailureReason)
+        assertEquals(50_000L, facts.lastFailureAt)
+    }
+
+    @Test
+    fun `a call saved in full with no known end time leaves the failure alone`() {
+        store.recordFailure(10_000L, FailureReason.CUT_OFF, "Carl")
+        store.recordSavedInFull(callStartedAt = null, callEndedAt = null)
+        assertEquals(FailureReason.CUT_OFF, store.read().lastFailureReason)
+    }
 }

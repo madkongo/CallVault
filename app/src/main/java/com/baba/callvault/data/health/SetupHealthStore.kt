@@ -144,6 +144,11 @@ class SetupHealthStore(context: Context) {
             if (callStartedAt != null && prefs.getLong(KEY_GAP_AT, 0L) == callStartedAt) {
                 remove(KEY_GAP_AT); remove(KEY_GAP_LABEL)
             }
+            // The card says "your LAST call failed": a newer, complete call replaces that line, like a verified call does.
+            // Only when this call ended after the stored failure; an unknown end cannot be ordered, so it clears nothing.
+            if (callEndedAt != null && callEndedAt > prefs.getLong(KEY_FAILURE_AT, 0L)) {
+                remove(KEY_FAILURE_AT); remove(KEY_FAILURE_REASON); remove(KEY_FAILURE_LABEL)
+            }
         }
     }
 
