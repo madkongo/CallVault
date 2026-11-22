@@ -612,7 +612,8 @@ object VoipRecordingCoordinator {
         // land out of order and drop what the earlier one added. One tiny file write.
         runCatching {
             synchronized(stagingNoteLock) {
-                StagingNote.updateFileName(
+                // Only for the recording this refresh belongs to: one that already finished must not get its note back.
+                pending === saf && StagingNote.updateFileName(
                     staged,
                     VoipLateCaller.finalName(startName, lateAppLabel, lateCaller, VoipDirection.nameToken(direction.get())),
                 )

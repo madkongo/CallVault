@@ -121,9 +121,12 @@ object SafHelper {
         // saved under its own name (CutOffRescueWorker). Best effort: without it the rescue uses a generic name.
         if (recoverable) {
             runCatching {
-                StagingNote.fileFor(tempFile).writeText(
-                    StagingNote(folderUri.toString(), fileName, mimeType, System.currentTimeMillis()).encode(),
-                )
+                check(
+                    StagingNote.writeAtomically(
+                        StagingNote.fileFor(tempFile),
+                        StagingNote(folderUri.toString(), fileName, mimeType, System.currentTimeMillis()).encode(),
+                    ),
+                ) { "write failed" }
             }.onFailure { AppLogger.w(TAG, "Could not write the staging note for ${tempFile.name}: ${it.message}") }
         }
         val tempFd = runCatching {
@@ -166,7 +169,8 @@ object SafHelper {
 
     /** A call recording's staged file (not a merge, not a note). */
     fun isStagedRecording(file: File): Boolean =
-        file.isFile && file.name.startsWith(STAGING_TEMP_PREFIX) && file.name.endsWith(STAGING_TEMP_SUFFIX)
+        file.isFile && file.name.startsWith(STAGING_TEMP_PREFIX) && file.name.endsWith(STAGING_TEMP_SUFFIX) &&
+            !StagingNote.isStrayNoteTemp(file)
 
     /**
      * Creates the destination file and writes [srcFile] into it, once there is a finished recording.

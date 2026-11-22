@@ -68,6 +68,9 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         // A note whose recording is gone was left by a normal finish (callers delete only the staged file).
         files.filter { it.name.endsWith(StagingNote.SUFFIX) && !File(dir, it.name.removeSuffix(StagingNote.SUFFIX)).exists() }
             .forEach { runCatching { it.delete() } }
+        // A note write cut short by a kill leaves its temp; a live write lasts milliseconds, so a minute-old one is stray.
+        files.filter { StagingNote.isStrayNoteTemp(it) && System.currentTimeMillis() - it.lastModified() > STRAY_NOTE_TEMP_MS }
+            .forEach { runCatching { it.delete() } }
         val staged = files.filter { SafHelper.isStagedRecording(it) }
         if (requestedPath != null && staged.none { sameFile(it, requestedPath) }) {
             CallEndLog.record(
@@ -241,6 +244,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
 
     companion object {
         private const val TAG = "CV:CutOffRescue"
+        private const val STRAY_NOTE_TEMP_MS = 60_000L
 
         /** The Drive copy, details-file copy and transcription a normal call gets after it is saved. A seam for tests. */
         internal val defaultHandOffs: (Context, String, Uri, String) -> Unit = AfterCallDecision::runHeldHandOffs

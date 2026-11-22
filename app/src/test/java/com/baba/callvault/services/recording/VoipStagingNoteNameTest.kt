@@ -74,3 +74,47 @@ class VoipStagingNoteNameTest {
         assertEquals(carrier, StagingNote.decode(carrier.encode()))
     }
 }
+
+class StagingNoteAtomicWriteTest {
+    private lateinit var dir: File
+    private lateinit var staged: File
+
+    @Before fun setUp() {
+        dir = java.nio.file.Files.createTempDirectory("n16a").toFile()
+        staged = File(dir, "rec_stage_1.tmp").apply { writeText("audio") }
+        StagingNote.fileFor(staged).writeText(StagingNote("content://f", "a.ogg", "audio/ogg", 7L).encode())
+    }
+
+    @After fun tearDown() { dir.deleteRecursively() }
+
+    @Test fun `a rename writes through a temp that is gone afterwards`() {
+        assertTrue(StagingNote.updateFileName(staged, "b.ogg"))
+        assertEquals("b.ogg", StagingNote.decode(StagingNote.fileFor(staged).readText())!!.fileName)
+        assertEquals(listOf("rec_stage_1.tmp", "rec_stage_1.tmp.note"), dir.list()!!.sorted())
+        assertTrue(StagingNote.markOrphanStop(staged, OrphanStop.STOPPED))
+        assertEquals(2, dir.list()!!.size)
+    }
+
+    @Test fun `a leftover temp is neither a note nor a staged recording`() {
+        val stray = File(dir, "rec_stage_1.tmp.note.tmp").apply { writeText("v=1") }
+        assertTrue(StagingNote.isStrayNoteTemp(stray))
+        assertFalse(com.baba.callvault.system.storage.SafHelper.isStagedRecording(stray))
+        assertFalse(StagingNote.isStrayNoteTemp(StagingNote.fileFor(staged)))
+        assertEquals("a.ogg", StagingNote.decode(StagingNote.fileFor(staged).readText())!!.fileName)
+        assertTrue(StagingNote.updateFileName(staged, "c.ogg"))
+        assertEquals("c.ogg", StagingNote.decode(StagingNote.fileFor(staged).readText())!!.fileName)
+    }
+
+    @Test fun `a failed write keeps the old note and removes the temp`() {
+        val note = StagingNote.fileFor(staged)
+        assertFalse(StagingNote.writeAtomically(File(dir, "missing/x.note"), "z"))
+        assertEquals("a.ogg", StagingNote.decode(note.readText())!!.fileName)
+    }
+
+    @Test fun `an update after the recording finished does not bring the note back`() {
+        StagingNote.deleteWithNote(staged)
+        assertFalse(StagingNote.updateFileName(staged, "late.ogg"))
+        assertFalse(StagingNote.fileFor(staged).exists())
+        assertEquals(0, dir.list()!!.size)
+    }
+}
