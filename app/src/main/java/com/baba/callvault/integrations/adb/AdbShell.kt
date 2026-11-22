@@ -957,6 +957,12 @@ object AdbShell {
      * Returns true if the write succeeded (or it was already on).
      */
     fun enableWirelessDebugging(context: Context): Boolean {
+        // A path that exists only because the user turned the switch off (the keep-alive's open-port relaunch)
+        // must not enable it even when the "override my Wireless-debugging-off" setting is on.
+        if (!wirelessDebuggingEnableAllowed()) {
+            AppLogger.i(TAG, "Not switching Wireless debugging on: this path runs because the user turned it off")
+            return false
+        }
         val prefs = AppPreferences(context)
         // A borrow is a loan, not a transfer: the switch goes back in `releaseWirelessDebugging` and the
         // user's preference below is deliberately left standing, so the next boot borrows again rather
@@ -1088,6 +1094,22 @@ object AdbShell {
      * worker thread; everything else (the keep-alive, recovery) runs without it and respects the user.
      */
     private val userRequest = ThreadLocal<Boolean>()
+
+    private val enableForbidden = ThreadLocal<Boolean>()
+
+    /** False while [withoutEnablingWirelessDebugging] is running on this thread. */
+    internal fun wirelessDebuggingEnableAllowed(): Boolean = enableForbidden.get() != true
+
+    /** Runs [block] so that nothing on this thread may switch Wireless debugging on, whatever the settings say. */
+    fun <T> withoutEnablingWirelessDebugging(block: () -> T): T {
+        val previous = enableForbidden.get()
+        enableForbidden.set(true)
+        try {
+            return block()
+        } finally {
+            enableForbidden.set(previous)
+        }
+    }
 
     /** Runs [block] as an explicit user request. See [userRequest]. Blocking, like everything it wraps. */
     fun <T> asUserRequest(block: () -> T): T {

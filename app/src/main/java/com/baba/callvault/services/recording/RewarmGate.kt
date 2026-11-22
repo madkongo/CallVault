@@ -73,4 +73,7 @@ class RewarmGate(
     fun leave() {
         inFlight = false
     }
+
+    /** Runs one claimed attempt and always leaves the gate, even when [block] throws (an exception must not park recovery until the gate expires). */
+    fun <T> leavingAfter(block: () -> T): T = try { block() } finally { leave() }
 }
