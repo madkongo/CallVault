@@ -120,4 +120,19 @@ class SyncSchedulerApplyTest {
 
         assertEquals(0, shadowOf(nm).allNotifications.size)
     }
+
+    @Test
+    fun `immediate mode keeps a posted Drive backup notice, because Drive is still in use`() {
+        shadowOf(context as android.app.Application).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
+        val nm = context.getSystemService(android.app.NotificationManager::class.java)
+        DriveBackupNotice.onGaveUp(context, DriveBackupNotice.Reason.NO_ANSWER, "test")
+        AppPreferences(context).apply {
+            setStorageTarget(StorageTarget.BOTH)
+            setSyncScheduleMode(SyncScheduleMode.IMMEDIATE)
+        }
+
+        SyncScheduler.apply(context)
+
+        assertEquals(1, shadowOf(nm).allNotifications.size)
+    }
 }
