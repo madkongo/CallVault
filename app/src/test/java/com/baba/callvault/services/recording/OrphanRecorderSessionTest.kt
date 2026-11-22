@@ -397,7 +397,7 @@ class OrphanRecorderSessionTest {
     fun `a stopped orphan whose file is known is marked and queued for the short-guard rescue`() {
         val recorder = FakeRecorder().apply { start("call1") }
         val staged = File("/staging/call1.ogg")
-        val env = FakeEnv(inCall = false, orphanStart = call1Start).apply { stagingFile = staged }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 1).apply { stagingFile = staged }
 
         OrphanRecorderSession.resolve(recorder, env, OrphanRecorderSession.TRIGGER_PHONE_CALL_ENDED)
 
@@ -408,15 +408,35 @@ class OrphanRecorderSessionTest {
     }
 
     @Test
-    fun `only the phone-call-ended stop claims the call was saved in full`() {
-        listOf("app start", "call start, /x", "rescue check", "app call ended").forEach { trigger ->
+    fun `a stop with no call up and the orphan's call over is saved in full, whatever the trigger`() {
+        listOf("app start", "rescue check", "phone call ended").forEach { trigger ->
             val recorder = FakeRecorder().apply { start("call1") }
-            val env = FakeEnv(inCall = false, orphanStart = call1Start).apply { stagingFile = File("/staging/call1.ogg") }
+            val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 1).apply { stagingFile = File("/staging/call1.ogg") }
 
             OrphanRecorderSession.resolve(recorder, env, trigger)
 
-            assertEquals(trigger, listOf(File("/staging/call1.ogg") to false), env.marks)
+            assertEquals(trigger, listOf(File("/staging/call1.ogg") to true), env.marks)
         }
+    }
+
+    @Test
+    fun `a stop while another call is up is never saved in full (the next call's start)`() {
+        val recorder = FakeRecorder().apply { start("call1") }
+        val env = FakeEnv(inCall = true, orphanStart = call1Start, lastNoCall = call1Start + 1).apply { stagingFile = File("/staging/call1.ogg") }
+
+        OrphanRecorderSession.resolve(recorder, env, "call start, /x")
+
+        assertEquals(listOf(File("/staging/call1.ogg") to false), env.marks)
+    }
+
+    @Test
+    fun `a stop when the orphan's start is unknown is never saved in full`() {
+        val recorder = FakeRecorder().apply { start("call1") }
+        val env = FakeEnv(inCall = false, orphanStart = null).apply { stagingFile = File("/staging/call1.ogg") }
+
+        OrphanRecorderSession.resolve(recorder, env, "app start")
+
+        assertEquals(listOf(File("/staging/call1.ogg") to false), env.marks)
     }
 
     @Test

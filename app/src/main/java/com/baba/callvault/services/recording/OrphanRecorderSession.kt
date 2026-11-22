@@ -47,7 +47,7 @@ object OrphanRecorderSession {
 
     private const val TAG = "CV:OrphanSession"
 
-    /** The trigger of the settle that follows a phone call ending: the only stop that proves the file holds the call's end. */
+    /** The trigger of the settle that follows a phone call ending. Only a name for the log: "saved in full" is decided from the call state at stop time. */
     const val TRIGGER_PHONE_CALL_ENDED = "phone call ended"
     private const val PREFS = "orphan_session"
     private const val KEY_LAST_NO_CALL_AT = "last_no_call_at"
@@ -135,7 +135,9 @@ object OrphanRecorderSession {
                     // Finalised, call over: publish after a short guard (the recorder answers before the trailer is
                     // written), not after the 2-minute quiet wait. Only the phone-call-ended stop is "saved in full".
                     if (stagingFile != null) {
-                        val callEnded = trigger == TRIGGER_PHONE_CALL_ENDED
+                        // Evidence, not the trigger's name: no call at all now, and the orphan's call known to be over
+                        // (a call-free moment after it started). A new call being up (N4, ADOPT spans) leaves it STOPPED.
+                        val callEnded = !inCall && ended
                         if (env.markOrphanStopped(stagingFile, callEnded)) {
                             env.record("orphan session [$trigger]: instant rescue queued for ${CallEndLog.safeName(stagingFile.name)} (savedInFull=$callEnded)")
                             env.scheduleRescueNow(stagingFile)

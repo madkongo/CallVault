@@ -47,7 +47,9 @@ import java.util.concurrent.TimeUnit
 class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
     override suspend fun doWork(): Result {
+        inputData.getString(KEY_OBSERVE_NAME)?.let { return retryObserve(it) }
         val requestedPath = inputData.getString(KEY_CONFIRMED_FILE)
+        val attempt = inputData.getInt(KEY_ATTEMPT, 0)
         // N37: an app idle in the rare or restricted bucket can lose network, loopback included. Say which bucket the
         // job ran in, so a report of a rescue that could not reach the recorder host can be read against it.
         logStandbyBucket(applicationContext)
@@ -81,7 +83,31 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         }
         // Something may still be in use; look again once it has had time to go quiet.
         if (waiting) schedule(applicationContext)
-        if (markedWaiting) scheduleConfirmed(applicationContext, null)
+        if (markedWaiting) {
+            if (CutOffRescuePolicy.handOverToQuietWait(attempt)) {
+                CallEndLog.record(applicationContext, "cut-off rescue: a stopped recording still looks busy after ${attempt + 1} re-checks; the ordinary quiet-wait rescue takes over")
+                schedule(applicationContext)
+            } else {
+                scheduleConfirmed(applicationContext, null, attempt + 1)
+            }
+        }
+        return Result.success()
+    }
+
+    /** A saved-in-full call whose call-log entry was not there yet (log lag): look again, bounded. */
+    private fun retryObserve(name: String): Result {
+        val started = inputData.getLong(KEY_OBSERVE_STARTED, -1L).takeIf { it >= 0 }
+        val cutAt = inputData.getLong(KEY_OBSERVE_CUT, 0L)
+        val attempt = inputData.getInt(KEY_ATTEMPT, 1)
+        val call = runCatching { matchCall(applicationContext, started, cutAt) }.getOrNull()
+        if (call != null) {
+            runCatching { SetupHealthStore(applicationContext).recordSavedInFull(call.startedAt, call.startedAt + call.durationSeconds * 1_000L) }
+            CallEndLog.record(applicationContext, "cut-off rescue: the call of ${CallEndLog.safeName(name)} showed in the call log on re-check $attempt; marked observed")
+        } else if (attempt < OBSERVE_MAX_ATTEMPTS) {
+            scheduleObserve(applicationContext, name, started, cutAt, attempt + 1)
+        } else {
+            CallEndLog.record(applicationContext, "cut-off rescue: no call-log entry for ${CallEndLog.safeName(name)} after $attempt re-checks; giving up")
+        }
         return Result.success()
     }
 
@@ -124,6 +150,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             callActive = callActive,
             ownedByLiveRecording = owned,
             confirmedStopped = marked,
+            stopProvesCallOver = note?.orphanStop == OrphanStop.CALL_ENDED,
         )
         var published: Published? = null
         when (decision) {
@@ -275,16 +302,16 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
          * recorded") and the notice. Shared with the waiting publisher, which saves a cut-off the same way (F3).
          */
         fun recordSaved(context: Context, fileName: String, startedAt: Long?, cutAt: Long, completeCall: Boolean = false) {
-            val call = CutOffRescuePolicy.matchCall(
-                CallLogReader.entriesSince(context, cutAt - CALL_LOOKBACK_MS), startedAt, cutAt,
-            )
+            val call = matchCall(context, startedAt, cutAt)
             AppLogger.i(TAG, "The cut-off recording belongs to ${call?.let { "the call at ${it.startedAt}" } ?: "no call in the call log"}")
             if (call == null) {
                 CallEndLog.record(
                     context,
                     "cut-off rescue: ${CallEndLog.safeName(fileName)} matches no call in the call log (an app call never does)" +
-                        if (completeCall) "; saved in full, so the status card gets no update for it" else "",
+                        if (completeCall) "; saved in full, so the status card gets no update for it yet" else "",
                 )
+                // The call log may lag the call's end: look again a few times (saved in full only; the cut-off path is as before).
+                if (completeCall) scheduleObserve(context, fileName, startedAt, cutAt, 1)
             }
             val callEndedAt = call?.let { it.startedAt + it.durationSeconds * 1_000L }
             runCatching {
@@ -300,6 +327,13 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             SilentFailureNotifier.noteCallSavedAfterRestart(context, fileName)
         }
         private const val WORK_NAME = "cut_off_rescue"
+        private const val WORK_NAME_OBSERVE = "cut_off_rescue_observe"
+        private const val KEY_ATTEMPT = "attempt"
+        private const val KEY_OBSERVE_NAME = "observe_name"
+        private const val KEY_OBSERVE_STARTED = "observe_started"
+        private const val KEY_OBSERVE_CUT = "observe_cut"
+        private const val OBSERVE_MAX_ATTEMPTS = 3
+        private const val OBSERVE_RETRY_MS = 2 * 60_000L
         private const val WORK_NAME_CONFIRMED = "cut_off_rescue_confirmed"
         private const val KEY_CONFIRMED_FILE = "confirmed_file"
         private val runLock = Mutex()
@@ -322,17 +356,34 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
          * request with an initial delay, and the delay is the point (the recorder answers "not recording" before the
          * muxer trailer is written). The file is published only once it has been quiet that long.
          */
-        fun scheduleConfirmed(context: Context, file: File?) {
+        fun scheduleConfirmed(context: Context, file: File?, attempt: Int = 0) {
             runCatching {
                 val builder = OneTimeWorkRequestBuilder<CutOffRescueWorker>()
                     .setInitialDelay(CutOffRescuePolicy.CONFIRMED_QUIET_MS, TimeUnit.MILLISECONDS)
-                if (file != null) builder.setInputData(Data.Builder().putString(KEY_CONFIRMED_FILE, file.absolutePath).build())
+                val data = Data.Builder().putInt(KEY_ATTEMPT, attempt)
+                if (file != null) data.putString(KEY_CONFIRMED_FILE, file.absolutePath)
+                builder.setInputData(data.build())
                 WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME_CONFIRMED, ExistingWorkPolicy.APPEND_OR_REPLACE, builder.build())
             }.onFailure {
-                CallEndLog.record(context, "cut-off rescue: could not queue the instant rescue ${CallEndLog.describe(it)}; the quiet-wait rescue covers it")
+                CallEndLog.record(context, "cut-off rescue: could not queue the instant rescue ${CallEndLog.describe(it)}; the ordinary quiet-wait rescue is queued instead")
                 AppLogger.w(TAG, "Could not schedule the instant rescue: ${it.message}")
+                schedule(context)
             }
         }
+
+        private fun scheduleObserve(context: Context, name: String, startedAt: Long?, cutAt: Long, attempt: Int) {
+            runCatching {
+                val data = Data.Builder().putString(KEY_OBSERVE_NAME, name).putLong(KEY_OBSERVE_STARTED, startedAt ?: -1L)
+                    .putLong(KEY_OBSERVE_CUT, cutAt).putInt(KEY_ATTEMPT, attempt).build()
+                val request = OneTimeWorkRequestBuilder<CutOffRescueWorker>()
+                    .setInitialDelay(OBSERVE_RETRY_MS, TimeUnit.MILLISECONDS).setInputData(data).build()
+                WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME_OBSERVE, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+            }.onFailure { CallEndLog.record(context, "cut-off rescue: could not queue the call-log re-check for ${CallEndLog.safeName(name)} ${CallEndLog.describe(it)}") }
+        }
+
+        private fun matchCall(context: Context, startedAt: Long?, cutAt: Long) = CutOffRescuePolicy.matchCall(
+            CallLogReader.entriesSince(context, cutAt - CALL_LOOKBACK_MS), startedAt, cutAt,
+        )
 
         /** Looks for cut-off recordings shortly. Safe to call often: the latest request replaces earlier ones. */
         fun schedule(context: Context) {

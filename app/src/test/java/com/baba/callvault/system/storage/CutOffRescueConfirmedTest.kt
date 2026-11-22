@@ -102,7 +102,7 @@ class CutOffRescueConfirmedTest {
 
     @Test
     fun `another fresh staged file still waits for the call to be over while a stopped one is published`() {
-        val stopped = stage("stopped", ageMs = 2 * guardMs, stop = OrphanStop.STOPPED)
+        val stopped = stage("stopped", ageMs = 2 * guardMs, stop = OrphanStop.CALL_ENDED)
         val other = stage("other", ageMs = CutOffRescuePolicy.QUIET_MS + 60_000L, stop = OrphanStop.NONE)
         (context.getSystemService(AudioManager::class.java)).mode = AudioManager.MODE_IN_CALL // another call is up
 
@@ -111,6 +111,24 @@ class CutOffRescueConfirmedTest {
         assertEquals(listOf("stopped.ogg"), published.toList())
         assertFalse(stopped.exists())
         assertTrue("an unmarked file is untouched while a call is up", other.exists())
+    }
+
+    @Test
+    fun `a file stopped at the next call's start is not published, nor handed to Whisper, while that call is up`() {
+        val handOffs = mutableListOf<String>()
+        CutOffRescueWorker.handOffs = { _, name, _, _ -> handOffs += name }
+        val f = stage("n4", ageMs = 2 * guardMs, stop = OrphanStop.STOPPED)
+        (context.getSystemService(AudioManager::class.java)).mode = AudioManager.MODE_IN_CALL
+
+        run()
+        assertTrue(published.isEmpty())
+        assertTrue(handOffs.isEmpty())
+        assertTrue(f.exists())
+
+        (context.getSystemService(AudioManager::class.java)).mode = AudioManager.MODE_NORMAL
+        run()
+        assertEquals(listOf("n4.ogg"), published.toList())
+        assertEquals(listOf("n4.ogg"), handOffs)
     }
 
     @Test

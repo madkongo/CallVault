@@ -47,12 +47,20 @@ object CutOffRescuePolicy {
      */
     const val QUIET_MS = 90_000L
 
+    /** How many 15 s re-checks a marked file gets before the ordinary quiet-wait request takes over. */
+    const val CONFIRMED_MAX_RECHECKS = 8
+
+    /** What a marked file that still waits does next: look again soon, or hand over to the ordinary quiet-wait request. */
+    fun handOverToQuietWait(attempt: Int): Boolean = attempt + 1 >= CONFIRMED_MAX_RECHECKS
+
     /** The quiet a file the recorder confirmed stopped must still show: more than twice the recorder's 6 s stop wait. */
     const val CONFIRMED_QUIET_MS = 15_000L
 
     /**
      * @param ownedByLiveRecording a recording in this process still owns the file ([LiveStagingFiles]): a paused
      *   recording is quiet for as long as the pause lasts, and a LINE call shows no call mode (review C12).
+     * @param stopProvesCallOver the stop came at a moment with no call at all, after the file's own call ended
+     *   ([OrphanStop.CALL_ENDED]): a call that is up now is another one, and does not hold this file back.
      * @param confirmedStopped the recorder was asked to stop this very file and confirmed it no longer records
      *   ([com.baba.callvault.services.recording.OrphanRecorderSession]). The 90 s quiet wait and the call-up check,
      *   which only exist to guess that, do not apply; the short [CONFIRMED_QUIET_MS] does. A live recording here wins.
@@ -64,9 +72,12 @@ object CutOffRescuePolicy {
         callActive: Boolean,
         ownedByLiveRecording: Boolean = false,
         confirmedStopped: Boolean = false,
+        stopProvesCallOver: Boolean = false,
     ): RescueDecision = when {
         ownedByLiveRecording -> RescueDecision.WAIT
-        !confirmedStopped && callActive -> RescueDecision.WAIT
+        // A stop that only says "the recorder stopped" (the next call's start, N4) leaves another call possibly up:
+        // publishing would start Whisper and the Drive copy under it, so the call-up check stays for it.
+        callActive && !(confirmedStopped && stopProvesCallOver) -> RescueDecision.WAIT
         !confirmedStopped && ageMs < QUIET_MS -> RescueDecision.WAIT
         // The recorder answers "not recording" before the muxer's trailer is written (stopRecording returns after
         // its 6 s wait even if teardown still runs). A short quiet guard keeps a truncated copy from being published.
