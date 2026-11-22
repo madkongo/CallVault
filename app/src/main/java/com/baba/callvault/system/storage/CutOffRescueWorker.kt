@@ -254,6 +254,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             completeCall: Boolean = false, ranOnSeconds: Int = 0, appCall: Boolean = false,
         ) {
             RecordingCatalog.recordLocal(context, fileName, uri, bytes, startedAt ?: cutAt)
+            RescuedDuration.store(context, fileName, uri)
             recordSaved(context, fileName, startedAt, cutAt, completeCall, ranOnSeconds, appCall)
             runCatching { handOffs(context, fileName, uri, mimeType) }
                 .onSuccess { CallEndLog.record(context, "cut-off rescue: '$fileName' handed to Drive copy and transcription") }

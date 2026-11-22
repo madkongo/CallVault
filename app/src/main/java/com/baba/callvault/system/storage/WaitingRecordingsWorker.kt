@@ -141,6 +141,8 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
             }
         }
 
+        override suspend fun storeCutOffLength(name: String, uri: Uri) = RescuedDuration.store(context, name, uri)
+
         override fun record(line: String) = CallEndLog.record(context, line)
 
         override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long, savedInFull: Boolean, ranOnSeconds: Int, appCall: Boolean) =
