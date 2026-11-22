@@ -17,18 +17,12 @@ import org.junit.Test
 class StoppedAdbdWaitsTest {
 
     @Test
-    fun `an armed loopback port is waited for while adbd runs or is restarting, not while it is stopped`() {
-        assertTrue(StoppedAdbdWaits.mayWaitForLoopbackSelfHeal(true, AdbdState.RUNNING))
-        assertTrue(StoppedAdbdWaits.mayWaitForLoopbackSelfHeal(true, AdbdState.UNKNOWN))
-        assertFalse(StoppedAdbdWaits.mayWaitForLoopbackSelfHeal(true, AdbdState.STOPPED))
-        assertFalse(StoppedAdbdWaits.mayWaitForLoopbackSelfHeal(false, AdbdState.RUNNING))
-    }
-
-    @Test
-    fun `mDNS is not searched or used to re-arm while adbd is stopped`() {
-        assertFalse(StoppedAdbdWaits.maySearchOrRearmViaMdns(AdbdState.STOPPED))
-        assertTrue(StoppedAdbdWaits.maySearchOrRearmViaMdns(AdbdState.RUNNING))
-        assertTrue(StoppedAdbdWaits.maySearchOrRearmViaMdns(AdbdState.UNKNOWN))
+    fun `one stopped reading is a restart in progress, only a persistent one is given up on (M1)`() {
+        assertFalse(StoppedAdbdWaits.persistentlyStopped(AdbdState.STOPPED, 0))
+        assertFalse(StoppedAdbdWaits.persistentlyStopped(AdbdState.STOPPED, StoppedAdbdWaits.GIVE_UP_AFTER_MS - 1))
+        assertTrue(StoppedAdbdWaits.persistentlyStopped(AdbdState.STOPPED, StoppedAdbdWaits.GIVE_UP_AFTER_MS))
+        assertFalse(StoppedAdbdWaits.persistentlyStopped(AdbdState.RUNNING, 60_000))
+        assertFalse(StoppedAdbdWaits.persistentlyStopped(AdbdState.UNKNOWN, 60_000))
     }
 
     private fun source(vararg rel: String): String =
@@ -40,7 +34,8 @@ class StoppedAdbdWaitsTest {
         val s = source("integrations/adb/AdbShell.kt")
         val a = s.indexOf("val deadline = startedAt + LOOPBACK_SELFHEAL_MS")
         assertTrue(a > 0)
-        assertTrue(s.substring(maxOf(0, a - 700), a).contains("StoppedAdbdWaits.mayWaitForLoopbackSelfHeal("))
+        // the wait loop itself polls adbd and gives up only on a persistent stop
+        assertTrue(s.substring(a, a + 1500).contains("adbdPersistentlyStopped()"))
     }
 
     @Test
@@ -49,14 +44,14 @@ class StoppedAdbdWaitsTest {
         val a = s.indexOf("offline mode but no connection")
         assertTrue(a > 0)
         val window = s.substring(maxOf(0, a - 900), a + 900)
-        assertTrue(window.contains("StoppedAdbdWaits.maySearchOrRearmViaMdns("))
+        assertTrue(window.contains("adbdPersistentlyStopped()"))
         assertTrue(window.contains("reviveAdbdIfStopped("))
     }
 
     @Test
     fun `the connect port search returns for a stopped adbd before it waits on mDNS`() {
         val s = source("integrations/adb/ConnectPortFinder.kt")
-        val stopped = s.indexOf("StoppedAdbdWaits.maySearchOrRearmViaMdns(adbd)")
+        val stopped = s.indexOf("StoppedAdbdWaits.persistentlyStopped(")
         val mdns = s.indexOf("AdbMdns.discoverEndpoint(")
         assertTrue("stopped check missing", stopped > 0)
         assertTrue("it must come before the mDNS wait (C65)", stopped < mdns)

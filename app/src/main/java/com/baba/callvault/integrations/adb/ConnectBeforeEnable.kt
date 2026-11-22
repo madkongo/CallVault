@@ -34,4 +34,39 @@ internal object ConnectBeforeEnable {
     /** Loopback first; the address mDNS resolved only as a fallback, and only when it differs. */
     fun hostsToTry(mdnsHost: String?): List<String> =
         listOfNotNull(LOOPBACK, mdnsHost?.takeIf { it.isNotBlank() && it != LOOPBACK })
+
+    /**
+     * One connect budget for the whole look, shared by every host (M3): two 8 s handshakes in a row would hold
+     * the connect lock for 16 s on top of the mDNS window.
+     */
+    const val CONNECT_BUDGET_MS = 8_000L
+
+    /** After an mDNS look found nothing, it is not repeated for this long in the same Wi-Fi session (M2). */
+    const val MDNS_MISS_RETRY_MS = 5 * 60_000L
+
+    /**
+     * Dials [hostsToTry] in order, each with whatever is left of [totalBudgetMs]; returns the host that connected, or
+     * null. [connect] gets the host and its budget. The resolved address is only ever one mDNS accepted, and
+     * [MdnsServiceVerdict] drops any that is not one of this phone's own addresses (L2).
+     */
+    fun tryHosts(
+        mdnsHost: String?,
+        port: Int,
+        totalBudgetMs: Long,
+        now: () -> Long,
+        connect: (host: String, budgetMs: Long) -> Boolean,
+        log: (String) -> Unit,
+    ): String? {
+        val startedAt = now()
+        for (host in hostsToTry(mdnsHost)) {
+            val left = totalBudgetMs - (now() - startedAt)
+            if (left <= 0) {
+                log("connect budget of ${totalBudgetMs}ms used up; not trying $host:$port")
+                return null
+            }
+            if (connect(host, left)) return host
+            log("connect to $host:$port did not complete")
+        }
+        return null
+    }
 }

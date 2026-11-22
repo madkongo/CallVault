@@ -11,6 +11,7 @@ package com.baba.callvault.integrations.adb
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -39,6 +40,49 @@ class ConnectBeforeEnableTest {
         assertFalse(ConnectBeforeEnable.shouldLook(AdbdState.RUNNING, WifiState.NOT_CONNECTED))
         assertTrue(ConnectBeforeEnable.shouldLook(AdbdState.RUNNING, WifiState.CONNECTED))
         assertTrue(ConnectBeforeEnable.shouldLook(AdbdState.UNKNOWN, WifiState.UNKNOWN))
+    }
+
+    // --- behaviour: the hosts and the one shared budget (M3) ---
+
+    private class Clock(var now: Long = 0)
+
+    @Test
+    fun `the first host that connects wins and the second is never dialled`() {
+        val dialled = mutableListOf<String>()
+        val got = ConnectBeforeEnable.tryHosts("10.0.0.5", 40123, 8_000, { 0 }, { h, _ -> dialled += h; h == "127.0.0.1" }) {}
+        assertEquals("127.0.0.1", got)
+        assertEquals(listOf("127.0.0.1"), dialled)
+    }
+
+    @Test
+    fun `a refused loopback falls back to the resolved address`() {
+        val got = ConnectBeforeEnable.tryHosts("10.0.0.5", 40123, 8_000, { 0 }, { h, _ -> h == "10.0.0.5" }) {}
+        assertEquals("10.0.0.5", got)
+    }
+
+    @Test
+    fun `both hosts share one budget, the second gets only what the first left`() {
+        val clock = Clock()
+        val budgets = mutableListOf<Long>()
+        val got = ConnectBeforeEnable.tryHosts("10.0.0.5", 1, 8_000, { clock.now }, { _, budget -> budgets += budget; clock.now += 3_000; false }) {}
+        assertNull(got)
+        assertEquals(listOf(8_000L, 5_000L), budgets)
+    }
+
+    @Test
+    fun `an exhausted budget skips the second host and says so`() {
+        val clock = Clock()
+        val dialled = mutableListOf<String>()
+        val log = mutableListOf<String>()
+        val got = ConnectBeforeEnable.tryHosts("10.0.0.5", 1, 8_000, { clock.now }, { h, _ -> dialled += h; clock.now += 8_000; false }) { log += it }
+        assertNull(got)
+        assertEquals(listOf("127.0.0.1"), dialled)
+        assertTrue(log.toString(), log.any { it.contains("budget") })
+    }
+
+    @Test
+    fun `the whole look stays far below the connect lock's entry wait`() {
+        assertTrue(ConnectBeforeEnable.LOOK_MDNS_MS + ConnectBeforeEnable.CONNECT_BUDGET_MS + 1_000 < 20_000)
     }
 
     // --- wiring (source-level, like SettleVerdictWiringTest) ---
@@ -70,6 +114,7 @@ class ConnectBeforeEnableTest {
     @Test
     fun `the quick look never writes the switch or takes ownership of it`() {
         val b = body("private fun connectWithoutEnabling(", "\n    /**")
+        assertTrue("find and the connect must be wrapped so an exception falls through to the enable rules", b.contains("runCatching"))
         listOf("enableWirelessDebugging(", "putInt(", "markOwnWirelessDebuggingWrite", "setWirelessDebuggingEnabledByUs", "setWirelessDebuggingTurnedOffByUser")
             .forEach { assertFalse("the look must not call $it", b.contains(it)) }
         assertTrue("it must say what it tried", b.contains("AppLogger"))

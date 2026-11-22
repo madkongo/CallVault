@@ -13,7 +13,6 @@ import com.baba.callvault.system.diagnostics.RecorderLogMarkers
 import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
-import com.baba.callvault.integrations.adb.StoppedAdbdWaits
 import com.baba.callvault.integrations.adb.TransportTimeline
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.services.recording.AppPauseWatch
@@ -256,12 +255,12 @@ object RecorderServerLauncher {
             if (!connected && AppPreferences(context).isOfflineRecordingEnabled()) {
                 // adbd stopped: re-arming goes through mDNS, which cannot answer, so it would only burn its
                 // timeout. Take the revival decision first (GH89-4); arm only if adbd is back (or unreadable).
-                var mayRearm = StoppedAdbdWaits.maySearchOrRearmViaMdns(AdbShell.adbdState())
+                var mayRearm = !AdbShell.adbdPersistentlyStopped()
                 if (!mayRearm) {
-                    AppLogger.i(TAG, "Attempt $n: offline mode, no connection and adbd reads stopped — deciding on a revival instead of re-arming through mDNS")
+                    AppLogger.i(TAG, "Attempt $n: offline mode, no connection and adbd has read stopped for a while — deciding on a revival instead of re-arming through mDNS")
                     runCatching { AdbShell.reviveAdbdIfStopped(context, "launch attempt $n (adbd stopped)") }
                         .onFailure { AppLogger.w(TAG, "Attempt $n: could not check adbd: ${it.message}") }
-                    mayRearm = StoppedAdbdWaits.maySearchOrRearmViaMdns(AdbShell.adbdState())
+                    mayRearm = !AdbShell.adbdPersistentlyStopped()
                     if (!mayRearm) AppLogger.w(TAG, "Attempt $n: adbd is still stopped after the revival decision; not re-arming")
                 }
                 if (mayRearm) {

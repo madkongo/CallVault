@@ -178,21 +178,25 @@ object AdbShell {
             // up to CONNECT_BUDGET_MS per port when adbd accepts TCP and never answers the handshake, and
             // counting only the sleeps let eight such rounds run ~140 s past a "12 s" window. When connects are
             // refused at once (the normal case) the two are the same.
-            val adbdNow = adbdState()
-            if (!ok && isLoopbackArmed(context) && !StoppedAdbdWaits.mayWaitForLoopbackSelfHeal(true, adbdNow)) {
-                // service.adb.tcp.port persists while adbd is stopped, so "armed" proves nothing here; nobody is
-                // restarting it. Skip the wait and let the caller take the revival decision (GH89-4, C65).
-                AppLogger.i(TAG, "Loopback armed but adbd reads stopped: not waiting ${LOOPBACK_SELFHEAL_MS}ms for a listener that cannot return; the revival decision comes next")
-            }
-            if (!ok && isLoopbackArmed(context) && StoppedAdbdWaits.mayWaitForLoopbackSelfHeal(true, adbdNow)) {
+            if (!ok && isLoopbackArmed(context)) {
                 val startedAt = SystemClock.elapsedRealtime()
                 val deadline = startedAt + LOOPBACK_SELFHEAL_MS
+                var gaveUp = false
                 while (!ok && SystemClock.elapsedRealtime() < deadline) {
                     Thread.sleep(LOOPBACK_RETRY_INTERVAL_MS)
                     ok = connectLoopback(context)
+                    // service.adb.tcp.port persists while adbd is stopped, so "armed" proves nothing, and nobody
+                    // restarts it. A stopped reading alone is normal mid-restart (a USB change); only one that
+                    // persists ends the wait, and the revival decision comes next (GH89-4, C65, M1).
+                    if (!ok && adbdPersistentlyStopped()) {
+                        AppLogger.i(TAG, "Loopback armed but adbd has read stopped for over ${StoppedAdbdWaits.GIVE_UP_AFTER_MS}ms: not waiting the rest of ${LOOPBACK_SELFHEAL_MS}ms for a listener that cannot return; the revival decision comes next")
+                        gaveUp = true
+                        break
+                    }
                 }
                 val waited = SystemClock.elapsedRealtime() - startedAt
                 if (ok) AppLogger.i(TAG, "Loopback self-healed after ${waited}ms (adbd restart) — no WD needed")
+                else if (!gaveUp) AppLogger.i(TAG, "Loopback did not come back within ${waited}ms")
             }
             // Last, a tcp listener the ROM itself opened (persist.adb.tcp.port, listen_addrs, 5555), leaving out
             // the ports connectLoopback was just refused on. Free when there is none: see [connectAlreadyOpenPort].
@@ -398,7 +402,17 @@ object AdbShell {
         reason: String,
         /** False where CallVault must not switch Wireless debugging on from off — Shizuku mode. */
         mayEnable: Boolean = true,
-    ): AdbdRevival {
+    ): AdbdRevival =
+        // Bounded entry (review): the launcher calls this at a call start, and a cycle holds the lock ~10 s.
+        // Busy means someone else is already reviving; proceed without a revival rather than queue behind it.
+        reviveLock.withLockOrElse(
+            onBusy = { holder ->
+                AppLogger.i(TAG, "adbd revival after $reason skipped: another revival still holds the lock after ${REVIVE_ENTRY_WAIT_MS}ms (held by ${holder ?: "a thread that has just left"})")
+                AdbdRevival.NOTHING
+            },
+        ) { reviveLocked(context, reason, mayEnable) }
+
+    private fun reviveLocked(context: Context, reason: String, mayEnable: Boolean): AdbdRevival {
         var streak = AdbdStoppedStreak(checks = 1, stoppedForMs = 0)
         var lastInputs = ""
         fun decideNow(): AdbdRevival {
@@ -435,9 +449,27 @@ object AdbShell {
         // One revival at a time. The switch observer and the keep-alive both reach here within milliseconds of
         // USB debugging going off; seen on the emulator, both switched Wireless debugging on at once. The second
         // now waits, looks again, and finds adbd running.
-        synchronized(reviveLock) {
-        streak = adbdStoppedTracker.observe(adbdState(), SystemClock.elapsedRealtime())
+        streak = observeAdbd()
+        // A cycle drops the recorder and restarts adbd: never during a call, never behind a connected recorder, and
+        // not again soon after one that did not bring adbd back (M4, H2). Asked before AND after the settle wait.
+        fun vetoCycle(): Boolean {
+            val blocked = AdbdCycleGuard.blockReason(
+                callInProgress = !runCatching { com.baba.callvault.system.updates.CallInProgressGate.mayInstall(context) }.getOrDefault(true),
+                recorderConnected = com.baba.callvault.server.RecorderConnection.isConnected,
+            )
+            if (blocked != null) {
+                AppLogger.i(TAG, "adbd is stopped after $reason; not cycling Wireless debugging: $blocked ($lastInputs)")
+                return true
+            }
+            val now = SystemClock.elapsedRealtime()
+            if (!revivalBackoff.mayCycle(now)) {
+                AppLogger.i(TAG, "adbd is stopped after $reason; backing off: the last cycle did not bring it back, next one allowed in ${(revivalBackoff.nextAllowedMs - now) / 1000}s ($lastInputs)")
+                return true
+            }
+            return false
+        }
         var decision = decideNow()
+        if (decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING && vetoCycle()) return AdbdRevival.NOTHING
         if (decision == AdbdRevival.ENABLE_WIRELESS_DEBUGGING || decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING) {
             // Let a USB change that may still be running finish first, then look again. Starting adbd inside
             // it loses a race measured on the emulator (24 ms wide): init stops the adbd we just started.
@@ -445,6 +477,7 @@ object AdbShell {
             // relaunch does — so the wait lives here rather than in any one caller.
             Thread.sleep(REVIVE_SETTLE_MS)
             decision = decideNow()
+            if (decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING && vetoCycle()) return AdbdRevival.NOTHING
         }
         when (decision) {
             AdbdRevival.NOTHING -> {
@@ -460,7 +493,7 @@ object AdbShell {
                 return decision
             }
             AdbdRevival.ENABLE_WIRELESS_DEBUGGING -> {
-                AppLogger.i(TAG, "adbd is stopped after $reason; switching Wireless debugging on")
+                AppLogger.i(TAG, "adbd is stopped after $reason; switching Wireless debugging on ($lastInputs)")
                 enableWirelessDebugging(context)
             }
             AdbdRevival.CYCLE_WIRELESS_DEBUGGING -> {
@@ -487,12 +520,41 @@ object AdbShell {
         while (adbdState() != AdbdState.RUNNING && android.os.SystemClock.elapsedRealtime() < deadline) {
             Thread.sleep(250)
         }
-        AppLogger.i(TAG, "adbd after revival ($decision): ${adbdState()}")
-        return decision
+        val after = adbdState()
+        if (decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING) {
+            revivalBackoff.onCycleEnded(SystemClock.elapsedRealtime(), adbdRunning = after == AdbdState.RUNNING)
+            if (after != AdbdState.RUNNING) {
+                AppLogger.w(TAG, "adbd is still $after after the Wireless-debugging cycle; backing off, next cycle allowed in ${(revivalBackoff.nextAllowedMs - SystemClock.elapsedRealtime()) / 1000}s")
+            }
         }
+        AppLogger.i(TAG, "adbd after revival ($decision): $after")
+        return decision
     }
 
-    /** Counts consecutive stopped readings of adbd across revival calls (GH89-1). Touched only under [reviveLock]. */
+    /**
+     * Records one look at adbd for the stopped streak and the back-off, and returns the streak. Called by every
+     * revival and by the keep-alive tick, so a running adbd clears a streak that only sightings would keep (H1).
+     */
+    fun observeAdbd(): AdbdStoppedStreak {
+        val state = adbdState()
+        if (state == AdbdState.RUNNING) revivalBackoff.onRunningSeen()
+        return adbdStoppedTracker.observe(state, SystemClock.elapsedRealtime())
+    }
+
+    /** How long adbd has read stopped, look after look; 0 when it does not read stopped (observes). */
+    internal fun adbdStoppedForMs(): Long = observeAdbd().stoppedForMs
+
+    /** True when adbd has read stopped long enough that waiting for it (or its mDNS service) is pointless (M1). */
+    internal fun adbdPersistentlyStopped(): Boolean {
+        val streak = observeAdbd()
+        return StoppedAdbdWaits.persistentlyStopped(adbdState(), streak.stoppedForMs)
+    }
+
+    private val revivalBackoff = AdbdRevivalBackoff()
+
+    private const val REVIVE_ENTRY_WAIT_MS = 2_000L
+
+    /** Counts consecutive stopped readings of adbd across revival calls (GH89-1). Thread-safe. */
     private val adbdStoppedTracker = AdbdStoppedTracker()
 
     /** Where the USB-debugging answer came from, for the revival log: the raw setting and the shell's own read. */
@@ -500,10 +562,12 @@ object AdbShell {
         "setting=${if (usbDebuggingSettingSaysOn(context)) 1 else 0}, shellRead=${UsbDebuggingShellRead.current()}"
 
     /** Serialises [reviveAdbdIfStopped]. Its own lock, so a revival never blocks unrelated ADB work. */
-    private val reviveLock = Any()
+    private val reviveLock = BoundedEntryLock(REVIVE_ENTRY_WAIT_MS)
 
     /** A system property for the always-on report; "" when the app cannot read it. */
-    internal fun systemPropertyForReport(key: String): String = getSystemProperty(key)
+    internal fun systemPropertyForReport(key: String): String = unreadableProps.get(key) { getSystemProperty(it) }
+
+    private val unreadableProps = UnreadablePropCache()
 
     /** Reads a system property via the hidden `SystemProperties.get` (reflection; public SDK-safe). */
     private fun getSystemProperty(key: String): String = runCatching {
@@ -618,35 +682,43 @@ object AdbShell {
      * the switch and never records ownership**, so the release path cannot later turn off something it did not
      * turn on, and a user-off switch stays off (nothing answers). Every try is logged with host:port.
      */
-    private fun connectWithoutEnabling(context: Context, mgr: AdbConnectionManager): Boolean {
+    private fun connectWithoutEnabling(context: Context, mgr: AdbConnectionManager): Boolean = runCatching {
         val adbd = adbdState()
         val wifi = WifiState.of(context)
         if (!ConnectBeforeEnable.shouldLook(adbd, wifi)) {
             AppLogger.i(TAG, "adb_wifi_enabled reads off; adbd=$adbd wifi=$wifi: no connect port to look for")
-            return false
+            return@runCatching false
         }
         val excluded = setOfNotNull(AppPreferences(context).getLoopbackAdbPort(), adbdTcpPort())
-        val found = ConnectPortFinder.find(context, ConnectBeforeEnable.LOOK_MDNS_MS, excluded, adbd, allowScan = false)
+        // The cheap last-good-port probe always runs; the mDNS window only if it did not just come up empty (M2).
+        val found = ConnectPortFinder.lookForConnectPort(context, ConnectBeforeEnable.LOOK_MDNS_MS, excluded, adbd)
         if (found == null) {
-            AppLogger.i(TAG, "adb_wifi_enabled reads off; no connect port answered (last good port, ${ConnectBeforeEnable.LOOK_MDNS_MS}ms of mDNS) — going on to the enable rules")
-            return false
+            AppLogger.i(TAG, "adb_wifi_enabled reads off; no connect port answered (last good port, mDNS up to ${ConnectBeforeEnable.LOOK_MDNS_MS}ms) — going on to the enable rules")
+            return@runCatching false
         }
-        for (host in ConnectBeforeEnable.hostsToTry(found.host)) {
-            AppLogger.i(TAG, "adb_wifi_enabled reads off but a connect port answers ($host:${found.port} from ${found.source.label}); trying it without writing the switch")
-            val ok = connectBounded(context, "Wireless debugging $host:${found.port} (switch read off)") { mgr.connect(host, found.port) }
-            if (ok) {
-                AppLogger.i(TAG, "Connected to $host:${found.port} although adb_wifi_enabled reads off — the read is not trusted; nothing was written")
-                ConnectPortFinder.recordSuccess(context, found.port)
-                Thread.sleep(CONNECT_SETTLE_MS)
-                PairingLoss.recordConnected(context)
-                AppPreferences(context).setAdbPaired(true)
-                grantSecureSettingsIfNeeded(context)
-                return true
-            }
-            AppLogger.i(TAG, "Connect to $host:${found.port} did not complete")
-        }
-        return false
-    }
+        AppLogger.i(TAG, "adb_wifi_enabled reads off but a connect port answers (:${found.port} from ${found.source.label}); trying it without writing the switch")
+        val host = ConnectBeforeEnable.tryHosts(
+            mdnsHost = found.host,
+            port = found.port,
+            totalBudgetMs = ConnectBeforeEnable.CONNECT_BUDGET_MS,
+            now = { SystemClock.elapsedRealtime() },
+            connect = { h, budget ->
+                AppLogger.i(TAG, "Trying $h:${found.port} (budget ${budget}ms)")
+                connectBounded(context, "Wireless debugging $h:${found.port} (switch read off)", budgetMs = budget) { mgr.connect(h, found.port) }
+            },
+            log = { AppLogger.i(TAG, it) },
+        ) ?: return@runCatching false
+        AppLogger.i(TAG, "Connected to $host:${found.port} although adb_wifi_enabled reads off — the read is not trusted; nothing was written")
+        ConnectPortFinder.recordSuccess(context, found.port)
+        Thread.sleep(CONNECT_SETTLE_MS)
+        PairingLoss.recordConnected(context)
+        AppPreferences(context).setAdbPaired(true)
+        grantSecureSettingsIfNeeded(context)
+        true
+    }.onFailure {
+        // Any failure here falls through to the enable rules, exactly as if nothing had answered.
+        AppLogger.w(TAG, "Looking for a connect port before enabling failed (${it.javaClass.simpleName}: ${it.message}); going on to the enable rules")
+    }.getOrDefault(false)
 
     /**
      * Forces a fresh ADB connection: drops the current one (so a half-dead/stale connection that
@@ -841,6 +913,7 @@ object AdbShell {
         context: Context,
         what: String,
         onFailure: (Throwable) -> Unit = {},
+        budgetMs: Long = CONNECT_BUDGET_MS,
         connect: () -> Boolean,
     ): Boolean {
         val ok = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -849,9 +922,9 @@ object AdbShell {
                 .onFailure { AppLogger.d(TAG, "$what unavailable (unarmed/refused): ${it.message}"); onFailure(it) }
         }.apply { isDaemon = true; name = "cv-adb-connect" }
         worker.start()
-        runCatching { worker.join(CONNECT_BUDGET_MS) }
+        runCatching { worker.join(budgetMs) }
         if (worker.isAlive) {
-            AppLogger.w(TAG, "$what did not complete the ADB handshake within ${CONNECT_BUDGET_MS}ms (adbd restarting?) — abandoning this attempt")
+            AppLogger.w(TAG, "$what did not complete the ADB handshake within ${budgetMs}ms (adbd restarting?) — abandoning this attempt")
             worker.interrupt() // the handshake waits interruptibly; out of it, the thread frees libadb's lock
             runCatching { AdbConnectionManager.getInstance(context).disconnect() }
             return false

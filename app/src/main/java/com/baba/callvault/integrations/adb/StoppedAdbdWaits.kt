@@ -9,18 +9,19 @@
 package com.baba.callvault.integrations.adb
 
 /**
- * Which waits are pointless while `init.svc.adbd` reads stopped (GH89-4, C65).
+ * When a wait for adbd's listener or an mDNS service is pointless because adbd is **persistently** stopped
+ * (GH89-4, C65).
  *
  * `service.adb.tcp.port` persists across adbd restarts, so an armed loopback port looks "about to come back"
- * even when adbd is stopped and nothing will bring it back (the Honor BVL-N49 sat like that for ~48 h). The
- * 12 s self-heal wait, the mDNS search and the mDNS re-arm all wait for a listener that cannot appear; the
- * thing to do is the revival decision ([AdbdRevivalPolicy]), which is where the launcher goes instead.
+ * even when adbd is stopped and nothing will bring it back (the Honor BVL-N49 sat like that for ~48 h). But a
+ * single stopped reading is normal: a USB change or screen transition restarts adbd and it reads stopped for a
+ * moment (M1). So only a stop that has lasted [GIVE_UP_AFTER_MS] ends a wait; a shorter one keeps waiting as before.
  */
 internal object StoppedAdbdWaits {
-    /** Waiting for the loopback listener to reappear after an adbd restart. */
-    fun mayWaitForLoopbackSelfHeal(loopbackArmed: Boolean, adbd: AdbdState): Boolean =
-        loopbackArmed && adbd != AdbdState.STOPPED
+    /** How long adbd must have read stopped, look after look, before a wait for it is abandoned. */
+    const val GIVE_UP_AFTER_MS = 4_000L
 
-    /** Searching mDNS for a Wireless-debugging connect port, or re-arming through it. */
-    fun maySearchOrRearmViaMdns(adbd: AdbdState): Boolean = adbd != AdbdState.STOPPED
+    /** [stoppedForMs] is how long the stopped streak has run (0 for a first sighting). */
+    fun persistentlyStopped(adbd: AdbdState, stoppedForMs: Long): Boolean =
+        adbd == AdbdState.STOPPED && stoppedForMs >= GIVE_UP_AFTER_MS
 }

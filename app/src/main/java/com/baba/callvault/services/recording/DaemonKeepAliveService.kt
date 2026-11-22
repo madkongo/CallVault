@@ -118,6 +118,8 @@ class DaemonKeepAliveService : Service() {
     private val watchdog = object : Runnable {
         override fun run() {
             reconcileAdbWatchers("tick")
+            // One look at adbd per tick, so a running adbd clears a stopped streak and a real one accumulates (H1).
+            if (usesAdb()) runCatching { AdbShell.observeAdbd() }
             val alive = isDaemonAlive()
             if (alive != (lastReady == true)) {
                 lastReady = alive
