@@ -9,6 +9,7 @@
 package com.baba.callvault.services.recording
 
 import android.app.Notification
+import android.os.SystemClock
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -82,11 +83,36 @@ object SharedStatusNotice {
         else -> Live.RECORDING
     }
 
+    // How long the live recording has really run, pausing excluded (the Home card's timer). Guarded by liveByOwner.
+    private var runningSinceMs = NOT_RUNNING
+    private var bankedMs = 0L
+
+    /**
+     * Milliseconds the current recording has been actively recording at [nowMs] (the same clock [setLive] reads,
+     * SystemClock.elapsedRealtime): frozen while paused, 0 when nothing is live.
+     */
+    fun liveElapsedMs(nowMs: Long): Long = synchronized(liveByOwner) {
+        bankedMs + if (runningSinceMs == NOT_RUNNING) 0L else (nowMs - runningSinceMs).coerceAtLeast(0L)
+    }
+
+    private fun trackClock(state: Live, nowMs: Long) {
+        when (state) {
+            Live.NONE -> { runningSinceMs = NOT_RUNNING; bankedMs = 0L }
+            Live.RECORDING -> if (runningSinceMs == NOT_RUNNING) runningSinceMs = nowMs
+            Live.PAUSED -> if (runningSinceMs != NOT_RUNNING) {
+                bankedMs += (nowMs - runningSinceMs).coerceAtLeast(0L)
+                runningSinceMs = NOT_RUNNING
+            }
+        }
+    }
+
+    private const val NOT_RUNNING = -1L
+
     /** The live state now. */
     val live: Live get() = liveState.value
 
     /** [owner] is recording ([paused] false) or holding a paused recording; [Live.NONE] clears it. */
-    fun setLive(owner: Owner, state: Live) {
+    fun setLive(owner: Owner, state: Live, nowMs: Long = SystemClock.elapsedRealtime()) {
         synchronized(liveByOwner) {
             if (state == Live.NONE) liveByOwner.remove(owner) else liveByOwner[owner] = state
             // Recording wins over paused when two calls overlap.
@@ -95,6 +121,7 @@ object SharedStatusNotice {
                 liveByOwner.containsValue(Live.PAUSED) -> Live.PAUSED
                 else -> Live.NONE
             }
+            trackClock(liveState.value, nowMs)
         }
     }
 
@@ -153,6 +180,7 @@ object SharedStatusNotice {
         synchronized(claims) { claims.clear() }
         synchronized(liveByOwner) { liveByOwner.clear() }
         liveState.value = Live.NONE
+        synchronized(liveByOwner) { trackClock(Live.NONE, 0L) }
         onReleased = null
         foregroundPoster = null
     }
