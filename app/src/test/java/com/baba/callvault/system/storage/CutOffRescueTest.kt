@@ -151,6 +151,16 @@ class CutOffRescueTest {
         assertNull(CutOffRescuePolicy.matchCompleteCall(listOf(earlierCall, theCall), null, callStart + 25 * minute))
     }
 
+    // Review N1: a call that never connected leaves a 191-byte, 0.04 s Ogg: container headers and no audio.
+    @Test
+    fun `a staged file that holds only container headers is discarded, real audio never is`() {
+        assertEquals(RescueDecision.DISCARD_EMPTY, decide(sizeBytes = 191))
+        assertEquals(RescueDecision.DISCARD_EMPTY, decide(sizeBytes = CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES - 1))
+        assertEquals(RescueDecision.SAVE_NAMED, decide(sizeBytes = CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES))
+        assertEquals(RescueDecision.LEAVE_UNATTRIBUTED, decide(hasNote = false, sizeBytes = 191))
+        assertEquals(RescueDecision.WAIT, decide(sizeBytes = 191, ageMs = CutOffRescuePolicy.QUIET_MS - 1))
+    }
+
     private fun decide(
         hasNote: Boolean = true,
         sizeBytes: Long = 900_000,

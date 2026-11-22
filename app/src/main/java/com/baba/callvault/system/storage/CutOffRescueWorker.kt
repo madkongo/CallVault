@@ -191,6 +191,10 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             }
             RescueDecision.DISCARD_EMPTY -> {
                 AppLogger.i(TAG, "${file.name} is empty; removing it")
+                CallEndLog.record(
+                    applicationContext,
+                    "cut-off rescue: ${CallEndLog.safeName(file.name)} holds no audio (${file.length()} bytes, under ${CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES}); removed, not published",
+                )
                 runCatching { file.delete(); noteFile.delete() }
             }
             RescueDecision.SAVE_NAMED -> note?.let {
