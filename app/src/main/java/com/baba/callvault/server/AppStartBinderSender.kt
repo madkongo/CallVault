@@ -23,6 +23,13 @@ import java.util.concurrent.Executors
  * the daemon survives, but the next call starts a new app process that has no binder, so it killed the live daemon
  * and launched another over ADB, which cannot happen away from Wi-Fi: the call was lost with a recorder running.
  *
+ * That event fires only when the app's uid goes from idle to active. It does NOT fire when the main process is killed
+ * and restarted while another process of the app (`:drive`) keeps the uid active: on the OnePlus 9 (2026-11-22) the app
+ * was killed mid-call and restarted for a service, no event came, and the restarted app killed the recording daemon.
+ * So the daemon also watches the app's provider binder (the provider lives in the main process) and, when it dies
+ * while recording, delivers again after a short wait, with retries ([AppDeathRedelivery]). A delivery starts the app's
+ * process itself. Idle daemons do not do this: they must not restart an app the user stopped.
+ *
  * Mirrors Shizuku's `BinderSender` (RikkaApps/Shizuku, server/.../BinderSender.java): the server registers an
  * activity-manager uid observer and, when the client app's uid becomes active, calls its provider's `sendBinder`.
  * Shizuku subclasses the hidden `IUidObserver.Stub`; this runs from a bare `app_process` with no hidden-API stubs, so
@@ -49,6 +56,63 @@ internal object AppStartBinderSender {
     @Volatile
     private var lastSentAt = 0L
 
+    @Volatile
+    private var watchedProvider: IBinder? = null
+
+    private val appDeathRecipient = IBinder.DeathRecipient { onAppDied() }
+
+    @Volatile
+    private var deathContext: DeathContext? = null
+
+    private class DeathContext(val binder: IBinder, val authority: String, val apkPath: String, val isRecording: () -> Boolean)
+
+    private fun startDeathWatch(binder: IBinder, authority: String, apkPath: String, isRecording: () -> Boolean) {
+        deathContext = DeathContext(binder, authority, apkPath, isRecording)
+        BinderDelivery.onProviderBinder = ::watchProvider
+        BinderDelivery.lastProviderBinder?.let(::watchProvider)
+    }
+
+    /** Links to the death of the app's provider binder (once per binder); a delivery after a restart brings a new one. */
+    private fun watchProvider(provider: IBinder) {
+        synchronized(this) {
+            if (watchedProvider === provider) return
+            runCatching { watchedProvider?.unlinkToDeath(appDeathRecipient, 0) }
+            try {
+                provider.linkToDeath(appDeathRecipient, 0)
+                watchedProvider = provider
+                AppLogger.i(TAG, "Watching the app's provider binder: if the app dies while this daemon records, it is handed the binder again")
+            } catch (t: Throwable) {
+                watchedProvider = null
+                AppLogger.w(TAG, "Could not watch the app's provider binder (${t.message}); the app is not handed the binder again after its death")
+            }
+        }
+    }
+
+    private fun onAppDied() {
+        val ctx = deathContext ?: return
+        synchronized(this) { watchedProvider = null }
+        val recording = runCatching { ctx.isRecording() }.getOrDefault(false)
+        AppLogger.i(TAG, "The app's process died; recording=$recording" + if (recording) "; handing the binder over again" else "; idle, leaving the app alone")
+        if (!recording) return
+        worker.execute {
+            var attempt = 0
+            var lastDelivered: Boolean? = null
+            while (true) {
+                val stillRecording = runCatching { ctx.isRecording() }.getOrDefault(false)
+                val wait = AppDeathRedelivery.nextDelayMs(attempt, stillRecording, lastDelivered) ?: break
+                runCatching { Thread.sleep(wait) }
+                val delivered = runCatching { BinderDelivery.redeliverBinderToApp(ctx.binder, ctx.authority, ctx.apkPath) }
+                    .onFailure { AppLogger.w(TAG, "Re-delivery after the app's death threw: ${it.message}") }
+                    .getOrDefault(false)
+                lastSentAt = android.os.SystemClock.elapsedRealtime()
+                AppLogger.i(TAG, "Re-delivery after the app's death, attempt ${attempt + 1} (after ${wait}ms): delivered=$delivered")
+                lastDelivered = delivered
+                attempt++
+            }
+            AppLogger.i(TAG, "Re-delivery after the app's death finished after $attempt attempt(s); last delivered=$lastDelivered")
+        }
+    }
+
     /** Keeps the observer from being collected: the activity manager only holds a weak reference to our side. */
     @Volatile
     private var observer: Binder? = null
@@ -57,16 +121,31 @@ internal object AppStartBinderSender {
      * Starts watching. Returns whether the observer was registered; the outcome is logged either way, so the log
      * says whether this daemon can hand its binder over again.
      */
-    fun register(binder: IBinder, authority: String, apkPath: String): Boolean = try {
+    fun register(binder: IBinder, authority: String, apkPath: String, isRecording: () -> Boolean): Boolean = try {
+        startDeathWatch(binder, authority, apkPath, isRecording)
+        registerUidObserver(binder, authority, apkPath)
+    } catch (t: Throwable) {
+        AppLogger.w(TAG, "Cannot watch the app: ${t.message}", t)
+        false
+    }
+
+    private fun registerUidObserver(binder: IBinder, authority: String, apkPath: String): Boolean = try {
         val appUid = resolveAppUid(authority)
         val am = Class.forName("android.app.ActivityManager").getMethod("getService").invoke(null)
             ?: error("ActivityManager.getService() returned null")
+        val activeCode = runCatching {
+            Class.forName("$OBSERVER_DESCRIPTOR\$Stub").getDeclaredField("TRANSACTION_onUidActive")
+                .apply { isAccessible = true }.getInt(null)
+        }.onFailure { AppLogger.w(TAG, "Cannot resolve the onUidActive transaction code; any observer call counts: ${it.message}") }
+            .getOrNull()
         val observerBinder = object : Binder() {
             override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
                 // Only onUidActive(int uid) is subscribed, and every IUidObserver call starts with the uid.
                 return try {
                     data.enforceInterface(OBSERVER_DESCRIPTOR)
-                    if (data.readInt() == appUid) onAppActive(binder, authority, apkPath)
+                    val uid = data.readInt()
+                    AppLogger.i(TAG, "uid observer call: code=$code uid=$uid (active code=$activeCode)")
+                    if (AppDeathRedelivery.isActiveTransaction(code, activeCode) && uid == appUid) onAppActive(binder, authority, apkPath)
                     true
                 } catch (t: Throwable) {
                     AppLogger.w(TAG, "uid observer call ignored: ${t.message}")

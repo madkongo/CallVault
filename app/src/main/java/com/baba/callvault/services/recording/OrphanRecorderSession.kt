@@ -175,6 +175,11 @@ object OrphanRecorderSession {
         edit(context) { putLong(KEY_LIVE_CALL_BEGAN_AT, atMillis) }
     }
 
+    /** The staging file of the session the app last handed to the recorder, or null (read by the daemon launcher). */
+    fun sessionStagingPath(context: Context): String? = runCatching {
+        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_SESSION_STAGING, null)
+    }.getOrNull()
+
     /** The app handed [staging] to the recorder for a session it now owns. */
     fun noteSessionStarted(context: Context, staging: File?) {
         synchronized(sessionRecordLock) {

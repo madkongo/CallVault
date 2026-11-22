@@ -97,6 +97,18 @@ internal object BinderDelivery {
     fun askWifiJoinApprovalConfig(authority: String): Bundle? =
         call(authority, RecorderBinderProvider.METHOD_WIFI_JOIN_APPROVAL_CONFIG, Bundle())
 
+    /**
+     * The app's provider binder from the latest delivery through the activity manager. It lives in the app's process,
+     * so its death is the death of that process ([AppStartBinderSender] watches it).
+     */
+    @Volatile
+    var lastProviderBinder: IBinder? = null
+        private set
+
+    /** Told of the provider binder on every delivery, so a watcher can re-link after the app restarted. */
+    @Volatile
+    var onProviderBinder: ((IBinder) -> Unit)? = null
+
     private fun deliver(authority: String, method: String, bundle: Bundle): Boolean = call(authority, method, bundle) != null
 
     /** The provider's reply to [method], or null when neither path reached it. */
@@ -144,6 +156,11 @@ internal object BinderDelivery {
             // 3. holder.provider : IContentProvider (field name "provider" on ContentProviderHolder).
             val provider = holder.javaClass.getField("provider").get(holder)
                 ?: throw IllegalStateException("ContentProviderHolder.provider is null")
+
+            runCatching { (provider as? android.os.IInterface)?.asBinder() }.getOrNull()?.let { b ->
+                lastProviderBinder = b
+                runCatching { onProviderBinder?.invoke(b) }
+            }
 
             // 4. provider.call(...) — version matrix from Shizuku's IContentProviderCompat.
             val reply = callProvider(provider, authority, method, bundle)

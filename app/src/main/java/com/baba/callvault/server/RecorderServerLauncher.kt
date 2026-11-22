@@ -16,6 +16,8 @@ import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.TransportTimeline
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.services.recording.AppPauseWatch
+import com.baba.callvault.services.recording.OrphanRecorderSession
+import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -91,8 +93,14 @@ object RecorderServerLauncher {
     private const val KILL_STALE_CMD =
         "p=\$(pgrep -f 'com.baba.callvault.server.Recorder[S]erver' 2>/dev/null); [ -n \"\$p\" ] && kill \$p 2>/dev/null; true"
 
-    /** Same scan as [KILL_STALE_CMD] without the kill: prints the daemon pids, used to tell whether one is running during a call. */
-    private const val LIST_DAEMONS_CMD = "pgrep -f 'com.baba.callvault.server.Recorder[S]erver' 2>/dev/null; true"
+    /**
+     * Same scan as [KILL_STALE_CMD] without the kill: one `<pid> <argv...>` line per match (the argv tells a recorder host
+     * from the adb launcher shell, see [RecorderProcessFilter]) and a closing marker, so a cut-short read is not taken for
+     * "no daemon".
+     */
+    private const val LIST_DAEMONS_CMD =
+        "for p in \$(pgrep -f 'com.baba.callvault.server.Recorder[S]erver' 2>/dev/null); do " +
+            "echo \"\$p \$(tr '\\0' ' ' < /proc/\$p/cmdline 2>/dev/null)\"; done; echo ${StaleDaemonPolicy.END_MARKER}"
 
     /** Drain cap for [killStaleDaemons]; the command isn't backgrounded, so it usually EOFs sooner. */
     private const val KILL_DRAIN_MS = 1500L
@@ -104,6 +112,12 @@ object RecorderServerLauncher {
      * happens at much higher uptimes.
      */
     private const val RECENT_BOOT_GRACE_MS = 90_000L
+
+    /** How long a spared daemon gets to deliver its binder before the launcher gives up for this round. */
+    private const val SPARED_WAIT_MS = 4_000L
+
+    /** Gap between the two staging-file size reads when its modification time is old. */
+    private const val STAGING_REREAD_MS = 1_000L
 
     /** Poll interval while waiting for the daemon to deliver its binder to [RecorderConnection]. */
     private const val POLL_INTERVAL_MS = 150L
@@ -245,11 +259,12 @@ object RecorderServerLauncher {
                 return@repeat
             }
 
-            if (launchOnce(context, apk, n)) {
-                // A daemon is recording the call in progress and was left alone (see launchOnce). Launching another
-                // would put two recorders on the audio input, so stop here; its hand-over may still be on its way.
-                val ok = pollConnected(DaemonReuse.REDELIVERY_GRACE_MS)
-                AppLogger.w(TAG, "Left a running recorder alone during a call; no second one launched; connected=$ok")
+            if (launchOnce(context, apk, n) == LaunchStep.SPARED_RECORDING_DAEMON) {
+                // A daemon is recording the call in progress and was left alone (see clearStaleDaemons). Launching another
+                // would put two recorders on the audio input, so stop here; its hand-over may still be on its way, and
+                // the daemon sends it again when it sees this app's process die while recording.
+                val ok = pollConnected(SPARED_WAIT_MS)
+                AppLogger.w(TAG, "Attempt $n: left a recording daemon alone, no second one launched; its binder ${if (ok) "arrived" else "has NOT arrived yet"}")
                 if (ok) applyWdPolicy(context)
                 return ok
             }
@@ -333,19 +348,19 @@ object RecorderServerLauncher {
      * A "Stream closed" on the drain thread is expected (the `&`-backgrounded launcher shell exits at
      * once and the daemon's own stdio is /dev/null), so failures are logged at debug, not error.
      */
-    private fun launchOnce(context: Context, apk: String, attempt: Int): Boolean {
+    private fun launchOnce(context: Context, apk: String, attempt: Int): LaunchStep {
         // A daemon from an earlier attempt (or a slow cold start) may have delivered its binder while this attempt was
         // connecting. Killing "stale" daemons now would kill that one, and the launch below would start a second (C39).
         if (RecorderConnection.isConnected) {
             AppLogger.i(TAG, "Attempt $attempt: the recorder's binder arrived while preparing; not clearing or launching again")
-            return false
+            return LaunchStep.BINDER_ALREADY_HERE
         }
         // Clear any stale/orphaned daemon (e.g. old code surviving a reinstall) before launching fresh,
         // so at most one daemon — matching the installed code — is ever running. Skipped shortly after
         // boot: a reboot already cleared every process, so the scan can only cost time on the
         // latency-critical first post-boot launch.
         if (SystemClock.elapsedRealtime() > RECENT_BOOT_GRACE_MS) {
-            if (!clearStaleDaemons(context)) return true
+            if (!clearStaleDaemons(context)) return LaunchStep.SPARED_RECORDING_DAEMON
         } else {
             AppLogger.d(TAG, "Recent boot (uptime < ${RECENT_BOOT_GRACE_MS}ms); skipping killStaleDaemons — reboot already cleared any stale daemon")
         }
@@ -377,12 +392,15 @@ object RecorderServerLauncher {
         while (System.currentTimeMillis() < deadline) {
             if (RecorderConnection.isConnected) {
                 AppLogger.d(TAG, "Attempt $attempt: binder arrived during launch; not waiting out keep-alive")
-                return false
+                return LaunchStep.ISSUED
             }
             runCatching { Thread.sleep(POLL_INTERVAL_MS) }
         }
-        return false
+        return LaunchStep.ISSUED
     }
+
+    /** What [launchOnce] did. */
+    private enum class LaunchStep { ISSUED, BINDER_ALREADY_HERE, SPARED_RECORDING_DAEMON }
 
     /**
      * Best-effort: kill any already-running [RecorderServer] daemon over the embedded ADB shell so a
@@ -394,33 +412,46 @@ object RecorderServerLauncher {
     }
 
     /**
-     * Clears stale daemons before a launch, except one that is recording a call: with a call in progress the daemon
-     * list is read first, and if one is there (or the read failed) nothing is killed and false is returned, so the
-     * caller launches nothing either (see [DaemonReuse.staleAction]). Outside a call this is the old single kill.
+     * Clears stale daemons before a launch, except one that is recording a session (see [StaleDaemonPolicy]). False
+     * means a recording daemon was left alone and the caller must launch nothing.
      */
-    private fun clearStaleDaemons(context: Context): Boolean {
-        val inCall = runCatching {
-            DaemonReuse.isCallAudioMode((context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager).mode)
-        }.getOrDefault(false)
-        val running = if (inCall) runShell(context, LIST_DAEMONS_CMD)?.let(DaemonReuse::pgrepFoundDaemon) else null
-        return when (DaemonReuse.staleAction(inCall, running)) {
-            DaemonReuse.StaleAction.SPARE -> {
-                AppLogger.w(TAG, "A call is in progress and a recorder daemon is running (probe=$running): not killing it, not launching another")
-                false
+    private fun clearStaleDaemons(context: Context): Boolean = StaleDaemonClearing.clear(object : StaleDaemonClearing.Env {
+        override fun staging(): StaleDaemonClearing.Staging {
+            val path = OrphanRecorderSession.sessionStagingPath(context)
+                ?: return StaleDaemonClearing.Staging(null, false, "the app records no session")
+            val file = java.io.File(path)
+            if (!file.exists()) return StaleDaemonClearing.Staging(path, false, "file missing")
+            val age = System.currentTimeMillis() - file.lastModified()
+            val before = file.length()
+            // Only when the modification time is old does a second read, a moment later, settle it.
+            val after = if (age in 0..StaleDaemonPolicy.FRESH_WRITE_MS) null else {
+                runCatching { Thread.sleep(STAGING_REREAD_MS) }
+                file.length()
             }
-            DaemonReuse.StaleAction.LAUNCH -> true
-            DaemonReuse.StaleAction.KILL_THEN_LAUNCH -> { killStaleDaemons(context); true }
+            return StaleDaemonClearing.Staging(
+                path, StaleDaemonPolicy.isGrowing(age, before, after), "age=${age}ms size=$before size2=${after ?: "n/a"}",
+            )
         }
-    }
 
-    /** Runs [command] over the embedded shell and returns what it printed, or null when the shell failed. */
+        override fun inCall(): Boolean? = runCatching {
+            val mode = (context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager).mode
+            AppLogger.i(TAG, "audio mode at launch: $mode")
+            AfterCallPolicy.isCallAudioMode(mode)
+        }.onFailure { AppLogger.w(TAG, "Could not read the audio mode: ${it.message}") }.getOrNull()
+
+        override fun probeOutput(): String? = runShell(context, LIST_DAEMONS_CMD)
+        override fun kill() = killStaleDaemons(context)
+        override fun log(line: String) = AppLogger.i(TAG, line)
+    })
+
+    /** Runs [command] over the embedded shell and returns what it printed, or null when the shell failed outright. */
     private fun runShell(context: Context, command: String): String? {
         val out = StringBuilder()
-        val failed = runCatching {
+        val failure = runCatching {
             AdbShell.openShell(context, command).use { shell ->
                 val deadline = System.currentTimeMillis() + KILL_DRAIN_MS
                 shell.openInputStream().use { input ->
-                    val buf = ByteArray(128)
+                    val buf = ByteArray(256)
                     while (System.currentTimeMillis() < deadline) {
                         val n = input.read(buf)
                         if (n < 0) break
@@ -428,8 +459,9 @@ object RecorderServerLauncher {
                     }
                 }
             }
-        }.onFailure { AppLogger.d(TAG, "shell command ended: ${it.message}") }.isFailure
-        return if (failed && out.isEmpty()) null else out.toString()
+        }.exceptionOrNull()
+        if (failure != null) AppLogger.w(TAG, "Shell scan ended early: ${failure.message} (read ${out.length} chars)")
+        return if (failure != null && out.isEmpty()) null else out.toString()
     }
 
     /** Polls [RecorderConnection.isConnected] up to [waitMs]. Returns true as soon as connected. */
