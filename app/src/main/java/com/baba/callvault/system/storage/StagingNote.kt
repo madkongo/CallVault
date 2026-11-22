@@ -56,6 +56,24 @@ data class StagingNote(
 
         fun fileFor(staged: File): File = File(staged.parentFile, staged.name + SUFFIX)
 
+        /** A note being written: `rec_stage_1.tmp.note` → `rec_stage_1.tmp.note.tmp`. Never a note, never a recording. */
+        const val TMP_SUFFIX = ".tmp"
+
+        fun isStrayNoteTemp(file: File): Boolean = file.name.endsWith(SUFFIX + TMP_SUFFIX)
+
+        /**
+         * Writes [note] to [noteFile] through a temp file and a rename, so a kill mid-write leaves the old note (or
+         * none), never an empty one that makes the rescue leave the recording alone. Returns false on failure; the temp is removed.
+         */
+        fun writeAtomically(noteFile: File, text: String): Boolean {
+            val tmp = File(noteFile.parentFile, noteFile.name + TMP_SUFFIX)
+            val ok = runCatching { tmp.writeText(text); tmp.renameTo(noteFile) }
+                .onFailure { com.baba.callvault.utils.AppLogger.w("CV:StagingNote", "Could not write ${noteFile.name}: ${it.message}") }
+                .getOrDefault(false)
+            if (!ok) runCatching { tmp.delete() }
+            return ok
+        }
+
         /**
          * Deletes a staged recording that was published or discarded, and its note with it (review N19: the note
          * was left behind until the next rescue sweep). Returns whether the recording is gone; the caller logs a false.
@@ -91,7 +109,21 @@ data class StagingNote(
         fun markOrphanStop(staged: File, stop: OrphanStop, ranOnSeconds: Int = 0, appCall: Boolean = false): Boolean {
             val noteFile = fileFor(staged)
             val note = noteFile.takeIf { it.exists() }?.let { runCatching { decode(it.readText()) }.getOrNull() } ?: return false
-            return runCatching { noteFile.writeText(note.copy(orphanStop = stop, ranOnSeconds = ranOnSeconds, appCall = appCall).encode()); true }.getOrDefault(false)
+            return writeAtomically(noteFile, note.copy(orphanStop = stop, ranOnSeconds = ranOnSeconds, appCall = appCall).encode())
+        }
+
+        /**
+         * Replaces the file name in the note beside [staged], keeping every other field (review N16: an app call's
+         * direction and late app/caller are learned after the note is written; a rescue after a kill would
+         * publish the start-time name). Writes only when the staged file and a readable note both exist, so a
+         * recording that finished meanwhile never gets a stray note back. Returns whether it wrote.
+         */
+        fun updateFileName(staged: File, fileName: String): Boolean {
+            if (fileName.isBlank() || !staged.exists()) return false
+            val noteFile = fileFor(staged)
+            val note = noteFile.takeIf { it.exists() }?.let { runCatching { decode(it.readText()) }.getOrNull() } ?: return false
+            if (note.fileName == fileName) return true
+            return writeAtomically(noteFile, note.copy(fileName = fileName).encode())
         }
     }
 }

@@ -103,4 +103,11 @@ object VoipLateCaller {
         if (existing.isNotEmpty()) return fileName
         return fileName.substring(0, match.range.first) + "_voip$app" + "_$who" + extension
     }
+
+    /** The name a call is published under: [startName] with what was learned late filled in. Null/blank leaves it as is. */
+    fun finalName(startName: String, lateApp: String?, caller: String?, directionToken: String?): String {
+        val withApp = lateApp?.let { withApp(startName, it) } ?: startName
+        val withCaller = caller?.let { withCaller(withApp, it) } ?: withApp
+        return withDirection(withCaller, directionToken)
+    }
 }
