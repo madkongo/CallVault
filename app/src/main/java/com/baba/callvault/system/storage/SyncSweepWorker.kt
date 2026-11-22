@@ -244,6 +244,14 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // sidecars go to Drive until the user says keep: copying one they then delete would leave the call
         // in the cloud, and under DRIVE-only the copy would take it off the phone before they had answered.
         val heldNames = AfterCallDecisions.pendingNames(applicationContext)
+        val template = AppPreferences(applicationContext).getFileNameTemplate()
+        // Merge outputs may carry any name; if they cannot be read they simply are not treated as ours (nothing extra goes to Drive).
+        val mergedNames = runCatching {
+            com.baba.callvault.data.recordings.db.RecordingDatabase.get(applicationContext).mergePartDao().allMergedNames().toSet()
+        }.getOrElse {
+            journal("merge outputs could not be read (${it.javaClass.simpleName}); only name-proven recordings are copied this run")
+            emptySet()
+        }
         for (file in sourceDir.listFiles()) {
             val name = file.name ?: continue
             if (!file.isFile) continue
@@ -263,6 +271,14 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             if (sourceSize <= 0L) {
                 skipped++
                 continue // an empty file means capture never ran; copying it would fake a backup
+            }
+            // Only what CallVault wrote, and never a stub with no audio (review N10). Said once per file per process:
+            // the sweep runs often and a foreign file would otherwise fill the journal.
+            val notOurs = CloudCopyPolicy.sweepSkipReason(name, sourceSize, template, mergedNames)
+            if (notOurs != null) {
+                if (loggedSkips.add(name)) journal("not copied to Drive: '$name' ($sourceSize bytes) is $notOurs")
+                skipped++
+                continue
             }
             val alreadyThere = existingInDrive[name]
             if (alreadyThere == null) {
@@ -469,6 +485,9 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         @Volatile internal var copierFactory: ((Context) -> DriveCopier)? = null
 
         private const val TAG = "CV:SyncSweep"
+
+        /** Names already reported as skipped by N10, so each is journalled once per process. */
+        private val loggedSkips: MutableSet<String> = java.util.Collections.synchronizedSet(HashSet())
         private const val DEFAULT_MIME = "audio/ogg"
         private const val PACE_EVERY = 10
     }

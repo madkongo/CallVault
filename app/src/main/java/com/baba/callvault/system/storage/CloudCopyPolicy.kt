@@ -8,6 +8,7 @@
 
 package com.baba.callvault.system.storage
 
+import com.baba.callvault.utils.LogRedaction
 import com.baba.callvault.data.recordings.ImportedRecording
 
 /** What an already-present destination file (same display name) means for a pending copy. */
@@ -172,4 +173,24 @@ object CloudCopyPolicy {
      * is no gate at all.
      */
     fun mayGoToCloud(displayName: String): Boolean = !ImportedRecording.isImported(displayName)
+
+    /**
+     * Why the Drive sweep must NOT copy a file, or null when it may (review N10).
+     *
+     * Two things were reaching the user's Drive that are not recordings: another app's audio sitting in the folder
+     * (the rescan catalogues it, so catalogued is no proof) and the header-only stub a call that never connected
+     * leaves (N1). Only a name that passes [AuthoredName] against [activeTemplate], or a merge output, is ours;
+     * an audio file under [CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES] holds no audio. Sidecars (.json, .md) are
+     * judged by name alone: a small one is normal.
+     */
+    fun sweepSkipReason(displayName: String, sizeBytes: Long, activeTemplate: String, mergedNames: Set<String>): String? {
+        if (!RetentionPolicy.isOursToSweep(displayName, activeTemplate, mergedNames)) {
+            return "not written by CallVault (name matches no CallVault grammar)"
+        }
+        val isAudio = LogRedaction.NAME_EXTENSIONS.any { displayName.endsWith(".$it", ignoreCase = true) }
+        if (isAudio && sizeBytes < CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES) {
+            return "holds no audio ($sizeBytes bytes, under ${CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES})"
+        }
+        return null
+    }
 }

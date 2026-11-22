@@ -110,9 +110,9 @@ class SyncSweepExactNameTest {
             setDriveFolderUri("content://com.google.android.apps.docs.storage/tree/driveroot".toUri())
         }
         val drive = DriveCopyProtocol.Listing(
-            names = listOf("Call.m4a", "Rec.m4a"),
+            names = listOf("20260101_101010.000+0200_in_Call.m4a", "20260101_101010.000+0200_in_Rec.m4a"),
             uris = listOf(driveDoc("otherCall"), driveDoc("otherRec")),
-            sizes = listOf(10L, 10L),
+            sizes = listOf(4000L, 300L),
         )
         val copier = FakeCopier(drive)
         SyncSweepWorker.copierFactory = { copier }
@@ -120,7 +120,7 @@ class SyncSweepExactNameTest {
         TestListenableWorkerBuilder<SyncSweepWorker>(context).build().doWork()
 
         val byName = copier.copies.associateBy { it.name }
-        assertEquals("both recordings go to the copier: neither is 'already there'", setOf("call.m4a", "rec.m4a"), byName.keys)
+        assertEquals("both recordings go to the copier: neither is 'already there'", setOf("20260101_101010.000+0200_in_call.m4a", "20260101_101010.000+0200_in_rec.m4a"), byName.keys)
         for (r in byName.values) {
             assertNull("'${r.name}' was handed another recording's document", r.existing)
             assertEquals(-1L, r.existingSize)
@@ -129,7 +129,7 @@ class SyncSweepExactNameTest {
 
     companion object {
         const val SOURCE = "com.baba.callvault.test.sweepsource"
-        /** "call.m4a" differs in length from Drive's "Call.m4a" (the PARTIAL -> delete case); "rec.m4a" matches it. */
-        val FILES = mapOf("call.m4a" to 4096L, "rec.m4a" to 10L)
+        /** "call.m4a" differs in length from Drive's "Call.m4a" (the PARTIAL -> delete case); "rec.m4a" matches it (names carry the CallVault stamp: the sweep skips foreign names, N10). */
+        val FILES = mapOf("20260101_101010.000+0200_in_call.m4a" to 4096L, "20260101_101010.000+0200_in_rec.m4a" to 300L)
     }
 }
