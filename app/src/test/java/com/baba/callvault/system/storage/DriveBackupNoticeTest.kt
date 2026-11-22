@@ -40,9 +40,14 @@ class DriveBackupNoticeTest {
     @Before
     fun setUp() {
         shadowOf(context as Application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        DriveBackupNotice.onDriveSyncOff(context, "test reset")
         DriveBackupNotice.onDriveReached(context, "test reset")
         nm.cancelAll()
+        DriveBackupNotice.clock = { now }
     }
+
+    @org.junit.After
+    fun tearDown() { DriveBackupNotice.clock = System::currentTimeMillis }
 
     @Test
     fun `giving up posts once, reaching Drive clears, nothing else does anything`() {
@@ -113,13 +118,15 @@ class DriveBackupNoticeTest {
         assertEquals(5, DriveBackupNotice.nextFailedRuns(previous = 4, driveProved = false, failures = 1))
         assertEquals("a straggler beside files Drive holds", 0, DriveBackupNotice.nextFailedRuns(9, driveProved = true, failures = 1))
         assertEquals("a run with no failures", 0, DriveBackupNotice.nextFailedRuns(9, driveProved = false, failures = 0))
-        assertEquals(false, DriveBackupNotice.isCopySpellGivingUp(CloudCopyPolicy.MAX_ATTEMPTS - 1))
-        assertTrue(DriveBackupNotice.isCopySpellGivingUp(CloudCopyPolicy.MAX_ATTEMPTS))
+        val day = DriveBackupNotice.MIN_SPELL_MS
+        assertEquals(false, DriveBackupNotice.isCopySpellGivingUp(CloudCopyPolicy.MAX_ATTEMPTS - 1, day))
+        assertEquals("one retry chain is not a spell", false, DriveBackupNotice.isCopySpellGivingUp(CloudCopyPolicy.MAX_ATTEMPTS, day - 1))
+        assertTrue(DriveBackupNotice.isCopySpellGivingUp(CloudCopyPolicy.MAX_ATTEMPTS, day))
     }
 
     @Test
     fun `a notice about failing copies survives a listing and is cleared by a copy`() {
-        repeat(CloudCopyPolicy.MAX_ATTEMPTS) { DriveBackupNotice.onCopyRunEnd(context, driveProved = false, tried = 3, failures = 3) }
+        failSpell()
         assertEquals(1, shown())
         val text = shadowOf(shadowOf(nm).allNotifications.single()).contentText.toString()
         assertTrue(text, text.contains("Google Drive is not accepting copies"))
@@ -128,6 +135,18 @@ class DriveBackupNoticeTest {
         assertEquals("a listing must not clear it", 1, shown())
 
         DriveBackupNotice.onDriveReached(context, "copy ok")
+        assertEquals(0, shown())
+    }
+
+    private var now = 1_000_000L
+    private fun failSpell() = repeat(CloudCopyPolicy.MAX_ATTEMPTS) {
+        DriveBackupNotice.onCopyRunEnd(context, driveProved = false, tried = 3, failures = 3)
+        now += DriveBackupNotice.MIN_SPELL_MS / 5
+    }
+
+    @Test
+    fun `ten fruitless runs inside one day do not tell the user`() {
+        repeat(CloudCopyPolicy.MAX_ATTEMPTS + 3) { DriveBackupNotice.onCopyRunEnd(context, driveProved = false, tried = 1, failures = 1) }
         assertEquals(0, shown())
     }
 

@@ -40,6 +40,9 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
+    /** When a recording started, from its name; null for a name that does not carry it (custom templates, sidecars). */
+    private fun startedAtOf(name: String): Long? = runCatching { com.baba.callvault.data.recordings.RecordingsRepository.parseName(name).startedAtMillis }.getOrNull()
+
     private fun journal(line: String) = DriveCopyJournal.record(applicationContext, line)
 
     override suspend fun doWork(): Result {
@@ -225,8 +228,12 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         val deleteLocal = target == StorageTarget.DRIVE
         var copied = 0
         var failures = 0
-        // Drive is shown to work in this run: a copy went through, or it listed a recording of ours at the right size.
+        // Drive is shown to work in this run: a copy went through (the listing's newer-than-failures proof is added at the end).
         var driveProved = false
+        // The newest recording Drive holds, and the newest one that failed this run, by the start time in their names
+        // (else the file's own time): an OLD file already in Drive proves nothing about new uploads (review N6).
+        var newestFailedAt = 0L
+        val newestListedAt = listed.names.maxOfOrNull { startedAtOf(it) ?: 0L } ?: 0L
         var skipped = 0
         var deleted = 0
         var kept = 0
@@ -283,7 +290,6 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     applicationContext, name, alreadyThere.uri,
                     CloudCopyPolicy.driveSizeToRecord(alreadyThere.sizeBytes), deleteLocalAfter = false,
                 )
-                driveProved = true
                 continue
             }
 
@@ -348,6 +354,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 is SafHelper.CopyResult.Copied -> result.uri.also { copied++; driveProved = true }
                 is SafHelper.CopyResult.Failed -> {
                     failures++
+                    newestFailedAt = maxOf(newestFailedAt, startedAtOf(name) ?: entry.lastModified)
                     AppLogger.w(TAG, "Failed to copy '$name' to Drive (${result.reason}).")
                     null
                 }
@@ -413,7 +420,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         if (!isStopped && done == total) RecordingCatalog.markDriveSizesReconfirmed(applicationContext)
         AppLogger.i(TAG, "Sweep complete (target=$target copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal).")
         journal("sweep complete: copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal deleted=$deleted kept=$kept unverified=$unverified")
-        if (!isStopped) DriveBackupNotice.onCopyRunEnd(applicationContext, driveProved, tried = done, failures = failures)
+        if (!isStopped) DriveBackupNotice.onCopyRunEnd(applicationContext, driveProved || (failures > 0 && newestListedAt > newestFailedAt), tried = done, failures = failures)
         // A sweep that keeps failing backs off rather than hammering the provider: the next scheduled run
         // picks the stragglers up anyway, so there is nothing to gain from an unbounded retry chain.
         return if (failures > 0 && !CloudCopyPolicy.isLastAttempt(runAttemptCount)) Result.retry() else Result.success()

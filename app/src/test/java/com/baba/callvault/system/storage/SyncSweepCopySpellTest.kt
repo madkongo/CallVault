@@ -18,7 +18,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
-import com.baba.callvault.data.recordings.RecordingCatalog
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.justRun
@@ -46,8 +45,12 @@ class SyncSweepCopySpellTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val nm get() = context.getSystemService(NotificationManager::class.java)
+    // Names carry their start time, which is how "newer than the newest failure" is judged.
+    private val old = "20251201_101010.000+0200_in_0501111111.ogg"
     private val good = "20260101_101010.000+0200_in_0501111111.ogg"
     private val bad = "20260101_111111.000+0200_in_0502222222.ogg"
+    private val newer = "20260301_101010.000+0200_in_0503333333.ogg"
+    private var now = 1_000_000L
     private val deviceFolder = Uri.parse("content://com.android.externalstorage.documents/tree/primary%3ARec")
     private val driveFolder = Uri.parse("content://com.google.android.apps.docs.storage/tree/acc%3D1%3Bdoc%3Dd")
     private val driveCopy = Uri.parse("$driveFolder/document/acc%3D1%3Bdoc%3Dx")
@@ -64,6 +67,13 @@ class SyncSweepCopySpellTest {
         return f
     }
 
+    private fun device(vararg names: String) {
+        val dir = mockk<DocumentFile>(relaxed = true)
+        every { dir.exists() } returns true
+        every { dir.listFiles() } returns names.map { doc(it) }.toTypedArray()
+        every { DocumentFile.fromTreeUri(any(), deviceFolder) } returns dir
+    }
+
     @Before
     fun setUp() {
         shadowOf(context as Application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
@@ -75,21 +85,17 @@ class SyncSweepCopySpellTest {
             setRecordingFolderUri(deviceFolder)
             setDriveFolderUri(driveFolder)
         }
-        val dir = mockk<DocumentFile>(relaxed = true)
-        every { dir.exists() } returns true
-        every { dir.listFiles() } returns arrayOf(doc(good), doc(bad))
         mockkStatic(DocumentFile::class)
-        every { DocumentFile.fromTreeUri(any(), deviceFolder) } returns dir
+        DriveBackupNotice.clock = { now }
         mockkConstructor(DriveCopyClient::class)
         justRun { anyConstructed<DriveCopyClient>().close() }
-        runBlocking {
-            RecordingCatalog.recordLocal(context, good, Uri.parse("$deviceFolder/document/g"), size, 1_000L)
-            RecordingCatalog.recordLocal(context, bad, Uri.parse("$deviceFolder/document/b"), size, 1_000L)
-        }
     }
 
     @After
-    fun tearDown() = unmockkAll()
+    fun tearDown() {
+        unmockkAll()
+        DriveBackupNotice.clock = System::currentTimeMillis
+    }
 
     private fun driveLists(names: List<String>) {
         val listing = DriveCopyProtocol.Listing(names, names.map { driveCopy }, names.map { size })
@@ -106,19 +112,30 @@ class SyncSweepCopySpellTest {
         TestListenableWorkerBuilder<SyncSweepWorker>(context).setRunAttemptCount(attempt).build().doWork()
     }
 
+    /** [runs] sweeps, each at its own attempt number, [stepMs] apart on the notice's clock. */
+    private fun spell(runs: Int, stepMs: Long) = repeat(runs) {
+        sweep(minOf(it, CloudCopyPolicy.MAX_ATTEMPTS - 1))
+        now += stepMs
+    }
+
+    private val threeHours = 3L * 3_600_000
+    private val spellRuns = CloudCopyPolicy.MAX_ATTEMPTS + 2
+
     @Test
-    fun `one straggler that never copies, beside a recording Drive holds, never raises the notice`() {
-        driveLists(listOf(good))
+    fun `DRIVE-only with one stuck old file, newer ones already in Drive, never raises the notice`() {
+        device(old) // the other copies were deleted from the phone after upload
+        driveLists(listOf(good, newer))
         copiesFail()
-        repeat(CloudCopyPolicy.MAX_ATTEMPTS + 2) { sweep(minOf(it, CloudCopyPolicy.MAX_ATTEMPTS - 1)) }
+        spell(spellRuns, threeHours)
         assertEquals(0, shadowOf(nm).allNotifications.size)
     }
 
     @Test
-    fun `every copy failing through a whole spell raises it once, and a later listing does not clear it`() {
-        driveLists(emptyList())
+    fun `BOTH with old files in Drive and every new copy failing raises it once, and a listing does not clear it`() {
+        device(good, bad)
+        driveLists(listOf(good))
         copiesFail()
-        repeat(CloudCopyPolicy.MAX_ATTEMPTS) { sweep(it) }
+        spell(spellRuns, threeHours)
         assertEquals(1, shadowOf(nm).allNotifications.size)
 
         sweep(0) // listing works again, copies still fail
@@ -126,10 +143,29 @@ class SyncSweepCopySpellTest {
     }
 
     @Test
-    fun `a spell shorter than the attempts is not yet told`() {
-        driveLists(emptyList())
+    fun `BOTH with old files in Drive and one stuck older file never raises the notice`() {
+        device(good, old)
+        driveLists(listOf(good))
         copiesFail()
-        repeat(CloudCopyPolicy.MAX_ATTEMPTS - 1) { sweep(it) }
+        spell(spellRuns, threeHours)
+        assertEquals(0, shadowOf(nm).allNotifications.size)
+    }
+
+    @Test
+    fun `every copy failing inside one retry chain does not raise it yet`() {
+        device(good, bad)
+        driveLists(listOf(good))
+        copiesFail()
+        spell(spellRuns, 60_000L)
+        assertEquals(0, shadowOf(nm).allNotifications.size)
+    }
+
+    @Test
+    fun `a spell shorter than the attempts is not yet told`() {
+        device(good, bad)
+        driveLists(listOf(good))
+        copiesFail()
+        spell(CloudCopyPolicy.MAX_ATTEMPTS - 1, 6L * 3_600_000)
         assertEquals(0, shadowOf(nm).allNotifications.size)
     }
 }

@@ -31,6 +31,7 @@ object DriveBackupNotice {
     private const val KEY_POSTED = "posted"
     private const val KEY_POSTED_FOR_COPIES = "posted_for_copies"
     private const val KEY_FAILED_RUNS = "failed_copy_runs"
+    private const val KEY_SPELL_START = "failed_copy_spell_start"
 
     /** What the user is told went wrong, in a few words. */
     enum class Reason(val text: Int) {
@@ -59,27 +60,46 @@ object DriveBackupNotice {
     /** True when attempt [runAttemptCount] (0-based) is the one after which the sweep stops retrying. */
     fun isGivingUp(runAttemptCount: Int): Boolean = !CloudCopyPolicy.shouldRetryListFailure(runAttemptCount)
 
-    /** Runs in a row (across retries and days) in which copies were tried, none reached Drive, and Drive held none of ours. */
+    /** Test seam: the clock the spell's length is measured with. */
+    internal var clock: () -> Long = System::currentTimeMillis
+
+    /** Runs in a row (across retries and days) in which copies were tried and nothing newer than the failures reached Drive. */
     fun nextFailedRuns(previous: Int, driveProved: Boolean, failures: Int): Int =
         if (driveProved || failures <= 0) 0 else previous + 1
 
-    /** The failure spell is long enough to tell the user: as many fruitless runs as the sweep has attempts (review N6). */
-    fun isCopySpellGivingUp(failedRuns: Int): Boolean = failedRuns >= CloudCopyPolicy.MAX_ATTEMPTS
+    /**
+     * The failure spell is long enough to tell the user (review N6): as many fruitless runs as the sweep has attempts
+     * AND at least [MIN_SPELL_MS] since the first, so one retry chain of a single stuck file (all inside ~90 minutes)
+     * never alarms. Immediate mode does not feed the spell (the sweep is not scheduled there); the 2-day symptom check
+     * covers it.
+     */
+    fun isCopySpellGivingUp(failedRuns: Int, spellMs: Long): Boolean =
+        failedRuns >= CloudCopyPolicy.MAX_ATTEMPTS && spellMs >= MIN_SPELL_MS
+
+    const val MIN_SPELL_MS = 24L * 60 * 60 * 1000
 
     /**
-     * A finished sweep run that listed the folder (review N6). [driveProved]: a copy went through, or Drive listed a
-     * recording of ours at the right size, so Drive does work and a leftover failing file is only that file's problem.
-     * Only a spell with no such proof, for [CloudCopyPolicy.MAX_ATTEMPTS] runs, raises the notice. [tried] files were
-     * attempted, [failures] failed.
+     * A finished sweep run that listed the folder (review N6). [driveProved] is true only when a copy went through in
+     * this run, or Drive holds a recording NEWER than the newest one that failed (an old file Drive already has proves
+     * nothing about new uploads). Only a spell with no proof, for [CloudCopyPolicy.MAX_ATTEMPTS] runs over at least a
+     * day, raises the notice. [tried] files were attempted, [failures] failed.
      */
     fun onCopyRunEnd(context: Context, driveProved: Boolean, tried: Int, failures: Int) {
         val prefs = prefs(context)
         val before = prefs.getInt(KEY_FAILED_RUNS, 0)
         val after = nextFailedRuns(before, driveProved, failures)
         if (after != before) prefs.edit().putInt(KEY_FAILED_RUNS, after).apply()
-        if (after == 0) return
-        val why = "of $tried recording(s) tried, $failures failed and none reached Drive; fruitless run $after of ${CloudCopyPolicy.MAX_ATTEMPTS}, and Drive held none of ours"
-        if (!isCopySpellGivingUp(after)) {
+        if (after == 0) {
+            if (before > 0) {
+                prefs.edit().remove(KEY_SPELL_START).apply()
+                DriveCopyJournal.record(context, "failed-copy spell ENDED after $before fruitless run(s): " + if (failures <= 0) "no copy failed this run" else "Drive holds a newer recording than the newest failure")
+            }
+            return
+        }
+        val now = clock()
+        val start = prefs.getLong(KEY_SPELL_START, 0L).takeIf { it > 0L } ?: now.also { prefs.edit().putLong(KEY_SPELL_START, it).apply() }
+        val why = "of $tried recording(s) tried, $failures failed and nothing newer reached Drive; fruitless run $after of ${CloudCopyPolicy.MAX_ATTEMPTS}, spell ${(now - start) / 3_600_000} h old (needs ${MIN_SPELL_MS / 3_600_000} h)"
+        if (!isCopySpellGivingUp(after, now - start)) {
             DriveCopyJournal.record(context, "copies failing, not yet told to the user: $why")
             return
         }
@@ -120,8 +140,15 @@ object DriveBackupNotice {
      */
     fun onDriveReached(context: Context, how: String, byListing: Boolean = false) {
         val prefs = prefs(context)
-        if (!byListing && prefs.getInt(KEY_FAILED_RUNS, 0) != 0) prefs.edit().putInt(KEY_FAILED_RUNS, 0).apply()
-        if (byListing && prefs.getBoolean(KEY_POSTED_FOR_COPIES, false)) return
+        val runs = prefs.getInt(KEY_FAILED_RUNS, 0)
+        if (!byListing && runs != 0) {
+            prefs.edit().putInt(KEY_FAILED_RUNS, 0).remove(KEY_SPELL_START).apply()
+            DriveCopyJournal.record(context, "failed-copy spell ENDED after $runs fruitless run(s): a copy reached Drive ($how)")
+        }
+        if (byListing && prefs.getBoolean(KEY_POSTED_FOR_COPIES, false)) {
+            DriveCopyJournal.record(context, "Drive listed again ($how), but the copies-failing notice stays until a copy works")
+            return
+        }
         if (decide(prefs.getBoolean(KEY_POSTED, false), Event.REACHED) != Action.CLEAR) return
         SilentFailureNotifier.clearDriveBackupBroken(context)
         prefs.edit().putBoolean(KEY_POSTED, false).putBoolean(KEY_POSTED_FOR_COPIES, false).apply()
@@ -132,7 +159,7 @@ object DriveBackupNotice {
     /** Drive sync was switched off (device-only / immediate): a posted notice is about a backup that no longer runs. */
     fun onDriveSyncOff(context: Context, why: String) {
         val prefs = prefs(context)
-        if (prefs.getInt(KEY_FAILED_RUNS, 0) != 0) prefs.edit().putInt(KEY_FAILED_RUNS, 0).apply()
+        if (prefs.getInt(KEY_FAILED_RUNS, 0) != 0) prefs.edit().putInt(KEY_FAILED_RUNS, 0).remove(KEY_SPELL_START).apply()
         if (!prefs.getBoolean(KEY_POSTED, false)) return
         SilentFailureNotifier.clearDriveBackupBroken(context)
         prefs.edit().putBoolean(KEY_POSTED, false).putBoolean(KEY_POSTED_FOR_COPIES, false).apply()
