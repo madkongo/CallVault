@@ -350,6 +350,20 @@ class LogRedactionTest {
     }
 
     @Test
+    fun `a key that merely ends in a measurement word is still redacted`() {
+        assertEquals("account=[PHONE_REDACTED]", redact("account=0544557278"))
+        assertEquals("phoneAccount=[PHONE_REDACTED]", redact("phoneAccount=0544557278"))
+        assertEquals("discount: [PHONE_REDACTED]", redact("discount: 0544557278"))
+        assertEquals("terms=[PHONE_REDACTED]", redact("terms=0544557278"))
+    }
+
+    @Test
+    fun `camelCase and snake_case measurement keys are kept`() {
+        for (line in listOf("frameCount=4685000", "frame_count=4685000", "retryDelayMs=3600000", "delay_ms=3600000", "SIZE=1234567"))
+            assertEquals(line, redact(line))
+    }
+
+    @Test
     fun `a number that only starts with a measurement word is still redacted`() {
         assertEquals("sizeable=[PHONE_REDACTED]", redact("sizeable=0544557278"))
         assertEquals("caller_size_of=[PHONE_REDACTED]", redact("caller_size_of=0544557278"))

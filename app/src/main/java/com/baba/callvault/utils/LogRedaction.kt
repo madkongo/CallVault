@@ -79,11 +79,12 @@ object LogRedaction {
     /**
      * Keys we log a measurement under (`initialDelayMs=3600000`, `size=1234567`, `pid: 4242`): a number right after
      * one is not a person (review N12). Matched as the END of the key so camelCase and snake_case keys count; the
-     * milliseconds suffix is case-sensitive (`Ms`, `_ms`) so an ordinary word ending in "ms" is not an exemption.
+     * key must start at a word or camelCase boundary (`initialDelayMs`, `frame_count`), so `account=`, `phoneAccount=` and `discount=` are still redacted.
      * Deliberately short: `number`, `phone`, `from`, `to`, `id` are not here, and an unknown key still redacts.
      */
     private const val MEASUREMENT_KEYS =
-        "(?-i:Ms|_ms)|(?i:millis|bytes|size|elapsed|pid|uid|version|length|duration|delay|timeout|count|frames|samples)"
+        "(?:(?:(?<![A-Za-z0-9])|(?<=_))(?i:ms|millis|bytes|size|elapsed|pid|uid|version|length|duration|delay|timeout|count|frames|samples)" +
+            "|(?<=[a-z0-9])(?:Ms|Millis|Bytes|Size|Elapsed|Pid|Uid|Version|Length|Duration|Delay|Timeout|Count|Frames|Samples))"
 
     private val PHONE_REGEX = Regex(
         "(?<!\\d)" +                      // Negative Lookbehind: Don't start in the middle of another number
