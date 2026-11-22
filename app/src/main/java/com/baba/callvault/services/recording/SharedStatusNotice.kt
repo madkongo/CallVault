@@ -10,6 +10,7 @@ package com.baba.callvault.services.recording
 
 import android.app.Notification
 import android.os.SystemClock
+import com.baba.callvault.utils.AppLogger
 import kotlin.math.abs
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.StateFlow
  * Both services run on the main thread of the same process; the fields are volatile for the rare off-thread reader.
  */
 object SharedStatusNotice {
+    private const val TAG = "CV:SharedStatusNotice"
 
     /** The keep-alive's existing id, so a notification already on a user's phone stays the same one. */
     const val ID = 4720
@@ -99,6 +101,9 @@ object SharedStatusNotice {
 
         /** The last wall-clock moment the phone was seen with no call at all (0 if never); a call-free moment ends any call. */
         fun lastNoCallAt(): Long
+
+        /** When the call in progress began ringing or was dialled, as CallVault saw it (0 if unknown). */
+        fun liveCallBeganAt(): Long
     }
 
     @Volatile
@@ -116,8 +121,10 @@ object SharedStatusNotice {
      * A saved clock is trusted only when it was written in this same boot (elapsedRealtime is comparable then),
      * recently enough to be one call, and is not from the future. Anything else is a different call: start at zero.
      */
-    internal fun restorable(saved: SavedClock, nowMs: Long, wallMs: Long, lastNoCallAt: Long = 0L): Boolean =
+    internal fun restorable(saved: SavedClock, nowMs: Long, wallMs: Long, lastNoCallAt: Long = 0L, liveCallBeganAt: Long = 0L): Boolean =
         lastNoCallAt <= saved.startedWallMs &&
+            // A call that began after the saved clock started is another call, whatever the clock says.
+            (liveCallBeganAt <= 0L || liveCallBeganAt <= saved.startedWallMs + CALL_BEGAN_TOLERANCE_MS) &&
             abs((wallMs - nowMs) - saved.bootWallMs) <= BOOT_TOLERANCE_MS &&
             wallMs - saved.savedWallMs in 0..MAX_RESTORE_AGE_MS &&
             saved.runningSinceMs <= nowMs
@@ -133,7 +140,7 @@ object SharedStatusNotice {
             Live.RECORDING -> {
                 if (runningSinceMs == NOT_RUNNING && bankedMs == 0L) {
                     // A fresh process joining a call that was already being timed?
-                    store?.load()?.takeIf { restorable(it, nowMs, wallMs, store.lastNoCallAt()) }?.let {
+                    store?.load()?.takeIf { restorable(it, nowMs, wallMs, store.lastNoCallAt(), store.liveCallBeganAt()) }?.let {
                         runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs; startedWallMs = it.startedWallMs
                     }
                 }
@@ -141,7 +148,7 @@ object SharedStatusNotice {
             }
             Live.PAUSED -> {
                 if (runningSinceMs == NOT_RUNNING && bankedMs == 0L) {
-                    store?.load()?.takeIf { restorable(it, nowMs, wallMs, store.lastNoCallAt()) }?.let {
+                    store?.load()?.takeIf { restorable(it, nowMs, wallMs, store.lastNoCallAt(), store.liveCallBeganAt()) }?.let {
                         runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs; startedWallMs = it.startedWallMs
                     }
                 }
@@ -159,6 +166,7 @@ object SharedStatusNotice {
 
     private const val NOT_RUNNING = -1L
     private const val BOOT_TOLERANCE_MS = 5_000L
+    private const val CALL_BEGAN_TOLERANCE_MS = 10_000L
     private const val MAX_RESTORE_AGE_MS = 2 * 60 * 60 * 1000L
 
     /** The live state now. */
@@ -174,7 +182,9 @@ object SharedStatusNotice {
                 liveByOwner.containsValue(Live.PAUSED) -> Live.PAUSED
                 else -> Live.NONE
             }
-            trackClock(liveState.value, nowMs, wallMs)
+            // The timer is decoration: it must never be able to throw on the recording path.
+            runCatching { trackClock(liveState.value, nowMs, wallMs) }
+                .onFailure { AppLogger.w(TAG, "Live clock update failed: ${it.message}") }
         }
     }
 

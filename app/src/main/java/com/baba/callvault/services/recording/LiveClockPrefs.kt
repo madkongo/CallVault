@@ -43,6 +43,10 @@ class LiveClockPrefs(context: Context) : SharedStatusNotice.ClockStore {
         appContext.getSharedPreferences(OrphanRecorderSession.PREFS, Context.MODE_PRIVATE).getLong(OrphanRecorderSession.KEY_LAST_NO_CALL_AT, 0L)
     }.getOrDefault(0L)
 
+    override fun liveCallBeganAt(): Long = runCatching {
+        appContext.getSharedPreferences(OrphanRecorderSession.PREFS, Context.MODE_PRIVATE).getLong(OrphanRecorderSession.KEY_LIVE_CALL_BEGAN_AT, 0L)
+    }.getOrDefault(0L)
+
     private companion object {
         const val KEY_RUNNING = "running_since"
         const val KEY_BANKED = "banked"

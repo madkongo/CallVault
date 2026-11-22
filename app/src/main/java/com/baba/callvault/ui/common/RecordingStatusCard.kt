@@ -37,18 +37,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
@@ -84,12 +86,12 @@ fun RecordingStatusCard(
     // Read on every composition (a cheap settings read) so a changed "remove animations" setting shows up at once.
     val animationsOn = animationsEnabled(Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f))
     val style = recordingCardStyle(status, animationsOn) ?: return
-    val elapsedMs by recordingElapsedMs(running = status == HomeStatus.RECORDING)
-    val elapsed = formatRecordingElapsed(elapsedMs)
+    // Held as State and read only inside the subtitle text and the semantics block, so a tick recomposes the
+    // timer text alone, not the whole card.
+    val elapsedState = recordingElapsedMs(running = status == HomeStatus.RECORDING)
     val title = stringResource(status.titleResId)
     // Paused: just the frozen time under the title; the long "nothing is being saved" sentence wrapped.
-    val subtitle = if (status == HomeStatus.RECORDING) stringResource(status.suggestionResId) + " · " + elapsed else elapsed
-    val description = "$title, $elapsed"
+    val subtitlePrefix = if (status == HomeStatus.RECORDING) stringResource(status.suggestionResId) + " · " else ""
 
     CvCard(
         color = brand.recordingContainer,
@@ -98,7 +100,7 @@ fun RecordingStatusCard(
     ) {
         // The description covers the header only, so the Stop control below keeps its own semantics.
         Row(
-            Modifier.semantics(mergeDescendants = true) { contentDescription = description },
+            Modifier.semantics(mergeDescendants = true) { contentDescription = "$title, ${formatRecordingElapsed(elapsedState.value)}" },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -110,7 +112,7 @@ fun RecordingStatusCard(
             }
             Column(Modifier.weight(1f).clearAndSetSemantics { }, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = brand.onRecordingMuted)
+                RecordingTimerText(subtitlePrefix, elapsedState, brand.onRecordingMuted)
             }
             RecordingBars(animate = style.animateBars)
         }
@@ -126,7 +128,7 @@ fun RecordingStatusCard(
                     onClick = { onSetRecordingState(RecordingState.STOPPED) },
                     shape = CircleShape,
                     color = brand.recording.copy(alpha = 0.16f),
-                    modifier = Modifier.heightIn(min = 48.dp),
+                    modifier = Modifier.heightIn(min = 48.dp).semantics { role = Role.Button },
                 ) {
                     Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.StopCircle, contentDescription = null, tint = brand.recording, modifier = Modifier.size(20.dp))
@@ -140,18 +142,25 @@ fun RecordingStatusCard(
 }
 
 @Composable
+private fun RecordingTimerText(prefix: String, elapsedMs: State<Long>, color: androidx.compose.ui.graphics.Color) {
+    Text(prefix + formatRecordingElapsed(elapsedMs.value), style = MaterialTheme.typography.bodyMedium, color = color)
+}
+
+@Composable
 private fun RecordingDot(blink: Boolean) {
-    val alpha = if (blink) {
-        val t = rememberInfiniteTransition(label = "recDot")
-        val a by t.animateFloat(
+    val alpha: State<Float> = if (blink) {
+        rememberInfiniteTransition(label = "recDot").animateFloat(
             initialValue = 1f, targetValue = 0.25f,
             animationSpec = infiniteRepeatable(tween(DOT_CYCLE_MS / 2, easing = LinearEasing), RepeatMode.Reverse),
             label = "recDotAlpha",
         )
-        a
-    } else 1f
-    Box(Modifier.size(14.dp).alpha(alpha).clip(CircleShape).background(LocalCvBrand.current.recording))
+    } else ConstantOne
+    // Read in the draw phase, so the blink never recomposes anything.
+    Box(Modifier.size(14.dp).graphicsLayer { this.alpha = alpha.value }.clip(CircleShape).background(LocalCvBrand.current.recording))
 }
+
+private val ConstantOne: State<Float> = object : State<Float> { override val value = 1f }
+private val ConstantStill: State<Float> = object : State<Float> { override val value = BAR_STILL_SCALE }
 
 @Composable
 private fun RecordingBars(animate: Boolean) {
@@ -159,7 +168,7 @@ private fun RecordingBars(animate: Boolean) {
     val transition = if (animate) rememberInfiniteTransition(label = "recBars") else null
     Row(Modifier.height(22.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
         repeat(BAR_COUNT) { i ->
-            val scale = transition?.animateFloat(
+            val scale: State<Float> = transition?.animateFloat(
                 initialValue = BAR_STILL_SCALE, targetValue = 1f,
                 animationSpec = infiniteRepeatable(
                     tween(BAR_CYCLE_MS / 2, easing = LinearEasing),
@@ -167,9 +176,9 @@ private fun RecordingBars(animate: Boolean) {
                     initialStartOffset = androidx.compose.animation.core.StartOffset(BAR_DELAYS_MS[i]),
                 ),
                 label = "recBar$i",
-            )?.value ?: BAR_STILL_SCALE
+            ) ?: ConstantStill
             Box(
-                Modifier.width(3.dp).fillMaxHeight().graphicsLayer { scaleY = scale }
+                Modifier.width(3.dp).fillMaxHeight().graphicsLayer { scaleY = scale.value }
                     .clip(RoundedCornerShape(2.dp)).background(color)
             )
         }

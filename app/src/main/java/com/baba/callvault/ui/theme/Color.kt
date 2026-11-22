@@ -63,8 +63,8 @@ val WarningOnLight  = Color(0xFFB7791F)
 val RecordingRed               = Color(0xFFF87171) // dot + bars on dark
 val RecordingRedContainer      = Color(0xFF2B1A1E) // card on dark
 val RecordingRedMuted          = Color(0xFFD6BFC3) // subtitle on dark
-val RecordingRedOnLight        = Color(0xFFD32F2F) // dot + bars on light (4.6:1 on the light card)
+val RecordingRedOnLight        = Color(0xFFD32F2F) // dot + bars on light (4.37:1 on the light card)
 val RecordingRedContainerLight = Color(0xFFFDECEE) // card on light
-val RecordingRedMutedLight     = Color(0xFF6B4A50) // subtitle on light (7:1 on the light card)
+val RecordingRedMutedLight     = Color(0xFF6B4A50) // subtitle on light (6.77:1 on the light card)
 
 val White = Color(0xFFFFFFFF)

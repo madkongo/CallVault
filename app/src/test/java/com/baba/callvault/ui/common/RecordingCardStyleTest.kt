@@ -87,6 +87,8 @@ class LiveClockRestoreTest {
     private class FakeStore : SharedStatusNotice.ClockStore {
         var saved: SharedStatusNotice.SavedClock? = null
         var noCallAt = 0L
+        var callBeganAt = 0L
+        override fun liveCallBeganAt() = callBeganAt
         override fun lastNoCallAt() = noCallAt
         override fun load() = saved
         override fun save(clock: SharedStatusNotice.SavedClock?) { saved = clock }
@@ -174,5 +176,35 @@ class LiveClockRestoreTest {
         killProcess()
         SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 40_000, boot + 40_000)
         assertEquals(30_000L, SharedStatusNotice.liveElapsedMs(40_000))
+    }
+
+    @Test
+    fun `a call that began after the stored clock started never inherits its time`() {
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 0, boot)
+        store.callBeganAt = boot + 45_000 // call B rang well after A's clock started
+        killProcess()
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 60_000, boot + 60_000)
+        assertEquals(0L, SharedStatusNotice.liveElapsedMs(60_000))
+    }
+
+    @Test
+    fun `the same call that rang just before capture started still restores`() {
+        store.callBeganAt = boot - 3_000
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 0, boot)
+        killProcess()
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 60_000, boot + 60_000)
+        assertEquals(60_000L, SharedStatusNotice.liveElapsedMs(60_000))
+    }
+
+    @Test
+    fun `a failing store never throws out of setLive`() {
+        SharedStatusNotice.clockStore = object : SharedStatusNotice.ClockStore {
+            override fun load(): SharedStatusNotice.SavedClock? = throw IllegalStateException("boom")
+            override fun save(clock: SharedStatusNotice.SavedClock?) = throw IllegalStateException("boom")
+            override fun lastNoCallAt() = 0L
+            override fun liveCallBeganAt() = 0L
+        }
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 0, boot)
+        assertEquals(SharedStatusNotice.Live.RECORDING, SharedStatusNotice.live)
     }
 }
