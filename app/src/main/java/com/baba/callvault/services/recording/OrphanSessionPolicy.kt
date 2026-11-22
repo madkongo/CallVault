@@ -65,10 +65,13 @@ object OrphanSessionPolicy {
     const val SAME_CALL_MARGIN_MS = 2_000L
 
     /**
-     * A call logged more than this after the orphan's recording began is another call, not the orphan's own. Short on
-     * purpose: an incoming call is logged at its ring (before the recording) and an outgoing one at its dial (about the
-     * recording's start), so only clock slack is needed, and a quick redial within a minute must still be seen.
+     * Whether a staged file the recorder no longer writes was finalised by the daemon's own self-stop after its call
+     * ended (the app was gone or frozen then): its call ended no earlier than it began, it was last written at or after
+     * that end, and no call is up now. [inCall] unknown counts as a call (never guess "ended").
      */
+    fun finalisedAfterCallEnd(startedAt: Long?, callEndedAt: Long?, lastWriteAt: Long, inCall: Boolean?): Boolean =
+        inCall == false && callEndedAt != null && (startedAt == null || callEndedAt >= startedAt) && lastWriteAt >= callEndedAt
+
     /** A file that runs on past its call's end by more than this is told to the user (a hang-up is never exact). */
     const val RUN_ON_NOTICE_MS = 30_000L
 
@@ -83,6 +86,11 @@ object OrphanSessionPolicy {
         return if (gap > RUN_ON_NOTICE_MS) (gap / 1_000L).toInt() else null
     }
 
+    /**
+     * A call logged more than this after the orphan's recording began is another call, not the orphan's own. Short on
+     * purpose: an incoming call is logged at its ring (before the recording) and an outgoing one at its dial (about the
+     * recording's start), so only clock slack is needed, and a quick redial within a minute must still be seen.
+     */
     const val SAME_CALL_LOG_SLACK_MS = 10_000L
 
     /** True when the orphan's recording began clearly before the live call did, so it cannot be that call's. */

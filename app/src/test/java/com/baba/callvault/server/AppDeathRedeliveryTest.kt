@@ -238,4 +238,37 @@ class AppDeathRedeliveryTest {
         assertTrue(s.ownsSince(150)); assertTrue(s.holdsSince(150)) // owning is also holding
         assertFalse(s.ownsSince(201))
     }
+
+    @Test
+    fun `a refused start only holds the binder and never marks ownership`() {
+        val s = ClientSignals()
+        s.noteOwnerIfWon(won = false, now = 100)
+        assertTrue(s.holdsSince(0)); assertFalse(s.ownsSince(0))
+        s.noteOwnerIfWon(won = true, now = 200)
+        assertTrue(s.ownsSince(0))
+    }
+
+    @Test
+    fun `any extra call signal that says up holds the self-stop, an unreadable one is not no-call`() {
+        assertEquals(true, OrphanSelfStop.callUpAny(false, false, true, null))
+        assertEquals(null, OrphanSelfStop.callUpAny(false, false, null))
+        assertEquals(false, OrphanSelfStop.callUpAny(false, false, false, false))
+        val w = watch(mayRestart = false)
+        // LINE on hold: audio mode and playback say no call, but a foreign VOICE_COMMUNICATION recorder is open.
+        fun tick(now: Long, other: List<Boolean?>) = w.step(now, true, true, false, false, callUp = false, voiceCommActive = false, otherCallSignals = other) { false }
+        assertEquals(OrphanWatch.Action.NONE, tick(0, listOf(true, false)).action)
+        assertEquals(OrphanWatch.Action.NONE, tick(60_000, listOf(true, false)).action)
+        assertEquals(OrphanWatch.Action.NONE, tick(61_000, listOf(null, false)).action)
+        assertEquals(OrphanWatch.Action.NONE, tick(130_000, listOf(false, false)).action)
+        assertEquals(OrphanWatch.Action.SELF_STOP, tick(135_000, listOf(false, false)).action)
+    }
+
+    @Test
+    fun `a hold that cancels a due re-delivery is reported once`() {
+        val w = watch()
+        assertEquals(false, w.consumeRedeliveryCancelled())
+        w.tick(0, holds = true)
+        assertEquals(true, w.consumeRedeliveryCancelled())
+        assertEquals(false, w.consumeRedeliveryCancelled())
+    }
 }

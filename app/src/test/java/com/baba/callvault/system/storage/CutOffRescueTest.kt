@@ -147,8 +147,8 @@ class CutOffRescueTest {
     }
 
     @Test
-    fun a_saved_in_full_match_without_a_start_time_takes_the_newest_call_ended_before_the_cut() {
-        assertEquals(theCall, CutOffRescuePolicy.matchCompleteCall(listOf(earlierCall, theCall), null, callStart + 25 * minute))
+    fun a_saved_in_full_match_without_a_start_time_claims_no_call() {
+        assertNull(CutOffRescuePolicy.matchCompleteCall(listOf(earlierCall, theCall), null, callStart + 25 * minute))
     }
 
     private fun decide(

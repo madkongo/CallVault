@@ -96,8 +96,8 @@ internal object AppStartBinderSender {
     /** Called for every transaction an app process makes on this daemon's binder: the app holds the binder. */
     fun noteClientCall() = clientSignals.noteHold(android.os.SystemClock.elapsedRealtime())
 
-    /** Called by the calls that claim or end a session (start/stop recording, handoff, VoIP): the app owns it. */
-    fun noteOwnerCall() = clientSignals.noteOwner(android.os.SystemClock.elapsedRealtime())
+    /** Called by a start that won the recording latch or a stop that tore a session down (never by a refused call, nor by the handoff calls: they never touch the daemon's session): the app owns it. */
+    fun noteOwnerCall(won: Boolean) = clientSignals.noteOwnerIfWon(won, android.os.SystemClock.elapsedRealtime())
 
     private val restartCycles = RestartCycles()
 
@@ -139,6 +139,7 @@ internal object AppStartBinderSender {
     private fun watchLoop(ctx: DeathContext, generation: Int, diedAt: Long, mayRestart: Boolean) {
         val watch = OrphanWatch(mayRestart = mayRestart, diedAt = diedAt)
         val audio = AudioProbe()
+        val telecom = TelecomProbe()
         var unreadableLogged = false
         while (true) {
             val now = android.os.SystemClock.elapsedRealtime()
@@ -151,8 +152,12 @@ internal object AppStartBinderSender {
                 clientOwns = clientSignals.ownsSince(diedAt),
                 callUp = mode?.let(OrphanSelfStop::isCallAudioMode),
                 voiceCommActive = audio.voiceCommPlaybackActive(),
+                // A LINE call on hold or muted shows no call mode and no playback: a foreign VOICE_COMMUNICATION recorder or Telecom's
+                // own in-call flag still says it is up.
+                otherCallSignals = listOf(audio.foreignVoiceCommRecorderActive(), telecom.isInCall()),
                 packageStopped = { isAppStopped(ctx.authority) },
             )
+            if (watch.consumeRedeliveryCancelled()) AppLogger.i(TAG, "The app holds the binder; no more re-deliveries (the self-stop still runs until it claims the session)")
             if (step.audioUnreadable && !unreadableLogged) {
                 unreadableLogged = true
                 AppLogger.w(TAG, "Cannot read the audio state; not stopping the unowned recording")
@@ -208,6 +213,22 @@ internal object AppStartBinderSender {
         /** The audio mode (the app-call truth; the telephony call state lies during VoIP), or null. */
         fun mode(): Int? = runCatching { getMode?.invoke(service) as? Int }.getOrNull()
 
+        private val getRecording = runCatching { service?.javaClass?.getMethod("getActiveRecordingConfigurations") }.getOrNull()
+
+        /**
+         * Whether a VOICE_COMMUNICATION recorder is active under a uid other than the daemon's own (a LINE/WhatsApp call on
+         * hold or muted keeps its mic open). Null = unreadable.
+         */
+        fun foreignVoiceCommRecorderActive(): Boolean? = runCatching {
+            val list = getRecording?.invoke(service) as? List<*> ?: return@runCatching null
+            val own = android.os.Process.myUid()
+            list.filterNotNull().any { config ->
+                val source = config.javaClass.getMethod("getClientAudioSource").invoke(config) as? Int
+                val uid = config.javaClass.getMethod("getClientUid").invoke(config) as? Int
+                source == SOURCE_VOICE_COMMUNICATION && uid != null && uid != own
+            }
+        }.getOrNull()
+
         /** Whether any VOICE_COMMUNICATION track is playing: a VoIP call whose audio mode dipped to NORMAL. Null = unreadable. */
         fun voiceCommPlaybackActive(): Boolean? = runCatching {
             val list = getPlayback?.invoke(service) as? List<*> ?: return@runCatching null
@@ -217,6 +238,24 @@ internal object AppStartBinderSender {
                 val active = runCatching { config.javaClass.getMethod("isActive").invoke(config) as? Boolean }.getOrNull() ?: true
                 usage == USAGE_VOICE_COMMUNICATION && active
             }
+        }.getOrNull()
+    }
+
+    /** Telecom's own "a call is up" flag, read through ITelecomService (the shell may read it). */
+    private class TelecomProbe {
+        private val service: Any? = runCatching {
+            val binder = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, "telecom") as? IBinder
+            binder?.let { Class.forName("com.android.internal.telecom.ITelecomService\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, it) }
+        }.getOrNull()
+        private val isInCall = runCatching {
+            service?.javaClass?.methods?.firstOrNull { m -> m.name == "isInCall" && m.parameterTypes.all { it == String::class.java } }
+        }.getOrNull()
+
+        /** Null = unreadable. The calling package is the shell's own; the feature id (API 30+) is null. */
+        fun isInCall(): Boolean? = runCatching {
+            val m = isInCall ?: return@runCatching null
+            val args = Array<Any?>(m.parameterTypes.size) { if (it == 0) "com.android.shell" else null }
+            m.invoke(service, *args) as? Boolean
         }.getOrNull()
     }
 
@@ -328,4 +367,5 @@ internal object AppStartBinderSender {
 
     private const val WATCH_TICK_MS = 1_000L
     private const val USAGE_VOICE_COMMUNICATION = 2
+    private const val SOURCE_VOICE_COMMUNICATION = 7
 }

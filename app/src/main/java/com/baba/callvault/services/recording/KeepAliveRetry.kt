@@ -44,8 +44,15 @@ object KeepAliveRetry {
 
     fun needsRetry(running: Boolean, userStopped: Boolean): Boolean = !running && !userStopped
 
-    /** Queues retry number [attempt] (1-based); replaces one already queued. */
-    fun schedule(context: Context, attempt: Int, why: String) {
+    /**
+     * The work policy of a queue request. A refusal seen from Application.onCreate must KEEP a chain that exists: each
+     * retry's own process start runs onCreate, and REPLACE there reset the chain to attempt 1 for ever (a wake every
+     * 3 minutes, review 2026-11-22). The chain's own worker and the other callers still REPLACE (attempt+1).
+     */
+    fun workPolicy(fromAppStart: Boolean): ExistingWorkPolicy = if (fromAppStart) ExistingWorkPolicy.KEEP else ExistingWorkPolicy.REPLACE
+
+    /** Queues retry number [attempt] (1-based); replaces one already queued, except from app start ([fromAppStart]: keeps it). */
+    fun schedule(context: Context, attempt: Int, why: String, fromAppStart: Boolean = false) {
         val delay = delayForAttempt(attempt)
         if (delay == null) {
             log(context, "keep-alive: not retrying the start any more ($why; $MAX_ATTEMPTS retries used)")
@@ -56,7 +63,7 @@ object KeepAliveRetry {
                 .setInitialDelay(delay, TimeUnit.MILLISECONDS)
                 .setInputData(Data.Builder().putInt(KEY_ATTEMPT, attempt).build())
                 .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request)
+            WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, workPolicy(fromAppStart), request)
             log(context, "keep-alive: start retry $attempt of $MAX_ATTEMPTS queued in ${delay / 60_000} min ($why)")
         }.onFailure { log(context, "keep-alive: could not queue the start retry ($why): ${it.javaClass.simpleName}: ${it.message}") }
     }

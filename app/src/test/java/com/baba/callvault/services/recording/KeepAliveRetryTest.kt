@@ -49,4 +49,15 @@ class KeepAliveRetryTest {
     fun `a keep-alive that is down and wanted is retried`() {
         assertTrue(KeepAliveRetry.needsRetry(running = false, userStopped = false))
     }
+
+    @Test
+    fun `a refusal at app start keeps a queued chain, every other caller replaces it`() {
+        assertEquals(androidx.work.ExistingWorkPolicy.KEEP, KeepAliveRetry.workPolicy(fromAppStart = true))
+        assertEquals(androidx.work.ExistingWorkPolicy.REPLACE, KeepAliveRetry.workPolicy(fromAppStart = false))
+    }
+
+    @Test
+    fun `the attempt cap is real - no delay past the last attempt`() {
+        assertEquals(null, KeepAliveRetry.delayForAttempt(KeepAliveRetry.MAX_ATTEMPTS + 1))
+    }
 }

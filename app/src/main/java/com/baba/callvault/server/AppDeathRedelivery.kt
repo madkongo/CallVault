@@ -98,6 +98,16 @@ class OrphanSelfStop(private val quietMs: Long = QUIET_MS) {
             else -> false
         }
 
+        /**
+         * Any number of call signals: true if any says a call is up; null (unreadable) when none does and one cannot be
+         * read, since an unreadable signal is never evidence of "no call"; false only when every one reads false.
+         */
+        fun callUpAny(vararg signals: Boolean?): Boolean? = when {
+            signals.any { it == true } -> true
+            signals.any { it == null } -> null
+            else -> false
+        }
+
         // AudioManager modes: RINGTONE, IN_CALL, IN_COMMUNICATION, CALL_SCREENING, CALL_REDIRECT, COMMUNICATION_REDIRECT.
         // Kept here (not read from the app's AfterCallPolicy) so the daemon loads nothing from the app's UI layer.
         fun isCallAudioMode(mode: Int): Boolean = mode in 1..6

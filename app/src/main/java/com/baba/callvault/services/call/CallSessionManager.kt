@@ -260,7 +260,12 @@ class CallSessionManager private constructor(context: Context) {
             CallEndLog.record(appContext, OrphanRecorderSession.scheduledLine(ORPHAN_CHECK_AFTER_IDLE_MS))
             // Safety net for a process the phone freezes before the 3 s check runs (ColorOS "Hans", OnePlus 9 2026-11-22):
             // WorkManager runs it ~20 s later. Only when something may be orphaned (a cheap binder read, main-thread safe).
-            if (OrphanRecorderSession.needsSettling()) CutOffRescueWorker.scheduleCallEndCheck(appContext)
+            if (OrphanRecorderSession.needsSettling()) {
+                CutOffRescueWorker.scheduleCallEndCheck(appContext)
+                CallEndLog.record(appContext, "call end check queued in ${CutOffRescueWorker.CALL_END_CHECK_DELAY_MS / 1_000} s (a recording may be orphaned)")
+            } else {
+                CallEndLog.record(appContext, "call end check not queued (the recorder is idle, unreachable or owned here)")
+            }
             managerScope.launch(Dispatchers.IO) {
                 delay(ORPHAN_CHECK_AFTER_IDLE_MS)
                 CallEndLog.record(appContext, OrphanRecorderSession.runningLine(System.currentTimeMillis() - orphanCheckScheduledAt - ORPHAN_CHECK_AFTER_IDLE_MS))

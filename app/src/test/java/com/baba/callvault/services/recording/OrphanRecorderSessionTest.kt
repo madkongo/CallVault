@@ -86,6 +86,8 @@ class OrphanRecorderSessionTest {
         val appCallMarks = mutableListOf<Boolean>()
         var markWorks = true
         var callEnded: Long? = null
+        var finalised: OrphanRecorderSession.DaemonFinalised? = null
+        override fun daemonFinalisedOrphan(exclude: File?) = finalised
         var nowMs: Long = 0L
         override fun callEndedAt(): Long? = callEnded
         override fun now(): Long = nowMs
@@ -599,5 +601,43 @@ class OrphanRecorderSessionTest {
     fun `the call-end check lines say when it was scheduled and how late it ran`() {
         assertEquals("orphan check scheduled for +3 s", OrphanRecorderSession.scheduledLine(3_000))
         assertEquals("orphan check running (late by 61000 ms)", OrphanRecorderSession.runningLine(61_000))
+    }
+
+    @Test
+    fun `a recording the daemon stopped itself after its call ended is marked saved in full with its run-on`() {
+        val env = FakeEnv(inCall = false).apply {
+            callEnded = call1Start + 300_000L
+            finalised = OrphanRecorderSession.DaemonFinalised(File("c"), lastWriteAt = call1Start + 300_000L + 40_000L, startedAt = call1Start)
+        }
+        OrphanRecorderSession.resolve(FakeRecorder(), env, "rescue check")
+        assertEquals(listOf(File("c") to true), env.marks)
+        assertEquals(listOf(40), env.ranOnMarks)
+        assertEquals(listOf(File("c")), env.rescuedNow)
+    }
+
+    @Test
+    fun `a daemon-finalised file is not saved in full when the call log shows a later call or a call is up`() {
+        val later = FakeEnv(inCall = false).apply {
+            callEnded = call1Start + 1L; laterCall = true
+            finalised = OrphanRecorderSession.DaemonFinalised(File("c"), call1Start + 10L, call1Start)
+        }
+        OrphanRecorderSession.resolve(FakeRecorder(), later, "rescue check")
+        assertEquals(listOf(File("c") to false), later.marks)
+
+        val inCall = FakeEnv(inCall = true).apply {
+            callEnded = call1Start + 1L
+            finalised = OrphanRecorderSession.DaemonFinalised(File("c"), call1Start + 10L, call1Start)
+        }
+        OrphanRecorderSession.resolve(FakeRecorder(), inCall, "rescue check")
+        assertTrue(inCall.marks.isEmpty())
+    }
+
+    @Test
+    fun `finalised-after-call-end needs a known call end before the last write and no call now`() {
+        assertTrue(OrphanSessionPolicy.finalisedAfterCallEnd(0, 100, 150, false))
+        assertFalse(OrphanSessionPolicy.finalisedAfterCallEnd(0, 100, 99, false))
+        assertFalse(OrphanSessionPolicy.finalisedAfterCallEnd(0, null, 150, false))
+        assertFalse(OrphanSessionPolicy.finalisedAfterCallEnd(200, 100, 150, false))
+        assertFalse(OrphanSessionPolicy.finalisedAfterCallEnd(0, 100, 150, null))
     }
 }

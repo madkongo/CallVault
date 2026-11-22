@@ -264,7 +264,7 @@ class CallVaultApplication : Application() {
             if (com.baba.callvault.services.recording.KeepAlivePolicy.shouldStartAtAppStart(startMode, startPrefs.isPrivilegedTransportSetUp())) {
                 // Also on every start, not only on a switch: a keep-alive can outlive the process that
                 // started it, and the foreground service is what keeps Android from hibernating the app. It runs in Shizuku mode too (process anchor, P1a); start() logs the decision once per change.
-                DaemonKeepAliveService.start(applicationContext)
+                DaemonKeepAliveService.startAtAppStart(applicationContext)
             }
         }.onFailure { AppLogger.d(TAG, "Nothing left over to clear: ${it.message}") }
 

@@ -30,7 +30,8 @@ class RestartCycles {
  * daemon is not mistaken for one that owns the recording (2026-11-22, OnePlus 9: the restarted app only queried, and the
  * daemon's self-stop never ran).
  *  - holds: ANY transaction, the app has the binder (the re-delivery can stop asking);
- *  - owns: startRecording / stopRecording / a handoff or VoIP start or stop, the app claimed or ended the session (this
+ *  - owns: a startRecording / startVoipRecording that won the recorder latch, or a stopRecording that tore a session down
+ *    (a refused start, e.g. "already recording", only holds); the app claimed or ended the session (this
  *    alone disables the self-stop, since an app that owns it will end it).
  */
 class ClientSignals {
@@ -40,6 +41,9 @@ class ClientSignals {
     fun noteHold(now: Long) { lastHoldAt = now }
 
     /** An ownership call is also a hold. */
+    /** Only a call that actually claimed or ended the session counts; a refused one ([won] false) is just a hold. */
+    fun noteOwnerIfWon(won: Boolean, now: Long) { if (won) noteOwner(now) else noteHold(now) }
+
     fun noteOwner(now: Long) { lastOwnAt = now; lastHoldAt = now }
 
     fun holdsSince(diedAt: Long): Boolean = lastHoldAt >= diedAt
@@ -64,6 +68,10 @@ class OrphanWatch(
     private var unknownDelivered = false
     private var deliveryDue: Long? = if (mayRestart) diedAt + (AppDeathRedelivery.nextDelayMs(0, true, false) ?: 0L) else null
 
+    /** True once, after a hold cancelled a due re-delivery: the caller logs it ([consumeRedeliveryCancelled]). */
+    private var redeliveryCancelledByHold = false
+    fun consumeRedeliveryCancelled(): Boolean = redeliveryCancelledByHold.also { redeliveryCancelledByHold = false }
+
     val attempts: Int get() = attempt
 
     /**
@@ -78,12 +86,13 @@ class OrphanWatch(
         clientOwns: Boolean,
         callUp: Boolean?,
         voiceCommActive: Boolean?,
+        otherCallSignals: List<Boolean?> = emptyList(),
         packageStopped: () -> Boolean?,
     ): Step {
         if (!current) return Step(Action.SUPERSEDED)
-        val decision = selfStop.onPoll(now, recording, clientOwns, OrphanSelfStop.callUp(callUp, voiceCommActive))
+        val decision = selfStop.onPoll(now, recording, clientOwns, OrphanSelfStop.callUpAny(callUp, voiceCommActive, *otherCallSignals.toTypedArray()))
         if (clientOwns) return Step(Action.APP_RETURNED)
-        if (clientHolds) deliveryDue = null // the app has the binder: no more offers, but the self-stop still runs
+        if (clientHolds && deliveryDue != null) { deliveryDue = null; redeliveryCancelledByHold = true } // the app has the binder: no more offers, but the self-stop still runs
         if (!recording) return Step(Action.RECORDING_ENDED)
         if (decision == OrphanSelfStop.Decision.STOP) return Step(Action.SELF_STOP)
         val unreadable = decision == OrphanSelfStop.Decision.UNREADABLE
