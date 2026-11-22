@@ -219,7 +219,7 @@
         <item>Naprawiono — koniec z fałszywym „Połączenie zostało przerwane“</item>
     </string-array>
     <string name="whatsnew_244_title">Pewniejsze nagrywanie, łatwe ponowne parowanie i powiadomienia o aktualizacjach</string>
-    <string name="whatsnew_244_where">Ustawienia ▸ Niezawodność ▸ Sparuj ponownie</string>
+    <string name="whatsnew_244_where">Ustawienia ▸ Łączność ▸ Sparuj ponownie</string>
     <string-array name="whatsnew_244_items">
         <item>Nowość — Jeśli telefon zamknie CallVault w trakcie połączenia, nagrana do tego momentu część zostaje zapisana, a Ty dostajesz informację</item>
         <item>Nowość — Sparuj ponownie z Ustawień, gdy połączenie z rejestratorem zostanie utracone, bez ponownej instalacji</item>

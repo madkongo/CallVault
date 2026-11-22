@@ -258,6 +258,7 @@ internal fun ConnectionRows() {
     SettingsDivider()
     UsbDefaultConfigRow()
     PairAgainRow()
+    KeepPairedToggle()
 }
 
 /** A branded, collapsible section: a tappable [CvSectionHeader] (with a rotating chevron) above a

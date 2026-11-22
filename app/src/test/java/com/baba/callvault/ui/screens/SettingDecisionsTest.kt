@@ -133,6 +133,10 @@ class SettingDecisionsTest {
             SettingsOnly("off by default; only matters to people who move between Wi-Fi networks, found next to Keep Wireless debugging on"),
             ModeCapability.WIFI_NETWORK_APPROVAL,
         ),
+        // Stay paired for good (2026-11-22): device-only. Asked ONCE on Home after setup (the wizard is not
+        // blocked, and the question needs the pairing the wizard has just made), then a switch in Settings.
+        "keep_paired_answer" to Decision(SettingsOnly("asked once by a dialog on Home after onboarding, so no wizard step blocks setup; Settings ▸ Connection ▸ Stay paired for good holds the switch")),
+        "keep_paired_original_ms" to Decision(SettingsOnly("bookkeeping: the Android value the switch restores")),
         "wd_never_turn_off" to Decision(
             SettingsOnly("power-user setting, built-in mode only"),
             ModeCapability.WIRELESS_DEBUGGING_CONTROL,
@@ -146,6 +150,7 @@ class SettingDecisionsTest {
     private val deviceOnlySettings = setOf(
         "transcription_service", "transcription_cloud_mobile_data", "transcription_cloud_consent",
         "transcription_custom_base_url", "transcription_custom_model",
+        "keep_paired_answer", "keep_paired_original_ms",
     )
 
     @Test

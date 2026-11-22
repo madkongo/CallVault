@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keep_paired_title">Να παραμείνει η σύζευξη μόνιμα;</string>
+    <string name="keep_paired_body">Το Android ξεχνά τη σύζευξη μετά από 7 ημέρες χωρίς σύνδεση USB και τότε οι κλήσεις δεν καταγράφονται μέχρι να κάνετε ξανά σύζευξη. Το CallVault μπορεί να απενεργοποιήσει αυτό το χρονικό όριο.</string>
+    <string name="keep_paired_note">Έτσι παραμένει επίσης εγκεκριμένος κάθε υπολογιστής που έχετε επιτρέψει για τον εντοπισμό σφαλμάτων USB. Μπορείτε να το απενεργοποιήσετε ξανά στις Ρυθμίσεις ▸ Σύνδεση ▸ Μόνιμη σύζευξη.</string>
+    <string name="keep_paired_accept">Να παραμείνει</string>
+    <string name="keep_paired_decline">Διατήρηση ορίου</string>
+    <string name="keep_paired_setting_label">Μόνιμη σύζευξη</string>
+    <string name="keep_paired_setting_description">Εμποδίζει το Android να ξεχάσει τη σύζευξη μετά από 7 ημέρες χωρίς σύνδεση USB.</string>
+    <string name="keep_paired_setting_failed">Δεν ήταν δυνατή η αλλαγή του ορίου. Η σύζευξη μπορεί ακόμα να λήξει.</string>
+    <string name="keep_paired_setting_external">Κάτι άλλο απενεργοποίησε το όριο, οπότε το CallVault το αφήνει ως έχει.</string>
+    <string name="keep_paired_restore_title">Να ενεργοποιηθεί ξανά το όριο των 7 ημερών;</string>
+    <string name="keep_paired_restore_text">Αν το CallVault έγινε σύζευξη πριν από περισσότερες από 7 ημέρες μέσω Wi-Fi, το Android μπορεί να ξεχάσει αμέσως τη σύζευξη και οι κλήσεις δεν θα καταγράφονται μέχρι να κάνετε ξανά σύζευξη.</string>
+    <string name="keep_paired_restore_confirm">Ενεργοποίηση</string>
+    <string name="keep_paired_restore_cancel">Ακύρωση</string>
+    <string name="keep_paired_setting_changed">Το όριο άλλαξε αλλού, οπότε το CallVault το αφήνει ως έχει.</string>
+</resources>

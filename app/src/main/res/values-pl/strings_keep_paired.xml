@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keep_paired_title">Zostać sparowanym na stałe?</string>
+    <string name="keep_paired_body">Android zapomina o sparowaniu po 7 dniach bez połączenia USB, a wtedy rozmowy przestają być nagrywane, dopóki nie sparujesz ponownie. CallVault może wyłączyć ten limit czasu.</string>
+    <string name="keep_paired_note">Dzięki temu każdy komputer, któremu zezwolono na debugowanie USB, pozostaje dozwolony. Możesz to ponownie wyłączyć w: Ustawienia ▸ Łączność ▸ Zostań sparowany na stałe.</string>
+    <string name="keep_paired_accept">Zostań sparowany</string>
+    <string name="keep_paired_decline">Zachowaj limit</string>
+    <string name="keep_paired_setting_label">Zostań sparowany na stałe</string>
+    <string name="keep_paired_setting_description">Zapobiega zapominaniu sparowania przez Androida po 7 dniach bez połączenia USB.</string>
+    <string name="keep_paired_setting_failed">Nie udało się zmienić limitu. Sparowanie nadal może wygasnąć.</string>
+    <string name="keep_paired_setting_external">Coś innego wyłączyło limit, więc CallVault go nie zmienia.</string>
+    <string name="keep_paired_restore_title">Włączyć z powrotem limit 7 dni?</string>
+    <string name="keep_paired_restore_text">Jeśli CallVault sparowano ponad 7 dni temu przez Wi-Fi, Android może od razu zapomnieć o sparowaniu, a rozmowy nie będą nagrywane, dopóki nie sparujesz ponownie.</string>
+    <string name="keep_paired_restore_confirm">Włącz</string>
+    <string name="keep_paired_restore_cancel">Anuluj</string>
+    <string name="keep_paired_setting_changed">Limit został zmieniony gdzie indziej, więc CallVault zostawia go bez zmian.</string>
+</resources>

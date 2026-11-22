@@ -219,7 +219,7 @@
         <item>Corrigido — sem mais falso «Uma chamada foi interrompida»</item>
     </string-array>
     <string name="whatsnew_244_title">Gravação mais confiável, reemparelhamento fácil e avisos de atualização</string>
-    <string name="whatsnew_244_where">Configurações ▸ Confiabilidade ▸ Emparelhar de novo</string>
+    <string name="whatsnew_244_where">Configurações ▸ Conexão ▸ Parear de novo</string>
     <string-array name="whatsnew_244_items">
         <item>Novo — Se o telefone fechar o CallVault durante uma chamada, a parte gravada até ali é salva e você é avisado</item>
         <item>Novo — Emparelhe de novo nas Configurações se a conexão com o gravador cair, sem reinstalar</item>

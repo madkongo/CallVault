@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keep_paired_title">Оставить сопряжение навсегда?</string>
+    <string name="keep_paired_body">Android забывает сопряжение через 7 дней без USB-подключения, и тогда звонки перестают записываться, пока вы не выполните сопряжение снова. CallVault может отключить это ограничение по времени.</string>
+    <string name="keep_paired_note">Это также сохраняет доступ для любого компьютера, которому вы разрешили отладку по USB. Отключить это снова можно в разделе Настройки ▸ Подключение ▸ Оставить сопряжение навсегда.</string>
+    <string name="keep_paired_accept">Оставить сопряжение</string>
+    <string name="keep_paired_decline">Сохранить ограничение</string>
+    <string name="keep_paired_setting_label">Оставить сопряжение навсегда</string>
+    <string name="keep_paired_setting_description">Не даёт Android забыть сопряжение через 7 дней без USB-подключения.</string>
+    <string name="keep_paired_setting_failed">Не удалось изменить ограничение. Сопряжение всё ещё может истечь.</string>
+    <string name="keep_paired_setting_external">Ограничение отключено чем-то другим, поэтому CallVault его не трогает.</string>
+    <string name="keep_paired_restore_title">Снова включить ограничение в 7 дней?</string>
+    <string name="keep_paired_restore_text">Если сопряжение CallVault было выполнено более 7 дней назад по Wi-Fi, Android может сразу забыть его, и звонки не будут записываться, пока вы не выполните сопряжение снова.</string>
+    <string name="keep_paired_restore_confirm">Включить</string>
+    <string name="keep_paired_restore_cancel">Отмена</string>
+    <string name="keep_paired_setting_changed">Ограничение было изменено в другом месте, поэтому CallVault оставляет его как есть.</string>
+</resources>

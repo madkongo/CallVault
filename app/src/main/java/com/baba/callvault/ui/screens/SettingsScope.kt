@@ -181,6 +181,7 @@ object SettingsGroups {
         )
         SettingsGroup.CONNECTION -> listOf(
             "handoff_persist", "offline_recording", "wd_enforced", "wd_auto_approve_network", "wd_never_turn_off",
+            "keep_paired_answer", "keep_paired_original_ms",
         )
         SettingsGroup.TRANSCRIPTION_AND_SUMMARIES -> listOf(
             "transcription_service", "transcription_cloud_mobile_data", "transcription_custom_base_url",

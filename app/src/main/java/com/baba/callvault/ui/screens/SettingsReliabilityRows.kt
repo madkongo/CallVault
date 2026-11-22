@@ -47,6 +47,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.ModeCapability
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.KeepPaired
 import com.baba.callvault.integrations.adb.UsbDebuggingOff
 import com.baba.callvault.integrations.adb.UsbDebuggingOffGuard
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
@@ -542,5 +543,76 @@ internal fun OfflineRecordingToggle() {
             onResult = { nowEnabled -> enabled = nowEnabled },
             onClose = { dialogMode = null },
         )
+    }
+}
+
+/**
+ * "Stay paired for good": Android forgets the ADB pairing after 7 days without a USB connection
+ * (`adb_allowed_connection_time`). On switches that limit off; off puts back the value CallVault replaced —
+ * and only that: a limit someone else set to 0 is shown on, locked, with the reason ("only undo switches we
+ * set"). Hidden in Shizuku mode unless CallVault set it, so it can still be undone there.
+ */
+@Composable
+internal fun KeepPairedToggle() {
+    val context = LocalContext.current
+    val limit = remember(context) { KeepPaired.systemLimit(context) }
+    val memory = remember(context) { KeepPaired.memory(context) }
+    // Keyed on the setting's own value so a change made elsewhere (Developer options, another app) shows.
+    val reading = limit.read()
+    var on by remember(reading) { mutableStateOf(KeepPaired.isOn(limit)) }
+    var ours by remember(reading) { mutableStateOf(KeepPaired.canRestore(memory)) }
+    var failed by remember { mutableStateOf(false) }
+    var changedElsewhere by remember { mutableStateOf(false) }
+    // Turning the limit back on can make Android forget a Wi-Fi-only pairing at once, so it asks first.
+    var confirmRestore by remember { mutableStateOf(false) }
+    val usesEmbeddedAdb = !currentPrivilegedMode().needsShizuku
+    if (!usesEmbeddedAdb && !ours) return
+    SettingsDivider()
+    SettingsToggleRow(
+        icon = Icons.Filled.Shield,
+        label = stringResource(R.string.keep_paired_setting_label),
+        description = stringResource(R.string.keep_paired_setting_description),
+        checked = on,
+        enabled = if (on) ours else usesEmbeddedAdb,
+        onCheckedChange = { turnOn ->
+            if (turnOn) {
+                failed = KeepPaired.stayPaired(limit, memory).let {
+                    it != KeepPaired.Outcome.DONE && it != KeepPaired.Outcome.ALREADY_OFF
+                }
+                changedElsewhere = false
+                on = KeepPaired.isOn(limit)
+                ours = KeepPaired.canRestore(memory)
+            } else {
+                confirmRestore = true
+            }
+        },
+    )
+    if (confirmRestore) {
+        AlertDialog(
+            onDismissRequest = { KeepPaired.logRestoreChoice(false); confirmRestore = false },
+            title = { Text(stringResource(R.string.keep_paired_restore_title)) },
+            text = { Text(stringResource(R.string.keep_paired_restore_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    KeepPaired.logRestoreChoice(true)
+                    confirmRestore = false
+                    val outcome = KeepPaired.restore(limit, memory)
+                    changedElsewhere = outcome == KeepPaired.Outcome.CHANGED_ELSEWHERE
+                    failed = outcome != KeepPaired.Outcome.DONE && !changedElsewhere
+                    on = KeepPaired.isOn(limit)
+                    ours = KeepPaired.canRestore(memory)
+                }) { Text(stringResource(R.string.keep_paired_restore_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { KeepPaired.logRestoreChoice(false); confirmRestore = false }) {
+                    Text(stringResource(R.string.keep_paired_restore_cancel))
+                }
+            },
+        )
+    }
+    when {
+        failed -> SettingsHint(stringResource(R.string.keep_paired_setting_failed))
+        changedElsewhere -> SettingsHint(stringResource(R.string.keep_paired_setting_changed))
+        on && !ours -> SettingsHint(stringResource(R.string.keep_paired_setting_external))
     }
 }

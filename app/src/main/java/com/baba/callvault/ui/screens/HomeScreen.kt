@@ -323,6 +323,8 @@ fun HomeScreen(
     section: HomeSection,
     onSelectSection: (HomeSection) -> Unit,
     onOpenSettings: () -> Unit,
+    /** The Settings page is open over Home: dialogs that are not urgent wait until it closes. */
+    isCoveredBySettings: Boolean = false,
     openRecording: String? = null,
     onOpenRecordingHandled: () -> Unit = {},
     openTranscript: String? = null,
@@ -2244,6 +2246,44 @@ fun HomeScreen(
     // A dialog rather than a toast, because every one of these is something the user has to do
     // differently next time — pick another file, choose a folder — and a toast that appears while
     // they are still looking at the picker's closing animation is a message nobody reads.
+    // "Stay paired for good?" waits until no other Home dialog is open, so it never stacks on the What's new
+    // note, the update prompt, the support appeal or a confirmation. Back / a tap outside is "no answer yet".
+    val otherDialogOpen = updatePrompt != null || showSupport || showSupportAppeal || uiState.showWhatsNew ||
+        showBulkDelete || mergeFor != null || unMergeFor != null || confirmDeleteFor != null ||
+        deleteTranscriptFor != null || deleteSummaryFor != null || showLibraryBulkDelete || showModelMissing ||
+        transcribeAgainFor != null || confirmTranscribe != null || askLanguageFor != null ||
+        uiState.importRefusal != null || shareRequest != null || showTranscribingSheet ||
+        isCoveredBySettings || HomeDialogGate.rowDialogsOpen > 0
+    if (uiState.askKeepPaired && !otherDialogOpen) {
+        LaunchedEffect(Unit) { viewModel.keepPairedShown() }
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissKeepPaired() },
+            title = { Text(stringResource(R.string.keep_paired_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.keep_paired_body))
+                    Text(stringResource(R.string.keep_paired_note), style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.answerStayPaired() }) { Text(stringResource(R.string.keep_paired_accept)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.answerKeepLimit() }) { Text(stringResource(R.string.keep_paired_decline)) }
+            },
+        )
+    }
+    if (uiState.keepPairedFailed && !otherDialogOpen && !uiState.askKeepPaired) {
+        AlertDialog(
+            onDismissRequest = { viewModel.keepPairedFailureSeen() },
+            title = { Text(stringResource(R.string.keep_paired_title)) },
+            text = { Text(stringResource(R.string.keep_paired_setting_failed)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.keepPairedFailureSeen() }) { Text(stringResource(R.string.general_ok)) }
+            },
+        )
+    }
+
     uiState.importRefusal?.let { reason ->
         AlertDialog(
             onDismissRequest = { viewModel.importRefusalSeen() },
@@ -3892,6 +3932,11 @@ private fun RecordingRow(
     // Prefer the contact name, then the parsed number, then the raw file name.
     val primaryLabel = RecordingLabel.of(item) ?: item.displayName
 
+    val deleteDialogOpen = deleteTarget != null
+    androidx.compose.runtime.DisposableEffect(deleteDialogOpen) {
+        if (deleteDialogOpen) HomeDialogGate.rowDialogsOpen++
+        onDispose { if (deleteDialogOpen) HomeDialogGate.rowDialogsOpen-- }
+    }
     deleteTarget?.let { target ->
         if (target is DeleteTarget.Ask) {
             DeleteCopiesDialog(
@@ -4599,3 +4644,8 @@ private fun formatMillis(millis: Int): String {
 /** An open Share sheet: which calls, which part the page is about, and what a selection is called. */
 private data class CallShareRequest(val names: List<String>, val start: SharePart, val subject: String)
 
+
+/** How many per-row dialogs are open (they live in row composables HomeScreen cannot see into). */
+internal object HomeDialogGate {
+    var rowDialogsOpen by androidx.compose.runtime.mutableIntStateOf(0)
+}

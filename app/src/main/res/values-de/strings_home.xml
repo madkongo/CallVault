@@ -219,7 +219,7 @@
         <item>Behoben — keine falsche Meldung „Ein Anruf wurde abgeschnitten“ mehr</item>
     </string-array>
     <string name="whatsnew_244_title">Zuverlässigeres Aufnehmen, einfaches Neu-Koppeln und Update-Hinweise</string>
-    <string name="whatsnew_244_where">Einstellungen ▸ Zuverlässigkeit ▸ Erneut koppeln</string>
+    <string name="whatsnew_244_where">Einstellungen ▸ Verbindung ▸ Erneut koppeln</string>
     <string-array name="whatsnew_244_items">
         <item>Neu — Schließt dein Handy CallVault während eines Anrufs, wird der bis dahin aufgenommene Teil gespeichert und du wirst informiert</item>
         <item>Neu — In den Einstellungen erneut koppeln, wenn die Rekorder-Verbindung verloren geht, ohne Neuinstallation</item>

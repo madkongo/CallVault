@@ -219,7 +219,7 @@
         <item>修復 — 不再誤報“一次通話被中斷”</item>
     </string-array>
     <string name="whatsnew_244_title">錄音更可靠、輕鬆重新配對，以及更新提醒</string>
-    <string name="whatsnew_244_where">設定 ▸ 可靠性 ▸ 重新配對</string>
+    <string name="whatsnew_244_where">設定 ▸ 連接 ▸ 重新配對</string>
     <string-array name="whatsnew_244_items">
         <item>新增 — 如果手機在通話中關閉 CallVault，此前錄下的部分會被保存並通知你</item>
         <item>新增 — 若與錄音器的連接斷開，可在設定中重新配對，無需重裝</item>

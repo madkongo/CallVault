@@ -219,7 +219,7 @@
         <item>Đã sửa — không còn báo nhầm « Một cuộc gọi đã bị cắt »</item>
     </string-array>
     <string name="whatsnew_244_title">Ghi âm đáng tin cậy hơn, ghép nối lại dễ dàng và thông báo cập nhật</string>
-    <string name="whatsnew_244_where">Cài đặt ▸ Độ tin cậy ▸ Ghép nối lại</string>
+    <string name="whatsnew_244_where">Cài đặt ▸ Kết nối ▸ Ghép nối lại</string>
     <string-array name="whatsnew_244_items">
         <item>Mới — Nếu điện thoại đóng CallVault giữa cuộc gọi, phần đã ghi trước đó được lưu và bạn được báo</item>
         <item>Mới — Ghép nối lại từ Cài đặt nếu mất kết nối với trình ghi âm, không cần cài lại</item>

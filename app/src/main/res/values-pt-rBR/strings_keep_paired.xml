@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keep_paired_title">Continuar pareado para sempre?</string>
+    <string name="keep_paired_body">O Android esquece o pareamento após 7 dias sem conexão USB, e então as chamadas deixam de ser gravadas até você parear de novo. O CallVault pode desativar esse limite de tempo.</string>
+    <string name="keep_paired_note">Isso também mantém autorizado qualquer computador que você permitiu para a depuração USB. Você pode desativar de novo em Configurações ▸ Conexão ▸ Continuar pareado para sempre.</string>
+    <string name="keep_paired_accept">Continuar pareado</string>
+    <string name="keep_paired_decline">Manter o limite</string>
+    <string name="keep_paired_setting_label">Continuar pareado para sempre</string>
+    <string name="keep_paired_setting_description">Impede que o Android esqueça o pareamento após 7 dias sem conexão USB.</string>
+    <string name="keep_paired_setting_failed">Não foi possível alterar o limite. O pareamento ainda pode expirar.</string>
+    <string name="keep_paired_setting_external">Outra coisa desativou o limite, por isso o CallVault não mexe nele.</string>
+    <string name="keep_paired_restore_title">Reativar o limite de 7 dias?</string>
+    <string name="keep_paired_restore_text">Se o CallVault foi pareado há mais de 7 dias por Wi-Fi, o Android pode esquecer o pareamento imediatamente e as chamadas não serão gravadas até você parear de novo.</string>
+    <string name="keep_paired_restore_confirm">Reativar</string>
+    <string name="keep_paired_restore_cancel">Cancelar</string>
+    <string name="keep_paired_setting_changed">O limite foi alterado em outro lugar, por isso o CallVault o deixa como está.</string>
+</resources>

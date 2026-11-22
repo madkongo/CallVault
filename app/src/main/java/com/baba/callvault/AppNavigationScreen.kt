@@ -327,6 +327,7 @@ fun AppNavigationScreen(
                 ) {
                     HomeScreen(
                         section = section,
+                        isCoveredBySettings = settingsOpen,
                         onSelectSection = goToSection,
                         onOpenSettings = {
                             settingsScope = SettingsGroups.scopeFor(section)

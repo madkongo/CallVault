@@ -481,6 +481,9 @@ class AppPreferences(context: Context) {
         WD_APPROVED_AP_KEYS("wd_approved_ap_keys"),
         WD_AP_KEY_SALT("wd_ap_key_salt"),
         WD_NEVER_TURN_OFF("wd_never_turn_off"),
+        // "Stay paired for good?" (device-only, not exported): the answer, and the Android limit value we replaced.
+        KEEP_PAIRED_ANSWER("keep_paired_answer"),
+        KEEP_PAIRED_ORIGINAL_MS("keep_paired_original_ms"),
         LOG_PSEUDONYM_SALT("log_pseudonym_salt"),
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
         DEBUG_ENABLED("debug_enabled"),
@@ -708,6 +711,20 @@ class AppPreferences(context: Context) {
     fun getPairingRefusals() = getInt(Key.PAIRING_REFUSALS, 0)
 
     fun setPairingRefusals(refusals: Int) = setInt(Key.PAIRING_REFUSALS, refusals)
+
+    /** The answer to "Stay paired for good?"; see [com.baba.callvault.integrations.adb.KeepPaired]. */
+    fun getKeepPairedAnswer(): com.baba.callvault.integrations.adb.KeepPairedAnswer =
+        com.baba.callvault.integrations.adb.KeepPairedAnswer.entries.firstOrNull { it.name == getString(Key.KEEP_PAIRED_ANSWER) }
+            ?: com.baba.callvault.integrations.adb.KeepPairedAnswer.NOT_ASKED
+
+    fun setKeepPairedAnswer(answer: com.baba.callvault.integrations.adb.KeepPairedAnswer) =
+        setString(Key.KEEP_PAIRED_ANSWER, answer.name)
+
+    /** The pairing time limit CallVault replaced with 0, or null when it never changed it. */
+    fun getKeepPairedOriginalMs(): Long? = getLong(Key.KEEP_PAIRED_ORIGINAL_MS, -1L).takeIf { it >= 0L }
+
+    fun setKeepPairedOriginalMs(ms: Long?) =
+        if (ms == null) prefs.edit { remove(Key.KEEP_PAIRED_ORIGINAL_MS.id) } else setLong(Key.KEEP_PAIRED_ORIGINAL_MS, ms)
 
     /**
      * Returns this install's fixed loopback ADB port for the classic `adb tcpip` listener
