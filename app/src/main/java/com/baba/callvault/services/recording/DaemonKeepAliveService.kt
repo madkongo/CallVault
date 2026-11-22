@@ -670,7 +670,12 @@ class DaemonKeepAliveService : Service() {
 
     private val approveJoinedWifi = Runnable {
         if (!usesAdb() || !AppPreferences(applicationContext).isWifiNetworkAutoApproveEnabled()) return@Runnable
-        lastApprovalStartedAtMs = SystemClock.elapsedRealtime()
+        val wifiNow = WifiState.of(applicationContext)
+        if (!WifiApprovalSpacing.shouldStart(wifiNow)) {
+            AppLogger.i(TAG, "Wi-Fi approval skipped: no Wi-Fi right now; the next join retries after its settle time")
+            return@Runnable
+        }
+        lastApprovalStartedAtMs = WifiApprovalSpacing.recordStart(lastApprovalStartedAtMs, SystemClock.elapsedRealtime(), wifiNow)
         Thread {
             if (!usesAdb()) return@Thread
             runCatching {
