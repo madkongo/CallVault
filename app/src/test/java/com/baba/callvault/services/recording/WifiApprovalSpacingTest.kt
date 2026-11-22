@@ -8,7 +8,10 @@
 
 package com.baba.callvault.services.recording
 
+import com.baba.callvault.integrations.adb.WifiState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** R16: a flapping Wi-Fi must not start an approval every few seconds; a join is delayed, never dropped. */
@@ -40,5 +43,42 @@ class WifiApprovalSpacingTest {
     @Test
     fun `a clock that went backwards does not hold the approval for ever`() {
         assertEquals(settle, WifiApprovalSpacing.delayMs(nowMs = 1_000, lastStartedAtMs = 900_000, settleMs = settle))
+    }
+
+    // Review R16 follow-up: a run that stops at NO_WIFI must not use up the 30 s slot, and a lost Wi-Fi cancels the pending run.
+
+    @Test
+    fun `a run while Wi-Fi is definitely down does not start and does not use the slot`() {
+        assertFalse(WifiApprovalSpacing.shouldStart(WifiState.NOT_CONNECTED))
+    }
+
+    @Test
+    fun `a run with Wi-Fi up or unknown starts`() {
+        assertTrue(WifiApprovalSpacing.shouldStart(WifiState.CONNECTED))
+        assertTrue(WifiApprovalSpacing.shouldStart(WifiState.UNKNOWN))
+    }
+
+    @Test
+    fun `a skipped no-wifi run leaves the next join at the settle time`() {
+        val last = WifiApprovalSpacing.recordStart(null, 100_000, WifiState.NOT_CONNECTED)
+        assertEquals(null, last)
+        assertEquals(settle, WifiApprovalSpacing.delayMs(nowMs = 108_000, lastStartedAtMs = last, settleMs = settle))
+    }
+
+    @Test
+    fun `a passing run still holds the next join to thirty seconds`() {
+        val last = WifiApprovalSpacing.recordStart(null, 100_000, WifiState.CONNECTED)
+        assertEquals(100_000L, last)
+        assertEquals(spacing - 8_000, WifiApprovalSpacing.delayMs(nowMs = 108_000, lastStartedAtMs = last, settleMs = settle))
+    }
+
+    @Test
+    fun `an unknown Wi-Fi state records the start as before`() {
+        assertEquals(100_000L, WifiApprovalSpacing.recordStart(5_000L, 100_000, WifiState.UNKNOWN))
+    }
+
+    @Test
+    fun `a skipped run keeps an earlier recorded start`() {
+        assertEquals(70_000L, WifiApprovalSpacing.recordStart(70_000L, 100_000, WifiState.NOT_CONNECTED))
     }
 }
