@@ -30,4 +30,14 @@ class QuietReloadGateTest {
         val gate = QuietReloadGate().apply { setUiVisible(false); setUiVisible(true) }
         assertTrue(gate.mayReloadQuietly())
     }
+
+    @Test
+    fun `a skip is logged once per hidden spell`() {
+        val gate = QuietReloadGate().apply { setUiVisible(false) }
+        assertTrue(gate.shouldLogSkip())
+        assertFalse(gate.shouldLogSkip())
+        gate.setUiVisible(true)
+        gate.setUiVisible(false)
+        assertTrue(gate.shouldLogSkip())
+    }
 }

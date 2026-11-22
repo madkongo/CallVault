@@ -963,7 +963,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun reloadListQuietly() {
         if (!quietReloadGate.mayReloadQuietly()) {
-            AppLogger.d(TAG, "Catalog changed with no UI visible; the list reloads on the next resume")
+            if (quietReloadGate.shouldLogSkip()) AppLogger.d(TAG, "Catalog changed with no UI visible; the list reloads on the next resume (logged once per hidden spell)")
             return
         }
         if (listJob?.isActive == true) {
