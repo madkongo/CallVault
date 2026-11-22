@@ -7,9 +7,8 @@ import org.junit.Test
 class AppLanguageDisplayNameTest {
 
     @Test
-    fun hong_kong_and_taiwan_are_named_as_traditional_chinese() {
-        assertEquals("繁體中文（香港）", appLanguageDisplayName("zh-HK"))
-        assertEquals("繁體中文（台灣）", appLanguageDisplayName("zh-TW"))
+    fun traditional_chinese_is_named_as_traditional_chinese() {
+        assertEquals("繁體中文", appLanguageDisplayName("zh-Hant"))
     }
 
     @Test

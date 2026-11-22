@@ -176,12 +176,13 @@ All notable changes to CallVault are documented here. The format is based on
   English words is unmeasured (OpenAI documents turbo as weaker on Cantonese); it needs a native Cantonese speaker
   to transcribe a real mixed call with a turbo model and judge it. Whether Groq and OpenRouter accept "yue" is not
   tried live. -->
-- **CallVault's screens in Traditional Chinese, Hong Kong and Taiwan wording.** Phones set to Traditional Chinese
-  (Hong Kong, Macau or Taiwan) now get Traditional characters instead of Simplified Chinese or English, and both appear
-  in Settings ▸ Language. Standard written Chinese, not written Cantonese. Converted from the Simplified texts and
-  hand-corrected for local terms (HK 設定 / 檔案 / 短訊; TW 設定 / 檔案 / 背景行程); transcription pins Chinese for these phones.
-  <!-- 🧪 VERIFYING (BabApps item 120, not shipped): a native Hong Kong and a native Taiwan reader should skim the
-  screens for wrong or unnatural wording before release. -->
+- **CallVault's screens in Traditional Chinese (繁體中文), contributed by junyou1998 (PR #91).** Phones set to
+  Traditional Chinese (Taiwan, Hong Kong or Macau) now get Traditional characters, in Taiwan wording, instead of
+  Simplified Chinese or English, and 繁體中文 appears in Settings ▸ Language. Transcription pins Chinese for these
+  phones. This replaces the machine-converted Hong Kong and Taiwan screens built earlier for this release.
+  <!-- 🧪 VERIFYING (BabApps item 120 + PR #91, not shipped): the contributor's text is human-written; about 140
+  strings added after the PR were translated by Claude in the same style and need the contributor's proofread. A
+  Hong Kong reader should say whether Taiwan wording is acceptable there. -->
 - **Chinese transcripts and summaries are written in Traditional characters on Hong Kong and Taiwan phones, and the
   conversion is now complete.** When transcription is pinned to Chinese and the app or the phone is set to
   Traditional Chinese (Hong Kong, Macau, Taiwan or plain Traditional), the transcript and the summary are converted to

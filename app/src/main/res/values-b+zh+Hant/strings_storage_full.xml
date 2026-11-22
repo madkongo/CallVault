@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="storage_low_title">手機儲存空間快滿了</string>
+    <string name="storage_low_text">只剩下 %1$d MB。空間用完時，通話可能會停止錄音。請釋放一些空間。</string>
+    <string name="storage_full_title">手機儲存空間已滿</string>
+    <string name="storage_full_not_recorded_text">手機已沒有剩餘空間，因此無法保存新通話。請釋放一些空間。</string>
+    <string name="storage_full_empty_text">錄音是空的，因為手機儲存空間已滿。釋放一些空間後，通話就會恢復錄音。</string>
+    <string name="storage_full_cut_short_text">手機儲存空間快滿了。如果這通錄音聽起來被截斷，請釋放一些空間。</string>
+    <string name="waiting_calls_storage_full_text">手機儲存空間已滿，因此這些通話暫時保存在 CallVault 內。釋放一些空間後，它們就會儲存到你的資料夾。如果解除安裝 CallVault，這些通話就會遺失。</string>
+</resources>

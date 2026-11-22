@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="wizard_ui_auto_incoming_desc">來電時自動開始錄音。</string>
     <string name="wizard_ui_auto_outgoing_desc">撥打電話時自動開始錄音。</string>
@@ -10,5 +9,5 @@
     <string name="wizard_ui_schedule_weekly_desc">彙總本週的通話，每週上傳一次。</string>
     <string name="wizard_ui_storage_both_desc">在本手機保留一份副本，並備份到 Google Drive。</string>
     <string name="wizard_ui_storage_drive_desc">錄音上傳到你的 Google Drive 資料夾，然後從本手機清除。</string>
-    <string name="wizard_ui_storage_local_desc">錄音保留在本手機上，不會離開設備。</string>
+    <string name="wizard_ui_storage_local_desc">錄音保留在本手機上，不會離開裝置。</string>
 </resources>
