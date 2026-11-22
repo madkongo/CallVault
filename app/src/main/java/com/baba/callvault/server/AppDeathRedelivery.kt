@@ -53,4 +53,42 @@ object AppDeathRedelivery {
 
     /** The uid observer is subscribed to "active" only, but its transaction code must say so; unknown code = accept as before. */
     fun isActiveTransaction(code: Int, activeCode: Int?): Boolean = activeCode == null || code == activeCode
+
+    /**
+     * Whether to deliver to the app at all. A force-stopped app is left stopped: the user stopped it on purpose, and a
+     * delivery would reopen it. An unreadable state is not "stopped" (the daemon cannot tell; it logs that).
+     */
+    fun mayDeliver(packageStopped: Boolean?): Boolean = packageStopped != true
+
+    /** android.content.pm.ApplicationInfo.FLAG_STOPPED, the fallback when `isPackageStoppedForUser` is missing. */
+    const val FLAG_STOPPED = 1 shl 21
+}
+
+/**
+ * The daemon finishing a recording itself once the app that owned it is gone and the call is over, so the muxer
+ * trailer is written and the file is playable (a SIGTERM would leave it unfinalised). Conservative: never while a call
+ * audio mode is up, and never when the audio mode cannot be read.
+ */
+class OrphanSelfStop(private val quietMs: Long = QUIET_MS) {
+    enum class Decision { IDLE, WAIT, UNREADABLE, STOP }
+
+    private var noCallSince: Long? = null
+
+    /** One poll. [clientAttached]: an app call reached this daemon since the app's death. [callUp] null = unreadable. */
+    fun onPoll(nowMs: Long, recording: Boolean, clientAttached: Boolean, callUp: Boolean?): Decision {
+        if (!recording || clientAttached) { noCallSince = null; return Decision.IDLE }
+        if (callUp == null) { noCallSince = null; return Decision.UNREADABLE }
+        if (callUp) { noCallSince = null; return Decision.WAIT }
+        val since = noCallSince ?: nowMs.also { noCallSince = it }
+        return if (nowMs - since >= quietMs) Decision.STOP else Decision.WAIT
+    }
+
+    companion object {
+        /** No call audio mode for this long before the daemon stops the recording itself. */
+        const val QUIET_MS = 5_000L
+
+        // AudioManager modes: RINGTONE, IN_CALL, IN_COMMUNICATION, CALL_SCREENING, CALL_REDIRECT, COMMUNICATION_REDIRECT.
+        // Kept here (not read from the app's AfterCallPolicy) so the daemon loads nothing from the app's UI layer.
+        fun isCallAudioMode(mode: Int): Boolean = mode in 1..6
+    }
 }

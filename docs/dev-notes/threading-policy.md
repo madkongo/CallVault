@@ -85,7 +85,7 @@ Hand-made scopes (candidate owner in brackets):
 `AfterCallDecision`, `VoipRecordingCoordinator`.
 
 Fire-and-forget threads: `CallVaultApplication` (11), `DaemonKeepAliveService` (11), `AdbShell` (6, reader threads: allowed), and
-`AppStartBinderSender` (2: a single-thread delivery executor, and one short-lived re-delivery thread per app death while recording, owned by the daemon's death watch, capped at 3 cycles), and
+`AppStartBinderSender` (2: a single-thread delivery executor, and one short-lived watch thread per app death while recording (re-delivery and the daemon's own finalising of the recording), owned by the daemon's death watch, capped at 3 restart cycles), and
 about 40 single ones across receivers and helpers; the receiver ones should hand off to the process scope.
 
 Locks: `SetupHealthStore` locks exclude nothing (C139).

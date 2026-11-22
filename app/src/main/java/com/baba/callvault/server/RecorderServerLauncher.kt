@@ -414,6 +414,9 @@ object RecorderServerLauncher {
     /**
      * Clears stale daemons before a launch, except one that is recording a session (see [StaleDaemonPolicy]). False
      * means a recording daemon was left alone and the caller must launch nothing.
+     *
+     * Owner decision (2026-11-22): this also spares a daemon from an OLD APK when an update lands during a call. The
+     * old daemon finishes that call; the next launch after it ends replaces it as before.
      */
     private fun clearStaleDaemons(context: Context): Boolean = StaleDaemonClearing.clear(object : StaleDaemonClearing.Env {
         override fun staging(): StaleDaemonClearing.Staging {

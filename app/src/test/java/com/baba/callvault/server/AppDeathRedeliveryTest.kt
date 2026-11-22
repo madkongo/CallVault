@@ -60,4 +60,60 @@ class AppDeathRedeliveryTest {
         assertFalse(AppDeathRedelivery.isActiveTransaction(code = 1, activeCode = 2))
         assertTrue("code unknown: fall back to the old behaviour", AppDeathRedelivery.isActiveTransaction(code = 7, activeCode = null))
     }
+
+    @Test
+    fun `a force-stopped app is never reopened, an unreadable state is not treated as stopped`() {
+        assertFalse(AppDeathRedelivery.mayDeliver(packageStopped = true))
+        assertTrue(AppDeathRedelivery.mayDeliver(packageStopped = false))
+        assertTrue(AppDeathRedelivery.mayDeliver(packageStopped = null))
+    }
+
+    private fun poll(w: OrphanSelfStop, t: Long, recording: Boolean = true, attached: Boolean = false, callUp: Boolean? = false) =
+        w.onPoll(t, recording, attached, callUp)
+
+    @Test
+    fun `the daemon stops itself only after the call has been over for the quiet time`() {
+        val w = OrphanSelfStop(quietMs = 5_000)
+        assertEquals(OrphanSelfStop.Decision.WAIT, poll(w, 0))
+        assertEquals(OrphanSelfStop.Decision.WAIT, poll(w, 4_999))
+        assertEquals(OrphanSelfStop.Decision.STOP, poll(w, 5_000))
+    }
+
+    @Test
+    fun `a call audio mode coming back restarts the quiet time`() {
+        val w = OrphanSelfStop(quietMs = 5_000)
+        poll(w, 0)
+        assertEquals(OrphanSelfStop.Decision.WAIT, poll(w, 3_000, callUp = true))
+        assertEquals(OrphanSelfStop.Decision.WAIT, poll(w, 6_000))
+        assertEquals(OrphanSelfStop.Decision.STOP, poll(w, 11_000))
+    }
+
+    @Test
+    fun `never stops while a call is up`() {
+        val w = OrphanSelfStop(quietMs = 5_000)
+        assertEquals(OrphanSelfStop.Decision.WAIT, poll(w, 0, callUp = true))
+        assertEquals(OrphanSelfStop.Decision.WAIT, poll(w, 60_000, callUp = true))
+    }
+
+    @Test
+    fun `an unreadable call state never stops the recording and resets the quiet time`() {
+        val w = OrphanSelfStop(quietMs = 5_000)
+        poll(w, 0)
+        assertEquals(OrphanSelfStop.Decision.UNREADABLE, poll(w, 4_000, callUp = null))
+        assertEquals(OrphanSelfStop.Decision.WAIT, poll(w, 6_000))
+        assertEquals(OrphanSelfStop.Decision.STOP, poll(w, 11_000))
+    }
+
+    @Test
+    fun `an attached app or no recording means nothing to do`() {
+        val w = OrphanSelfStop(quietMs = 5_000)
+        assertEquals(OrphanSelfStop.Decision.IDLE, poll(w, 0, attached = true))
+        assertEquals(OrphanSelfStop.Decision.IDLE, poll(w, 9_000, recording = false))
+    }
+
+    @Test
+    fun `audio modes ringtone to redirect count as a call, normal does not`() {
+        assertTrue((1..6).all(OrphanSelfStop.Companion::isCallAudioMode))
+        assertFalse(OrphanSelfStop.isCallAudioMode(0))
+    }
 }

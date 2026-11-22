@@ -64,10 +64,13 @@ internal object AppStartBinderSender {
     @Volatile
     private var deathContext: DeathContext? = null
 
-    private class DeathContext(val binder: IBinder, val authority: String, val apkPath: String, val isRecording: () -> Boolean)
+    private class DeathContext(
+        val binder: IBinder, val authority: String, val apkPath: String,
+        val isRecording: () -> Boolean, val stopRecording: () -> Unit,
+    )
 
-    private fun startDeathWatch(binder: IBinder, authority: String, apkPath: String, isRecording: () -> Boolean) {
-        deathContext = DeathContext(binder, authority, apkPath, isRecording)
+    private fun startDeathWatch(binder: IBinder, authority: String, apkPath: String, isRecording: () -> Boolean, stopRecording: () -> Unit) {
+        deathContext = DeathContext(binder, authority, apkPath, isRecording, stopRecording)
         BinderDelivery.onProviderBinder = ::watchProvider
         BinderDelivery.lastProviderBinder?.let(::watchProvider)
     }
@@ -117,42 +120,96 @@ internal object AppStartBinderSender {
             return
         }
         val sinceLast = lastCycleAt?.let { now - it }
-        if (!AppDeathRedelivery.mayStartCycle(deathCycles, sinceLast)) {
+        val mayRestart = AppDeathRedelivery.mayStartCycle(deathCycles, sinceLast)
+        if (mayRestart) {
+            deathCycles++
+            lastCycleAt = now
+            AppLogger.i(TAG, "The app's process died while recording; handing the binder over again (cycle $deathCycles of ${AppDeathRedelivery.MAX_CYCLES})")
+        } else {
             AppLogger.w(TAG, "The app's process died while recording; NOT restarting it again (cycles=$deathCycles, ${sinceLast ?: "-"}ms since the last): " +
-                "an app killer or a crash loop would be fed. The recording continues unowned until the app comes back on its own")
-            return
+                "an app killer or a crash loop would be fed. The recording continues unowned; this daemon will finish it when the call ends")
         }
-        deathCycles++
-        lastCycleAt = now
-        AppLogger.i(TAG, "The app's process died while recording; handing the binder over again (cycle $deathCycles of ${AppDeathRedelivery.MAX_CYCLES})")
-        Thread({ redeliverLoop(ctx, generation, now) }, "cv-redeliver").apply { isDaemon = true }.start()
+        Thread({ watchLoop(ctx, generation, now, mayRestart) }, "cv-orphan-watch").apply { isDaemon = true }.start()
     }
 
-    /** Offers the binder again until an app call proves it holds it, the recording ends, or the attempts run out. */
-    private fun redeliverLoop(ctx: DeathContext, generation: Int, diedAt: Long) {
+    /**
+     * One thread per app death while recording. Each tick it (1) finishes the recording itself once the call is over
+     * and no app has attached ([OrphanSelfStop]: the file's trailer is written, so it is playable and the app's
+     * cut-off rescue publishes it later), and (2) offers the binder to the app again on the [AppDeathRedelivery]
+     * schedule, unless the user force-stopped the app. Ends when an app call proves it holds the binder, the recording
+     * ends, or a newer death takes over.
+     */
+    private fun watchLoop(ctx: DeathContext, generation: Int, diedAt: Long, mayRestart: Boolean) {
+        val selfStop = OrphanSelfStop()
         var attempt = 0
+        var deliveryDue: Long? = if (mayRestart) diedAt + (AppDeathRedelivery.nextDelayMs(0, true, false) ?: 0L) else null
+        var unreadableLogged = false
+        var stoppedLogged = false
         while (generation == loopGeneration) {
+            val now = android.os.SystemClock.elapsedRealtime()
+            val recording = runCatching { ctx.isRecording() }.getOrDefault(false)
             val clientSeen = lastClientCallAt >= diedAt
-            val stillRecording = runCatching { ctx.isRecording() }.getOrDefault(false)
-            val wait = AppDeathRedelivery.nextDelayMs(attempt, stillRecording, clientSeen) ?: break
-            runCatching { Thread.sleep(wait) }
-            if (generation != loopGeneration || lastClientCallAt >= diedAt) continue
-            val delivered = runCatching { BinderDelivery.redeliverBinderToApp(ctx.binder, ctx.authority, ctx.apkPath) }
-                .onFailure { AppLogger.w(TAG, "Re-delivery after the app's death threw: ${it.message}") }
-                .getOrDefault(false)
-            lastSentAt = android.os.SystemClock.elapsedRealtime()
-            AppLogger.i(TAG, "Re-delivery after the app's death, attempt ${attempt + 1} of ${AppDeathRedelivery.MAX_ATTEMPTS} " +
-                "(after ${wait}ms): provider replied=$delivered (not proof the app took it)")
-            attempt++
-        }
-        val held = lastClientCallAt >= diedAt
-        val recording = runCatching { ctx.isRecording() }.getOrDefault(false)
-        if (generation == loopGeneration) {
-            if (held) AppLogger.i(TAG, "Re-delivery finished: the app is calling this daemon again (after $attempt attempt(s))")
-            else if (recording) AppLogger.w(TAG, "Re-delivery gave up after $attempt attempt(s): the app has not called this daemon and it is STILL RECORDING with no owner")
-            else AppLogger.i(TAG, "Re-delivery stopped: not recording any more (after $attempt attempt(s))")
+            val mode = readAudioMode()
+            when (selfStop.onPoll(now, recording, clientSeen, mode?.let(OrphanSelfStop::isCallAudioMode))) {
+                OrphanSelfStop.Decision.STOP -> {
+                    AppLogger.i(TAG, "the call ended with no app attached; stopping and finalising the recording myself (audio mode $mode)")
+                    runCatching { ctx.stopRecording() }.onFailure { AppLogger.e(TAG, "Self-stop failed: ${it.message}", it) }
+                    AppLogger.i(TAG, "Self-stop done; recording=${runCatching { ctx.isRecording() }.getOrDefault(true)}")
+                    return
+                }
+                OrphanSelfStop.Decision.UNREADABLE ->
+                    if (!unreadableLogged) { unreadableLogged = true; AppLogger.w(TAG, "Cannot read the audio mode; not stopping the unowned recording") }
+                else -> Unit
+            }
+            if (!recording || clientSeen) {
+                AppLogger.i(TAG, if (clientSeen) "The app is calling this daemon again; watch over (after $attempt delivery attempt(s))"
+                    else "Not recording any more; watch over (after $attempt delivery attempt(s))")
+                return
+            }
+            val due = deliveryDue
+            if (due != null && now >= due) {
+                val stopped = isAppStopped(ctx.authority)
+                if (!AppDeathRedelivery.mayDeliver(stopped)) {
+                    if (!stoppedLogged) AppLogger.i(TAG, "app was force-stopped; not reopening it")
+                    stoppedLogged = true
+                    deliveryDue = null
+                } else {
+                    if (stopped == null) AppLogger.w(TAG, "Cannot tell whether the app was force-stopped; delivering anyway")
+                    val delivered = runCatching { BinderDelivery.redeliverBinderToApp(ctx.binder, ctx.authority, ctx.apkPath) }
+                        .onFailure { AppLogger.w(TAG, "Re-delivery after the app's death threw: ${it.message}") }
+                        .getOrDefault(false)
+                    lastSentAt = android.os.SystemClock.elapsedRealtime()
+                    attempt++
+                    AppLogger.i(TAG, "Re-delivery after the app's death, attempt $attempt of ${AppDeathRedelivery.MAX_ATTEMPTS}: " +
+                        "provider replied=$delivered (not proof the app took it)")
+                    deliveryDue = AppDeathRedelivery.nextDelayMs(attempt, true, false)?.let { lastSentAt + it }
+                    if (deliveryDue == null) AppLogger.w(TAG, "Re-delivery gave up after $attempt attempt(s); this daemon will finish the recording when the call ends")
+                }
+            }
+            runCatching { Thread.sleep(WATCH_TICK_MS) }
         }
     }
+
+    /** The audio mode as the audio service reports it (the app-call truth; the telephony call state lies during VoIP), or null. */
+    private fun readAudioMode(): Int? = runCatching {
+        val binder = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, "audio") as? IBinder
+            ?: return@runCatching null
+        val svc = Class.forName("android.media.IAudioService\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, binder)
+        svc.javaClass.getMethod("getMode").invoke(svc) as? Int
+    }.getOrNull()
+
+    /** Whether the app's package is in the stopped state (force-stopped), or null when that cannot be read. */
+    private fun isAppStopped(authority: String): Boolean? = runCatching {
+        val pm = packageManager()
+        val info = resolveProvider(pm, authority)
+        val pkg = info.javaClass.getField("packageName").get(info) as String
+        pm.javaClass.methods.firstOrNull { it.name == "isPackageStoppedForUser" && it.parameterTypes.size == 2 }
+            ?.let { return@runCatching it.invoke(pm, pkg, 0) as? Boolean }
+        val appInfo = info.javaClass.getField("applicationInfo").get(info)
+        val flags = appInfo?.javaClass?.getField("flags")?.getInt(appInfo) ?: return@runCatching null
+        // The provider's applicationInfo is read now, so its stopped bit is current.
+        (flags and AppDeathRedelivery.FLAG_STOPPED) != 0
+    }.onFailure { AppLogger.w(TAG, "Could not read the app's stopped state: ${it.message}") }.getOrNull()
 
     /** Keeps the observer from being collected: the activity manager only holds a weak reference to our side. */
     @Volatile
@@ -162,8 +219,8 @@ internal object AppStartBinderSender {
      * Starts watching. Returns whether the observer was registered; the outcome is logged either way, so the log
      * says whether this daemon can hand its binder over again.
      */
-    fun register(binder: IBinder, authority: String, apkPath: String, isRecording: () -> Boolean): Boolean = try {
-        startDeathWatch(binder, authority, apkPath, isRecording)
+    fun register(binder: IBinder, authority: String, apkPath: String, isRecording: () -> Boolean, stopRecording: () -> Unit): Boolean = try {
+        startDeathWatch(binder, authority, apkPath, isRecording, stopRecording)
         registerUidObserver(binder, authority, apkPath)
     } catch (t: Throwable) {
         AppLogger.w(TAG, "Cannot watch the app: ${t.message}", t)
@@ -226,17 +283,26 @@ internal object AppStartBinderSender {
 
     /** The uid of the app that owns [authority], from the package manager: the one uid whose start we care about. */
     private fun resolveAppUid(authority: String): Int {
+        val info = resolveProvider(packageManager(), authority)
+        val appInfo = info.javaClass.getField("applicationInfo").get(info) ?: error("provider has no applicationInfo")
+        return appInfo.javaClass.getField("uid").getInt(appInfo)
+    }
+
+    private fun packageManager(): Any {
         val serviceManager = Class.forName("android.os.ServiceManager")
         val pmBinder = serviceManager.getMethod("getService", String::class.java).invoke(null, "package") as? IBinder
             ?: error("no package service")
-        val pm = Class.forName("android.content.pm.IPackageManager\$Stub").getMethod("asInterface", IBinder::class.java)
-            .invoke(null, pmBinder)
+        return Class.forName("android.content.pm.IPackageManager\$Stub").getMethod("asInterface", IBinder::class.java)
+            .invoke(null, pmBinder) ?: error("no package manager")
+    }
+
+    private fun resolveProvider(pm: Any, authority: String): Any {
         val resolve = pm.javaClass.methods.firstOrNull { it.name == "resolveContentProvider" && it.parameterTypes.size == 3 }
             ?: error("resolveContentProvider not found")
         // The flags argument is an int up to Android 12 and a long from 13.
         val flags: Any = if (resolve.parameterTypes[1] == java.lang.Long.TYPE) 0L else 0
-        val info = resolve.invoke(pm, authority, flags, 0) ?: error("no provider for $authority")
-        val appInfo = info.javaClass.getField("applicationInfo").get(info) ?: error("provider has no applicationInfo")
-        return appInfo.javaClass.getField("uid").getInt(appInfo)
+        return resolve.invoke(pm, authority, flags, 0) ?: error("no provider for $authority")
     }
+
+    private const val WATCH_TICK_MS = 1_000L
 }
