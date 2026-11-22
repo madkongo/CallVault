@@ -87,14 +87,18 @@ object SharedStatusNotice {
     // How long the live recording has really run, pausing excluded (the Home card's timer). Guarded by liveByOwner.
     private var runningSinceMs = NOT_RUNNING
     private var bankedMs = 0L
+    private var startedWallMs = 0L
 
     /** What the clock persists so a process kill mid-call does not restart the timer at 00:00. */
-    data class SavedClock(val runningSinceMs: Long, val bankedMs: Long, val bootWallMs: Long, val savedWallMs: Long)
+    data class SavedClock(val runningSinceMs: Long, val bankedMs: Long, val bootWallMs: Long, val savedWallMs: Long, val startedWallMs: Long)
 
     /** Where the clock is persisted; null (tests, the shell process) means no persistence. */
     interface ClockStore {
         fun load(): SavedClock?
         fun save(clock: SavedClock?)
+
+        /** The last wall-clock moment the phone was seen with no call at all (0 if never); a call-free moment ends any call. */
+        fun lastNoCallAt(): Long
     }
 
     @Volatile
@@ -112,8 +116,9 @@ object SharedStatusNotice {
      * A saved clock is trusted only when it was written in this same boot (elapsedRealtime is comparable then),
      * recently enough to be one call, and is not from the future. Anything else is a different call: start at zero.
      */
-    internal fun restorable(saved: SavedClock, nowMs: Long, wallMs: Long): Boolean =
-        abs((wallMs - nowMs) - saved.bootWallMs) <= BOOT_TOLERANCE_MS &&
+    internal fun restorable(saved: SavedClock, nowMs: Long, wallMs: Long, lastNoCallAt: Long = 0L): Boolean =
+        lastNoCallAt <= saved.startedWallMs &&
+            abs((wallMs - nowMs) - saved.bootWallMs) <= BOOT_TOLERANCE_MS &&
             wallMs - saved.savedWallMs in 0..MAX_RESTORE_AGE_MS &&
             saved.runningSinceMs <= nowMs
 
@@ -121,23 +126,23 @@ object SharedStatusNotice {
         val store = clockStore
         when (state) {
             Live.NONE -> {
-                runningSinceMs = NOT_RUNNING; bankedMs = 0L
+                runningSinceMs = NOT_RUNNING; bankedMs = 0L; startedWallMs = 0L
                 store?.save(null)
                 return
             }
             Live.RECORDING -> {
                 if (runningSinceMs == NOT_RUNNING && bankedMs == 0L) {
                     // A fresh process joining a call that was already being timed?
-                    store?.load()?.takeIf { restorable(it, nowMs, wallMs) }?.let {
-                        runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs
+                    store?.load()?.takeIf { restorable(it, nowMs, wallMs, store.lastNoCallAt()) }?.let {
+                        runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs; startedWallMs = it.startedWallMs
                     }
                 }
                 if (runningSinceMs == NOT_RUNNING) runningSinceMs = nowMs
             }
             Live.PAUSED -> {
                 if (runningSinceMs == NOT_RUNNING && bankedMs == 0L) {
-                    store?.load()?.takeIf { restorable(it, nowMs, wallMs) }?.let {
-                        runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs
+                    store?.load()?.takeIf { restorable(it, nowMs, wallMs, store.lastNoCallAt()) }?.let {
+                        runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs; startedWallMs = it.startedWallMs
                     }
                 }
                 if (runningSinceMs != NOT_RUNNING) {
@@ -146,7 +151,10 @@ object SharedStatusNotice {
                 }
             }
         }
-        store?.save(SavedClock(runningSinceMs, bankedMs, wallMs - nowMs, wallMs))
+        // The call's first start: kept from a restored clock, else now.
+        val startedWall = startedWallMs.takeIf { it > 0L } ?: wallMs
+        startedWallMs = startedWall
+        store?.save(SavedClock(runningSinceMs, bankedMs, wallMs - nowMs, wallMs, startedWall))
     }
 
     private const val NOT_RUNNING = -1L
@@ -226,7 +234,7 @@ object SharedStatusNotice {
         synchronized(liveByOwner) { liveByOwner.clear() }
         liveState.value = Live.NONE
         // The saved clock is left alone on purpose: this is how a test simulates a process kill.
-        synchronized(liveByOwner) { runningSinceMs = NOT_RUNNING; bankedMs = 0L }
+        synchronized(liveByOwner) { runningSinceMs = NOT_RUNNING; bankedMs = 0L; startedWallMs = 0L }
         clockStore = null
         onReleased = null
         foregroundPoster = null

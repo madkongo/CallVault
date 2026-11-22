@@ -12,7 +12,8 @@ import android.content.Context
 
 /** Keeps the live recording clock across an app-process kill (SharedPreferences, a few bytes, written on state changes only). */
 class LiveClockPrefs(context: Context) : SharedStatusNotice.ClockStore {
-    private val prefs = context.applicationContext.getSharedPreferences("live_recording_clock", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val prefs = appContext.getSharedPreferences("live_recording_clock", Context.MODE_PRIVATE)
 
     override fun load(): SharedStatusNotice.SavedClock? {
         if (!prefs.contains(KEY_SAVED_WALL)) return null
@@ -21,6 +22,7 @@ class LiveClockPrefs(context: Context) : SharedStatusNotice.ClockStore {
             bankedMs = prefs.getLong(KEY_BANKED, 0L),
             bootWallMs = prefs.getLong(KEY_BOOT_WALL, 0L),
             savedWallMs = prefs.getLong(KEY_SAVED_WALL, 0L),
+            startedWallMs = prefs.getLong(KEY_STARTED_WALL, 0L),
         )
     }
 
@@ -31,14 +33,21 @@ class LiveClockPrefs(context: Context) : SharedStatusNotice.ClockStore {
                 putLong(KEY_BANKED, clock.bankedMs)
                 putLong(KEY_BOOT_WALL, clock.bootWallMs)
                 putLong(KEY_SAVED_WALL, clock.savedWallMs)
+                putLong(KEY_STARTED_WALL, clock.startedWallMs)
             }
         }.apply()
     }
+
+    /** The orphan-session code's own record of the last moment no call was up. */
+    override fun lastNoCallAt(): Long = runCatching {
+        appContext.getSharedPreferences(OrphanRecorderSession.PREFS, Context.MODE_PRIVATE).getLong(OrphanRecorderSession.KEY_LAST_NO_CALL_AT, 0L)
+    }.getOrDefault(0L)
 
     private companion object {
         const val KEY_RUNNING = "running_since"
         const val KEY_BANKED = "banked"
         const val KEY_BOOT_WALL = "boot_wall"
         const val KEY_SAVED_WALL = "saved_wall"
+        const val KEY_STARTED_WALL = "started_wall"
     }
 }

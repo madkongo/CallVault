@@ -86,6 +86,8 @@ class RecordingCardStyleTest {
 class LiveClockRestoreTest {
     private class FakeStore : SharedStatusNotice.ClockStore {
         var saved: SharedStatusNotice.SavedClock? = null
+        var noCallAt = 0L
+        override fun lastNoCallAt() = noCallAt
         override fun load() = saved
         override fun save(clock: SharedStatusNotice.SavedClock?) { saved = clock }
     }
@@ -154,5 +156,23 @@ class LiveClockRestoreTest {
         killProcess()
         SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 60_000, boot + 60_000)
         assertEquals(0L, SharedStatusNotice.liveElapsedMs(60_000))
+    }
+
+    @Test
+    fun `a call-free moment after the stored start means the old call ended`() {
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 0, boot)
+        store.noCallAt = boot + 30_000 // phone idle, no call, after the start
+        killProcess()
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 60_000, boot + 60_000)
+        assertEquals(0L, SharedStatusNotice.liveElapsedMs(60_000))
+    }
+
+    @Test
+    fun `a call-free moment before the stored start does not stop the restore`() {
+        store.noCallAt = boot - 5_000
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 10_000, boot + 10_000)
+        killProcess()
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 40_000, boot + 40_000)
+        assertEquals(30_000L, SharedStatusNotice.liveElapsedMs(40_000))
     }
 }
