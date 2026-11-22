@@ -409,6 +409,13 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         if (!isStopped && done == total) RecordingCatalog.markDriveSizesReconfirmed(applicationContext)
         AppLogger.i(TAG, "Sweep complete (target=$target copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal).")
         journal("sweep complete: copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal deleted=$deleted kept=$kept unverified=$unverified")
+        if (!isStopped && DriveBackupNotice.isCopyGivingUp(copied, failures, runAttemptCount)) {
+            DriveBackupNotice.onGaveUp(
+                applicationContext, DriveBackupNotice.Reason.ERROR,
+                "the Drive folder listed fine but all $failures copies failed on the last attempt",
+                detail = "no copy went through",
+            )
+        }
         // A sweep that keeps failing backs off rather than hammering the provider: the next scheduled run
         // picks the stragglers up anyway, so there is nothing to gain from an unbounded retry chain.
         return if (failures > 0 && !CloudCopyPolicy.isLastAttempt(runAttemptCount)) Result.retry() else Result.success()

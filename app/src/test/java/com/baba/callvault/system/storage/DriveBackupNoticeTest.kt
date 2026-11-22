@@ -106,4 +106,13 @@ class DriveBackupNoticeTest {
         DriveBackupNotice.onDriveSyncOff(context, "storage switched to device-only")
         assertEquals(0, shown())
     }
+
+    @Test
+    fun `a last attempt with failures and no copy at all is giving up on copies`() {
+        val last = CloudCopyPolicy.MAX_ATTEMPTS - 1
+        assertTrue(DriveBackupNotice.isCopyGivingUp(copied = 0, failures = 3, runAttemptCount = last))
+        assertEquals("an earlier attempt retries first", false, DriveBackupNotice.isCopyGivingUp(0, 3, 0))
+        assertEquals("some copies worked: Drive is reachable", false, DriveBackupNotice.isCopyGivingUp(1, 3, last))
+        assertEquals("no failures", false, DriveBackupNotice.isCopyGivingUp(0, 0, last))
+    }
 }

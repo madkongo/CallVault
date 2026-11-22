@@ -55,6 +55,13 @@ object DriveBackupNotice {
     fun isGivingUp(runAttemptCount: Int): Boolean = !CloudCopyPolicy.shouldRetryListFailure(runAttemptCount)
 
     /**
+     * The sweep listed the folder, but on its last attempt not one copy went through while some failed: nothing
+     * else uploads (review C11), so this is giving up too (review N6).
+     */
+    fun isCopyGivingUp(copied: Int, failures: Int, runAttemptCount: Int): Boolean =
+        copied == 0 && failures > 0 && CloudCopyPolicy.isLastAttempt(runAttemptCount)
+
+    /**
      * The sweep spent its last attempt without listing the Drive folder, or crashed on it; [why] is the journal's
      * reason, [detail] fills [Reason.ERROR]'s text (the error's name).
      */
