@@ -97,6 +97,19 @@ internal object BinderDelivery {
     fun askWifiJoinApprovalConfig(authority: String): Bundle? =
         call(authority, RecorderBinderProvider.METHOD_WIFI_JOIN_APPROVAL_CONFIG, Bundle())
 
+    /**
+     * The app's provider binder from the latest delivery through the activity manager. It lives in the app's process,
+     * so its death is the death of that process ([AppStartBinderSender] watches it).
+     */
+    @Volatile
+    var lastProviderBinder: IBinder? = null
+        private set
+
+    /** Told of the provider binder on every delivery, so a watcher can re-link after the app restarted. */
+    @Volatile
+    var onProviderBinder: ((IBinder) -> Unit)? = null
+
+    /** True when the provider replied. That is not "the app took it": the app may refuse a hand-over (see DaemonReuse.judgeRedelivery). */
     private fun deliver(authority: String, method: String, bundle: Bundle): Boolean = call(authority, method, bundle) != null
 
     /** The provider's reply to [method], or null when neither path reached it. */
@@ -111,9 +124,13 @@ internal object BinderDelivery {
         }
 
         AppLogger.i(TAG, "Falling back to system-context ContentResolver path")
-        return runCatching { deliverViaSystemContext(authority, bundle, method) }
+        val viaContext = runCatching { deliverViaSystemContext(authority, bundle, method) }
             .onFailure { AppLogger.e(TAG, "system-context path failed: ${it.message}", it) }
             .getOrNull()
+        if (viaContext != null) {
+            AppLogger.w(TAG, "Delivered ($method) via the system-context fallback: the app's provider binder is not watched, so a later death of the app will not be answered")
+        }
+        return viaContext
     }
 
     /**
@@ -144,6 +161,11 @@ internal object BinderDelivery {
             // 3. holder.provider : IContentProvider (field name "provider" on ContentProviderHolder).
             val provider = holder.javaClass.getField("provider").get(holder)
                 ?: throw IllegalStateException("ContentProviderHolder.provider is null")
+
+            runCatching { (provider as? android.os.IInterface)?.asBinder() }.getOrNull()?.let { b ->
+                lastProviderBinder = b
+                runCatching { onProviderBinder?.invoke(b) }
+            }
 
             // 4. provider.call(...) — version matrix from Shizuku's IContentProviderCompat.
             val reply = callProvider(provider, authority, method, bundle)

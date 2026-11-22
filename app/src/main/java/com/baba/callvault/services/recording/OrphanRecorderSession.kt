@@ -76,6 +76,8 @@ object OrphanRecorderSession {
         fun markNoCall()
         /** The recorder is not recording now: no session can be orphaned from before this moment. */
         fun markNoSession()
+        /** An orphan was stopped: forget the session record naming its file, unless it names [keep] (a live session). */
+        fun clearSessionRecord(keep: File?) {}
         fun scheduleRescue()
         /** The staged file the orphan was writing, when known; null when it cannot be told (then no instant rescue). */
         fun orphanStagingFile(exclude: File?): File? = null
@@ -139,6 +141,7 @@ object OrphanRecorderSession {
                         (stopFailure?.let { " " + CallEndLog.describe(it) } ?: "") + ")")
                 } else {
                     env.markNoSession()
+                    env.clearSessionRecord(exclude)
                     env.record("orphan session [$trigger]: stopped; its file goes to the cut-off rescue under its own call's name")
                     // Finalised, call over: publish after a short guard (the recorder answers before the trailer is
                     // written), not after the 2-minute quiet wait. Only the phone-call-ended stop is "saved in full".
@@ -225,6 +228,17 @@ object OrphanRecorderSession {
     fun noteCallBegan(context: Context, atMillis: Long = System.currentTimeMillis()) {
         edit(context) { putLong(KEY_LIVE_CALL_BEGAN_AT, atMillis) }
     }
+
+    /** The staging file of the session the app last handed to the recorder, or null (read by the daemon launcher). */
+    fun sessionStagingPath(context: Context): String? = runCatching {
+        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_SESSION_STAGING, null)
+    }.getOrNull()
+
+    /** Whether the staged session's own call is over (read by the daemon launcher before it spares a daemon). */
+    fun sessionCallEnded(context: Context): Boolean = runCatching {
+        val env = AndroidEnvironment(context.applicationContext)
+        OrphanSessionPolicy.orphanCallEnded(env.orphanStartedAt(null), env.lastNoCallAt(), env.liveCallBeganAt())
+    }.getOrDefault(false)
 
     /** The app handed [staging] to the recorder for a session it now owns. */
     fun noteSessionStarted(context: Context, staging: File?, isAppCall: Boolean = false) {
@@ -317,6 +331,14 @@ object OrphanRecorderSession {
         override fun markNoCall() = edit(context) {
             putLong(KEY_LAST_NO_CALL_AT, System.currentTimeMillis())
             remove(KEY_LIVE_CALL_BEGAN_AT)
+        }
+
+        override fun clearSessionRecord(keep: File?) {
+            synchronized(sessionRecordLock) {
+                val recorded = prefs.getString(KEY_SESSION_STAGING, null) ?: return
+                if (keep != null && File(recorded).absolutePath == keep.absolutePath) return
+                edit(context) { remove(KEY_SESSION_STAGING) }
+            }
         }
 
         override fun markNoSession() = edit(context) { putLong(KEY_LAST_NO_SESSION_AT, System.currentTimeMillis()) }

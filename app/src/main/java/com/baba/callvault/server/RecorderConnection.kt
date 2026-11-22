@@ -64,6 +64,7 @@ object RecorderConnection {
     fun onBinderReceived(service: IRecorderService) {
         this.service = service
         _connected.value = true
+        SpareMemory.shared.reset()
         AppLogger.i(TAG, "RecorderConnection received daemon binder")
         // Setup has demonstrably worked, so the always-on setup journal has nothing left to learn and
         // stops here for good. A healthy phone therefore pays for it exactly once.
@@ -115,9 +116,13 @@ object RecorderConnection {
             AppLogger.i(TAG, "A previous recorder's binder died; the current one is alive - keeping it")
             return
         }
+        // Only a death of a recorder this process held is "its recorder died". A cleanup that found nothing to clean
+        // (a restarted app's Shizuku stop, 15 ms after its start) used to set the flag, which skipped the wait for a
+        // running daemon's hand-over and let the launcher kill a daemon that was recording a call (2026-11-22).
+        if (current != null) sawRecorderDie = true
+        else AppLogger.i(TAG, "A recorder death was reported but this process held no recorder; not counted as one it saw die")
         this.service = null
         _connected.value = false
-        sawRecorderDie = true
         runCatching { onDeath?.invoke() }.onFailure { AppLogger.w(TAG, "onDeath hook failed: ${it.message}") }
     }
 
@@ -129,6 +134,10 @@ object RecorderConnection {
     @Volatile
     var sawRecorderDie: Boolean = false
         private set
+
+    internal fun resetDeathFlagForTest() {
+        sawRecorderDie = false
+    }
 
     /**
      * Drops the held binder even though it is still alive, for the one case where staying attached is

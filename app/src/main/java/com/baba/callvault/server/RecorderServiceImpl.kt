@@ -112,6 +112,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             destroy()
             return true
         }
+        // Any call from the app proves it holds this binder (the re-delivery after its death can stop asking).
+        AppStartBinderSender.noteClientCall()
         return super.onTransact(code, data, reply, flags)
     }
 
@@ -137,6 +139,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             AppLogger.w(TAG, "startRecording ignored: already recording")
             return
         }
+        AppStartBinderSender.noteSessionStarted()
 
         // Resolve cliKey strings to enums on the binder thread (cheap, validates input early).
         val sourceEnum = runCatching { ScrcpyAudioSource.fromKey(source) }.getOrNull()
@@ -323,6 +326,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             runCatching { outFd.close() }
             return false
         }
+        // A new session starts the app-restart budget over, as the carrier path does (the handoff paths hold no daemon session).
+        AppStartBinderSender.noteSessionStarted()
         val codecEnum = runCatching { ScrcpyAudioCodec.fromKey(codec) }.getOrNull()
         if (codecEnum == null) {
             AppLogger.e(TAG, "startVoipRecording: bad codec key $codec")
