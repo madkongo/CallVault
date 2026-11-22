@@ -100,13 +100,12 @@ internal fun PrivacySubSection(preferences: AppPreferences, updateTrigger: Int) 
  * "App" group; vibration, the last row of Visual on the classic screen, is [VibrationRow].
  */
 /**
- * What the app-language picker shows for [tag]. Android's own name for zh-HK / zh-TW is "中文 (香港)",
- * which does not say Traditional; those two are named explicitly (BabApps item 120). Every other
- * locale, zh-CN included, keeps the platform's name.
+ * What the app-language picker shows for [tag]. The Traditional Chinese screens (values-b+zh+Hant,
+ * PR #91) are named 繁體中文 explicitly, the name Traditional Chinese readers expect, instead of the
+ * platform's "中文 (繁體)". Every other locale, zh-CN included, keeps the platform's name.
  */
 internal fun appLanguageDisplayName(tag: String): String = when (tag) {
-    "zh-HK" -> "繁體中文（香港）"
-    "zh-TW" -> "繁體中文（台灣）"
+    "zh-Hant" -> "繁體中文"
     else -> {
         val locale = Locale.forLanguageTag(tag)
         locale.getDisplayName(locale).replaceFirstChar {

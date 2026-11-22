@@ -61,7 +61,7 @@ class TranscriptionLanguageChoiceTest {
 
     @Test
     fun traditional_chinese_phones_pin_chinese() {
-        // BabApps item 120: the app now has zh-HK and zh-TW screens; their phones must pin "zh", not auto-detect.
+        // BabApps item 120: the app has Traditional Chinese screens (zh-Hant); HK/TW phones must pin "zh", not auto-detect.
         listOf("zh-HK", "zh-TW", "zh-Hant-MO", "zh-CN").forEach {
             assertEquals(it, "zh", TranscriptionLanguageChoice.defaultLanguage(Locale.forLanguageTag(it)))
         }
