@@ -886,6 +886,8 @@ class DaemonKeepAliveService : Service() {
     private fun onDaemonDiedImmediate() {
         watchdogHandler.post {
             AppLogger.i(TAG, "keep-alive: binder-death signal — ${RecorderLogMarkers.RELAUNCH} immediately")
+            // In every mode, and always on: what the phone says about adbd and the USB gadget right now (GH #89).
+            runCatching { TransportTimeline.recorderDied(applicationContext) }
             if (usesAdb()) {
                 TransportTimeline.event(applicationContext, "recorder died")
                 timelineSnapshot(false, "death")

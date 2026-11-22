@@ -8,6 +8,7 @@
 
 package com.baba.callvault.system.diagnostics
 
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -85,5 +86,32 @@ class CallEndLogTest {
         assertEquals("daemon direct AudioRecord", CallEndLog.capturePathName(false, false, true, true))
         assertEquals("daemon scrcpy (muxer)", CallEndLog.capturePathName(false, false, true, false))
         assertEquals("local scrcpy over ADB (muxer)", CallEndLog.capturePathName(false, false, false, false))
+    }
+
+    // --- GH89-6: a failed call start is written to the always-on file with its cause ---
+
+    @Test
+    fun `a failed start line carries the cause, whether the recorder was connected, and adbd`() {
+        val line = CallEndLog.startFailed(
+            failure = IllegalStateException("Neither the recorder daemon nor a direct ADB connection is available"),
+            recorderConnected = false,
+            adbd = "STOPPED",
+        )
+        assertTrue(line, line.startsWith("call start FAILED"))
+        assertTrue(line, line.contains("IllegalStateException: Neither the recorder daemon"))
+        assertTrue(line, line.contains("recorderConnected=false"))
+        assertTrue(line, line.contains("adbd=STOPPED"))
+        assertFalse(line, line.contains("\n"))
+    }
+
+    @Test
+    fun `the foreground service writes the failed start to the always-on file`() {
+        val src = listOf(
+            "src/main/java/com/baba/callvault/services/recording/RecordingForegroundService.kt",
+            "app/src/main/java/com/baba/callvault/services/recording/RecordingForegroundService.kt",
+        ).map(::File).first { it.exists() }.readText()
+        val catchAt = src.indexOf("AppLogger.e(TAG, \"Failed to start recording session.\", e)")
+        assertTrue(catchAt > 0)
+        assertTrue(src.substring(catchAt, catchAt + 1500).contains("CallEndLog.startFailed("))
     }
 }

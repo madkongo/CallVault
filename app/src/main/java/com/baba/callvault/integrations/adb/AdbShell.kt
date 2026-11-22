@@ -399,32 +399,44 @@ object AdbShell {
         /** False where CallVault must not switch Wireless debugging on from off — Shizuku mode. */
         mayEnable: Boolean = true,
     ): AdbdRevival {
+        var streak = AdbdStoppedStreak(checks = 1, stoppedForMs = 0)
+        var lastInputs = ""
         fun decideNow(): AdbdRevival {
             val prefs = AppPreferences(context)
             // A switch we may borrow is not a switch that blocks revival: after a reboot the listener is
             // always gone, and refusing here was the second of the three gates that deadlocked a phone on
             // 2026-09-19. See [LoopbackBorrowPolicy].
             val userOff = (prefs.wasWirelessDebuggingTurnedOffByUser() || userOffPending.isPending()) &&
-        var streak = AdbdStoppedStreak(checks = 1, stoppedForMs = 0)
-        var lastInputs = ""
                 !prefs.isWirelessDebuggingEnforced() &&
                 !mayBorrowWirelessDebugging(context)
-            return AdbdRevivalPolicy.decide(
+            val usbOn = isUsbDebuggingEnabled(context)
+            val wdOn = isWirelessDebuggingEnabled(context)
+            val wifi = WifiState.of(context)
+            val grant = hasWriteSecureSettings(context)
+            // Asked every time, not cached: the point of the check is to catch a `init.svc.adbd`
+            // reading that has gone stale in the seconds since, which a cached answer would share.
+            val shizuku = runCatching { ShizukuBackend.isRunning() }.getOrDefault(false)
+            val decision = AdbdRevivalPolicy.decideWithReason(
                 adbd = adbdState(),
-                usbDebuggingOn = isUsbDebuggingEnabled(context),
-                wirelessDebuggingOn = isWirelessDebuggingEnabled(context),
-                wifi = WifiState.of(context),
-                hasGrant = hasWriteSecureSettings(context),
+                usbDebuggingOn = usbOn,
+                wirelessDebuggingOn = wdOn,
+                wifi = wifi,
+                hasGrant = grant,
                 mayEnable = mayEnable && !userOff,
-                // Asked every time, not cached: the point of the check is to catch a `init.svc.adbd`
-                // reading that has gone stale in the seconds since, which a cached answer would share.
-                shizukuServerRunning = runCatching { ShizukuBackend.isRunning() }.getOrDefault(false),
+                shizukuServerRunning = shizuku,
+                stoppedStreak = streak,
             )
+            // Inputs for the log: which switch said what, and where the USB answer came from (GH89-2).
+            lastInputs = "reason=\"${decision.reason.text}\"; usbOn=$usbOn (${usbDebuggingSource(context)}), wd=$wdOn, " +
+                "wifi=$wifi, grant=$grant, mayEnable=${mayEnable && !userOff} (callerMayEnable=$mayEnable, userOff=$userOff), " +
+                "shizukuRunning=$shizuku, stoppedChecks=${streak.checks}, stoppedFor=${streak.stoppedForMs}ms"
+            return decision.revival
         }
         // One revival at a time. The switch observer and the keep-alive both reach here within milliseconds of
         // USB debugging going off; seen on the emulator, both switched Wireless debugging on at once. The second
         // now waits, looks again, and finds adbd running.
         synchronized(reviveLock) {
+        streak = adbdStoppedTracker.observe(adbdState(), SystemClock.elapsedRealtime())
         var decision = decideNow()
         if (decision == AdbdRevival.ENABLE_WIRELESS_DEBUGGING || decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING) {
             // Let a USB change that may still be running finish first, then look again. Starting adbd inside
@@ -432,19 +444,12 @@ object AdbShell {
             // Every caller can reach here within milliseconds of the change — the keep-alive's binder-death
             // relaunch does — so the wait lives here rather than in any one caller.
             Thread.sleep(REVIVE_SETTLE_MS)
-            // Inputs for the log: which switch said what, and where the USB answer came from (GH89-2).
-            lastInputs = "reason=\"${decision.reason.text}\"; usbOn=$usbOn (${usbDebuggingSource(context)}), wd=$wdOn, " +
-                "wifi=$wifi, grant=$grant, mayEnable=${mayEnable && !userOff} (callerMayEnable=$mayEnable, userOff=$userOff), " +
-                "shizukuRunning=$shizuku, stoppedChecks=${streak.checks}, stoppedFor=${streak.stoppedForMs}ms"
-            return decision.revival
             decision = decideNow()
         }
         when (decision) {
             AdbdRevival.NOTHING -> {
-                // Worth saying only when it looked like it needed reviving. A stopped reading with a
-        streak = adbdStoppedTracker.observe(adbdState(), SystemClock.elapsedRealtime())
-                // Shizuku server still answering is the contradiction the policy declines to act on, and
-                // silence there would read in a report as the revival never having been asked.
+                // Worth saying only when it looked like it needed reviving. Names the branch the policy really
+                // took and its inputs: the old line blamed a Shizuku server on phones that have none (GH89-2).
                 if (adbdState() == AdbdState.STOPPED) {
                     AppLogger.i(TAG, "adbd reads stopped after $reason; leaving the switches alone ($lastInputs)")
                 }
@@ -487,8 +492,18 @@ object AdbShell {
         }
     }
 
+    /** Counts consecutive stopped readings of adbd across revival calls (GH89-1). Touched only under [reviveLock]. */
+    private val adbdStoppedTracker = AdbdStoppedTracker()
+
+    /** Where the USB-debugging answer came from, for the revival log: the raw setting and the shell's own read. */
+    private fun usbDebuggingSource(context: Context): String =
+        "setting=${if (usbDebuggingSettingSaysOn(context)) 1 else 0}, shellRead=${UsbDebuggingShellRead.current()}"
+
     /** Serialises [reviveAdbdIfStopped]. Its own lock, so a revival never blocks unrelated ADB work. */
     private val reviveLock = Any()
+
+    /** A system property for the always-on report; "" when the app cannot read it. */
+    internal fun systemPropertyForReport(key: String): String = getSystemProperty(key)
 
     /** Reads a system property via the hidden `SystemProperties.get` (reflection; public SDK-safe). */
     private fun getSystemProperty(key: String): String = runCatching {
@@ -498,13 +513,6 @@ object AdbShell {
     }.getOrDefault("")
 
     /**
-    /** Counts consecutive stopped readings of adbd across revival calls (GH89-1). Touched only under [reviveLock]. */
-    private val adbdStoppedTracker = AdbdStoppedTracker()
-
-    /** Where the USB-debugging answer came from, for the revival log: the raw setting and the shell's own read. */
-    private fun usbDebuggingSource(context: Context): String =
-        "setting=${if (usbDebuggingSettingSaysOn(context)) 1 else 0}, shellRead=${UsbDebuggingShellRead.current()}"
-
      * Wireless-Debugging bootstrap: enable WD if the OEM turned it off, mDNS-discover the connect port,
      * connect, settle. This is the ONLY path that writes `adb_wifi_enabled=1`. Used by the non-offline
      * recording path and by [armLoopbackIfNeeded] for the one-time base connection it needs to arm the
@@ -543,6 +551,10 @@ object AdbShell {
         if (mgr.isConnected) return BaseConnect.CONNECTED
         // Re-enable Wireless debugging if the OEM turned it off on reboot (needs WRITE_SECURE_SETTINGS).
         if (!isWirelessDebuggingEnabled(context)) {
+            // A 0 is not proof: Android 17 can hide the switch from apps while it is on, and the enable below
+            // needs a grant that only a first connect brings (C115, GitHub #40). Look for a port first, writing
+            // nothing. If WD is really off nothing answers and we fall through to the rules below, unchanged.
+            if (connectWithoutEnabling(context, mgr)) return BaseConnect.CONNECTED
             if (!enableWirelessDebugging(context)) {
                 if (WifiState.of(context) == WifiState.NOT_CONNECTED) return BaseConnect.NO_WIFI
                 AppLogger.w(TAG, "Wireless debugging is off and could not be switched on")
@@ -557,10 +569,6 @@ object AdbShell {
             // service.adb.tls.port instead: SELinux gives it only to adbd and system_server.
             if (!isWirelessDebuggingEnabled(context)) {
                 AppLogger.w(TAG, "Android switched Wireless debugging back off after we turned it on (untrusted network or no Wi-Fi)")
-            // A 0 is not proof: Android 17 can hide the switch from apps while it is on, and the enable below
-            // needs a grant that only a first connect brings (C115, GitHub #40). Look for a port first, writing
-            // nothing. If WD is really off nothing answers and we fall through to the rules below, unchanged.
-            if (connectWithoutEnabling(context, mgr)) return BaseConnect.CONNECTED
                 return BaseConnect.WIRELESS_DEBUGGING_REFUSED
             }
         }
@@ -605,20 +613,6 @@ object AdbShell {
     }
 
     /**
-     * Forces a fresh ADB connection: drops the current one (so a half-dead/stale connection that
-     * still reports `isConnected` is discarded) then re-runs [ensureConnected] to rediscover the
-     * mDNS port and reconnect. Used by the recorder-server launcher to recover from intermittent
-     * "Stream closed" failures on the flaky wireless link.
-     *
-     * Call off the main thread. Holds [connectLock] for the same reason as [ensureConnected] (serialise
-     * concurrent connect attempts), with the same bounded entry wait. Re-entrant with [ensureConnected]
-     * (same thread).
-     *
-     * @return true if a live connection is up after the reconnect attempt.
-     */
-    fun forceReconnect(context: Context): Boolean =
-        connectLock.withLockOrElse(onBusy = { logConnectBusy("forceReconnect", it); false }) {
-    /**
      * C115: `adb_wifi_enabled` reads off or absent, so try the connect port anyway — last good port, then a
      * short `_adb-tls-connect` window, then (if 127.0.0.1 is refused) the address mDNS resolved. **Never writes
      * the switch and never records ownership**, so the release path cannot later turn off something it did not
@@ -654,6 +648,20 @@ object AdbShell {
         return false
     }
 
+    /**
+     * Forces a fresh ADB connection: drops the current one (so a half-dead/stale connection that
+     * still reports `isConnected` is discarded) then re-runs [ensureConnected] to rediscover the
+     * mDNS port and reconnect. Used by the recorder-server launcher to recover from intermittent
+     * "Stream closed" failures on the flaky wireless link.
+     *
+     * Call off the main thread. Holds [connectLock] for the same reason as [ensureConnected] (serialise
+     * concurrent connect attempts), with the same bounded entry wait. Re-entrant with [ensureConnected]
+     * (same thread).
+     *
+     * @return true if a live connection is up after the reconnect attempt.
+     */
+    fun forceReconnect(context: Context): Boolean =
+        connectLock.withLockOrElse(onBusy = { logConnectBusy("forceReconnect", it); false }) {
             runCatching { AdbConnectionManager.getInstance(context).disconnect() }
                 .onFailure { AppLogger.d(TAG, "forceReconnect disconnect ignored: ${it.message}") }
             ensureConnected(context)
