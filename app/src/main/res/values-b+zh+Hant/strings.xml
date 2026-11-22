@@ -127,7 +127,7 @@
     <string name="home_hero_pill_starting">正在啟動…</string>
     <string name="home_hero_pill_stopped">已停止</string>
     <string name="home_hero_pill_with_mode">%1$s · %2$s</string>
-    <string name="home_hub_community_body">提問、反饋問題、瞭解新版本。</string>
+    <string name="home_hub_community_body">提問、回報問題、瞭解新版本。</string>
     <string name="home_hub_community_eyebrow">加入</string>
     <string name="home_hub_community_title">Telegram 群組</string>
     <string name="home_mode_badge_shizuku">Shizuku</string>
@@ -309,7 +309,7 @@
     <string name="recording_error_empty_file_shizuku">錄音為空——未擷取到音訊。請開啟 Shizuku 確認它仍在執行；每次重啟手機後它都會停止。</string>
     <string name="recording_error_file_creation">儲存錄音檔案失敗，請檢查輸出目錄的讀寫權限，或者嘗試換一個目錄後重試。</string>
     <string name="recording_error_folder_missing">選擇的輸出目錄被刪除、無效或者權限被復原。請在 App 中重新指定輸出目錄。</string>
-    <string name="recording_error_server_missing">Scrcpy-server二進位制檔案缺失，或者SHA256安全校驗失敗。如果看到此訊息，請直接反饋此問題。</string>
+    <string name="recording_error_server_missing">Scrcpy-server 二進位檔缺失，或 SHA256 安全檢查失敗。這不應該發生，請回報此問題。</string>
     <string name="recording_error_start_failed">無法啟動錄音。連線到 ShellService 出錯。</string>
     <string name="recording_error_title">錯誤：錄音遇到問題</string>
     <string name="recording_flag_added">已標記 (%1$d)</string>
@@ -383,7 +383,7 @@
     <string name="settings_debug_log_view_hint">輕觸可檢視最近的條目。</string>
     <string name="settings_debug_log_wrap">自動換行</string>
     <string name="settings_debug_logging_enabled">啟用記錄</string>
-    <string name="settings_debug_logging_enabled_description">若要反饋Bug，請先開啟此開關，然後在重啟 App 之後再重複您剛才的操作。</string>
+    <string name="settings_debug_logging_enabled_description">若要回報 Bug，請開啟此項，重現問題，然後將它關閉並分享記錄檔。</string>
     <string name="settings_drive_folder_desc">選擇一個資料夾（在 Google Drive App 中）用於複製錄音。</string>
     <string name="settings_drive_folder_label">Google Drive 資料夾</string>
     <string name="settings_dynamic_color">使用系統顏色</string>
@@ -454,7 +454,7 @@
     <string name="settings_search_no_matches">無比對項</string>
     <string name="settings_search_none">沒有與「%1$s」比對的設定</string>
     <plurals name="settings_search_matches">
-        <item quantity="other">%d 項比對</item>
+        <item quantity="other">%d 個相符結果</item>
     </plurals>
     <string name="summary_requirements_toggle_label">顯示要求</string>
     <string name="settings_sim_label_label">顯示每通電話使用的 SIM 卡</string>
@@ -527,7 +527,7 @@
     <string name="settings_support_value">請我喝杯咖啡</string>
     <string name="settings_tap_to_select_folder">點我選擇錄音儲存目錄…</string>
     <string name="settings_theme_mode">主題樣式</string>
-    <string name="settings_theme_mode_dark">暗色主題</string>
+    <string name="settings_theme_mode_dark">深色主題</string>
     <string name="settings_theme_mode_light">亮色主題</string>
     <string name="settings_theme_mode_system">系統預設</string>
     <string name="settings_title_recordings">錄音設定</string>
