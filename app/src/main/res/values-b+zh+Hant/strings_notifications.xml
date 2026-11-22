@@ -59,4 +59,17 @@
     <string name="transcript_notice_failed_many_title">有 %1$d 筆轉錄未完成</string>
     <string name="transcript_notice_failed_many_text">輕觸即可檢視。</string>
     <string name="transcript_notice_failed_kept_text">%1$s。已保留先前的逐字稿。</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s。無法轉錄：語言設定可能有誤，或音訊是空的。</string>
+    <string name="home_status_needs_wifi_title">需要 Wi-Fi 才能錄音</string>
+    <string name="home_status_needs_wifi_suggestion">錄音器已停止，沒有 Wi-Fi 就無法啟動，因此通話未被錄音。連上 Wi-Fi 即可恢復。設定中的「無 Wi-Fi 時繼續錄音」可避免下次再發生。</string>
+    <string name="notif_stopped_by_user_title">你停止了 CallVault</string>
+    <string name="notif_stopped_by_user_text">CallVault 停止期間的通話未被錄音。CallVault 已重新開啟，會錄製新的通話。</string>
+    <string name="home_stopped_by_user_text">你停止了 CallVault — 停止期間的通話未被錄音。</string>
+    <string name="home_status_battery_title">允許不受限制的電池用量</string>
+    <string name="home_status_battery_suggestion">在這種設定下，只有在 CallVault 擁有不受限制的電池用量時，Android 才允許它在背景開始錄製通話。輕觸後選擇「允許」。在某些手機上，這個設定稱為「不受限制」或「不要最佳化」。</string>
+    <string name="recording_error_start_refused">這通電話未被錄音，因為 Android 阻止 CallVault 在背景啟動錄音器。輕觸開啟設定，然後選擇「允許 CallVault 不受限制地使用電池」。</string>
+    <string name="recording_error_start_refused_title">通話未被錄音</string>
+    <string name="recording_error_start_refused_action">允許不受限制的電池用量</string>
+    <string name="home_status_battery_advised_suggestion">沒有不受限制的電池用量時，Android 可能會在來電時阻止 CallVault 啟動錄音器。輕觸後選擇「允許」。在某些手機上，這個設定稱為「不受限制」或「不要最佳化」。</string>
+    <string name="home_hero_pill_battery_setting">需要設定電池</string>
 </resources>

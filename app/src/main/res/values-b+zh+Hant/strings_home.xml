@@ -365,4 +365,16 @@
     <string name="share_import_kept_body">它已在你的錄音裡。你隨時可以從那裡開始轉錄。</string>
     <string name="share_import_kept_only_body">它正在「逐字稿」中等待。你可以隨時從那裡開始轉錄，也可以在同一處刪除它。</string>
     <string name="share_import_no_model">還沒有安裝轉錄模型，CallVault 讀不了這個檔案。音訊已儲存——請先在設定中安裝模型，再從「逐字稿」中開始。</string>
+    <string name="row_direction_in">來電</string>
+    <string name="row_direction_out">去電</string>
+    <string name="row_open_contact">開啟聯絡人 %1$s</string>
+    <string name="row_add_contact">新增聯絡人</string>
+    <string name="row_stored_local">保存在這支手機上</string>
+    <string name="row_stored_drive">保存在 Drive</string>
+    <string name="row_stored_both">保存在這支手機和 Drive</string>
+    <string name="whatsnew_252_title">現在也支援土耳其語</string>
+    <string-array name="whatsnew_252_items">
+        <item>新增土耳其語：CallVault 提供土耳其語介面，通話也能以土耳其語轉錄</item>
+    </string-array>
+    <string name="home_health_failed_no_sound">你上一通通話沒有錄到任何聲音。檔案已保留。</string>
 </resources>
