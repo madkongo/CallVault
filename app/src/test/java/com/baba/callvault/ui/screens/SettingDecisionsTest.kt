@@ -153,6 +153,8 @@ class SettingDecisionsTest {
         "transcription_service", "transcription_cloud_mobile_data", "transcription_cloud_consent",
         "transcription_custom_base_url", "transcription_custom_model",
         "keep_paired_answer", "keep_paired_original_ms",
+        // Names a SIM on this phone by its id; an import could pick a different SIM elsewhere (PR #85 review).
+        "transcription_after_call_sim",
     )
 
     @Test

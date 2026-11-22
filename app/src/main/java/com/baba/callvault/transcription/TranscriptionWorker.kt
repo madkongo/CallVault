@@ -55,6 +55,14 @@ class TranscriptionWorker(
         // An after-call run is its own unique work (review C124), so two runs can now be scheduled at once;
         // the gate keeps an unattended one from decoding on top of another. Refused means try again soon.
         val kind = runKind()
+        // "After each call" limited to one SIM (issue #81). In the worker, because finding this call's SIM waits for
+        // its call-log row and the call-end code that queued the run must not wait; and before the run gate, so that
+        // wait never holds the gate, blocks a tap, or leaves a skipped call looking like a running transcription.
+        val afterCallName = inputData.getString(KEY_DISPLAY_NAME)?.takeIf { inputData.getBoolean(KEY_AFTER_CALL, false) }
+        if (afterCallName != null && withContext(Dispatchers.IO) { afterCallSimSkip(applicationContext, afterCallName) }) {
+            journal("transcription run SKIPPED: the call was on a SIM not chosen for after-call transcription")
+            return Result.success()
+        }
         // Summaries already wait for a transcription; this is the other half. Both models in the main process
         // are ~2.5 GB and 12 threads, slower and hotter, and the same pairing can crash (review R38, C83).
         if (isSummaryRunning()) {
@@ -96,13 +104,6 @@ class TranscriptionWorker(
     }
 
     private suspend fun runBatch(): Result = withContext(Dispatchers.IO) {
-        // "After each call" limited to one SIM (issue #81). Here, on the worker's thread, because finding this
-        // call's SIM waits for its call-log row; the call-end code that queued the run must not wait for it.
-        val afterCallName = inputData.getString(KEY_DISPLAY_NAME)?.takeIf { inputData.getBoolean(KEY_AFTER_CALL, false) }
-        if (afterCallName != null && AfterCallSimGate.skipTranscription(applicationContext, afterCallName)) {
-            return@withContext Result.success()
-        }
-
         // Promote out of cached-process priority before allocating anything. Best-effort: a phone that
         // refuses the foreground service should still transcribe, just more vulnerable to being killed
         // — failing the whole job here would be a worse outcome than the risk it guards against.
@@ -341,6 +342,10 @@ class TranscriptionWorker(
 
         /** A test's stand-in for the phone's thermal status; null reads the real one. */
         internal var thermalStatusOverride: (() -> Int)? = null
+
+        /** The one-SIM rule for after-call runs (issue #81); a seam for tests. */
+        @androidx.annotation.VisibleForTesting
+        internal var afterCallSimSkip: suspend (Context, String) -> Boolean = AfterCallSimGate::skipTranscription
 
         /** Whether a summary is running; a seam so a test can say yes (the engine's flag is private-set). */
         internal var isSummaryRunning: () -> Boolean = { com.baba.callvault.summary.SummaryEngine.isRunning }

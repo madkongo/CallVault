@@ -130,32 +130,20 @@ object SimMatch {
     fun present(choice: SimChoice, installed: List<SimCard>): Boolean =
         choice is SimChoice.Only && installed.any { choice.id.matches(it) }
 
-    /** [call] null means the call log had no row yet. */
+    /**
+     * [call] null means the call log had no row yet. Only a call that positively matches a DIFFERENT installed SIM
+     * is [SimHit.OTHER]; no row, a row with no account, or an account that matches no installed SIM is
+     * [SimHit.UNKNOWN], so the call is transcribed.
+     */
     fun afterCall(choice: SimChoice, call: CallSim?, installed: List<SimCard>): SimHit {
         val id = (choice as? SimChoice.Only)?.id ?: return SimHit.CHOSEN
-        if (call == null || (call.accountId == null && call.slot == null)) {
-            return if (installed.any { id.matches(it) }) SimHit.UNKNOWN else SimHit.OTHER
-        }
-        val card = installed.find { it.sameCall(call) }
-        if (card != null) return if (id.matches(card)) SimHit.CHOSEN else SimHit.OTHER
-        return when (id) {
-            is SimId.Slot -> when (call.slot) {
-                null -> SimHit.UNKNOWN
-                id.value -> SimHit.CHOSEN
-                else -> SimHit.OTHER
-            }
-            is SimId.Sub -> when (call.accountId) {
-                null -> SimHit.UNKNOWN
-                id.value.toString() -> SimHit.CHOSEN
-                else -> SimHit.OTHER
-            }
-            is SimId.Icc -> when (call.accountId) {
-                null -> SimHit.UNKNOWN
-                id.value -> SimHit.CHOSEN
-                else -> SimHit.OTHER
-            }
-        }
+        if (call == null || (call.accountId == null && call.slot == null)) return SimHit.UNKNOWN
+        val card = installed.find { it.sameCall(call) } ?: return SimHit.UNKNOWN
+        return if (id.matches(card)) SimHit.CHOSEN else SimHit.OTHER
     }
+
+    /** Whether [call] names a SIM that is in the phone now. */
+    fun recognised(call: CallSim, installed: List<SimCard>): Boolean = installed.any { it.sameCall(call) }
 
     private fun SimCard.sameCall(call: CallSim): Boolean {
         val account = call.accountId

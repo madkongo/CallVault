@@ -9,6 +9,7 @@
 package com.baba.callvault.ui.screens
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,8 @@ import com.baba.callvault.data.calls.SimId
 import com.baba.callvault.data.calls.SimMatch
 import com.baba.callvault.ui.common.M3DropdownField
 import com.baba.callvault.ui.common.OptionItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * "Auto-transcribe" after each call: all SIMs or one SIM (issue #81). Shown when two SIMs are in the phone, or
@@ -34,24 +37,30 @@ import com.baba.callvault.ui.common.OptionItem
 internal fun TranscriptionSimChoices(preferences: AppPreferences, updateTrigger: Int) {
     val context = LocalContext.current
     val simWord = stringResource(R.string.sim_label_word)
-    val cards = remember(updateTrigger) { SimCards.list(context, simWord) }
-    val stored = remember(updateTrigger) {
-        val raw = preferences.getTranscriptionAutoSim()
-        SimMatch.stabilize(raw, cards).also { if (it != raw) preferences.setTranscriptionAutoSim(it) }
+    // Read off the main thread, after composition: the SIM list is a binder call, and stabilising a legacy slot
+    // value writes the preference. Nothing is shown until it is read.
+    var loaded by remember(updateTrigger) { mutableStateOf<Pair<List<SimCard>, SimChoice>?>(null) }
+    LaunchedEffect(updateTrigger) {
+        loaded = withContext(Dispatchers.IO) {
+            val cards = SimCards.list(context, simWord)
+            val raw = preferences.getTranscriptionAutoSim()
+            val stored = SimMatch.stabilize(raw, cards).also { if (it != raw) preferences.setTranscriptionAutoSim(it) }
+            cards to stored
+        }
     }
+    val (cards, stored) = loaded ?: return
     if (cards.size >= 2 || stored !is SimChoice.All) {
-        TranscriptionSimChoiceField(preferences, updateTrigger, cards, stored)
+        TranscriptionSimChoiceField(preferences, cards, stored)
     }
 }
 
 @Composable
 private fun TranscriptionSimChoiceField(
     preferences: AppPreferences,
-    updateTrigger: Int,
     cards: List<SimCard>,
     stored: SimChoice,
 ) {
-    var choice by remember(updateTrigger) { mutableStateOf(stored) }
+    var choice by remember(stored) { mutableStateOf(stored) }
     val options = simOptions(
         cards, choice,
         stringResource(R.string.transcription_sim_all),

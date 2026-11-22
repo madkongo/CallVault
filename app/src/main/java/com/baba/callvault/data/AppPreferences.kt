@@ -79,7 +79,6 @@ class AppPreferences(context: Context) {
             "transcription_mode", "transcription_hour", "transcription_minute", "transcription_requires_charging",
             "transcription_batch_limit", "transcription_confirm_before_run", "transcription_model_id",
             "transcription_language", "transcription_ask_language",
-            "transcription_after_call_sim",
             "summary_confirm_requirements", "summary_language",
             // App (VoIP) calls policy
             "voip_recording_enabled", "voip_auto_start", "voip_excluded_packages",
@@ -396,6 +395,8 @@ class AppPreferences(context: Context) {
         TRANSCRIPTION_LANGUAGE("transcription_language"),
         TRANSCRIPTION_ASK_LANGUAGE("transcription_ask_language"),
         /** "all", "sub:<id>", "icc:<id>", or a legacy slot. A stored "none" reads as all. See [getTranscriptionAutoSim]. */
+        // Device-only, deliberately NOT in EXPORTABLE_KEYS: the stored sub:/icc: id names a SIM on THIS phone, and an
+        // imported one could silently pick a different SIM on another phone.
         TRANSCRIPTION_AFTER_CALL_SIM("transcription_after_call_sim"),
         // Where calls are written out (#48). Device-only, deliberately NOT in EXPORTABLE_KEYS: the key
         // they need is not exported, and agreeing to send call audio is this phone owner's decision.

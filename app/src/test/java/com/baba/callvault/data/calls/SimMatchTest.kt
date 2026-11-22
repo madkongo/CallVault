@@ -86,4 +86,27 @@ class SimMatchTest {
         assertTrue(SimCards.usableIcc("8997000000000000001"))
         assertNull(SimId.fromKey("icc:"))
     }
+
+    @Test
+    fun an_account_that_matches_no_installed_sim_is_unknown_not_other() {
+        // Review: an unrecognised PHONE_ACCOUNT_ID (a renamed account, a removed SIM) must not skip the call.
+        val choice = SimChoice.Only(SimId.Sub(4))
+        assertEquals(SimHit.UNKNOWN, SimMatch.afterCall(choice, CallSim(accountId = "99", slot = null), installed))
+        assertEquals(SimHit.UNKNOWN, SimMatch.afterCall(SimChoice.Only(SimId.Icc("x")), CallSim(accountId = "99", slot = 1), installed))
+    }
+
+    @Test
+    fun only_a_positive_match_to_a_different_installed_sim_is_other() {
+        val choice = SimChoice.Only(SimId.Sub(4))
+        assertEquals(SimHit.OTHER, SimMatch.afterCall(choice, CallSim(accountId = "2", slot = null), installed))
+        assertEquals(SimHit.OTHER, SimMatch.afterCall(choice, CallSim(accountId = null, slot = 1), installed))
+        assertEquals(SimHit.UNKNOWN, SimMatch.afterCall(choice, CallSim(accountId = null, slot = 3), installed))
+    }
+
+    @Test
+    fun no_call_row_is_unknown_even_when_the_chosen_sim_is_absent() {
+        val choice = SimChoice.Only(SimId.Sub(4))
+        assertEquals(SimHit.UNKNOWN, SimMatch.afterCall(choice, null, listOf(personal)))
+        assertEquals(SimHit.UNKNOWN, SimMatch.afterCall(choice, CallSim(null, null), listOf(personal)))
+    }
 }

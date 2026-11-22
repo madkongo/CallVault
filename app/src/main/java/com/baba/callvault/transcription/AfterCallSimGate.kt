@@ -25,8 +25,9 @@ import kotlinx.coroutines.delay
 /**
  * "Transcribe after each call" limited to one SIM (issue #81).
  *
- * Asked by [TranscriptionWorker] at the start of an after-call run, so the wait for the call-log row happens on
- * the worker's thread, never on Main or in the call-end finalisation that queued the run. The SIM comes from the
+ * Asked by [TranscriptionWorker] at the start of an after-call run, before its run gate, so the wait for the
+ * call-log row happens on the worker's thread: never on Main, in the call-end finalisation that queued the run,
+ * or while holding the gate. The SIM comes from the
  * call log, the same way the opt-in SIM label does, and it is read whether or not that label is turned on.
  * Android writes the call-log row only after the call ends
  * ([CallLog.Calls](https://developer.android.com/reference/android/provider/CallLog.Calls)), so this waits briefly
@@ -47,6 +48,26 @@ object AfterCallSimGate {
     private const val ATTEMPTS = 8
     private const val RETRY_MS = 500L
 
+    /** Where the SIMs and the call-log row come from; replaced in tests. */
+    internal interface Sources {
+        fun cards(context: Context): List<SimCard>
+        fun canReadCallLog(context: Context): Boolean
+        /** This call's call-log account, or null when its row is not there (yet). One read, no wait. */
+        fun callAt(context: Context, startedAt: Long): CallSim?
+    }
+
+    internal object AndroidSources : Sources {
+        override fun cards(context: Context): List<SimCard> =
+            SimCards.list(context, context.getString(R.string.sim_label_word))
+        override fun canReadCallLog(context: Context): Boolean =
+            com.baba.callvault.system.permissions.PermissionChecks.hasCallLogPermission(context)
+        override fun callAt(context: Context, startedAt: Long): CallSim? =
+            SimLabels.forJustEnded(context, startedAt, context.getString(R.string.sim_label_word))
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal var sources: Sources = AndroidSources
+
     /** Why a call was or was not transcribed. Only [OTHER] skips. */
     internal enum class Verdict(val skip: Boolean) {
         ALL(false),
@@ -61,33 +82,61 @@ object AfterCallSimGate {
      * "All SIMs" (transcribe) and is logged. The file name is not logged.
      */
     suspend fun skipTranscription(context: Context, displayName: String): Boolean =
-        runCatching { decideFor(context, displayName) }
+        runCatching { evaluate(context, displayName).verdict.skip }
             .onFailure {
                 if (it is kotlin.coroutines.cancellation.CancellationException) throw it
                 AppLogger.w(TAG, "SIM check failed; transcribing as for all SIMs: ${it.javaClass.simpleName}: ${it.message}")
             }
             .getOrDefault(false)
 
-    private suspend fun decideFor(context: Context, displayName: String): Boolean {
+    /** Why the SIM rule transcribed or skipped; logged, and read by tests. */
+    internal enum class Reason { ALL_SIMS, NOT_AFTER_CALL_MODE, CHOSEN_ABSENT, NO_CALL_LOG_PERMISSION, APP_CALL, NO_START_TIME, NO_ROW, ROW_WITHOUT_ACCOUNT, UNRECOGNISED_ACCOUNT, CHOSEN, OTHER }
+
+    internal data class Outcome(val verdict: Verdict, val reason: Reason)
+
+    internal suspend fun evaluate(context: Context, displayName: String): Outcome {
         val prefs = AppPreferences(context)
-        if (!prefs.getTranscriptionMode().transcribesOnCallEnd) return false
+        if (!prefs.getTranscriptionMode().transcribesOnCallEnd) return Outcome(Verdict.ALL, Reason.NOT_AFTER_CALL_MODE)
         val raw = prefs.getTranscriptionAutoSim()
-        if (raw == SimChoice.All) return false
-        val cards = SimCards.list(context, context.getString(R.string.sim_label_word))
+        if (raw == SimChoice.All) return Outcome(Verdict.ALL, Reason.ALL_SIMS)
+        val cards = sources.cards(context)
         val choice = SimMatch.stabilize(raw, cards).also { if (it != raw) prefs.setTranscriptionAutoSim(it) }
-        // Checked before the call-log wait, so an absent SIM costs no wait at all.
-        val call = if (chosenAbsent(choice, cards)) null else resolvedCall(context, displayName)
-        val verdict = verdict(choice, cards, call)
-        when (verdict) {
-            Verdict.OTHER -> AppLogger.i(TAG, "Not transcribing: the call was on another SIM (choice=${choice.logKey()})")
-            Verdict.CHOSEN_ABSENT -> AppLogger.i(
-                TAG,
-                "Chosen SIM is not in this phone (${cards.size} SIM(s) seen); transcribing (choice=${choice.logKey()})",
-            )
-            Verdict.UNKNOWN -> AppLogger.i(TAG, "SIM of this call unknown; transcribing (choice=${choice.logKey()})")
-            Verdict.CHOSEN, Verdict.ALL -> Unit
+        val outcome = outcomeFor(context, displayName, choice, cards)
+        log(outcome, choice, cards.size)
+        return outcome
+    }
+
+    /** Checked in order of cost: nothing that can be told without the call log waits for it. */
+    private suspend fun outcomeFor(context: Context, displayName: String, choice: SimChoice, cards: List<SimCard>): Outcome {
+        if (chosenAbsent(choice, cards)) return Outcome(Verdict.CHOSEN_ABSENT, Reason.CHOSEN_ABSENT)
+        if (!RecordingsRepository.isCarrierCall(displayName)) return Outcome(Verdict.UNKNOWN, Reason.APP_CALL)
+        val startedAt = RecordingsRepository.parseName(displayName).startedAtMillis
+            ?: return Outcome(Verdict.UNKNOWN, Reason.NO_START_TIME)
+        if (!sources.canReadCallLog(context)) return Outcome(Verdict.UNKNOWN, Reason.NO_CALL_LOG_PERMISSION)
+        val call = waitForRow(context, startedAt) ?: return Outcome(Verdict.UNKNOWN, Reason.NO_ROW)
+        if (call.accountId == null && call.slot == null) return Outcome(Verdict.UNKNOWN, Reason.ROW_WITHOUT_ACCOUNT)
+        if (!SimMatch.recognised(call, cards)) return Outcome(Verdict.UNKNOWN, Reason.UNRECOGNISED_ACCOUNT)
+        return when (verdict(choice, cards, call)) {
+            Verdict.OTHER -> Outcome(Verdict.OTHER, Reason.OTHER)
+            else -> Outcome(Verdict.CHOSEN, Reason.CHOSEN)
         }
-        return verdict.skip
+    }
+
+    private fun log(outcome: Outcome, choice: SimChoice, cardCount: Int) {
+        val key = choice.logKey()
+        val line = when (outcome.reason) {
+            Reason.OTHER -> "Not transcribing: the call was on another SIM (choice=$key)"
+            Reason.CHOSEN -> "Transcribing: the call was on the chosen SIM (choice=$key)"
+            Reason.CHOSEN_ABSENT -> "Chosen SIM is not in this phone ($cardCount SIM(s) seen); transcribing (choice=$key)"
+            Reason.APP_CALL -> "App call, not in the call log; transcribing (choice=$key)"
+            Reason.NO_START_TIME -> "No start time in the file name; transcribing (choice=$key)"
+            Reason.NO_CALL_LOG_PERMISSION -> "No call-log permission, so the SIM cannot be told; transcribing (choice=$key)"
+            Reason.NO_ROW -> "No call-log row for this call after $ATTEMPTS tries; transcribing (choice=$key)"
+            Reason.ROW_WITHOUT_ACCOUNT -> "Call-log row has no phone account; transcribing (choice=$key)"
+            Reason.UNRECOGNISED_ACCOUNT -> "Call-log account matches no SIM in this phone; transcribing (choice=$key)"
+            Reason.ALL_SIMS, Reason.NOT_AFTER_CALL_MODE -> return
+        }
+        AppLogger.i(TAG, line)
     }
 
     internal fun chosenAbsent(choice: SimChoice, installed: List<SimCard>): Boolean =
@@ -104,16 +153,10 @@ object AfterCallSimGate {
         }
     }
 
-    /**
-     * The call-log account behind [displayName], or null. Waits briefly for the row of this call.
-     * Not a carrier recording, or a row that never appears, is null.
-     */
-    private suspend fun resolvedCall(context: Context, displayName: String): CallSim? {
-        if (!RecordingsRepository.isCarrierCall(displayName)) return null
-        val startedAt = RecordingsRepository.parseName(displayName).startedAtMillis ?: return null
-        val simWord = context.getString(R.string.sim_label_word)
+    /** This call's call-log account, waiting briefly while Android writes the row. Null when it never appears. */
+    private suspend fun waitForRow(context: Context, startedAt: Long): CallSim? {
         repeat(ATTEMPTS) { attempt ->
-            SimLabels.forJustEnded(context, startedAt, simWord)?.let { return it }
+            sources.callAt(context, startedAt)?.let { return it }
             if (attempt < ATTEMPTS - 1) delay(RETRY_MS)
         }
         return null

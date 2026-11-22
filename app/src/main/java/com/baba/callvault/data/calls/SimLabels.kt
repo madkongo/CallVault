@@ -111,7 +111,7 @@ object SimLabels {
      * Null when this call has no row yet. A previous call is not used.
      */
     fun forJustEnded(context: Context, startedAt: Long, simWord: String): CallSim? {
-        val calls = PhoneCallReader.since(context, startedAt - PhoneCallMatch.JUST_ENDED_START_SLOP_MS)
+        val calls = PhoneCallReader.since(context, startedAt - PhoneCallMatch.JUST_ENDED_EARLY_RING_MS)
         val call = PhoneCallMatch.justEnded(calls, startedAt) ?: return null
         val slot = Resolver(context, simWord).simFor(call.accountComponent, call.accountId)?.slot
         return CallSim(call.accountId, slot)

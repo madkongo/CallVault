@@ -18,6 +18,11 @@ import com.baba.callvault.data.calls.SimChoice
 import com.baba.callvault.data.calls.SimId
 import com.baba.callvault.transcription.AfterCallSimGate.Verdict
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import com.baba.callvault.data.recordings.RecordingsRepository
+import com.baba.callvault.transcription.AfterCallSimGate.Reason
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -40,8 +45,107 @@ class AfterCallSimGateTest {
     private val both = listOf(personal, work)
     private val onlyWork = SimChoice.Only(SimId.Sub(4))
 
+    private val carrierName = "20261112_143520_in_0541234567.ogg"
+    private val appCallName = "20261112_143520_voip-whatsapp_0541234567.ogg"
+
+    /** Counts every lookup, so a test can prove a path made none. */
+    private class FakeSources(
+        val cards: List<SimCard>,
+        val callLog: Boolean = true,
+        val call: CallSim? = null,
+    ) : AfterCallSimGate.Sources {
+        var cardReads = 0
+        var callReads = 0
+        override fun cards(context: Context): List<SimCard> { cardReads++; return cards }
+        override fun canReadCallLog(context: Context): Boolean = callLog
+        override fun callAt(context: Context, startedAt: Long): CallSim? { callReads++; return call }
+    }
+
+    private fun oneSim(sources: FakeSources): FakeSources {
+        AfterCallSimGate.sources = sources
+        val prefs = AppPreferences(context)
+        prefs.setTranscriptionMode(TranscriptionMode.AFTER_EACH_CALL)
+        prefs.setTranscriptionAutoSim(onlyWork)
+        return sources
+    }
+
+    @Test
+    fun all_sims_makes_no_lookups() = runTest {
+        val fake = FakeSources(both, call = CallSim("2", 1))
+        AfterCallSimGate.sources = fake
+        AppPreferences(context).setTranscriptionMode(TranscriptionMode.AFTER_EACH_CALL)
+        assertEquals(Reason.ALL_SIMS, AfterCallSimGate.evaluate(context, carrierName).reason)
+        assertEquals(0, fake.cardReads)
+        assertEquals(0, fake.callReads)
+    }
+
+    @Test
+    fun no_call_log_permission_transcribes_without_waiting() = runTest {
+        val fake = oneSim(FakeSources(both, callLog = false, call = CallSim("2", 1)))
+        val outcome = AfterCallSimGate.evaluate(context, carrierName)
+        assertEquals(Reason.NO_CALL_LOG_PERMISSION, outcome.reason)
+        assertFalse(outcome.verdict.skip)
+        assertEquals(0, fake.callReads)
+    }
+
+    @Test
+    fun an_app_call_transcribes_without_reading_the_call_log() = runTest {
+        val fake = oneSim(FakeSources(both, call = CallSim("2", 1)))
+        assertEquals(Reason.APP_CALL, AfterCallSimGate.evaluate(context, appCallName).reason)
+        assertEquals(0, fake.callReads)
+    }
+
+    @Test
+    fun a_row_that_never_appears_transcribes_after_the_tries() = runTest {
+        assertNotNull(RecordingsRepository.parseName(carrierName).startedAtMillis)
+        val fake = oneSim(FakeSources(both, call = null))
+        val outcome = AfterCallSimGate.evaluate(context, carrierName)
+        assertEquals(Reason.NO_ROW, outcome.reason)
+        assertFalse(outcome.verdict.skip)
+        assertTrue(fake.callReads > 1)
+    }
+
+    @Test
+    fun a_row_without_an_account_transcribes() = runTest {
+        oneSim(FakeSources(both, call = CallSim(null, null)))
+        val outcome = AfterCallSimGate.evaluate(context, carrierName)
+        assertEquals(Reason.ROW_WITHOUT_ACCOUNT, outcome.reason)
+        assertFalse(outcome.verdict.skip)
+    }
+
+    @Test
+    fun an_unrecognised_account_transcribes() = runTest {
+        oneSim(FakeSources(both, call = CallSim("99", null)))
+        val outcome = AfterCallSimGate.evaluate(context, carrierName)
+        assertEquals(Reason.UNRECOGNISED_ACCOUNT, outcome.reason)
+        assertFalse(outcome.verdict.skip)
+    }
+
+    @Test
+    fun a_call_positively_on_the_other_sim_is_skipped_and_the_chosen_one_is_not() = runTest {
+        oneSim(FakeSources(both, call = CallSim("2", 1)))
+        assertEquals(Reason.OTHER, AfterCallSimGate.evaluate(context, carrierName).reason)
+        assertTrue(AfterCallSimGate.skipTranscription(context, carrierName))
+        oneSim(FakeSources(both, call = CallSim("4", 2)))
+        assertEquals(Reason.CHOSEN, AfterCallSimGate.evaluate(context, carrierName).reason)
+    }
+
+    @Test
+    fun a_chosen_sim_not_in_the_phone_transcribes_without_reading_the_call_log() = runTest {
+        val fake = oneSim(FakeSources(listOf(personal), call = CallSim("2", 1)))
+        assertEquals(Reason.CHOSEN_ABSENT, AfterCallSimGate.evaluate(context, carrierName).reason)
+        assertEquals(0, fake.callReads)
+    }
+
+    @Test
+    fun the_choice_is_not_carried_by_a_settings_export() {
+        // Review: an imported sub:N would silently pick a different SIM on another phone.
+        assertFalse("transcription_after_call_sim" in AppPreferences.EXPORTABLE_KEYS)
+    }
+
     @After
     fun reset() {
+        AfterCallSimGate.sources = AfterCallSimGate.AndroidSources
         AppPreferences(context).setTranscriptionAutoSim(SimChoice.All)
         AppPreferences(context).setTranscriptionMode(TranscriptionMode.MANUAL)
     }

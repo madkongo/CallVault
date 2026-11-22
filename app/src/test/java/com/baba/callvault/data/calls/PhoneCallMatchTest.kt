@@ -60,8 +60,31 @@ class PhoneCallMatchTest {
     }
 
     @Test
-    fun `a start just outside the fresh window is not this call`() {
-        val call = PhoneCall(t - 26_000, 8, CallKind.OUTGOING, accountId = "other")
+    fun `a call that ended well before the recording began is not this call`() {
+        // Replaces "a start just outside the fresh window": the window now allows ring time on the early side,
+        // so a previous call is told apart by its end (DATE + DURATION), not its start.
+        val call = PhoneCall(t - 60_000, 8, CallKind.OUTGOING, accountId = "other")
         assertNull(PhoneCallMatch.justEnded(listOf(call), t))
+    }
+
+    @Test
+    fun `an incoming call that rang 30 seconds before it was answered and recorded is this call`() {
+        // Call-log DATE is when it started ringing; the recording starts at the answer.
+        val call = PhoneCall(t - 30_000, 120, CallKind.INCOMING, accountId = "sim2")
+        assertEquals("sim2", PhoneCallMatch.justEnded(listOf(call), t)?.accountId)
+    }
+
+    @Test
+    fun `an outgoing call recorded from the answer after a 45 second wait is this call`() {
+        // Record-from-answer: DATE is the dial, the recording starts when the far end picks up.
+        val call = PhoneCall(t - 45_000, 60, CallKind.OUTGOING, accountId = "sim1")
+        assertEquals("sim1", PhoneCallMatch.justEnded(listOf(call), t)?.accountId)
+    }
+
+    @Test
+    fun `with both rows present after a long ring the current call wins over the previous one`() {
+        val previous = PhoneCall(t - 100_000, 20, CallKind.OUTGOING, accountId = "prev")
+        val current = PhoneCall(t - 30_000, 90, CallKind.INCOMING, accountId = "cur")
+        assertEquals("cur", PhoneCallMatch.justEnded(listOf(previous, current), t)?.accountId)
     }
 }
