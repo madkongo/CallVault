@@ -32,6 +32,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
@@ -105,5 +106,18 @@ class SyncSchedulerApplyTest {
         SyncScheduler.apply(context)
 
         assertEquals(first, wm.getWorkInfosForUniqueWork(SyncScheduler.WORK_NAME).get().single { it.state == WorkInfo.State.ENQUEUED }.id)
+    }
+
+    @Test
+    fun `switching to device-only clears a posted Drive backup notice`() {
+        shadowOf(context as android.app.Application).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
+        val nm = context.getSystemService(android.app.NotificationManager::class.java)
+        DriveBackupNotice.onGaveUp(context, DriveBackupNotice.Reason.NO_ANSWER, "test")
+        assertEquals(1, shadowOf(nm).allNotifications.size)
+        AppPreferences(context).setStorageTarget(StorageTarget.LOCAL)
+
+        SyncScheduler.apply(context)
+
+        assertEquals(0, shadowOf(nm).allNotifications.size)
     }
 }

@@ -88,4 +88,22 @@ class DriveBackupNoticeTest {
         assertTrue(DriveBackupNotice.isGivingUp(CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS - 1))
         assertEquals(false, DriveBackupNotice.isGivingUp(0))
     }
+
+    @Test
+    fun `turning Drive sync off clears a posted notice and lets a later failure post again`() {
+        DriveBackupNotice.onGaveUp(context, DriveBackupNotice.Reason.NO_ANSWER, "no answer")
+        assertEquals(1, shown())
+
+        DriveBackupNotice.onDriveSyncOff(context, "storage switched to device-only")
+
+        assertEquals(0, shown())
+        DriveBackupNotice.onGaveUp(context, DriveBackupNotice.Reason.NO_ANSWER, "after re-enabling")
+        assertEquals("the posted flag was reset", 1, shown())
+    }
+
+    @Test
+    fun `turning Drive sync off with nothing posted does nothing`() {
+        DriveBackupNotice.onDriveSyncOff(context, "storage switched to device-only")
+        assertEquals(0, shown())
+    }
 }

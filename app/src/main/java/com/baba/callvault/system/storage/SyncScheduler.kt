@@ -64,6 +64,7 @@ object SyncScheduler {
             scheduler.edit().remove(KEY_SIGNATURE).apply()
             AppLogger.i(TAG, "Periodic sweep cancelled (target=$target mode=$mode).")
             DriveCopyJournal.record(context, "scheduler: periodic sweep CANCELLED (target=$target mode=$mode; was '${oldSignature ?: "none"}')")
+            DriveBackupNotice.onDriveSyncOff(context, "target=$target mode=$mode")
             return
         }
 

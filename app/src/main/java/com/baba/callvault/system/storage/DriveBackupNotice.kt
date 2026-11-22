@@ -91,5 +91,15 @@ object DriveBackupNotice {
         DriveCopyJournal.record(context, "user notice CLEARED: Drive reached again ($how)")
     }
 
+    /** Drive sync was switched off (device-only / immediate): a posted notice is about a backup that no longer runs. */
+    fun onDriveSyncOff(context: Context, why: String) {
+        val prefs = prefs(context)
+        if (!prefs.getBoolean(KEY_POSTED, false)) return
+        SilentFailureNotifier.clearDriveBackupBroken(context)
+        prefs.edit().putBoolean(KEY_POSTED, false).apply()
+        AppLogger.i(TAG, "Drive backup notice CLEARED: Drive sync turned off ($why)")
+        DriveCopyJournal.record(context, "user notice CLEARED: Drive sync turned off ($why)")
+    }
+
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }
