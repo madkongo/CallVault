@@ -968,7 +968,7 @@
     <string name="carrier_call_silent">No sound was captured on this call. The file is kept in case you want to check it. If it keeps happening on calls that connected, tell us your phone model.</string>
     <!-- batch B4: English fallback, pending translation -->
     <string name="offline_failed_recording">Сейчас записывается звонок. Включение этой функции перезапускает службу отладки Android и прервало бы звонок. Попробуйте ещё раз после звонка.</string>
-    <string name="offline_left_open_recording">Сейчас записывается звонок, поэтому соединение без Wi-Fi остаётся открытым, пока звонок не закончится и вы не выключите и снова не включите эту функцию или не перезагрузите телефон. Всё остальное выключено.</string>
+    <string name="offline_left_open_recording">Сейчас записывается звонок, поэтому соединение без Wi-Fi остаётся открытым, пока звонок не закончится и вы не включите эту функцию, а затем снова не выключите её, или не перезагрузите телефон. Всё остальное выключено.</string>
     <!-- batch B22: English fallback, pending translation -->
     <string name="permission_battery_hint_xiaomi">Battery exemption set. On this App info page, open \"Battery saver\" and choose \"No restrictions\". Also turn on \"Autostart\" for CallVault (Security app > Permissions > Autostart) so it can start in the background. More: dontkillmyapp.com/xiaomi</string>
     <string name="permission_battery_hint_samsung">Battery exemption set. On this App info page, tap \"Battery\" and choose \"Unrestricted\". Also remove CallVault from \"Sleeping apps\" and \"Deep sleeping apps\" (Settings > Battery > Background usage limits). More: dontkillmyapp.com/samsung</string>
