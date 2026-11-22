@@ -415,8 +415,10 @@ object RecorderServerLauncher {
      * Clears stale daemons before a launch, except one that is recording a session (see [StaleDaemonPolicy]). False
      * means a recording daemon was left alone and the caller must launch nothing.
      *
-     * Owner decision (2026-11-22): this also spares a daemon from an OLD APK when an update lands during a call. The
-     * old daemon finishes that call; the next launch after it ends replaces it as before.
+     * Owner decision (2026-11-22): this also spares a daemon from an OLD APK when an update lands during a call, however
+     * long the call lasts: the app refuses that daemon's binder (STALE_APK, not a refusal that withdraws the spare), so
+     * it is never "held", but while a call is up and its file grows it is left alone. It finishes that call; the next
+     * launch after it ends replaces it as before.
      */
     private fun clearStaleDaemons(context: Context): Boolean = StaleDaemonClearing.clear(object : StaleDaemonClearing.Env {
         override fun staging(): StaleDaemonClearing.Staging {
@@ -447,7 +449,7 @@ object RecorderServerLauncher {
         override fun kill() = killStaleDaemons(context)
         override fun log(line: String) = AppLogger.i(TAG, line)
         override fun warn(line: String) = AppLogger.w(TAG, line)
-        override fun spareAllowed() = SpareMemory.shared.stillAllowed(SystemClock.elapsedRealtime())
+        override fun spareAllowed(inCall: Boolean?) = SpareMemory.shared.stillAllowed(SystemClock.elapsedRealtime(), inCall)
         override fun noteSpared() = SpareMemory.shared.noteSpared(SystemClock.elapsedRealtime())
     })
 

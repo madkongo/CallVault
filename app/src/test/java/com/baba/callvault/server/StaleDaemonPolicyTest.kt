@@ -61,19 +61,38 @@ class StaleDaemonPolicyTest {
     @Test
     fun `a spare is withdrawn after a refusal`() {
         val memory = SpareMemory()
-        assertTrue(memory.stillAllowed(0))
+        assertTrue(memory.stillAllowed(0, callUp = true))
         memory.noteRejected()
-        assertFalse(memory.stillAllowed(1))
+        assertFalse(memory.stillAllowed(1, callUp = true))
     }
 
     @Test
-    fun `a spare is withdrawn when no hand-over came within the patience, and a binder resets it`() {
+    fun `no hand-over within the patience withdraws the spare only when a call is not known to be up`() {
         val memory = SpareMemory()
         memory.noteSpared(1_000)
-        assertTrue(memory.stillAllowed(1_000 + SpareMemory.PATIENCE_MS - 1))
-        assertFalse(memory.stillAllowed(1_000 + SpareMemory.PATIENCE_MS))
+        val late = 1_000 + SpareMemory.PATIENCE_MS
+        assertTrue(memory.stillAllowed(late - 1, callUp = null))
+        assertFalse(memory.stillAllowed(late, callUp = null))
+        assertTrue("a call is up and the file grows: spared however long it takes", memory.stillAllowed(late + 600_000, callUp = true))
         memory.reset()
-        assertTrue(memory.stillAllowed(1_000 + SpareMemory.PATIENCE_MS))
+        assertTrue(memory.stillAllowed(late, callUp = null))
+    }
+
+    @Test
+    fun `an old-APK daemon is never a refusal that withdraws the spare, a recording-off one is`() {
+        assertFalse(SpareMemory.refusalWithdrawsSpare(DaemonReuse.Verdict.STALE_APK))
+        assertFalse(SpareMemory.refusalWithdrawsSpare(DaemonReuse.Verdict.ALREADY_HELD))
+        assertFalse(SpareMemory.refusalWithdrawsSpare(DaemonReuse.Verdict.ACCEPT))
+        assertTrue(SpareMemory.refusalWithdrawsSpare(DaemonReuse.Verdict.RECORDING_STOPPED))
+        assertTrue(SpareMemory.refusalWithdrawsSpare(DaemonReuse.Verdict.WRONG_MODE))
+    }
+
+    @Test
+    fun `an old-APK daemon recording a call is spared past the patience`() {
+        val fresh = SpareMemory()
+        fresh.noteSpared(0)
+        if (SpareMemory.refusalWithdrawsSpare(DaemonReuse.Verdict.STALE_APK)) fresh.noteRejected()
+        assertTrue(fresh.stillAllowed(10 * SpareMemory.PATIENCE_MS, callUp = true))
     }
 
     @Test

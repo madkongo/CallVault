@@ -77,8 +77,15 @@ object StaleDaemonPolicy {
 
 /**
  * What this app process learned about sparing a recording daemon. A spare is a bet that the daemon's hand-over is on its
- * way; it is withdrawn when this process refused a hand-over (wrong APK, recording switched off) or none arrived within
- * [PATIENCE_MS] of the first spare, so a daemon that keeps recording call A past its end is not spared again for call B.
+ * way, withdrawn when:
+ * - this process refused a hand-over for a reason that does not pass with time (recording switched off, wrong mode).
+ *   A hand-over from an OLD APK is NOT such a refusal: owner decision, that daemon finishes the call it is recording
+ *   (the app refuses its binder, so it is never "held", yet it must not be killed mid-call);
+ * - no hand-over came within [PATIENCE_MS] of the first spare AND a call is not known to be up. While a call is up
+ *   and the file is growing the daemon is left alone however long it takes; the call's end (or the daemon's own
+ *   finalising of the recording once the call is over) ends it. Trade-off: a daemon that runs on into the NEXT call
+ *   (call A over, B started within the daemon's self-stop window) is spared and B lands in A's file; the daemon's
+ *   35 s quiet-time self-stop and the launcher's kill-after-call keep that window short.
  */
 class SpareMemory {
     @Volatile private var firstSparedAt: Long? = null
@@ -88,10 +95,16 @@ class SpareMemory {
     fun noteRejected() { rejected = true }
     fun reset() { firstSparedAt = null; rejected = false }
 
-    fun stillAllowed(now: Long): Boolean = !rejected && (firstSparedAt?.let { now - it < PATIENCE_MS } ?: true)
+    /** [callUp] is the call-state read at this launch (null = unreadable). */
+    fun stillAllowed(now: Long, callUp: Boolean?): Boolean =
+        !rejected && (callUp == true || (firstSparedAt?.let { now - it < PATIENCE_MS } ?: true))
 
     companion object {
         const val PATIENCE_MS = 30_000L
+
+        fun refusalWithdrawsSpare(verdict: DaemonReuse.Verdict): Boolean =
+            verdict != DaemonReuse.Verdict.ALREADY_HELD && verdict != DaemonReuse.Verdict.STALE_APK && verdict != DaemonReuse.Verdict.ACCEPT
+
         val shared = SpareMemory()
     }
 }

@@ -139,6 +139,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             AppLogger.w(TAG, "startRecording ignored: already recording")
             return
         }
+        AppStartBinderSender.noteSessionStarted()
 
         // Resolve cliKey strings to enums on the binder thread (cheap, validates input early).
         val sourceEnum = runCatching { ScrcpyAudioSource.fromKey(source) }.getOrNull()

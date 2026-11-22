@@ -116,4 +116,94 @@ class AppDeathRedeliveryTest {
         assertTrue((1..6).all(OrphanSelfStop.Companion::isCallAudioMode))
         assertFalse(OrphanSelfStop.isCallAudioMode(0))
     }
+
+    @Test
+    fun `the quiet time outlasts the app's own wait for a young VoIP call and stays under the rescue`() {
+        assertTrue(OrphanSelfStop.QUIET_MS >= 35_000L)
+        assertTrue(OrphanSelfStop.QUIET_MS < 90_000L)
+    }
+
+    @Test
+    fun `an active VoIP playback with a normal audio mode keeps the call up, either unreadable read blocks a stop`() {
+        assertEquals(true, OrphanSelfStop.callUp(modeIsCall = false, voiceCommActive = true))
+        assertEquals(true, OrphanSelfStop.callUp(modeIsCall = true, voiceCommActive = null))
+        assertEquals(null, OrphanSelfStop.callUp(modeIsCall = false, voiceCommActive = null))
+        assertEquals(null, OrphanSelfStop.callUp(modeIsCall = null, voiceCommActive = false))
+        assertEquals(false, OrphanSelfStop.callUp(modeIsCall = false, voiceCommActive = false))
+    }
+
+    @Test
+    fun `the restart cap is per recording session`() {
+        val cycles = RestartCycles()
+        var t = 0L
+        repeat(AppDeathRedelivery.MAX_CYCLES) { assertTrue(cycles.tryStart(t)); t += AppDeathRedelivery.MIN_CYCLE_GAP_MS }
+        assertFalse(cycles.tryStart(t))
+        cycles.onSessionStarted()
+        assertEquals(0, cycles.count())
+        assertTrue(cycles.tryStart(t))
+    }
+
+    private fun watch(mayRestart: Boolean = true) = OrphanWatch(OrphanSelfStop(quietMs = 5_000), mayRestart, diedAt = 0)
+
+    private fun OrphanWatch.tick(
+        now: Long, current: Boolean = true, recording: Boolean = true, clientSeen: Boolean = false,
+        callUp: Boolean? = false, voice: Boolean? = false, stopped: Boolean? = false,
+    ) = step(now, current, recording, clientSeen, callUp, voice) { stopped }
+
+    @Test
+    fun `an app that is calling again finishes the watch before any self-stop`() {
+        val w = watch(mayRestart = false)
+        w.tick(0)
+        assertEquals(OrphanWatch.Action.APP_RETURNED, w.tick(6_000, clientSeen = true).action)
+    }
+
+    @Test
+    fun `a newer death supersedes this watch`() {
+        assertEquals(OrphanWatch.Action.SUPERSEDED, watch().tick(0, current = false).action)
+    }
+
+    @Test
+    fun `the watch self-stops after the quiet time with no delivery in the way`() {
+        val w = watch(mayRestart = false)
+        assertEquals(OrphanWatch.Action.NONE, w.tick(0).action)
+        assertEquals(OrphanWatch.Action.SELF_STOP, w.tick(5_000).action)
+    }
+
+    @Test
+    fun `a force-stopped app gets no delivery while the self-stop still runs`() {
+        val w = watch()
+        val first = w.tick(1_000, stopped = true)
+        assertEquals(OrphanWatch.Action.NONE, first.action)
+        assertTrue(first.appForceStopped)
+        assertEquals(OrphanWatch.Action.NONE, w.tick(4_000, stopped = true).action)
+        assertEquals(OrphanWatch.Action.SELF_STOP, w.tick(6_000, stopped = true).action)
+    }
+
+    @Test
+    fun `an app that is not stopped is offered the binder when due, then on schedule`() {
+        val w = watch()
+        assertEquals(OrphanWatch.Action.NONE, w.tick(999, callUp = true).action)
+        assertEquals(OrphanWatch.Action.DELIVER, w.tick(1_000, callUp = true).action)
+        w.onDelivered(1_000)
+        assertEquals(OrphanWatch.Action.NONE, w.tick(2_999, callUp = true).action)
+        assertEquals(OrphanWatch.Action.DELIVER, w.tick(3_000, callUp = true).action)
+    }
+
+    @Test
+    fun `an unreadable stopped state delivers at most once`() {
+        val w = watch()
+        assertEquals(OrphanWatch.Action.DELIVER, w.tick(1_000, callUp = true, stopped = null).action)
+        w.onDelivered(1_000)
+        val second = w.tick(3_000, callUp = true, stopped = null)
+        assertEquals(OrphanWatch.Action.NONE, second.action)
+        assertTrue(second.stoppedUnknown)
+    }
+
+    @Test
+    fun `an unreadable audio state is reported and never stops`() {
+        val w = watch(mayRestart = false)
+        val s = w.tick(60_000, callUp = null)
+        assertEquals(OrphanWatch.Action.NONE, s.action)
+        assertTrue(s.audioUnreadable)
+    }
 }

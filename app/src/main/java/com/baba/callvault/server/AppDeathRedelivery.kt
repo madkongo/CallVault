@@ -84,8 +84,19 @@ class OrphanSelfStop(private val quietMs: Long = QUIET_MS) {
     }
 
     companion object {
-        /** No call audio mode for this long before the daemon stops the recording itself. */
-        const val QUIET_MS = 5_000L
+        /**
+         * No call audio mode and no VOICE_COMMUNICATION playback for this long before the daemon stops the recording
+         * itself. Longer than the app's own wait for a young VoIP call's audio mode to come back
+         * (VoipRingDipPolicy.WAIT_FOR_RETURN_MS = 30 s; LINE runs in MODE_NORMAL), shorter than the cut-off rescue's 90 s.
+         */
+        const val QUIET_MS = 35_000L
+
+        /** Whether a call is up: either signal says so; unreadable only when neither says so and one cannot be read. */
+        fun callUp(modeIsCall: Boolean?, voiceCommActive: Boolean?): Boolean? = when {
+            modeIsCall == true || voiceCommActive == true -> true
+            modeIsCall == null || voiceCommActive == null -> null
+            else -> false
+        }
 
         // AudioManager modes: RINGTONE, IN_CALL, IN_COMMUNICATION, CALL_SCREENING, CALL_REDIRECT, COMMUNICATION_REDIRECT.
         // Kept here (not read from the app's AfterCallPolicy) so the daemon loads nothing from the app's UI layer.

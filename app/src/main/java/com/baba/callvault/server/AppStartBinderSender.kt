@@ -99,8 +99,10 @@ internal object AppStartBinderSender {
         lastClientCallAt = android.os.SystemClock.elapsedRealtime()
     }
 
-    private var deathCycles = 0
-    private var lastCycleAt: Long? = null
+    private val restartCycles = RestartCycles()
+
+    /** A new recording session starts the restart budget over (the cap is per session, not per daemon lifetime). */
+    fun noteSessionStarted() = restartCycles.onSessionStarted()
 
     @Volatile
     private var loopGeneration = 0
@@ -110,93 +112,107 @@ internal object AppStartBinderSender {
         val now = android.os.SystemClock.elapsedRealtime()
         val recording = runCatching { ctx.isRecording() }.getOrDefault(false)
         val generation: Int
+        val mayRestart: Boolean
         synchronized(this) {
             watchedProvider = null
-            if (!recording) { deathCycles = 0; lastCycleAt = null }
             generation = ++loopGeneration
+            mayRestart = recording && restartCycles.tryStart(now)
         }
         if (!recording) {
             AppLogger.i(TAG, "The app's process died; idle, leaving the app alone")
             return
         }
-        val sinceLast = lastCycleAt?.let { now - it }
-        val mayRestart = AppDeathRedelivery.mayStartCycle(deathCycles, sinceLast)
         if (mayRestart) {
-            deathCycles++
-            lastCycleAt = now
-            AppLogger.i(TAG, "The app's process died while recording; handing the binder over again (cycle $deathCycles of ${AppDeathRedelivery.MAX_CYCLES})")
+            AppLogger.i(TAG, "The app's process died while recording; handing the binder over again (cycle ${restartCycles.count()} of ${AppDeathRedelivery.MAX_CYCLES})")
         } else {
-            AppLogger.w(TAG, "The app's process died while recording; NOT restarting it again (cycles=$deathCycles, ${sinceLast ?: "-"}ms since the last): " +
+            AppLogger.w(TAG, "The app's process died while recording; NOT restarting it again (cycles=${restartCycles.count()}): " +
                 "an app killer or a crash loop would be fed. The recording continues unowned; this daemon will finish it when the call ends")
         }
         Thread({ watchLoop(ctx, generation, now, mayRestart) }, "cv-orphan-watch").apply { isDaemon = true }.start()
     }
 
     /**
-     * One thread per app death while recording. Each tick it (1) finishes the recording itself once the call is over
-     * and no app has attached ([OrphanSelfStop]: the file's trailer is written, so it is playable and the app's
-     * cut-off rescue publishes it later), and (2) offers the binder to the app again on the [AppDeathRedelivery]
-     * schedule, unless the user force-stopped the app. Ends when an app call proves it holds the binder, the recording
-     * ends, or a newer death takes over.
+     * One thread per app death while recording; each tick is [OrphanWatch.step]. It finishes the recording itself once
+     * the call is over and no app has attached (the trailer is written, the app's cut-off rescue publishes it later) and
+     * offers the binder again on the [AppDeathRedelivery] schedule, never to a force-stopped app.
      */
     private fun watchLoop(ctx: DeathContext, generation: Int, diedAt: Long, mayRestart: Boolean) {
-        val selfStop = OrphanSelfStop()
-        var attempt = 0
-        var deliveryDue: Long? = if (mayRestart) diedAt + (AppDeathRedelivery.nextDelayMs(0, true, false) ?: 0L) else null
+        val watch = OrphanWatch(mayRestart = mayRestart, diedAt = diedAt)
+        val audio = AudioProbe()
         var unreadableLogged = false
-        var stoppedLogged = false
-        while (generation == loopGeneration) {
+        while (true) {
             val now = android.os.SystemClock.elapsedRealtime()
-            val recording = runCatching { ctx.isRecording() }.getOrDefault(false)
-            val clientSeen = lastClientCallAt >= diedAt
-            val mode = readAudioMode()
-            when (selfStop.onPoll(now, recording, clientSeen, mode?.let(OrphanSelfStop::isCallAudioMode))) {
-                OrphanSelfStop.Decision.STOP -> {
+            val mode = audio.mode()
+            val step = watch.step(
+                now = now,
+                current = generation == loopGeneration,
+                recording = runCatching { ctx.isRecording() }.getOrDefault(false),
+                clientSeen = lastClientCallAt >= diedAt,
+                callUp = mode?.let(OrphanSelfStop::isCallAudioMode),
+                voiceCommActive = audio.voiceCommPlaybackActive(),
+                packageStopped = { isAppStopped(ctx.authority) },
+            )
+            if (step.audioUnreadable && !unreadableLogged) {
+                unreadableLogged = true
+                AppLogger.w(TAG, "Cannot read the audio state; not stopping the unowned recording")
+            }
+            if (step.appForceStopped) AppLogger.i(TAG, "app was force-stopped; not reopening it")
+            if (step.stoppedUnknown) AppLogger.w(TAG, "Cannot tell whether the app was force-stopped; delivering at most once")
+            when (step.action) {
+                OrphanWatch.Action.SUPERSEDED -> return
+                OrphanWatch.Action.APP_RETURNED -> {
+                    AppLogger.i(TAG, "The app is calling this daemon again; watch over (after ${watch.attempts} delivery attempt(s))")
+                    return
+                }
+                OrphanWatch.Action.RECORDING_ENDED -> {
+                    AppLogger.i(TAG, "Not recording any more; watch over (after ${watch.attempts} delivery attempt(s))")
+                    return
+                }
+                OrphanWatch.Action.SELF_STOP -> {
                     AppLogger.i(TAG, "the call ended with no app attached; stopping and finalising the recording myself (audio mode $mode)")
                     runCatching { ctx.stopRecording() }.onFailure { AppLogger.e(TAG, "Self-stop failed: ${it.message}", it) }
                     AppLogger.i(TAG, "Self-stop done; recording=${runCatching { ctx.isRecording() }.getOrDefault(true)}")
                     return
                 }
-                OrphanSelfStop.Decision.UNREADABLE ->
-                    if (!unreadableLogged) { unreadableLogged = true; AppLogger.w(TAG, "Cannot read the audio mode; not stopping the unowned recording") }
-                else -> Unit
-            }
-            if (!recording || clientSeen) {
-                AppLogger.i(TAG, if (clientSeen) "The app is calling this daemon again; watch over (after $attempt delivery attempt(s))"
-                    else "Not recording any more; watch over (after $attempt delivery attempt(s))")
-                return
-            }
-            val due = deliveryDue
-            if (due != null && now >= due) {
-                val stopped = isAppStopped(ctx.authority)
-                if (!AppDeathRedelivery.mayDeliver(stopped)) {
-                    if (!stoppedLogged) AppLogger.i(TAG, "app was force-stopped; not reopening it")
-                    stoppedLogged = true
-                    deliveryDue = null
-                } else {
-                    if (stopped == null) AppLogger.w(TAG, "Cannot tell whether the app was force-stopped; delivering anyway")
+                OrphanWatch.Action.DELIVER -> {
                     val delivered = runCatching { BinderDelivery.redeliverBinderToApp(ctx.binder, ctx.authority, ctx.apkPath) }
                         .onFailure { AppLogger.w(TAG, "Re-delivery after the app's death threw: ${it.message}") }
                         .getOrDefault(false)
                     lastSentAt = android.os.SystemClock.elapsedRealtime()
-                    attempt++
-                    AppLogger.i(TAG, "Re-delivery after the app's death, attempt $attempt of ${AppDeathRedelivery.MAX_ATTEMPTS}: " +
+                    watch.onDelivered(lastSentAt)
+                    AppLogger.i(TAG, "Re-delivery after the app's death, attempt ${watch.attempts} of ${AppDeathRedelivery.MAX_ATTEMPTS}: " +
                         "provider replied=$delivered (not proof the app took it)")
-                    deliveryDue = AppDeathRedelivery.nextDelayMs(attempt, true, false)?.let { lastSentAt + it }
-                    if (deliveryDue == null) AppLogger.w(TAG, "Re-delivery gave up after $attempt attempt(s); this daemon will finish the recording when the call ends")
+                    if (watch.deliveryExhausted) AppLogger.w(TAG, "No more re-deliveries; this daemon will finish the recording when the call ends")
                 }
+                OrphanWatch.Action.NONE -> Unit
             }
             runCatching { Thread.sleep(WATCH_TICK_MS) }
         }
     }
 
-    /** The audio mode as the audio service reports it (the app-call truth; the telephony call state lies during VoIP), or null. */
-    private fun readAudioMode(): Int? = runCatching {
-        val binder = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, "audio") as? IBinder
-            ?: return@runCatching null
-        val svc = Class.forName("android.media.IAudioService\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, binder)
-        svc.javaClass.getMethod("getMode").invoke(svc) as? Int
-    }.getOrNull()
+    /** The audio service, resolved once per watch (no reflection lookups per tick). */
+    private class AudioProbe {
+        private val service: Any? = runCatching {
+            val binder = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, "audio") as? IBinder
+            binder?.let { Class.forName("android.media.IAudioService\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, it) }
+        }.getOrNull()
+        private val getMode = runCatching { service?.javaClass?.getMethod("getMode") }.getOrNull()
+        private val getPlayback = runCatching { service?.javaClass?.getMethod("getActivePlaybackConfigurations") }.getOrNull()
+
+        /** The audio mode (the app-call truth; the telephony call state lies during VoIP), or null. */
+        fun mode(): Int? = runCatching { getMode?.invoke(service) as? Int }.getOrNull()
+
+        /** Whether any VOICE_COMMUNICATION track is playing: a VoIP call whose audio mode dipped to NORMAL. Null = unreadable. */
+        fun voiceCommPlaybackActive(): Boolean? = runCatching {
+            val list = getPlayback?.invoke(service) as? List<*> ?: return@runCatching null
+            list.filterNotNull().any { config ->
+                val attrs = config.javaClass.getMethod("getAudioAttributes").invoke(config)
+                val usage = attrs?.javaClass?.getMethod("getUsage")?.invoke(attrs) as? Int
+                val active = runCatching { config.javaClass.getMethod("isActive").invoke(config) as? Boolean }.getOrNull() ?: true
+                usage == USAGE_VOICE_COMMUNICATION && active
+            }
+        }.getOrNull()
+    }
 
     /** Whether the app's package is in the stopped state (force-stopped), or null when that cannot be read. */
     private fun isAppStopped(authority: String): Boolean? = runCatching {
@@ -305,4 +321,5 @@ internal object AppStartBinderSender {
     }
 
     private const val WATCH_TICK_MS = 1_000L
+    private const val USAGE_VOICE_COMMUNICATION = 2
 }

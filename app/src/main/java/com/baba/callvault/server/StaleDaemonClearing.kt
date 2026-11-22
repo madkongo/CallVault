@@ -29,7 +29,7 @@ object StaleDaemonClearing {
         fun warn(line: String)
 
         /** False once a spare has been withdrawn (see [SpareMemory]). */
-        fun spareAllowed(): Boolean
+        fun spareAllowed(inCall: Boolean?): Boolean
         fun noteSpared()
     }
 
@@ -41,7 +41,7 @@ object StaleDaemonClearing {
         val probe = if (staging.growing) StaleDaemonPolicy.parseProbe(env.probeOutput()) else StaleDaemonPolicy.Probe.Unknown
         val facts = "inCall=${inCall ?: "unknown"} staging=${staging.path ?: "none"} (${staging.detail}) hosts=$probe"
         val action = StaleDaemonPolicy.decide(staging.growing, probe, inCall)
-        if (action == StaleDaemonPolicy.Action.SPARE && !env.spareAllowed()) {
+        if (action == StaleDaemonPolicy.Action.SPARE && !env.spareAllowed(inCall)) {
             env.warn("Not sparing the recording daemon any more (its hand-over was refused or never came); killing it, its file may be unfinalised; $facts")
             env.kill()
             return true

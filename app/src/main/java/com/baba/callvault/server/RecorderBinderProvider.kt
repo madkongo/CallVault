@@ -202,8 +202,9 @@ class RecorderBinderProvider : ContentProvider() {
             AppLogger.i(TAG, "A running recorder (apk=$hostApk) handed over its binder at app start; reusing it, no ADB launch")
         } else {
             AppLogger.i(TAG, "A running recorder handed over its binder at app start; not taking it: $verdict (its apk=$hostApk)")
-            // Refused for what the daemon is (wrong APK/mode, recording off): it will not be spared as a recording daemon (see SpareMemory).
-            if (verdict != DaemonReuse.Verdict.ALREADY_HELD) SpareMemory.shared.noteRejected()
+            // A refusal that does not pass with time withdraws the spare (see SpareMemory). Not ALREADY_HELD (we hold it) and
+            // not STALE_APK: an old daemon finishes the call it is recording (owner decision), it is replaced after.
+            if (SpareMemory.refusalWithdrawsSpare(verdict)) SpareMemory.shared.noteRejected()
         }
         return verdict == DaemonReuse.Verdict.ACCEPT
     }

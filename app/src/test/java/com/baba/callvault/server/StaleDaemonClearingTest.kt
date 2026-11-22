@@ -26,7 +26,7 @@ class StaleDaemonClearingTest {
         var spared = 0
         val warnings = mutableListOf<String>()
         override fun warn(line: String) { warnings += line }
-        override fun spareAllowed() = spareOk
+        override fun spareAllowed(inCall: Boolean?) = spareOk
         override fun noteSpared() { spared++ }
         var kills = 0
         var probes = 0
