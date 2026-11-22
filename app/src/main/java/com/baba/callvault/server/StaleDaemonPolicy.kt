@@ -83,9 +83,9 @@ object StaleDaemonPolicy {
  *   (the app refuses its binder, so it is never "held", yet it must not be killed mid-call);
  * - no hand-over came within [PATIENCE_MS] of the first spare AND a call is not known to be up. While a call is up
  *   and the file is growing the daemon is left alone however long it takes; the call's end (or the daemon's own
- *   finalising of the recording once the call is over) ends it. Trade-off: a daemon that runs on into the NEXT call
- *   (call A over, B started within the daemon's self-stop window) is spared and B lands in A's file; the daemon's
- *   35 s quiet-time self-stop and the launcher's kill-after-call keep that window short.
+ *   finalising of the recording once the call is over) ends it. A daemon still recording an EARLIER call is not
+ *   spared for a new one: the launcher compares the staged session with the call log first (orphanCallEnded). What that
+ *   cannot see is call waiting: call B answered while A is still up leaves no call-free moment, so B is spared into A's file.
  */
 class SpareMemory {
     @Volatile private var firstSparedAt: Long? = null

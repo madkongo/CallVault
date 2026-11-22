@@ -50,6 +50,8 @@ object RecorderServerLauncher {
     var lastLaunchSparedDaemon: Boolean = false
         private set
 
+    fun clearSparedDaemon() { lastLaunchSparedDaemon = false }
+
     /** Set when a run really tried to launch the daemon (not when it found it up); read by [RecorderBackend]. */
     @Volatile
     internal var launchedThisRun: Boolean = false

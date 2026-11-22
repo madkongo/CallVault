@@ -665,14 +665,15 @@ class AudioRecordingEngine {
      * Nothing else may capture this call: no local ADB path and no handoff (a second voice capture drops the user's own
      * side). Aborts the start (nothing to record here), loudly.
      */
-    private fun abortIfDaemonSpared(connected: Boolean) {
-        if (connected || !RecorderBackend.recordingDaemonSpared()) return
+    private fun abortIfDaemonSpared(context: Context, connected: Boolean) {
+        if (connected || !RecorderBackend.recordingDaemonSpared(context)) return
         AppLogger.e(TAG, "A recorder daemon is already recording this call and cannot be reached; NOT starting a second capture " +
             "(no local fallback, no handoff). The daemon's own recording is the call's recording")
         runCatching { outputPfd?.close() }
-        stagingFile?.let { runCatching { it.delete() } }
-        stagingFile = null
-        throw CancellationException("Recording aborted: a recorder daemon already records this call")
+        discardStaging()
+        // Not a failure and not a cancellation: the daemon's own recording is the call's recording. The service stands
+        // down without an error notice, as for a session kept after an app kill (Q25).
+        throw OrphanSessionKeptException("A recorder daemon already records this call and cannot be reached; not starting a second capture")
     }
 
     /**
@@ -694,7 +695,7 @@ class AudioRecordingEngine {
     ): Boolean {
         AppLogger.i(TAG, "Ensuring recorder daemon is running")
         val connected = RecorderBackend.ensureRunning(context)
-        abortIfDaemonSpared(connected)
+        abortIfDaemonSpared(context, connected)
         // ensureServerRunning can block for tens of seconds cold-starting the daemon; the call may have
         // ENDED in the meantime. Abort BEFORE startRecording so we never start capture after the call
         // (the stuck-mic bug). Throw (not return false) so the caller does NOT fall back to the local
@@ -702,8 +703,7 @@ class AudioRecordingEngine {
         if (isCancelled()) {
             AppLogger.w(TAG, "Call ended before the daemon was ready; aborting start so the mic stays off")
             runCatching { outputPfd?.close() }
-            stagingFile?.let { runCatching { it.delete() } }
-            stagingFile = null
+            discardStaging()
             throw CancellationException("Recording aborted before start (call ended during daemon cold-start)")
         }
         val service = RecorderConnection.service
@@ -778,14 +778,13 @@ class AudioRecordingEngine {
         val t0 = System.currentTimeMillis()
         val connected = RecorderBackend.ensureRunning(context)
         AppLogger.i(TAG, "Handoff: ensureServerRunning=$connected in ${System.currentTimeMillis() - t0}ms")
-        abortIfDaemonSpared(connected)
+        abortIfDaemonSpared(context, connected)
         // Same cold-start abort as the daemon path: if the call ended while the daemon was coming up,
         // abort before creating any capture so the mic never turns on after the call (stuck-mic bug).
         if (isCancelled()) {
             AppLogger.w(TAG, "Call ended before the daemon was ready; aborting handoff start")
             runCatching { outputPfd?.close() }
-            stagingFile?.let { runCatching { it.delete() } }
-            stagingFile = null
+            discardStaging()
             throw CancellationException("Recording aborted before start (call ended during daemon cold-start)")
         }
         val service = RecorderConnection.service

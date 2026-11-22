@@ -20,3 +20,7 @@ Known residual cases
   35 s after the app died, if the app has not come back.
 - Self-stop only watches playback, not active recordings: the daemon's own capture would block it forever.
 - A daemon killed by SIGTERM (no app, call over, file still growing) is not finalised; logged as a warning.
+- Call waiting: call B answered while call A is still up leaves no call-free moment, so the launcher cannot tell B from A
+  and spares A's daemon; B is then not recorded separately (it lands in A's file). The call log cannot show it either.
+- A spared daemon that cannot be reached makes the call's start stand the service down quietly (the daemon's recording is
+  the call's recording); the foreground notice is the one for a kept session, not an error.

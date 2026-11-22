@@ -107,8 +107,14 @@ object RecorderBackend {
      * @return true when a binder is available, false when it could not be obtained — a normal outcome
      *   for Shizuku mode on a phone where Shizuku is not running, and never an exception.
      */
-    /** True when the last bring-up left a daemon that is recording the call alone: nothing else may record that call. */
-    fun recordingDaemonSpared(): Boolean = RecorderServerLauncher.lastLaunchSparedDaemon
+    /**
+     * True when the last standalone bring-up left a daemon that is recording the call alone: nothing else may record that
+     * call. Only meaningful in standalone mode, so a Shizuku user never gets this abort. Read from a process-wide flag the
+     * launch sets (the bring-up's shared Boolean result does not carry it; changing that single-flight type was not cheap).
+     */
+    fun recordingDaemonSpared(context: Context): Boolean =
+        RecorderServerLauncher.lastLaunchSparedDaemon &&
+            runCatching { BackendChoice.of(AppPreferences(context).getPrivilegedMode()) == BackendChoice.ADB }.getOrDefault(false)
 
     fun ensureRunning(context: Context, timeoutMs: Long = 24_000): Boolean {
         val prefs = AppPreferences(context)
@@ -140,6 +146,7 @@ object RecorderBackend {
                         BackendChoice.of(AppPreferences(context).getPrivilegedMode()) == BackendChoice.ADB
                     }.getOrDefault(true)
                     if (!stillStandalone) {
+                        RecorderServerLauncher.clearSparedDaemon()
                         AppLogger.w(TAG, "The mode changed to Shizuku while a standalone launch ran; its result is not used")
                         TransportTimeline.event(context, "recorder bring-up by $caller: mode changed during the launch; its result is not used")
                         false
@@ -152,7 +159,10 @@ object RecorderBackend {
                     }
                 }
             }
-            BackendChoice.SHIZUKU -> ensureShizukuRunning(context)
+            BackendChoice.SHIZUKU -> {
+                RecorderServerLauncher.clearSparedDaemon()
+                ensureShizukuRunning(context)
+            }
         }
     }
 
