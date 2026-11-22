@@ -2,11 +2,15 @@
 <resources>
     <string name="keep_paired_title">Stay paired for good?</string>
     <string name="keep_paired_body">Android forgets the pairing after 7 days without a USB connection, and then calls stop being recorded until you pair again. CallVault can switch that time limit off.</string>
-    <string name="keep_paired_note">This also keeps any computer you allowed for USB debugging allowed. You can turn it back on in Settings › Reliability.</string>
+    <string name="keep_paired_note">This also keeps any computer you allowed for USB debugging allowed. You can switch this off again in Settings ▸ Connection ▸ Stay paired for good.</string>
     <string name="keep_paired_accept">Stay paired</string>
     <string name="keep_paired_decline">Keep the limit</string>
     <string name="keep_paired_setting_label">Stay paired for good</string>
     <string name="keep_paired_setting_description">Stops Android forgetting the pairing after 7 days without a USB connection.</string>
     <string name="keep_paired_setting_failed">Could not change the limit. The pairing can still expire.</string>
     <string name="keep_paired_setting_external">Something else turned the limit off, so CallVault leaves it alone.</string>
+    <string name="keep_paired_restore_title">Turn the 7-day limit back on?</string>
+    <string name="keep_paired_restore_text">If CallVault was paired more than 7 days ago over Wi-Fi, Android may forget the pairing right away and calls won\'t be recorded until you pair again.</string>
+    <string name="keep_paired_restore_confirm">Turn it on</string>
+    <string name="keep_paired_restore_cancel">Cancel</string>
 </resources>

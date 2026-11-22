@@ -560,6 +560,8 @@ internal fun KeepPairedToggle() {
     var on by remember { mutableStateOf(KeepPaired.isOn(limit)) }
     var ours by remember { mutableStateOf(KeepPaired.canRestore(memory)) }
     var failed by remember { mutableStateOf(false) }
+    // Turning the limit back on can make Android forget a Wi-Fi-only pairing at once, so it asks first.
+    var confirmRestore by remember { mutableStateOf(false) }
     val usesEmbeddedAdb = !currentPrivilegedMode().needsShizuku
     if (!usesEmbeddedAdb && !ours) return
     SettingsDivider()
@@ -570,12 +572,38 @@ internal fun KeepPairedToggle() {
         checked = on,
         enabled = if (on) ours else usesEmbeddedAdb,
         onCheckedChange = { turnOn ->
-            val outcome = if (turnOn) KeepPaired.stayPaired(limit, memory) else KeepPaired.restore(limit, memory)
-            failed = outcome != KeepPaired.Outcome.DONE
-            on = KeepPaired.isOn(limit)
-            ours = KeepPaired.canRestore(memory)
+            if (turnOn) {
+                failed = KeepPaired.stayPaired(limit, memory) != KeepPaired.Outcome.DONE
+                on = KeepPaired.isOn(limit)
+                ours = KeepPaired.canRestore(memory)
+            } else {
+                confirmRestore = true
+            }
         },
     )
+    if (confirmRestore) {
+        AlertDialog(
+            onDismissRequest = { KeepPaired.logRestoreChoice(false); confirmRestore = false },
+            title = { Text(stringResource(R.string.keep_paired_restore_title)) },
+            text = { Text(stringResource(R.string.keep_paired_restore_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    KeepPaired.logRestoreChoice(true)
+                    confirmRestore = false
+                    failed = KeepPaired.restore(limit, memory).let {
+                        it != KeepPaired.Outcome.DONE && it != KeepPaired.Outcome.CHANGED_ELSEWHERE
+                    }
+                    on = KeepPaired.isOn(limit)
+                    ours = KeepPaired.canRestore(memory)
+                }) { Text(stringResource(R.string.keep_paired_restore_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { KeepPaired.logRestoreChoice(false); confirmRestore = false }) {
+                    Text(stringResource(R.string.keep_paired_restore_cancel))
+                }
+            },
+        )
+    }
     when {
         failed -> SettingsHint(stringResource(R.string.keep_paired_setting_failed))
         on && !ours -> SettingsHint(stringResource(R.string.keep_paired_setting_external))

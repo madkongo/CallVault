@@ -248,7 +248,7 @@
         <item>Fixed — no more false ‘call was cut off’</item>
     </string-array>
     <string name="whatsnew_244_title">More reliable recording, easy re-pairing, and update alerts</string>
-    <string name="whatsnew_244_where">Settings ▸ Reliability ▸ Pair again</string>
+    <string name="whatsnew_244_where">Settings ▸ Connection ▸ Pair again</string>
     <string-array name="whatsnew_244_items">
         <item>New — If your phone closes CallVault mid-call, the part recorded before that is saved, and you\'re told</item>
         <item>New — Pair again from Settings if the recorder connection is lost, with no reinstall</item>

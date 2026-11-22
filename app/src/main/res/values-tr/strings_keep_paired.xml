@@ -2,11 +2,15 @@
 <resources>
     <string name="keep_paired_title">Eşleşme kalıcı olsun mu?</string>
     <string name="keep_paired_body">Android, USB bağlantısı olmadan 7 gün geçince eşleşmeyi unutur ve yeniden eşleştirene kadar aramalar kaydedilmez. CallVault bu süre sınırını kapatabilir.</string>
-    <string name="keep_paired_note">Bu aynı zamanda USB hata ayıklama için izin verdiğiniz tüm bilgisayarların izinli kalmasını sağlar. Ayarlar › Güvenilirlik bölümünden yeniden açabilirsiniz.</string>
+    <string name="keep_paired_note">Bu aynı zamanda USB hata ayıklama için izin verdiğiniz tüm bilgisayarların izinli kalmasını sağlar. Bunu Ayarlar ▸ Bağlantı ▸ Eşleşme kalıcı olsun bölümünden yeniden kapatabilirsiniz.</string>
     <string name="keep_paired_accept">Eşleşmiş kalsın</string>
     <string name="keep_paired_decline">Sınırı koru</string>
     <string name="keep_paired_setting_label">Eşleşme kalıcı olsun</string>
     <string name="keep_paired_setting_description">Android’in USB bağlantısı olmadan 7 gün sonra eşleşmeyi unutmasını engeller.</string>
     <string name="keep_paired_setting_failed">Sınır değiştirilemedi. Eşleşme yine de sona erebilir.</string>
     <string name="keep_paired_setting_external">Sınırı başka bir şey kapattı, bu yüzden CallVault ona dokunmaz.</string>
+    <string name="keep_paired_restore_title">7 günlük sınır yeniden açılsın mı?</string>
+    <string name="keep_paired_restore_text">CallVault 7 günden uzun süre önce Wi-Fi üzerinden eşleştirildiyse Android eşleşmeyi hemen unutabilir ve yeniden eşleştirene kadar aramalar kaydedilmez.</string>
+    <string name="keep_paired_restore_confirm">Aç</string>
+    <string name="keep_paired_restore_cancel">İptal</string>
 </resources>

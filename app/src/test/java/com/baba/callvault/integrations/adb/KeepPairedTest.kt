@@ -47,7 +47,8 @@ class KeepPairedTest {
         answer: KeepPairedAnswer = KeepPairedAnswer.NOT_ASKED,
         recording: Boolean = false,
         limit: Long? = KeepPaired.ANDROID_DEFAULT_MS,
-    ) = KeepPairedPolicy.Situation(standalone, paired, grant, answer, recording, limit)
+        offline: Boolean = false,
+    ) = KeepPairedPolicy.Situation(standalone, paired, grant, answer, recording, limit, offline)
 
     // ---- when to ask ----
 
@@ -73,7 +74,7 @@ class KeepPairedTest {
 
     @Test
     fun `never asks again after either answer`() {
-        listOf(KeepPairedAnswer.STAY_PAIRED, KeepPairedAnswer.KEEP_LIMIT).forEach {
+        listOf(KeepPairedAnswer.STAY_PAIRED, KeepPairedAnswer.KEEP_LIMIT, KeepPairedAnswer.WRITE_REFUSED).forEach {
             assertEquals(KeepPairedPolicy.Decision.SKIP_ALREADY_ANSWERED, KeepPairedPolicy.decide(situation(answer = it)))
         }
     }
@@ -91,6 +92,11 @@ class KeepPairedTest {
     @Test
     fun `does not ask when the setting cannot be read`() {
         assertEquals(KeepPairedPolicy.Decision.SKIP_UNREADABLE, KeepPairedPolicy.decide(situation(limit = null)))
+    }
+
+    @Test
+    fun `does not ask while off-Wi-Fi recording is on because loopback connects reset the clock`() {
+        assertEquals(KeepPairedPolicy.Decision.SKIP_OFFLINE_RECORDING, KeepPairedPolicy.decide(situation(offline = true)))
     }
 
     // ---- Stay paired ----
@@ -114,18 +120,35 @@ class KeepPairedTest {
         assertEquals(KeepPaired.Outcome.UNREADABLE, KeepPaired.stayPaired(limit, memory, log))
         assertTrue(limit.writes.isEmpty())
         assertNull(memory.storedOriginal)
-        assertEquals(KeepPairedAnswer.NOT_ASKED, memory.storedAnswer)
-        assertTrue(logs.isNotEmpty())
+        assertEquals(KeepPairedAnswer.WRITE_REFUSED, memory.storedAnswer)
+        assertTrue(logs.any { "unreadable" in it })
     }
 
     @Test
-    fun `stay paired when the write is refused keeps no ownership and does not claim success`() {
+    fun `stay paired when the write is refused keeps no ownership and never asks again`() {
         val limit = FakeLimit(KeepPaired.ANDROID_DEFAULT_MS, writable = false)
         val memory = FakeMemory()
         assertEquals(KeepPaired.Outcome.WRITE_FAILED, KeepPaired.stayPaired(limit, memory, log))
         assertNull(memory.storedOriginal)
-        assertEquals(KeepPairedAnswer.NOT_ASKED, memory.storedAnswer)
+        assertEquals(KeepPairedAnswer.WRITE_REFUSED, memory.storedAnswer)
+        assertTrue(KeepPairedPolicy.decide(situation(answer = memory.storedAnswer)) == KeepPairedPolicy.Decision.SKIP_ALREADY_ANSWERED)
         assertTrue(logs.isNotEmpty())
+    }
+
+    @Test
+    fun `stay paired whose read-back is not zero is a refusal and puts the old value back`() {
+        // Android accepted the call but the setting did not take (a vendor build that ignores it).
+        val limit = object : AdbConnectionLimit {
+            var value: Long? = 900L
+            val writes = mutableListOf<Long>()
+            override fun read() = value
+            override fun write(ms: Long): Boolean { writes += ms; if (ms != 0L) value = ms; return true }
+        }
+        val memory = FakeMemory()
+        assertEquals(KeepPaired.Outcome.WRITE_FAILED, KeepPaired.stayPaired(limit, memory, log))
+        assertEquals(listOf(0L, 900L), limit.writes)
+        assertNull(memory.storedOriginal)
+        assertEquals(KeepPairedAnswer.WRITE_REFUSED, memory.storedAnswer)
     }
 
     @Test
@@ -170,6 +193,27 @@ class KeepPairedTest {
         assertNull(memory.storedOriginal)
         assertEquals(KeepPairedAnswer.KEEP_LIMIT, memory.storedAnswer)
         assertTrue(logs.any { "777" in it })
+    }
+
+    @Test
+    fun `restore when someone else changed the value forgets ownership and writes nothing`() {
+        val limit = FakeLimit(300_000L)
+        val memory = FakeMemory(KeepPairedAnswer.STAY_PAIRED, storedOriginal = 777L)
+        assertEquals(KeepPaired.Outcome.CHANGED_ELSEWHERE, KeepPaired.restore(limit, memory, log))
+        assertTrue(limit.writes.isEmpty())
+        assertEquals(300_000L, limit.value)
+        assertNull(memory.storedOriginal)
+        assertFalse(KeepPaired.canRestore(memory))
+        assertTrue(logs.any { "changed elsewhere" in it })
+    }
+
+    @Test
+    fun `restore on an unreadable setting changes nothing and keeps the original`() {
+        val limit = FakeLimit(null)
+        val memory = FakeMemory(KeepPairedAnswer.STAY_PAIRED, storedOriginal = 777L)
+        assertEquals(KeepPaired.Outcome.UNREADABLE, KeepPaired.restore(limit, memory, log))
+        assertTrue(limit.writes.isEmpty())
+        assertEquals(777L, memory.storedOriginal)
     }
 
     @Test

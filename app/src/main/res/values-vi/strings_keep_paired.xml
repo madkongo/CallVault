@@ -2,11 +2,15 @@
 <resources>
     <string name="keep_paired_title">Giữ ghép nối vĩnh viễn?</string>
     <string name="keep_paired_body">Android quên ghép nối sau 7 ngày không có kết nối USB, và khi đó cuộc gọi sẽ không được ghi cho đến khi bạn ghép nối lại. CallVault có thể tắt giới hạn thời gian này.</string>
-    <string name="keep_paired_note">Việc này cũng giữ nguyên quyền cho mọi máy tính bạn đã cho phép gỡ lỗi USB. Bạn có thể bật lại trong Cài đặt › Độ tin cậy.</string>
+    <string name="keep_paired_note">Việc này cũng giữ nguyên quyền cho mọi máy tính bạn đã cho phép gỡ lỗi USB. Bạn có thể tắt lại trong Cài đặt ▸ Kết nối ▸ Giữ ghép nối vĩnh viễn.</string>
     <string name="keep_paired_accept">Giữ ghép nối</string>
     <string name="keep_paired_decline">Giữ giới hạn</string>
     <string name="keep_paired_setting_label">Giữ ghép nối vĩnh viễn</string>
     <string name="keep_paired_setting_description">Ngăn Android quên ghép nối sau 7 ngày không có kết nối USB.</string>
     <string name="keep_paired_setting_failed">Không thể thay đổi giới hạn. Ghép nối vẫn có thể hết hạn.</string>
     <string name="keep_paired_setting_external">Một thứ khác đã tắt giới hạn này, nên CallVault để nguyên.</string>
+    <string name="keep_paired_restore_title">Bật lại giới hạn 7 ngày?</string>
+    <string name="keep_paired_restore_text">Nếu CallVault được ghép nối hơn 7 ngày trước qua Wi-Fi, Android có thể quên ghép nối ngay lập tức và cuộc gọi sẽ không được ghi cho đến khi bạn ghép nối lại.</string>
+    <string name="keep_paired_restore_confirm">Bật lại</string>
+    <string name="keep_paired_restore_cancel">Hủy</string>
 </resources>

@@ -2,11 +2,15 @@
 <resources>
     <string name="keep_paired_title">¿Mantener el emparejamiento para siempre?</string>
     <string name="keep_paired_body">Android olvida el emparejamiento tras 7 días sin conexión USB, y entonces las llamadas dejan de grabarse hasta que vuelvas a emparejar. CallVault puede desactivar ese límite de tiempo.</string>
-    <string name="keep_paired_note">Esto también mantiene autorizado cualquier ordenador que hayas permitido para la depuración USB. Puedes volver a activarlo en Ajustes › Fiabilidad.</string>
+    <string name="keep_paired_note">Esto también mantiene autorizado cualquier ordenador que hayas permitido para la depuración USB. Puedes desactivarlo de nuevo en Ajustes ▸ Conexión ▸ Mantener el emparejamiento para siempre.</string>
     <string name="keep_paired_accept">Mantener emparejado</string>
     <string name="keep_paired_decline">Conservar el límite</string>
     <string name="keep_paired_setting_label">Mantener el emparejamiento para siempre</string>
     <string name="keep_paired_setting_description">Evita que Android olvide el emparejamiento tras 7 días sin conexión USB.</string>
     <string name="keep_paired_setting_failed">No se pudo cambiar el límite. El emparejamiento aún puede caducar.</string>
     <string name="keep_paired_setting_external">Otra cosa desactivó el límite, así que CallVault lo deja como está.</string>
+    <string name="keep_paired_restore_title">¿Volver a activar el límite de 7 días?</string>
+    <string name="keep_paired_restore_text">Si CallVault se emparejó hace más de 7 días por Wi-Fi, Android puede olvidar el emparejamiento de inmediato y las llamadas no se grabarán hasta que vuelvas a emparejar.</string>
+    <string name="keep_paired_restore_confirm">Activar</string>
+    <string name="keep_paired_restore_cancel">Cancelar</string>
 </resources>

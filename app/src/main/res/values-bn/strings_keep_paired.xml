@@ -2,11 +2,15 @@
 <resources>
     <string name="keep_paired_title">পেয়ারিং কি চিরতরে থাকবে?</string>
     <string name="keep_paired_body">USB সংযোগ ছাড়া ৭ দিন পার হলে Android পেয়ারিং ভুলে যায়, এরপর আবার পেয়ার না করা পর্যন্ত কল রেকর্ড হয় না। CallVault এই সময়সীমা বন্ধ করে দিতে পারে।</string>
-    <string name="keep_paired_note">এতে USB ডিবাগিংয়ের জন্য আপনার অনুমোদিত যেকোনো কম্পিউটারও অনুমোদিত থাকে। সেটিংস › নির্ভরযোগ্যতা থেকে আবার চালু করতে পারবেন।</string>
+    <string name="keep_paired_note">এতে USB ডিবাগিংয়ের জন্য আপনার অনুমোদিত যেকোনো কম্পিউটারও অনুমোদিত থাকে। আপনি আবার এটি সেটিংস ▸ সংযোগ ▸ চিরতরে পেয়ার থাকুক-এ বন্ধ করতে পারবেন।</string>
     <string name="keep_paired_accept">পেয়ার থাকুক</string>
     <string name="keep_paired_decline">সীমা রাখুন</string>
     <string name="keep_paired_setting_label">চিরতরে পেয়ার থাকুক</string>
     <string name="keep_paired_setting_description">USB সংযোগ ছাড়া ৭ দিন পরে Android-কে পেয়ারিং ভুলে যাওয়া থেকে আটকায়।</string>
     <string name="keep_paired_setting_failed">সীমা বদলানো যায়নি। পেয়ারিং এখনও শেষ হয়ে যেতে পারে।</string>
     <string name="keep_paired_setting_external">অন্য কিছু সীমাটি বন্ধ করেছে, তাই CallVault এটি যেমন আছে তেমনই রাখছে।</string>
+    <string name="keep_paired_restore_title">৭ দিনের সীমা কি আবার চালু হবে?</string>
+    <string name="keep_paired_restore_text">CallVault ৭ দিনের বেশি আগে Wi-Fi দিয়ে পেয়ার করা হলে Android সঙ্গে সঙ্গে পেয়ারিং ভুলে যেতে পারে, আর আবার পেয়ার না করা পর্যন্ত কল রেকর্ড হবে না।</string>
+    <string name="keep_paired_restore_confirm">চালু করুন</string>
+    <string name="keep_paired_restore_cancel">বাতিল</string>
 </resources>

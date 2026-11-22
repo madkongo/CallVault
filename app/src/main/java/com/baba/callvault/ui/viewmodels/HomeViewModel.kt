@@ -297,6 +297,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val privilegedMode: PrivilegedMode = PrivilegedMode.STANDALONE,
         /** True while the one-time "Stay paired for good?" question is open (see [KeepPaired]). */
         val askKeepPaired: Boolean = false,
+        /** True after "Stay paired" could not be applied; shown to the user once. */
+        val keepPairedFailed: Boolean = false,
         /** True while the banner's Update action is downloading/dispatching the install. */
         val isUpdateInstalling: Boolean = false,
         /**
@@ -786,11 +788,26 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** The dialog is on screen now (it may have waited for another dialog to close). */
+    fun keepPairedShown() = KeepPaired.logAsked()
+
+    /** Back or a tap outside: no answer, so the question is asked again, but not before the next app start. */
+    fun dismissKeepPaired() {
+        _uiState.update { it.copy(askKeepPaired = false) }
+        KeepPaired.logDismissedWithoutAnswer()
+    }
+
+    fun keepPairedFailureSeen() = _uiState.update { it.copy(keepPairedFailed = false) }
+
     /** "Stay paired": switches Android's 7-day pairing limit off, after remembering its value. */
     fun answerStayPaired() {
         _uiState.update { it.copy(askKeepPaired = false) }
-        viewModelScope.launch(Dispatchers.IO) {
-            KeepPaired.stayPaired(KeepPaired.systemLimit(appContext), KeepPaired.memory(appContext))
+        viewModelScope.launch {
+            val outcome = withContext(Dispatchers.IO) {
+                KeepPaired.stayPaired(KeepPaired.systemLimit(appContext), KeepPaired.memory(appContext))
+            }
+            val failed = outcome != KeepPaired.Outcome.DONE && outcome != KeepPaired.Outcome.ALREADY_OFF
+            if (failed) _uiState.update { it.copy(keepPairedFailed = true) }
         }
     }
 

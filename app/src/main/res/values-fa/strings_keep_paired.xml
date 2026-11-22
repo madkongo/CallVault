@@ -2,11 +2,15 @@
 <resources>
     <string name="keep_paired_title">جفت‌شدگی برای همیشه بماند؟</string>
     <string name="keep_paired_body">اندروید پس از ۷ روز بدون اتصال USB جفت‌شدگی را فراموش می‌کند و پس از آن تماس‌ها تا زمانی که دوباره جفت نکنید ضبط نمی‌شوند. CallVault می‌تواند این محدودیت زمانی را خاموش کند.</string>
-    <string name="keep_paired_note">این کار هر رایانه‌ای را هم که برای اشکال‌زدایی USB مجاز کرده‌اید مجاز نگه می‌دارد. می‌توانید دوباره آن را در تنظیمات › قابلیت اطمینان روشن کنید.</string>
+    <string name="keep_paired_note">این کار هر رایانه‌ای را هم که برای اشکال‌زدایی USB مجاز کرده‌اید مجاز نگه می‌دارد. می‌توانید دوباره آن را در تنظیمات ▸ اتصال ▸ جفت‌شدگی برای همیشه بماند خاموش کنید.</string>
     <string name="keep_paired_accept">جفت بماند</string>
     <string name="keep_paired_decline">محدودیت بماند</string>
     <string name="keep_paired_setting_label">جفت‌شدگی برای همیشه بماند</string>
     <string name="keep_paired_setting_description">از فراموش‌شدن جفت‌شدگی توسط اندروید پس از ۷ روز بدون اتصال USB جلوگیری می‌کند.</string>
     <string name="keep_paired_setting_failed">تغییر محدودیت ممکن نشد. جفت‌شدگی هنوز ممکن است منقضی شود.</string>
     <string name="keep_paired_setting_external">چیز دیگری این محدودیت را خاموش کرده است، بنابراین CallVault آن را دست‌نخورده می‌گذارد.</string>
+    <string name="keep_paired_restore_title">محدودیت ۷ روزه دوباره روشن شود؟</string>
+    <string name="keep_paired_restore_text">اگر جفت‌شدگی CallVault بیش از ۷ روز پیش از طریق Wi-Fi انجام شده باشد، اندروید ممکن است بلافاصله آن را فراموش کند و تماس‌ها تا جفت‌شدن دوباره ضبط نشوند.</string>
+    <string name="keep_paired_restore_confirm">روشن کن</string>
+    <string name="keep_paired_restore_cancel">لغو</string>
 </resources>

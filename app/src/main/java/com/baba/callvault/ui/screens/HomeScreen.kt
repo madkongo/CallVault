@@ -645,26 +645,6 @@ fun HomeScreen(
         updatePrompt = tag
         viewModel.markUpdatePopupSeen(tag)
     }
-    if (uiState.askKeepPaired) {
-        AlertDialog(
-            // Not dismissable by a tap outside: either button is an answer, and a stray tap must not
-            // spend the one-time question or leave it open forever.
-            onDismissRequest = {},
-            title = { Text(stringResource(R.string.keep_paired_title)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.keep_paired_body))
-                    Text(stringResource(R.string.keep_paired_note), style = MaterialTheme.typography.bodySmall)
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { viewModel.answerStayPaired() }) { Text(stringResource(R.string.keep_paired_accept)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.answerKeepLimit() }) { Text(stringResource(R.string.keep_paired_decline)) }
-            },
-        )
-    }
     updatePrompt?.let { tag ->
         AlertDialog(
             onDismissRequest = { updatePrompt = null },
@@ -2264,6 +2244,43 @@ fun HomeScreen(
     // A dialog rather than a toast, because every one of these is something the user has to do
     // differently next time — pick another file, choose a folder — and a toast that appears while
     // they are still looking at the picker's closing animation is a message nobody reads.
+    // "Stay paired for good?" waits until no other Home dialog is open, so it never stacks on the What's new
+    // note, the update prompt, the support appeal or a confirmation. Back / a tap outside is "no answer yet".
+    val otherDialogOpen = updatePrompt != null || showSupport || showSupportAppeal || uiState.showWhatsNew ||
+        showBulkDelete || mergeFor != null || unMergeFor != null || confirmDeleteFor != null ||
+        deleteTranscriptFor != null || deleteSummaryFor != null || showLibraryBulkDelete || showModelMissing ||
+        transcribeAgainFor != null || confirmTranscribe != null || askLanguageFor != null ||
+        uiState.importRefusal != null || shareRequest != null || showTranscribingSheet
+    if (uiState.askKeepPaired && !otherDialogOpen) {
+        LaunchedEffect(Unit) { viewModel.keepPairedShown() }
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissKeepPaired() },
+            title = { Text(stringResource(R.string.keep_paired_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.keep_paired_body))
+                    Text(stringResource(R.string.keep_paired_note), style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.answerStayPaired() }) { Text(stringResource(R.string.keep_paired_accept)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.answerKeepLimit() }) { Text(stringResource(R.string.keep_paired_decline)) }
+            },
+        )
+    }
+    if (uiState.keepPairedFailed && !otherDialogOpen && !uiState.askKeepPaired) {
+        AlertDialog(
+            onDismissRequest = { viewModel.keepPairedFailureSeen() },
+            title = { Text(stringResource(R.string.keep_paired_title)) },
+            text = { Text(stringResource(R.string.keep_paired_setting_failed)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.keepPairedFailureSeen() }) { Text(stringResource(R.string.general_ok)) }
+            },
+        )
+    }
+
     uiState.importRefusal?.let { reason ->
         AlertDialog(
             onDismissRequest = { viewModel.importRefusalSeen() },

@@ -241,7 +241,7 @@
         <item>Düzeltildi — artık yanlış “arama kesildi” yok</item>
     </string-array>
     <string name="whatsnew_244_title">Daha güvenilir kayıt, kolay yeniden eşleştirme ve güncelleme uyarıları</string>
-    <string name="whatsnew_244_where">Ayarlar ▸ Güvenilirlik ▸ Yeniden eşleştir</string>
+    <string name="whatsnew_244_where">Ayarlar ▸ Bağlantı ▸ Yeniden eşleştir</string>
     <string-array name="whatsnew_244_items">
         <item>Yeni — Telefonunuz arama ortasında CallVault’u kapatırsa, bundan önce kaydedilen kısım saklanır ve size söylenir</item>
         <item>Yeni — Kaydedici bağlantısı kaybolursa Ayarlar’dan yeniden eşleştirin, yeniden yüklemeye gerek yok</item>

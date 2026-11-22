@@ -219,7 +219,7 @@
         <item>Corregido — no más falso «Una llamada se cortó»</item>
     </string-array>
     <string name="whatsnew_244_title">Grabación más fiable, reemparejamiento fácil y avisos de actualización</string>
-    <string name="whatsnew_244_where">Ajustes ▸ Fiabilidad ▸ Volver a emparejar</string>
+    <string name="whatsnew_244_where">Ajustes ▸ Conexión ▸ Volver a emparejar</string>
     <string-array name="whatsnew_244_items">
         <item>Nuevo — Si tu teléfono cierra CallVault durante una llamada, se guarda la parte grabada hasta entonces y se te avisa</item>
         <item>Nuevo — Vuelve a emparejar desde Ajustes si se pierde la conexión con la grabadora, sin reinstalar</item>

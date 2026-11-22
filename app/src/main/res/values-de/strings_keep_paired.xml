@@ -2,11 +2,15 @@
 <resources>
     <string name="keep_paired_title">Dauerhaft gekoppelt bleiben?</string>
     <string name="keep_paired_body">Android vergisst die Kopplung nach 7 Tagen ohne USB-Verbindung, und dann werden Anrufe nicht mehr aufgezeichnet, bis du erneut koppelst. CallVault kann dieses Zeitlimit abschalten.</string>
-    <string name="keep_paired_note">Dadurch bleibt auch jeder Computer, den du für USB-Debugging zugelassen hast, zugelassen. Du kannst es unter Einstellungen › Zuverlässigkeit wieder einschalten.</string>
+    <string name="keep_paired_note">Dadurch bleibt auch jeder Computer, den du für USB-Debugging zugelassen hast, zugelassen. Du kannst das unter Einstellungen ▸ Verbindung ▸ Dauerhaft gekoppelt bleiben wieder ausschalten.</string>
     <string name="keep_paired_accept">Gekoppelt bleiben</string>
     <string name="keep_paired_decline">Limit beibehalten</string>
     <string name="keep_paired_setting_label">Dauerhaft gekoppelt bleiben</string>
     <string name="keep_paired_setting_description">Verhindert, dass Android die Kopplung nach 7 Tagen ohne USB-Verbindung vergisst.</string>
     <string name="keep_paired_setting_failed">Das Limit konnte nicht geändert werden. Die Kopplung kann weiterhin ablaufen.</string>
     <string name="keep_paired_setting_external">Etwas anderes hat das Limit abgeschaltet, deshalb lässt CallVault es unverändert.</string>
+    <string name="keep_paired_restore_title">7-Tage-Limit wieder einschalten?</string>
+    <string name="keep_paired_restore_text">Wenn CallVault vor mehr als 7 Tagen über WLAN gekoppelt wurde, kann Android die Kopplung sofort vergessen, und Anrufe werden erst wieder aufgezeichnet, wenn du erneut koppelst.</string>
+    <string name="keep_paired_restore_confirm">Einschalten</string>
+    <string name="keep_paired_restore_cancel">Abbrechen</string>
 </resources>

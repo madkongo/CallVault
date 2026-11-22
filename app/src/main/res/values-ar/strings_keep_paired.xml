@@ -2,11 +2,15 @@
 <resources>
     <string name="keep_paired_title">هل تريد بقاء الاقتران دائماً؟</string>
     <string name="keep_paired_body">ينسى Android الاقتران بعد 7 أيام دون اتصال USB، وعندها تتوقف المكالمات عن التسجيل حتى تقوم بالاقتران مجدداً. يمكن لـ CallVault إيقاف هذا الحد الزمني.</string>
-    <string name="keep_paired_note">يُبقي هذا أيضاً أي حاسوب سمحت له بتصحيح أخطاء USB مسموحاً به. يمكنك إعادة تفعيله من الإعدادات › الموثوقية.</string>
+    <string name="keep_paired_note">يُبقي هذا أيضاً أي حاسوب سمحت له بتصحيح أخطاء USB مسموحاً به. يمكنك إيقاف ذلك مجدداً من الإعدادات ▸ الاتصال ▸ ابقَ مقترناً دائماً.</string>
     <string name="keep_paired_accept">ابقَ مقترناً</string>
     <string name="keep_paired_decline">أبقِ الحد</string>
     <string name="keep_paired_setting_label">ابقَ مقترناً دائماً</string>
     <string name="keep_paired_setting_description">يمنع Android من نسيان الاقتران بعد 7 أيام دون اتصال USB.</string>
     <string name="keep_paired_setting_failed">تعذّر تغيير الحد. قد ينتهي الاقتران رغم ذلك.</string>
     <string name="keep_paired_setting_external">أوقف شيء آخر هذا الحد، لذلك يتركه CallVault كما هو.</string>
+    <string name="keep_paired_restore_title">هل تريد إعادة تفعيل حد الأيام السبعة؟</string>
+    <string name="keep_paired_restore_text">إذا كان اقتران CallVault قد تم قبل أكثر من 7 أيام عبر Wi-Fi، فقد ينسى Android الاقتران فوراً ولن تُسجَّل المكالمات حتى تقترن من جديد.</string>
+    <string name="keep_paired_restore_confirm">تفعيل</string>
+    <string name="keep_paired_restore_cancel">إلغاء</string>
 </resources>

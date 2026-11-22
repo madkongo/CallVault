@@ -220,7 +220,7 @@
         <item>Corrigé — fini le faux « Un appel a été interrompu »</item>
     </string-array>
     <string name="whatsnew_244_title">Enregistrement plus fiable, réassociation facile et alertes de mise à jour</string>
-    <string name="whatsnew_244_where">Réglages ▸ Fiabilité ▸ Réassocier</string>
+    <string name="whatsnew_244_where">Réglages ▸ Connexion ▸ Réassocier</string>
     <string-array name="whatsnew_244_items">
         <item>Nouveau — Si votre téléphone ferme CallVault pendant un appel, la partie déjà enregistrée est sauvegardée et vous êtes prévenu</item>
         <item>Nouveau — Réassociez depuis les Réglages si la connexion à l\'enregistreur est perdue, sans réinstaller</item>

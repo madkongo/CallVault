@@ -2,11 +2,15 @@
 <resources>
     <string name="keep_paired_title">Rester jumelé pour de bon ?</string>
     <string name="keep_paired_body">Android oublie le jumelage après 7 jours sans connexion USB, et les appels ne sont alors plus enregistrés tant que vous ne jumelez pas à nouveau. CallVault peut désactiver cette limite de durée.</string>
-    <string name="keep_paired_note">Cela garde aussi autorisé tout ordinateur que vous avez autorisé pour le débogage USB. Vous pouvez la réactiver dans Paramètres › Fiabilité.</string>
+    <string name="keep_paired_note">Cela garde aussi autorisé tout ordinateur que vous avez autorisé pour le débogage USB. Vous pouvez le désactiver à nouveau dans Réglages ▸ Connexion ▸ Rester jumelé pour de bon.</string>
     <string name="keep_paired_accept">Rester jumelé</string>
     <string name="keep_paired_decline">Garder la limite</string>
     <string name="keep_paired_setting_label">Rester jumelé pour de bon</string>
     <string name="keep_paired_setting_description">Empêche Android d’oublier le jumelage après 7 jours sans connexion USB.</string>
     <string name="keep_paired_setting_failed">Impossible de modifier la limite. Le jumelage peut encore expirer.</string>
     <string name="keep_paired_setting_external">Autre chose a désactivé la limite, CallVault n’y touche donc pas.</string>
+    <string name="keep_paired_restore_title">Réactiver la limite de 7 jours ?</string>
+    <string name="keep_paired_restore_text">Si CallVault a été jumelé il y a plus de 7 jours via le Wi-Fi, Android peut oublier le jumelage immédiatement et les appels ne seront plus enregistrés tant que vous ne jumelez pas à nouveau.</string>
+    <string name="keep_paired_restore_confirm">Réactiver</string>
+    <string name="keep_paired_restore_cancel">Annuler</string>
 </resources>

@@ -16,7 +16,12 @@ import com.baba.callvault.services.recording.SharedStatusNotice
 import com.baba.callvault.utils.AppLogger
 
 /** What the user answered to "Stay paired for good?". */
-enum class KeepPairedAnswer { NOT_ASKED, STAY_PAIRED, KEEP_LIMIT }
+enum class KeepPairedAnswer {
+    NOT_ASKED, STAY_PAIRED, KEEP_LIMIT,
+
+    /** The dialog's "Stay paired" could not be applied; terminal, so the question never comes back. */
+    WRITE_REFUSED,
+}
 
 /** The global setting `adb_allowed_connection_time`, behind a seam so the logic can be tested. */
 interface AdbConnectionLimit {
@@ -48,6 +53,8 @@ object KeepPairedPolicy {
         val isRecordingLive: Boolean,
         /** The current limit, or null when unreadable. */
         val limitMs: Long?,
+        /** Off-Wi-Fi recording is on: its loopback connects reset Android's clock, so the pairing does not expire. */
+        val isOfflineRecordingOn: Boolean = false,
     )
 
     enum class Decision(val ask: Boolean) {
@@ -59,6 +66,7 @@ object KeepPairedPolicy {
         SKIP_RECORDING(false),
         SKIP_UNREADABLE(false),
         SKIP_ALREADY_OFF(false),
+        SKIP_OFFLINE_RECORDING(false),
     }
 
     fun decide(s: Situation): Decision = when {
@@ -66,6 +74,7 @@ object KeepPairedPolicy {
         !s.isPaired -> Decision.SKIP_NOT_PAIRED
         !s.hasSecureSettingsGrant -> Decision.SKIP_NO_GRANT
         s.answer != KeepPairedAnswer.NOT_ASKED -> Decision.SKIP_ALREADY_ANSWERED
+        s.isOfflineRecordingOn -> Decision.SKIP_OFFLINE_RECORDING
         s.isRecordingLive -> Decision.SKIP_RECORDING
         s.limitMs == null -> Decision.SKIP_UNREADABLE
         s.limitMs == 0L -> Decision.SKIP_ALREADY_OFF
@@ -84,27 +93,41 @@ object KeepPaired {
     const val SETTING = "adb_allowed_connection_time"
     const val ANDROID_DEFAULT_MS = 604_800_000L
 
-    enum class Outcome { DONE, UNREADABLE, WRITE_FAILED, ALREADY_OFF, NOT_OURS }
+    enum class Outcome { DONE, UNREADABLE, WRITE_FAILED, ALREADY_OFF, NOT_OURS, CHANGED_ELSEWHERE }
 
     private val defaultLog: (String) -> Unit = { AppLogger.i(TAG, it) }
 
+    /**
+     * Every outcome of the dialog's "Stay paired" ends in a terminal answer, so the question never reopens:
+     * a refusal is [KeepPairedAnswer.WRITE_REFUSED], and the caller tells the user once.
+     */
     fun stayPaired(limit: AdbConnectionLimit, memory: KeepPairedMemory, log: (String) -> Unit = defaultLog): Outcome {
         val before = limit.read()
         if (before == null) {
-            log("Stay paired: the limit cannot be read, so nothing was changed")
+            log("Stay paired: the limit is unreadable, so nothing was changed")
+            memory.setAnswer(KeepPairedAnswer.WRITE_REFUSED)
             return Outcome.UNREADABLE
         }
         if (before == 0L) {
             log("Stay paired: the limit already reads 0 and CallVault did not set it, so it is left alone")
+            memory.setAnswer(KeepPairedAnswer.STAY_PAIRED)
             return Outcome.ALREADY_OFF
         }
         if (!limit.write(0L)) {
             log("Stay paired: Android refused the write (limit stays $before ms); the pairing can still expire")
+            memory.setAnswer(KeepPairedAnswer.WRITE_REFUSED)
+            return Outcome.WRITE_FAILED
+        }
+        val after = limit.read()
+        if (after != 0L) {
+            log("Stay paired: the write did not take (read back ${after ?: "unreadable"} ms, was $before ms); putting $before ms back")
+            limit.write(before)
+            memory.setAnswer(KeepPairedAnswer.WRITE_REFUSED)
             return Outcome.WRITE_FAILED
         }
         memory.setOriginalMs(before)
         memory.setAnswer(KeepPairedAnswer.STAY_PAIRED)
-        log("Stay paired: limit changed from $before ms to ${limit.read() ?: 0L} ms (0 = never expires); original kept for the switch in Settings")
+        log("Stay paired: limit changed from $before ms to $after ms (0 = never expires); original kept for the switch in Settings")
         return Outcome.DONE
     }
 
@@ -113,6 +136,7 @@ object KeepPaired {
         log("Keep the limit: the user chose to leave Android's pairing time limit as it is; not asked again")
     }
 
+    /** Puts the stored original back, but only while the setting still reads 0 as CallVault left it. */
     fun restore(limit: AdbConnectionLimit, memory: KeepPairedMemory, log: (String) -> Unit = defaultLog): Outcome {
         val original = memory.originalMs()
         if (original == null) {
@@ -120,13 +144,23 @@ object KeepPaired {
             return Outcome.NOT_OURS
         }
         val before = limit.read()
+        if (before == null) {
+            log("Restore: the limit is unreadable, so nothing was changed; the original $original ms is kept")
+            return Outcome.UNREADABLE
+        }
+        if (before != 0L) {
+            memory.setOriginalMs(null)
+            memory.setAnswer(KeepPairedAnswer.KEEP_LIMIT)
+            log("Restore: the limit changed elsewhere (reads $before ms, not 0), so it is left alone and no longer treated as ours")
+            return Outcome.CHANGED_ELSEWHERE
+        }
         if (!limit.write(original)) {
             log("Restore: Android refused the write; the original $original ms is kept to try again")
             return Outcome.WRITE_FAILED
         }
         memory.setOriginalMs(null)
         memory.setAnswer(KeepPairedAnswer.KEEP_LIMIT)
-        log("Restore: limit changed from ${before ?: "unreadable"} ms back to $original ms")
+        log("Restore: limit changed from 0 ms back to $original ms (now reads ${limit.read() ?: "unreadable"})")
         return Outcome.DONE
     }
 
@@ -181,13 +215,32 @@ object KeepPaired {
             answer = prefs.getKeepPairedAnswer(),
             isRecordingLive = isRecordingLive(),
             limitMs = systemLimit(context).read(),
+            isOfflineRecordingOn = prefs.isOfflineRecordingEnabled(),
         )
         val decision = KeepPairedPolicy.decide(situation)
-        if (!decision.ask && decision != KeepPairedPolicy.Decision.SKIP_ALREADY_ANSWERED) {
-            AppLogger.d(TAG, "Not asking 'Stay paired for good?': $decision")
+        // Home re-evaluates on every resume: say why not only when the reason changes.
+        if (decision != lastDecision) {
+            lastDecision = decision
+            if (!decision.ask) AppLogger.d(TAG, "Not asking 'Stay paired for good?': $decision")
         }
-        return decision.ask
+        return decision.ask && !askedThisProcess
     }
+
+    @Volatile private var lastDecision: KeepPairedPolicy.Decision? = null
+
+    /** The question was shown (or is waiting) this app start; a dismissal without an answer asks again next start. */
+    @Volatile private var askedThisProcess = false
+
+    fun logAsked() {
+        askedThisProcess = true
+        AppLogger.i(TAG, "Asked 'Stay paired for good?'")
+    }
+
+    fun logDismissedWithoutAnswer() =
+        AppLogger.i(TAG, "'Stay paired for good?' dismissed without an answer; it is asked again next app start")
+
+    fun logRestoreChoice(confirmed: Boolean) =
+        AppLogger.i(TAG, if (confirmed) "Switch off: the user confirmed turning the 7-day limit back on" else "Switch off: the user cancelled")
 
     /** A call is being recorded: the daemon says so, or a recording owns the shared notification. */
     internal fun isRecordingLive(): Boolean =

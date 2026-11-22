@@ -219,7 +219,7 @@
         <item>Javítva — nincs több téves „Egy hívás megszakadt“ értesítés</item>
     </string-array>
     <string name="whatsnew_244_title">Megbízhatóbb rögzítés, egyszerű újrapárosítás és frissítési értesítések</string>
-    <string name="whatsnew_244_where">Beállítások ▸ Megbízhatóság ▸ Újrapárosítás</string>
+    <string name="whatsnew_244_where">Beállítások ▸ Kapcsolat ▸ Újrapárosítás</string>
     <string-array name="whatsnew_244_items">
         <item>Új — Ha a telefon hívás közben bezárja a CallVaultot, az addig rögzített rész elmentődik, és értesítést kapsz</item>
         <item>Új — Párosíts újra a Beállításokból, ha megszakad a kapcsolat a rögzítővel, újratelepítés nélkül</item>
