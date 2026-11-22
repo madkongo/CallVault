@@ -424,7 +424,7 @@
     <string name="recording_error_file_creation">ایجاد فایل ضبط ناموفق بود. لطفاً مجوزهای فضای ذخیره‌سازی را بررسی کنید و/یا یک پوشه ضبط جدید در تنظیمات برنامه انتخاب کنید.</string>
     <string name="recording_error_folder_missing">پوشه خروجی انتخاب‌شده وجود ندارد، نامعتبر است، یا اجازه نوشتن در آن را نداریم. یکی را در تنظیمات برنامه انتخاب کنید.</string>
     <string name="recording_error_server_missing">فایل باینری scrcpy-server وجود ندارد یا بررسی امنیتی SHA256 ناموفق بود. این نباید رخ دهد، لطفاً آن را گزارش کنید.</string>
-    <string name="recording_error_start_failed">شروع ضبط ناموفق بود. هنگام فراخوانی متد بایندر ShellService خطایی رخ داد.</string>
+    <string name="recording_error_start_failed">این تماس ضبط نمی‌شود. ضبط‌کننده اجرا نمی‌شود و CallVault نتوانست به آن دسترسی پیدا کند. برای راه‌اندازی دوباره، CallVault را باز کنید.</string>
     <string name="recording_error_title">خطای ضبط</string>
     <string name="recording_flag_added">لحظه نشان‌گذاری شد (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐بین‌کشوری</string>

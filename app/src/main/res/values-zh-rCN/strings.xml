@@ -330,7 +330,7 @@
     <string name="recording_error_file_creation">保存录音文件失败，请检查输出目录的读写权限，或者尝试换一个目录后重试。</string>
     <string name="recording_error_folder_missing">选择的输出目录被删除、无效或者权限被撤销。请在App中重新指定输出目录。</string>
     <string name="recording_error_server_missing">Scrcpy-server二进制文件缺失，或者SHA256安全校验失败。如果看到此消息，请直接反馈此问题。</string>
-    <string name="recording_error_start_failed">无法启动录音。连接到ShellService出错。</string>
+    <string name="recording_error_start_failed">这通电话没有被录音。录音程序未运行，CallVault 也无法连接到它。请打开 CallVault 让它恢复运行。</string>
     <string name="recording_error_title">错误：录音遇到问题</string>
     <string name="recording_flag_added">已标记 (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐国际电话</string>

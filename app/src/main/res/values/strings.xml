@@ -423,7 +423,7 @@
     <string name="recording_error_folder_missing">Selected output folder is missing, invalid, or we do not have permission to write to it. Select one in the app settings.</string>
     <string name="recording_error_server_missing">Scrcpy-server binary is missing or the security SHA256 check failed. This should not happen, please report this.</string>
     <string name="recording_error_file_creation">Failed to create recording file. Please check the storage permissions and/or select a new recording folder in the app settings.</string>
-    <string name="recording_error_start_failed">Failed to start the recording. An error occurred when calling the ShellService binder method.</string>
+    <string name="recording_error_start_failed">This call isn\'t being recorded. The recorder isn\'t running and CallVault couldn\'t reach it. Open CallVault to bring it back.</string>
     <string name="recording_error_empty_file_shizuku">The recording is empty — no audio was captured. Open Shizuku and check it is still running; it stops whenever the phone restarts.</string>
     <string name="recording_error_empty_file">The recording is empty — no audio was captured because the recorder daemon was not running. Check that Developer options and Wireless debugging are enabled.</string>
     <string name="recording_error_daemon_died">The recorder daemon stopped — this call is NOT being recorded. Check that Developer options and Wireless debugging are enabled.</string>
