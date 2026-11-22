@@ -246,7 +246,7 @@
     <string name="oem_gate_open_dev_options">開啟開發人員選項</string>
     <string name="oem_gate_title">手機正在阻止這一步</string>
     <string name="offline_recording_warning_continue">仍然繼續</string>
-    <string name="offline_recording_warning_message">此操作會在您的手機上開啟一個本機偵錯埠，以便在沒有 Wi-Fi 的情況下錄製通話。它受裝置金鑰保護，但會帶來輕微的安全權衡。僅在您需要在沒有 Wi-Fi 的情況下錄製通話時才啟用。</string>
+    <string name="offline_recording_warning_message">此操作會在你的手機上開啟一個偵錯埠，讓通話在沒有 Wi-Fi 時也能錄音。在手機重新啟動前，這個埠在手機連上的每個網路上都保持開啟。只有你手機的偵錯金鑰能連入，但這仍是輕微的安全權衡。只有在需要於沒有 Wi-Fi 時錄製通話，才啟用此功能。</string>
     <string name="offline_recording_warning_shizuku">Shizuku 正在執行。開啟此項會重啟 Android 的偵錯服務，從而停止 Shizuku——CallVault 會隨後立即重新啟動它，若無法啟動會通知你。</string>
     <string name="offline_recording_warning_title">啟用離線錄音？</string>
     <string name="permission_adb_description">設定和啟動錄音器時需要，且僅在連線 Wi-Fi 時可用。透過通知配對一次，之後會自動連線。</string>
@@ -382,8 +382,6 @@
     <string name="settings_debug_log_file">記錄檔案</string>
     <string name="settings_debug_log_view_hint">輕觸可檢視最近的條目。</string>
     <string name="settings_debug_log_wrap">自動換行</string>
-    <string name="settings_debug_skip_mdns">連線時跳過 mDNS（測試埠搜尋）</string>
-    <string name="settings_debug_skip_mdns_description">用於測試。下一次無線偵錯連線將忽略 mDNS 和上次可用的埠，透過搜尋本機通訊埠來找到埠。僅在記錄功能開啟時有效。</string>
     <string name="settings_debug_logging_enabled">啟用記錄</string>
     <string name="settings_debug_logging_enabled_description">若要反饋Bug，請先開啟此開關，然後在重啟 App 之後再重複您剛才的操作。</string>
     <string name="settings_drive_folder_desc">選擇一個資料夾（在 Google Drive App 中）用於複製錄音。</string>
@@ -651,7 +649,7 @@
     <string name="tile_recording_stopped">已停止</string>
     <string name="transcribe_confirm_dont_ask">不再詢問</string>
     <string name="transcribe_long_call_line">這通電話長度 %1$s。在此手機上，轉錄大約需要通話時間的 %2$s 倍——約 %3$s。</string>
-    <string name="transcribe_confirm_message">轉錄 %1$s 會佔用手機並明顯耗電。你可以隨時停止。\n\n可在設定的「逐字稿」中重新開啟此提示。</string>
+    <string name="transcribe_confirm_message">轉錄這通電話會佔用手機並明顯耗電。你可以隨時停止。\n\n可在設定的「逐字稿」中重新開啟此提示。</string>
     <string name="transcribe_confirm_title">大約需要 %1$s</string>
     <string name="transcribe_confirm_title_first_run">第一次可能需要一些時間</string>
     <string name="transcribe_confirm_title_unknown">要轉錄這通電話嗎？</string>
@@ -908,8 +906,6 @@
     <string name="transcribe_again_waiting">等待重新轉錄…</string>
     <string name="wifi_call_switch_failed">這似乎是一通 Wi-Fi 通話，但無法啟動雙方錄音。正在按常規方式錄音，可能錄不到對方的聲音。</string>
     <string name="wifi_call_one_sided">這通 Wi-Fi 通話只錄到您這一方。如果反覆出現，請在電話 App 的設定中將 Wi-Fi 通話設為「首選行動網路」。</string>
-    <string name="settings_debug_force_wifi_route">強制使用 Wi-Fi 通話錄音方式</string>
-    <string name="settings_debug_force_wifi_route_description">用於測試。每通電話會在通話中切換到 App 通話錄音方式，就像 Wi-Fi 通話那樣。在不支援 Wi-Fi 通話的手機上會缺少對方的聲音，並應顯示錯誤。需要開啟 App 通話錄音。僅在開啟記錄功能時生效。</string>
     <string name="wifi_call_switch_aborted">這通 Wi-Fi 通話的錄音提前停止了：無法安全地切換錄音方式。已錄下的部分會保留。</string>
     <string name="wifi_call_far_unknown">這通 Wi-Fi 通話已錄音，但 CallVault 無法確認其中錄到了對方的聲音。請收聽錄音確認。</string>
 </resources>

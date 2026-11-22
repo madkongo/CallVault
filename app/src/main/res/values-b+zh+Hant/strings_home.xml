@@ -4,7 +4,7 @@
     <string name="home_date_yesterday">昨天</string>
     <string name="home_health_call_not_recorded">有一通通話未被錄音 — %1$s，%2$s。</string>
     <string name="home_health_call_not_recorded_unnamed">有一通通話未被錄音 — %1$s。</string>
-    <string name="home_health_call_not_recorded_force_stopped">CallVault 已被手機或其他 App 強制停止，因此無法察覺這通電話。請確認手機的電池設定不會讓 CallVault 進入休眠。</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault 已被停止（由你在「使用中的 App」或「強制停止」操作，或由手機、其他 App 停止），因此無法察覺這通電話。請確認手機的電池設定不會讓 CallVault 進入休眠。</string>
     <string name="home_health_failed_daemon">上一通通話期間錄音已停止。</string>
     <string name="home_health_failed_empty">你上一通通話產生了空錄音（0 位元組）。</string>
     <string name="home_health_failed_no_audio">上次通話錄音已儲存，但沒有聲音。</string>
@@ -214,7 +214,7 @@
         <item>修復 — 不再誤報「一次通話被中斷」</item>
     </string-array>
     <string name="whatsnew_244_title">錄音更可靠、輕鬆重新配對，以及更新提醒</string>
-    <string name="whatsnew_244_where">設定 ▸ 可靠性 ▸ 重新配對</string>
+    <string name="whatsnew_244_where">設定 ▸ 連線 ▸ 重新配對</string>
     <string-array name="whatsnew_244_items">
         <item>新增 — 如果手機在通話中關閉 CallVault，此前錄下的部分會被儲存並通知你</item>
         <item>新增 — 若與錄音器的連線斷開，可在設定中重新配對，不必重灌</item>
