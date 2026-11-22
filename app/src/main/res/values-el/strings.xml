@@ -398,6 +398,7 @@
     <string name="notif_drive_backup_reason_no_answer">το Google Drive δεν απαντά</string>
     <string name="notif_drive_backup_reason_folder">ο φάκελος του Drive δεν μπορεί να διαβαστεί</string>
     <string name="notif_drive_backup_reason_error">ένα σφάλμα το σταμάτησε (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">το Google Drive δεν δέχεται αντίγραφα</string>
     <string name="notif_health_sync_title">Οι εγγραφές δεν φτάνουν στο Drive</string>
     <string name="notif_info_channel">Ειδοποιήσεις CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Το Android ξέχασε τη σύζευξη του CallVault, οπότε οι κλήσεις δεν μπορούν να καταγραφούν. Ανοίξτε το CallVault και πατήστε την κάρτα κατάστασης για να κάνετε σύζευξη ξανά.</string>

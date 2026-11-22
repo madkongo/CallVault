@@ -836,6 +836,7 @@
     <string name="notif_drive_backup_reason_no_answer">Google Drive yanıt vermiyor</string>
     <string name="notif_drive_backup_reason_folder">Drive klasörü okunamıyor</string>
     <string name="notif_drive_backup_reason_error">bir hata onu durdurdu (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">Google Drive kopyaları kabul etmiyor</string>
     <string name="notif_health_recorder_text_shizuku">Shizuku yeniden çalışana kadar aramalar kaydedilmeyecek. Yeniden başlatma onu durdurur, bu yüzden telefon yeniden başladıktan sonra bir kez başlatılması gerekir.</string>
     <string name="settings_offline_recording_reboot_note">Yeniden başlatmadan sonra, telefon bir Wi-Fi ağına bir kez katılana kadar bu çalışmaz. Herhangi bir ağ olur ve internet gerekmez — birkaç saniye yeterli. Bunun ne zaman gerektiğini CallVault size söyler.</string>
     <string name="general_stop">Durdur</string>

@@ -244,6 +244,7 @@
     <string name="notif_drive_backup_reason_no_answer">Google Drive antwortet nicht</string>
     <string name="notif_drive_backup_reason_folder">der Drive-Ordner kann nicht gelesen werden</string>
     <string name="notif_drive_backup_reason_error">ein Fehler hat sie gestoppt (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">Google Drive nimmt keine Kopien an</string>
     <string name="notif_health_sync_title">Aufnahmen erreichen Drive nicht</string>
     <string name="notif_info_channel">CallVault-Hinweise</string>
     <string name="notif_readiness_pairing_lost_text">Android hat die Kopplung von CallVault vergessen, daher können keine Anrufe aufgenommen werden. Öffne CallVault und tippe auf die Statuskarte, um erneut zu koppeln.</string>

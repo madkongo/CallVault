@@ -246,6 +246,7 @@
     <string name="notif_drive_backup_reason_no_answer">Dysk Google nie odpowiada</string>
     <string name="notif_drive_backup_reason_folder">nie można odczytać folderu na Dysku</string>
     <string name="notif_drive_backup_reason_error">zatrzymał ją błąd (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">Dysk Google nie przyjmuje kopii</string>
     <string name="notif_health_sync_title">Nagrania nie trafiają na Dysk</string>
     <string name="notif_info_channel">Powiadomienia CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android zapomniał parowanie CallVault, więc nie można nagrywać połączeń. Otwórz CallVault i dotknij karty stanu, aby sparować ponownie.</string>

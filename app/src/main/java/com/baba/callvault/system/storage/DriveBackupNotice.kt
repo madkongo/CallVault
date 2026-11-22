@@ -29,6 +29,8 @@ object DriveBackupNotice {
     private const val TAG = "CV:DriveBackupNotice"
     private const val PREFS = "drive_backup_notice"
     private const val KEY_POSTED = "posted"
+    private const val KEY_POSTED_FOR_COPIES = "posted_for_copies"
+    private const val KEY_FAILED_RUNS = "failed_copy_runs"
 
     /** What the user is told went wrong, in a few words. */
     enum class Reason(val text: Int) {
@@ -40,6 +42,9 @@ object DriveBackupNotice {
 
         /** The sweep itself threw; the text names the error (the `detail` of [onGaveUp]). */
         ERROR(R.string.notif_drive_backup_reason_error),
+
+        /** The folder lists, but every copy of the whole failure spell failed (review N6). */
+        COPIES_FAILING(R.string.notif_drive_backup_reason_copies),
     }
 
     enum class Event { GAVE_UP, REACHED }
@@ -54,12 +59,32 @@ object DriveBackupNotice {
     /** True when attempt [runAttemptCount] (0-based) is the one after which the sweep stops retrying. */
     fun isGivingUp(runAttemptCount: Int): Boolean = !CloudCopyPolicy.shouldRetryListFailure(runAttemptCount)
 
+    /** Runs in a row (across retries and days) in which copies were tried, none reached Drive, and Drive held none of ours. */
+    fun nextFailedRuns(previous: Int, driveProved: Boolean, failures: Int): Int =
+        if (driveProved || failures <= 0) 0 else previous + 1
+
+    /** The failure spell is long enough to tell the user: as many fruitless runs as the sweep has attempts (review N6). */
+    fun isCopySpellGivingUp(failedRuns: Int): Boolean = failedRuns >= CloudCopyPolicy.MAX_ATTEMPTS
+
     /**
-     * The sweep listed the folder, but on its last attempt not one copy went through while some failed: nothing
-     * else uploads (review C11), so this is giving up too (review N6).
+     * A finished sweep run that listed the folder (review N6). [driveProved]: a copy went through, or Drive listed a
+     * recording of ours at the right size, so Drive does work and a leftover failing file is only that file's problem.
+     * Only a spell with no such proof, for [CloudCopyPolicy.MAX_ATTEMPTS] runs, raises the notice. [tried] files were
+     * attempted, [failures] failed.
      */
-    fun isCopyGivingUp(copied: Int, failures: Int, runAttemptCount: Int): Boolean =
-        copied == 0 && failures > 0 && CloudCopyPolicy.isLastAttempt(runAttemptCount)
+    fun onCopyRunEnd(context: Context, driveProved: Boolean, tried: Int, failures: Int) {
+        val prefs = prefs(context)
+        val before = prefs.getInt(KEY_FAILED_RUNS, 0)
+        val after = nextFailedRuns(before, driveProved, failures)
+        if (after != before) prefs.edit().putInt(KEY_FAILED_RUNS, after).apply()
+        if (after == 0) return
+        val why = "of $tried recording(s) tried, $failures failed and none reached Drive; fruitless run $after of ${CloudCopyPolicy.MAX_ATTEMPTS}, and Drive held none of ours"
+        if (!isCopySpellGivingUp(after)) {
+            DriveCopyJournal.record(context, "copies failing, not yet told to the user: $why")
+            return
+        }
+        onGaveUp(context, Reason.COPIES_FAILING, why)
+    }
 
     /**
      * The sweep spent its last attempt without listing the Drive folder, or crashed on it; [why] is the journal's
@@ -80,7 +105,7 @@ object DriveBackupNotice {
                     )
                     return
                 }
-                prefs.edit().putBoolean(KEY_POSTED, true).apply()
+                prefs.edit().putBoolean(KEY_POSTED, true).putBoolean(KEY_POSTED_FOR_COPIES, reason == Reason.COPIES_FAILING).apply()
                 AppLogger.w(TAG, "Drive backup notice POSTED ($reason): $why")
                 DriveCopyJournal.record(context, "user notice POSTED: Drive backup isn't working ($reason); cause: $why")
             }
@@ -88,12 +113,18 @@ object DriveBackupNotice {
         }
     }
 
-    /** Drive was reached ([how]: a listing or a copy). Clears a posted notice. */
-    fun onDriveReached(context: Context, how: String) {
+    /**
+     * Drive was reached ([how]). A copy (the default) proves Drive takes files: it clears any posted notice and ends the
+     * failed-copy spell. A listing ([byListing]) clears only a notice about listing; one about failing copies stays until
+     * a copy works, or it would flicker away on the next run's listing while every copy still fails (review N6).
+     */
+    fun onDriveReached(context: Context, how: String, byListing: Boolean = false) {
         val prefs = prefs(context)
+        if (!byListing && prefs.getInt(KEY_FAILED_RUNS, 0) != 0) prefs.edit().putInt(KEY_FAILED_RUNS, 0).apply()
+        if (byListing && prefs.getBoolean(KEY_POSTED_FOR_COPIES, false)) return
         if (decide(prefs.getBoolean(KEY_POSTED, false), Event.REACHED) != Action.CLEAR) return
         SilentFailureNotifier.clearDriveBackupBroken(context)
-        prefs.edit().putBoolean(KEY_POSTED, false).apply()
+        prefs.edit().putBoolean(KEY_POSTED, false).putBoolean(KEY_POSTED_FOR_COPIES, false).apply()
         AppLogger.i(TAG, "Drive backup notice CLEARED: $how")
         DriveCopyJournal.record(context, "user notice CLEARED: Drive reached again ($how)")
     }
@@ -101,9 +132,10 @@ object DriveBackupNotice {
     /** Drive sync was switched off (device-only / immediate): a posted notice is about a backup that no longer runs. */
     fun onDriveSyncOff(context: Context, why: String) {
         val prefs = prefs(context)
+        if (prefs.getInt(KEY_FAILED_RUNS, 0) != 0) prefs.edit().putInt(KEY_FAILED_RUNS, 0).apply()
         if (!prefs.getBoolean(KEY_POSTED, false)) return
         SilentFailureNotifier.clearDriveBackupBroken(context)
-        prefs.edit().putBoolean(KEY_POSTED, false).apply()
+        prefs.edit().putBoolean(KEY_POSTED, false).putBoolean(KEY_POSTED_FOR_COPIES, false).apply()
         AppLogger.i(TAG, "Drive backup notice CLEARED: Drive sync turned off ($why)")
         DriveCopyJournal.record(context, "user notice CLEARED: Drive sync turned off ($why)")
     }

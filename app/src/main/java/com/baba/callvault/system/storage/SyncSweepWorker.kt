@@ -212,7 +212,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             }
             return if (again) Result.retry() else Result.success()
         }
-        DriveBackupNotice.onDriveReached(applicationContext, "the sweep listed the Drive folder")
+        DriveBackupNotice.onDriveReached(applicationContext, "the sweep listed the Drive folder", byListing = true)
         // Keyed by the EXACT name, as the after-call copy matches ([DriveCopyHandler.knownDestFrom]): Drive can hold
         // "Call.m4a" and "call.m4a" side by side, and a case-insensitive key handed one recording's document to the
         // other's copy, which deleted it as "truncated" or stamped the wrong recording as backed up.
@@ -225,6 +225,8 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         val deleteLocal = target == StorageTarget.DRIVE
         var copied = 0
         var failures = 0
+        // Drive is shown to work in this run: a copy went through, or it listed a recording of ours at the right size.
+        var driveProved = false
         var skipped = 0
         var deleted = 0
         var kept = 0
@@ -281,6 +283,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     applicationContext, name, alreadyThere.uri,
                     CloudCopyPolicy.driveSizeToRecord(alreadyThere.sizeBytes), deleteLocalAfter = false,
                 )
+                driveProved = true
                 continue
             }
 
@@ -341,8 +344,8 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             }
             journal("copy '$name' ${sourceSize}B total=${fileMs}ms $stepTimes -> ${describe(copyResult)}")
             val driveUri = when (val result = copyResult) {
-                is SafHelper.CopyResult.AlreadyPresent -> result.uri
-                is SafHelper.CopyResult.Copied -> result.uri.also { copied++ }
+                is SafHelper.CopyResult.AlreadyPresent -> result.uri.also { driveProved = true }
+                is SafHelper.CopyResult.Copied -> result.uri.also { copied++; driveProved = true }
                 is SafHelper.CopyResult.Failed -> {
                     failures++
                     AppLogger.w(TAG, "Failed to copy '$name' to Drive (${result.reason}).")
@@ -357,6 +360,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     journal("pace $done of $total, ${DriveCopyJournal.pace(done, SystemClock.elapsedRealtime() - copyStart)} files/min")
                 }
             }
+            if (driveUri != null) DriveBackupNotice.onDriveReached(applicationContext, "'$name' was copied by the sweep")
             if (driveUri == null) {
                 if (stalls >= CloudCopyPolicy.MAX_CONSECUTIVE_STALLS) {
                     AppLogger.w(TAG, "Drive stopped answering ($stalls files in a row); ending this run, the next one retries.")
@@ -409,13 +413,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         if (!isStopped && done == total) RecordingCatalog.markDriveSizesReconfirmed(applicationContext)
         AppLogger.i(TAG, "Sweep complete (target=$target copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal).")
         journal("sweep complete: copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal deleted=$deleted kept=$kept unverified=$unverified")
-        if (!isStopped && DriveBackupNotice.isCopyGivingUp(copied, failures, runAttemptCount)) {
-            DriveBackupNotice.onGaveUp(
-                applicationContext, DriveBackupNotice.Reason.ERROR,
-                "the Drive folder listed fine but all $failures copies failed on the last attempt",
-                detail = "no copy went through",
-            )
-        }
+        if (!isStopped) DriveBackupNotice.onCopyRunEnd(applicationContext, driveProved, tried = done, failures = failures)
         // A sweep that keeps failing backs off rather than hammering the provider: the next scheduled run
         // picks the stragglers up anyway, so there is nothing to gain from an unbounded retry chain.
         return if (failures > 0 && !CloudCopyPolicy.isLastAttempt(runAttemptCount)) Result.retry() else Result.success()

@@ -243,6 +243,7 @@
     <string name="notif_drive_backup_reason_no_answer">Google 雲端硬碟沒有回應</string>
     <string name="notif_drive_backup_reason_folder">無法讀取雲端硬碟資料夾</string>
     <string name="notif_drive_backup_reason_error">出錯而停止（%1$s）</string>
+    <string name="notif_drive_backup_reason_copies">Google 雲端硬碟不接受副本</string>
     <string name="notif_health_sync_title">錄音沒有傳到雲端硬碟</string>
     <string name="notif_info_channel">CallVault 通知</string>
     <string name="notif_readiness_pairing_lost_text">Android 忘記了 CallVault 的配對，因此無法錄製通話。開啟 CallVault 並點按狀態卡片以重新配對。</string>
