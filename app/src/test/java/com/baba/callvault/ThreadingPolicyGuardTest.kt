@@ -49,7 +49,7 @@ class ThreadingPolicyGuardTest {
         "integrations/adb/ConnectPortScan.kt" to 1,
         "integrations/adb/ShizukuRestarter.kt" to 2,
         "integrations/scrcpy/ScrcpyLauncher.kt" to 2,
-        "server/AppStartBinderSender.kt" to 1,
+        "server/AppStartBinderSender.kt" to 2,
         "server/BoundedProcess.kt" to 1,
         "server/DirectAudioRecorderSession.kt" to 2,
         "server/RecorderServer.kt" to 1,

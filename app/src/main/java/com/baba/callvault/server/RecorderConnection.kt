@@ -64,6 +64,7 @@ object RecorderConnection {
     fun onBinderReceived(service: IRecorderService) {
         this.service = service
         _connected.value = true
+        SpareMemory.shared.reset()
         AppLogger.i(TAG, "RecorderConnection received daemon binder")
         // Setup has demonstrably worked, so the always-on setup journal has nothing left to learn and
         // stops here for good. A healthy phone therefore pays for it exactly once.

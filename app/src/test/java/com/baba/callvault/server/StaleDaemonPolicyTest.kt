@@ -44,13 +44,36 @@ class StaleDaemonPolicyTest {
 
     @Test
     fun `an old file that got bigger between two reads is growing`() {
-        assertTrue(StaleDaemonPolicy.isGrowing(ageMs = 60_000, sizeBefore = 100, sizeAfter = 150))
+        assertTrue(StaleDaemonPolicy.isGrowing(ageMs = 20_000, sizeBefore = 100, sizeAfter = 150))
     }
 
     @Test
     fun `an old file of the same size is not growing, and neither is a missing one`() {
         assertFalse(StaleDaemonPolicy.isGrowing(ageMs = 60_000, sizeBefore = 100, sizeAfter = 100))
         assertFalse(StaleDaemonPolicy.isGrowing(ageMs = null, sizeBefore = null, sizeAfter = null))
+    }
+
+    @Test
+    fun `a record left from an earlier call is stale and needs no second read`() {
+        assertFalse(StaleDaemonPolicy.isGrowing(ageMs = StaleDaemonPolicy.STALE_SESSION_MS + 1, sizeBefore = 100, sizeAfter = 200))
+    }
+
+    @Test
+    fun `a spare is withdrawn after a refusal`() {
+        val memory = SpareMemory()
+        assertTrue(memory.stillAllowed(0))
+        memory.noteRejected()
+        assertFalse(memory.stillAllowed(1))
+    }
+
+    @Test
+    fun `a spare is withdrawn when no hand-over came within the patience, and a binder resets it`() {
+        val memory = SpareMemory()
+        memory.noteSpared(1_000)
+        assertTrue(memory.stillAllowed(1_000 + SpareMemory.PATIENCE_MS - 1))
+        assertFalse(memory.stillAllowed(1_000 + SpareMemory.PATIENCE_MS))
+        memory.reset()
+        assertTrue(memory.stillAllowed(1_000 + SpareMemory.PATIENCE_MS))
     }
 
     @Test

@@ -24,6 +24,9 @@ object StaleDaemonPolicy {
     /** A staging file modified this recently is being written. */
     const val FRESH_WRITE_MS = 5_000L
 
+    /** A session record whose file was last written longer ago than this is left over from an earlier call. */
+    const val STALE_SESSION_MS = 30_000L
+
     enum class Action { SPARE, KILL_THEN_LAUNCH }
 
     sealed class Probe {
@@ -53,6 +56,7 @@ object StaleDaemonPolicy {
      */
     fun isGrowing(ageMs: Long?, sizeBefore: Long?, sizeAfter: Long?): Boolean = when {
         ageMs == null -> false
+        ageMs > STALE_SESSION_MS -> false
         ageMs in 0..FRESH_WRITE_MS -> true
         sizeBefore != null && sizeAfter != null -> sizeAfter > sizeBefore
         else -> false
@@ -68,5 +72,26 @@ object StaleDaemonPolicy {
         probe is Probe.Hosts && probe.pids.isEmpty() -> Action.KILL_THEN_LAUNCH
         inCall == false -> Action.KILL_THEN_LAUNCH
         else -> Action.SPARE
+    }
+}
+
+/**
+ * What this app process learned about sparing a recording daemon. A spare is a bet that the daemon's hand-over is on its
+ * way; it is withdrawn when this process refused a hand-over (wrong APK, recording switched off) or none arrived within
+ * [PATIENCE_MS] of the first spare, so a daemon that keeps recording call A past its end is not spared again for call B.
+ */
+class SpareMemory {
+    @Volatile private var firstSparedAt: Long? = null
+    @Volatile private var rejected = false
+
+    fun noteSpared(now: Long) { if (firstSparedAt == null) firstSparedAt = now }
+    fun noteRejected() { rejected = true }
+    fun reset() { firstSparedAt = null; rejected = false }
+
+    fun stillAllowed(now: Long): Boolean = !rejected && (firstSparedAt?.let { now - it < PATIENCE_MS } ?: true)
+
+    companion object {
+        const val PATIENCE_MS = 30_000L
+        val shared = SpareMemory()
     }
 }

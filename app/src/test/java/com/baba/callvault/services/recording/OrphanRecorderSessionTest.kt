@@ -61,6 +61,7 @@ class OrphanRecorderSessionTest {
     ) : OrphanRecorderSession.Environment {
         var rescues = 0
         var noSessionMarks = 0
+        val clearedKeeping = mutableListOf<File?>()
         val lines = mutableListOf<String>()
         override fun ownedHere() = owned
         override fun callInProgress() = inCall
@@ -69,6 +70,7 @@ class OrphanRecorderSessionTest {
         override fun liveCallBeganAt() = liveCallBegan
         override fun markNoCall() { lastNoCall = System.currentTimeMillis(); liveCallBegan = null }
         override fun markNoSession() { noSessionMarks++ }
+        override fun clearSessionRecord(keep: File?) { clearedKeeping.add(keep) }
         override fun scheduleRescue() { rescues++ }
         override fun record(line: String) { lines.add(line) }
     }
@@ -110,6 +112,17 @@ class OrphanRecorderSessionTest {
 
         assertEquals(Action.STOP_ORPHAN, outcome.action)
         assertEquals(listOf("whatsapp1"), recorder.finalised)
+    }
+
+    @Test
+    fun `a stopped orphan clears the session record, sparing the live session's file`() {
+        val recorder = FakeRecorder().apply { start("whatsapp1") }
+        val env = FakeEnv(inCall = true, orphanStart = call1Start, lastNoCall = 0L, liveCallBegan = call1Start + 90_000L)
+        val live = File("/staging/live.ogg")
+
+        OrphanRecorderSession.resolve(recorder, env, "app call start", exclude = live)
+
+        assertEquals(listOf<File?>(live), env.clearedKeeping)
     }
 
     @Test

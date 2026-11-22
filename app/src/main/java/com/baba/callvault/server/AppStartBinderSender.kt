@@ -88,28 +88,69 @@ internal object AppStartBinderSender {
         }
     }
 
+    @Volatile
+    private var lastClientCallAt = 0L
+
+    /** Called for every transaction an app process makes on this daemon's binder. */
+    fun noteClientCall() {
+        lastClientCallAt = android.os.SystemClock.elapsedRealtime()
+    }
+
+    private var deathCycles = 0
+    private var lastCycleAt: Long? = null
+
+    @Volatile
+    private var loopGeneration = 0
+
     private fun onAppDied() {
         val ctx = deathContext ?: return
-        synchronized(this) { watchedProvider = null }
+        val now = android.os.SystemClock.elapsedRealtime()
         val recording = runCatching { ctx.isRecording() }.getOrDefault(false)
-        AppLogger.i(TAG, "The app's process died; recording=$recording" + if (recording) "; handing the binder over again" else "; idle, leaving the app alone")
-        if (!recording) return
-        worker.execute {
-            var attempt = 0
-            var lastDelivered: Boolean? = null
-            while (true) {
-                val stillRecording = runCatching { ctx.isRecording() }.getOrDefault(false)
-                val wait = AppDeathRedelivery.nextDelayMs(attempt, stillRecording, lastDelivered) ?: break
-                runCatching { Thread.sleep(wait) }
-                val delivered = runCatching { BinderDelivery.redeliverBinderToApp(ctx.binder, ctx.authority, ctx.apkPath) }
-                    .onFailure { AppLogger.w(TAG, "Re-delivery after the app's death threw: ${it.message}") }
-                    .getOrDefault(false)
-                lastSentAt = android.os.SystemClock.elapsedRealtime()
-                AppLogger.i(TAG, "Re-delivery after the app's death, attempt ${attempt + 1} (after ${wait}ms): delivered=$delivered")
-                lastDelivered = delivered
-                attempt++
-            }
-            AppLogger.i(TAG, "Re-delivery after the app's death finished after $attempt attempt(s); last delivered=$lastDelivered")
+        val generation: Int
+        synchronized(this) {
+            watchedProvider = null
+            if (!recording) { deathCycles = 0; lastCycleAt = null }
+            generation = ++loopGeneration
+        }
+        if (!recording) {
+            AppLogger.i(TAG, "The app's process died; idle, leaving the app alone")
+            return
+        }
+        val sinceLast = lastCycleAt?.let { now - it }
+        if (!AppDeathRedelivery.mayStartCycle(deathCycles, sinceLast)) {
+            AppLogger.w(TAG, "The app's process died while recording; NOT restarting it again (cycles=$deathCycles, ${sinceLast ?: "-"}ms since the last): " +
+                "an app killer or a crash loop would be fed. The recording continues unowned until the app comes back on its own")
+            return
+        }
+        deathCycles++
+        lastCycleAt = now
+        AppLogger.i(TAG, "The app's process died while recording; handing the binder over again (cycle $deathCycles of ${AppDeathRedelivery.MAX_CYCLES})")
+        Thread({ redeliverLoop(ctx, generation, now) }, "cv-redeliver").apply { isDaemon = true }.start()
+    }
+
+    /** Offers the binder again until an app call proves it holds it, the recording ends, or the attempts run out. */
+    private fun redeliverLoop(ctx: DeathContext, generation: Int, diedAt: Long) {
+        var attempt = 0
+        while (generation == loopGeneration) {
+            val clientSeen = lastClientCallAt >= diedAt
+            val stillRecording = runCatching { ctx.isRecording() }.getOrDefault(false)
+            val wait = AppDeathRedelivery.nextDelayMs(attempt, stillRecording, clientSeen) ?: break
+            runCatching { Thread.sleep(wait) }
+            if (generation != loopGeneration || lastClientCallAt >= diedAt) continue
+            val delivered = runCatching { BinderDelivery.redeliverBinderToApp(ctx.binder, ctx.authority, ctx.apkPath) }
+                .onFailure { AppLogger.w(TAG, "Re-delivery after the app's death threw: ${it.message}") }
+                .getOrDefault(false)
+            lastSentAt = android.os.SystemClock.elapsedRealtime()
+            AppLogger.i(TAG, "Re-delivery after the app's death, attempt ${attempt + 1} of ${AppDeathRedelivery.MAX_ATTEMPTS} " +
+                "(after ${wait}ms): provider replied=$delivered (not proof the app took it)")
+            attempt++
+        }
+        val held = lastClientCallAt >= diedAt
+        val recording = runCatching { ctx.isRecording() }.getOrDefault(false)
+        if (generation == loopGeneration) {
+            if (held) AppLogger.i(TAG, "Re-delivery finished: the app is calling this daemon again (after $attempt attempt(s))")
+            else if (recording) AppLogger.w(TAG, "Re-delivery gave up after $attempt attempt(s): the app has not called this daemon and it is STILL RECORDING with no owner")
+            else AppLogger.i(TAG, "Re-delivery stopped: not recording any more (after $attempt attempt(s))")
         }
     }
 
@@ -144,8 +185,10 @@ internal object AppStartBinderSender {
                 return try {
                     data.enforceInterface(OBSERVER_DESCRIPTOR)
                     val uid = data.readInt()
-                    AppLogger.i(TAG, "uid observer call: code=$code uid=$uid (active code=$activeCode)")
-                    if (AppDeathRedelivery.isActiveTransaction(code, activeCode) && uid == appUid) onAppActive(binder, authority, apkPath)
+                    val isActive = AppDeathRedelivery.isActiveTransaction(code, activeCode)
+                    // Other apps' uids are not logged; ours, or a code that is not "active", is.
+                    if (uid == appUid || !isActive) AppLogger.i(TAG, "uid observer call: code=$code uid=$uid (active code=$activeCode)")
+                    if (isActive && uid == appUid) onAppActive(binder, authority, apkPath)
                     true
                 } catch (t: Throwable) {
                     AppLogger.w(TAG, "uid observer call ignored: ${t.message}")

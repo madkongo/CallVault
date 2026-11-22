@@ -112,6 +112,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             destroy()
             return true
         }
+        // Any call from the app proves it holds this binder (the re-delivery after its death can stop asking).
+        AppStartBinderSender.noteClientCall()
         return super.onTransact(code, data, reply, flags)
     }
 

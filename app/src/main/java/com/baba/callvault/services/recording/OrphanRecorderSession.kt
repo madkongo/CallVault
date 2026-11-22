@@ -71,6 +71,8 @@ object OrphanRecorderSession {
         fun markNoCall()
         /** The recorder is not recording now: no session can be orphaned from before this moment. */
         fun markNoSession()
+        /** An orphan was stopped: forget the session record naming its file, unless it names [keep] (a live session). */
+        fun clearSessionRecord(keep: File?) {}
         fun scheduleRescue()
         fun record(line: String)
     }
@@ -117,6 +119,7 @@ object OrphanRecorderSession {
                         (stopFailure?.let { " " + CallEndLog.describe(it) } ?: "") + ")")
                 } else {
                     env.markNoSession()
+                    env.clearSessionRecord(exclude)
                     env.record("orphan session [$trigger]: stopped; its file goes to the cut-off rescue under its own call's name")
                 }
                 // Scheduled either way: a stopped file is published once quiet, a failed stop is looked at again.
@@ -270,6 +273,14 @@ object OrphanRecorderSession {
         override fun markNoCall() = edit(context) {
             putLong(KEY_LAST_NO_CALL_AT, System.currentTimeMillis())
             remove(KEY_LIVE_CALL_BEGAN_AT)
+        }
+
+        override fun clearSessionRecord(keep: File?) {
+            synchronized(sessionRecordLock) {
+                val recorded = prefs.getString(KEY_SESSION_STAGING, null) ?: return
+                if (keep != null && File(recorded).absolutePath == keep.absolutePath) return
+                edit(context) { remove(KEY_SESSION_STAGING) }
+            }
         }
 
         override fun markNoSession() = edit(context) { putLong(KEY_LAST_NO_SESSION_AT, System.currentTimeMillis()) }

@@ -18,29 +18,40 @@ class AppDeathRedeliveryTest {
 
     @Test
     fun `while recording, the first re-delivery comes after a short wait`() {
-        assertEquals(1_000L, AppDeathRedelivery.nextDelayMs(attempt = 0, recording = true, lastDelivered = null))
+        assertEquals(1_000L, AppDeathRedelivery.nextDelayMs(attempt = 0, recording = true, clientSeen = false))
     }
 
     @Test
-    fun `a failed delivery is retried up to three attempts, then given up`() {
+    fun `quick retries come first, then a periodic gap, then the attempts run out`() {
         assertEquals(2_000L, AppDeathRedelivery.nextDelayMs(1, true, false))
         assertEquals(2_000L, AppDeathRedelivery.nextDelayMs(2, true, false))
-        assertNull(AppDeathRedelivery.nextDelayMs(3, true, false))
+        assertEquals(AppDeathRedelivery.PERIODIC_GAP_MS, AppDeathRedelivery.nextDelayMs(3, true, false))
+        assertEquals(AppDeathRedelivery.PERIODIC_GAP_MS, AppDeathRedelivery.nextDelayMs(AppDeathRedelivery.MAX_ATTEMPTS - 1, true, false))
+        assertNull(AppDeathRedelivery.nextDelayMs(AppDeathRedelivery.MAX_ATTEMPTS, true, false))
     }
 
     @Test
-    fun `a delivered binder ends the retries`() {
-        assertNull(AppDeathRedelivery.nextDelayMs(1, true, true))
+    fun `an app call on the binder ends the retries, a provider reply alone does not`() {
+        assertNull(AppDeathRedelivery.nextDelayMs(1, true, clientSeen = true))
+        assertEquals(2_000L, AppDeathRedelivery.nextDelayMs(1, true, clientSeen = false))
     }
 
     @Test
     fun `an idle daemon never restarts a stopped app`() {
-        assertNull(AppDeathRedelivery.nextDelayMs(0, recording = false, lastDelivered = null))
+        assertNull(AppDeathRedelivery.nextDelayMs(0, recording = false, clientSeen = false))
     }
 
     @Test
     fun `recording that ends between retries stops them`() {
-        assertNull(AppDeathRedelivery.nextDelayMs(1, recording = false, lastDelivered = false))
+        assertNull(AppDeathRedelivery.nextDelayMs(1, recording = false, clientSeen = false))
+    }
+
+    @Test
+    fun `app restarts per recording are capped, and a tight loop does not start a new cycle`() {
+        assertTrue(AppDeathRedelivery.mayStartCycle(0, null))
+        assertTrue(AppDeathRedelivery.mayStartCycle(2, AppDeathRedelivery.MIN_CYCLE_GAP_MS))
+        assertFalse(AppDeathRedelivery.mayStartCycle(AppDeathRedelivery.MAX_CYCLES, null))
+        assertFalse(AppDeathRedelivery.mayStartCycle(1, AppDeathRedelivery.MIN_CYCLE_GAP_MS - 1))
     }
 
     @Test

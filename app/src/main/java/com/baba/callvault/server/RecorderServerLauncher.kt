@@ -424,7 +424,8 @@ object RecorderServerLauncher {
             val age = System.currentTimeMillis() - file.lastModified()
             val before = file.length()
             // Only when the modification time is old does a second read, a moment later, settle it.
-            val after = if (age in 0..StaleDaemonPolicy.FRESH_WRITE_MS) null else {
+            // A fresh write needs no second read, and neither does a record left over from an earlier call.
+            val after = if (age in 0..StaleDaemonPolicy.FRESH_WRITE_MS || age > StaleDaemonPolicy.STALE_SESSION_MS) null else {
                 runCatching { Thread.sleep(STAGING_REREAD_MS) }
                 file.length()
             }
@@ -442,6 +443,9 @@ object RecorderServerLauncher {
         override fun probeOutput(): String? = runShell(context, LIST_DAEMONS_CMD)
         override fun kill() = killStaleDaemons(context)
         override fun log(line: String) = AppLogger.i(TAG, line)
+        override fun warn(line: String) = AppLogger.w(TAG, line)
+        override fun spareAllowed() = SpareMemory.shared.stillAllowed(SystemClock.elapsedRealtime())
+        override fun noteSpared() = SpareMemory.shared.noteSpared(SystemClock.elapsedRealtime())
     })
 
     /** Runs [command] over the embedded shell and returns what it printed, or null when the shell failed outright. */

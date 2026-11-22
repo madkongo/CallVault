@@ -109,6 +109,7 @@ internal object BinderDelivery {
     @Volatile
     var onProviderBinder: ((IBinder) -> Unit)? = null
 
+    /** True when the provider replied. That is not "the app took it": the app may refuse a hand-over (see DaemonReuse.judgeRedelivery). */
     private fun deliver(authority: String, method: String, bundle: Bundle): Boolean = call(authority, method, bundle) != null
 
     /** The provider's reply to [method], or null when neither path reached it. */
@@ -123,9 +124,13 @@ internal object BinderDelivery {
         }
 
         AppLogger.i(TAG, "Falling back to system-context ContentResolver path")
-        return runCatching { deliverViaSystemContext(authority, bundle, method) }
+        val viaContext = runCatching { deliverViaSystemContext(authority, bundle, method) }
             .onFailure { AppLogger.e(TAG, "system-context path failed: ${it.message}", it) }
             .getOrNull()
+        if (viaContext != null) {
+            AppLogger.w(TAG, "Delivered ($method) via the system-context fallback: the app's provider binder is not watched, so a later death of the app will not be answered")
+        }
+        return viaContext
     }
 
     /**

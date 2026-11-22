@@ -20,15 +20,36 @@ package com.baba.callvault.server
  */
 object AppDeathRedelivery {
 
-    private val DELAYS_MS = longArrayOf(1_000L, 2_000L, 2_000L)
+    private val FIRST_DELAYS_MS = longArrayOf(1_000L, 2_000L, 2_000L)
 
-    /** Milliseconds to wait before attempt [attempt] (0-based), or null to stop. */
-    fun nextDelayMs(attempt: Int, recording: Boolean, lastDelivered: Boolean?): Long? = when {
+    /** After the quick retries, a still-unclaimed recording is offered the binder again at this gap. */
+    const val PERIODIC_GAP_MS = 15_000L
+
+    /** Total attempts per death (3 quick, then periodic): about two minutes, then the daemon stops asking. */
+    const val MAX_ATTEMPTS = 9
+
+    /** App deaths per recording session that may each restart the app; beyond it an OEM killer / crash loop is left alone. */
+    const val MAX_CYCLES = 3
+
+    /** Two deaths closer than this count as one loop, not as a new cycle. */
+    const val MIN_CYCLE_GAP_MS = 10_000L
+
+    /**
+     * Milliseconds to wait before attempt [attempt] (0-based), or null to stop. [clientSeen] is true once any app call
+     * reached this daemon's binder since the death: the app holds it, whatever the provider's reply said ("delivered"
+     * only means the provider replied; the app may have refused the binder).
+     */
+    fun nextDelayMs(attempt: Int, recording: Boolean, clientSeen: Boolean): Long? = when {
         !recording -> null
-        lastDelivered == true -> null
-        attempt >= DELAYS_MS.size -> null
-        else -> DELAYS_MS[attempt]
+        clientSeen -> null
+        attempt >= MAX_ATTEMPTS -> null
+        attempt < FIRST_DELAYS_MS.size -> FIRST_DELAYS_MS[attempt]
+        else -> PERIODIC_GAP_MS
     }
+
+    /** Whether this death may start another re-delivery cycle (each one restarts the app's process). */
+    fun mayStartCycle(cyclesSoFar: Int, sinceLastCycleMs: Long?): Boolean =
+        cyclesSoFar < MAX_CYCLES && (sinceLastCycleMs == null || sinceLastCycleMs >= MIN_CYCLE_GAP_MS)
 
     /** The uid observer is subscribed to "active" only, but its transaction code must say so; unknown code = accept as before. */
     fun isActiveTransaction(code: Int, activeCode: Int?): Boolean = activeCode == null || code == activeCode

@@ -21,7 +21,13 @@ class StaleDaemonClearingTest {
         val growing: Boolean,
         val inCallValue: Boolean? = true,
         val probe: String? = "27774 app_process / com.baba.callvault.server.RecorderServer \ncv-end\n",
+        var spareOk: Boolean = true,
     ) : Env {
+        var spared = 0
+        val warnings = mutableListOf<String>()
+        override fun warn(line: String) { warnings += line }
+        override fun spareAllowed() = spareOk
+        override fun noteSpared() { spared++ }
         var kills = 0
         var probes = 0
         val lines = mutableListOf<String>()
@@ -75,5 +81,29 @@ class StaleDaemonClearingTest {
         val env = FakeEnv(growing = false, inCallValue = false)
         StaleDaemonClearing.clear(env)
         assertTrue(env.lines.any { it.contains("killing") && it.contains("inCall=false") })
+    }
+
+    @Test
+    fun `a withdrawn spare kills the daemon with a warning`() {
+        val env = FakeEnv(growing = true, spareOk = false)
+        assertTrue(StaleDaemonClearing.clear(env))
+        assertEquals(1, env.kills)
+        assertEquals(0, env.spared)
+        assertTrue(env.warnings.any { it.contains("Not sparing") })
+    }
+
+    @Test
+    fun `a spare is remembered`() {
+        val env = FakeEnv(growing = true)
+        StaleDaemonClearing.clear(env)
+        assertEquals(1, env.spared)
+    }
+
+    @Test
+    fun `killing a recording orphan after the call warns that the file will be unfinalised`() {
+        val env = FakeEnv(growing = true, inCallValue = false)
+        assertTrue(StaleDaemonClearing.clear(env))
+        assertEquals(1, env.kills)
+        assertTrue(env.warnings.any { it.contains("unfinalised") && it.contains("rescue expected") })
     }
 }
