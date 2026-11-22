@@ -95,6 +95,12 @@ object KeepPaired {
 
     enum class Outcome { DONE, UNREADABLE, WRITE_FAILED, ALREADY_OFF, NOT_OURS, CHANGED_ELSEWHERE }
 
+    /**
+     * A limit for the log. Always with its unit: the log redactor hides any bare 7-or-more-digit number as a
+     * phone number, and 604800000 is one; "604800000 ms" is left alone (it is a measurement).
+     */
+    private fun ms(value: Long?): String = if (value == null) "unreadable" else "$value ms"
+
     private val defaultLog: (String) -> Unit = { AppLogger.i(TAG, it) }
 
     /**
@@ -120,7 +126,7 @@ object KeepPaired {
         }
         val after = limit.read()
         if (after != 0L) {
-            log("Stay paired: the write did not take (read back ${after ?: "unreadable"} ms, was $before ms); putting $before ms back")
+            log("Stay paired: the write did not take (read back ${ms(after)}, was $before ms); putting $before ms back")
             val rolledBack = limit.write(before)
             if (rolledBack) {
                 log("Stay paired: rolled back to $before ms")
@@ -167,12 +173,19 @@ object KeepPaired {
         }
         memory.setOriginalMs(null)
         memory.setAnswer(KeepPairedAnswer.KEEP_LIMIT)
-        log("Restore: limit changed from 0 ms back to $original ms (now reads ${limit.read() ?: "unreadable"})")
+        log("Restore: limit changed from 0 ms back to $original ms (now reads ${ms(limit.read())})")
         return Outcome.DONE
     }
 
     /** True only when the setting provably reads 0; an unreadable setting is never shown as on. */
     fun isOn(limit: AdbConnectionLimit): Boolean = limit.read() == 0L
+
+    /**
+     * Whether turning the switch off should ask first: only while the setting still reads 0, i.e. there is a
+     * limit to turn back on. Read at tap time; a limit changed elsewhere skips the question, and an unreadable
+     * one keeps it (nothing proves it changed).
+     */
+    fun needsRestoreConfirm(limit: AdbConnectionLimit): Boolean = limit.read().let { it == null || it == 0L }
 
     /** Whether the switch may be turned off: only when CallVault replaced the value. */
     fun canRestore(memory: KeepPairedMemory): Boolean = memory.originalMs() != null
@@ -180,7 +193,7 @@ object KeepPaired {
     /** Logged when the mode switches to Shizuku: the setting stays as it is. */
     fun logLeftAsIs(limit: AdbConnectionLimit, memory: KeepPairedMemory, log: (String) -> Unit = defaultLog) {
         log(
-            "Switching to Shizuku mode: the pairing time limit is left as it is (reads ${limit.read() ?: "unreadable"}, " +
+            "Switching to Shizuku mode: the pairing time limit is left as it is (reads ${ms(limit.read())}, " +
                 "set by CallVault: ${canRestore(memory)}); Shizuku mode does not need the pairing",
         )
     }

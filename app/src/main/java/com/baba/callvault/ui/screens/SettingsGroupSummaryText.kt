@@ -21,6 +21,7 @@ import com.baba.callvault.data.SyncScheduleMode
 import com.baba.callvault.ui.common.SyncScheduleLabels
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.KeepPaired
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.summary.SummaryModel
 import com.baba.callvault.transcription.model.ModelRepository
@@ -222,6 +223,11 @@ private fun connectionSummaryText(preferences: AppPreferences, updateTrigger: In
                 SwitchSummaryInput(preferences.isWirelessDebuggingEnforced(), usesEmbeddedAdb),
                 SwitchSummaryInput(preferences.isWifiNetworkAutoApproveEnabled(), wifiApprovalSupported),
                 SwitchSummaryInput(preferences.isWirelessDebuggingNeverTurnOff(), wdControlSupported),
+                keepPairedSummaryInput(
+                    isOn = KeepPaired.isOn(KeepPaired.systemLimit(context)),
+                    usesEmbeddedAdb = usesEmbeddedAdb,
+                    isSetByCallVault = KeepPaired.canRestore(KeepPaired.memory(context)),
+                ),
             )
         )
     }

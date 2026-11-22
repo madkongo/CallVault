@@ -582,8 +582,15 @@ internal fun KeepPairedToggle() {
                 changedElsewhere = false
                 on = KeepPaired.isOn(limit)
                 ours = KeepPaired.canRestore(memory)
-            } else {
+            } else if (KeepPaired.needsRestoreConfirm(limit)) {
                 confirmRestore = true
+            } else {
+                // Already changed elsewhere: nothing to turn back on, so no question; restore() records it.
+                val outcome = KeepPaired.restore(limit, memory)
+                changedElsewhere = outcome == KeepPaired.Outcome.CHANGED_ELSEWHERE
+                failed = outcome != KeepPaired.Outcome.DONE && !changedElsewhere
+                on = KeepPaired.isOn(limit)
+                ours = KeepPaired.canRestore(memory)
             }
         },
     )

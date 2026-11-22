@@ -86,4 +86,16 @@ class SettingsGroupSummariesTest {
         assertEquals(2, activeRuleCount(listOf(true, false, true)))
         assertEquals(0, activeRuleCount(emptyList()))
     }
+
+    @Test
+    fun `stay paired switch counts in standalone mode`() {
+        assertEquals(SwitchSummaryInput(isOn = true, isAvailable = true), keepPairedSummaryInput(isOn = true, usesEmbeddedAdb = true, isSetByCallVault = false))
+        assertEquals(CountSummary(1, 1), countSummary(listOf(keepPairedSummaryInput(true, true, false))))
+    }
+
+    @Test
+    fun `stay paired switch counts in Shizuku mode only when CallVault set it`() {
+        assertEquals(CountSummary(1, 1), countSummary(listOf(keepPairedSummaryInput(true, false, true))))
+        assertEquals(CountSummary(0, 0), countSummary(listOf(keepPairedSummaryInput(true, false, false))))
+    }
 }
