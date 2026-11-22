@@ -489,6 +489,7 @@ class DaemonKeepAliveService : Service() {
             val prefs = AppPreferences(applicationContext)
             if (on) {
                 watchdogHandler.removeCallbacks(settleWirelessDebuggingOffCause)
+                AdbShell.userOffPending.clear()
                 // On again, by anyone: nothing left to respect.
                 // Remembered first: a quick revert of this on must put back what the user already had.
                 wdUserFlagTracker.onSwitchedOn(prefs.wasWirelessDebuggingTurnedOffByUser(), SystemClock.elapsedRealtime())
@@ -543,11 +544,16 @@ class DaemonKeepAliveService : Service() {
                 WirelessDebuggingOffCause.ANDROID_NO_WIFI ->
                     AppLogger.i(TAG, "Wireless debugging went off with Wi-Fi; Android's doing, not the user's")
                 WirelessDebuggingOffCause.USER -> {
+                    // Known gap: with no location permission BSSID reads as hidden, so identity is the network handle
+                    // alone. A mesh roam between access points of one network (Android: "Detected wifi network
+                    // change") keeps the same handle and can still be blamed on the user.
                     // C99 (OP9): Android can write the switch off a few ms before Wi-Fi is reported gone, which reads
                     // exactly like a tap. So no verdict now: look again once the network has settled, and only then
                     // attribute it to the user (Wi-Fi never dropped, same network). One decision, so it cannot flip.
                     pendingOffAtMs = SystemClock.elapsedRealtime()
-                    pendingOffWifiIdentity = lastKnownWifiIdentity ?: WifiIdentity.of(applicationContext)
+                    // A fresh read, not a remembered one, which can be older than the flap that caused this off.
+                    pendingOffWifiIdentity = WifiIdentity.of(applicationContext)
+                    AdbShell.userOffPending.start()
                     AppLogger.i(TAG, "Wireless debugging off with Wi-Fi up; waiting ${WirelessDebuggingSettledVerdict.SETTLE_WINDOW_MS} ms before calling it the user's")
                     watchdogHandler.removeCallbacks(settleWirelessDebuggingOffCause)
                     watchdogHandler.postDelayed(settleWirelessDebuggingOffCause, WirelessDebuggingSettledVerdict.SETTLE_WINDOW_MS)
@@ -583,10 +589,9 @@ class DaemonKeepAliveService : Service() {
 
     @Volatile private var pendingOffWifiIdentity: String? = null
 
-    /** The Wi-Fi network last seen joined; "the same network as before" is judged against it. */
-    @Volatile private var lastKnownWifiIdentity: String? = null
-
     private val settleWirelessDebuggingOffCause = Runnable {
+        AdbShell.userOffPending.clear()
+        if (!usesAdb()) return@Runnable
         val prefs = AppPreferences(applicationContext)
         // Switched back on during the window: the on branch already handled it.
         if (AdbShell.isWirelessDebuggingEnabled(applicationContext)) return@Runnable
@@ -629,7 +634,6 @@ class DaemonKeepAliveService : Service() {
 
         override fun onAvailable(network: Network) {
             if (!usesAdb()) return
-            lastKnownWifiIdentity = WifiIdentity.of(applicationContext)
             // Let Android finish its own "Wi-Fi changed" handling of the switch first.
             // Never sooner than 30 s after the last approval began (R16); a join inside that window is delayed, not dropped.
             watchdogHandler.removeCallbacks(approveJoinedWifi)
@@ -757,6 +761,9 @@ class DaemonKeepAliveService : Service() {
         runCatching { contentResolver.unregisterContentObserver(developerOptionsObserver) }
         runCatching { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(wifiJoinCallback) }
         watchdogHandler.removeCallbacks(approveJoinedWifi)
+        // A verdict still settling is dropped with the watchers (onDestroy, or a switch to Shizuku mode).
+        watchdogHandler.removeCallbacks(settleWirelessDebuggingOffCause)
+        AdbShell.userOffPending.clear()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
