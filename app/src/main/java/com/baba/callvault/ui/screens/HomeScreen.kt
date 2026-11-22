@@ -2832,7 +2832,7 @@ private fun HeroStatusCard(
 ) {
     // A live recording gets its own red, animated card (design B); everything else is the normal hero.
     if (status == HomeViewModel.HomeStatus.RECORDING || status == HomeViewModel.HomeStatus.RECORDING_PAUSED) {
-        com.baba.callvault.ui.common.RecordingStatusCard(status, onAction)
+        com.baba.callvault.ui.common.RecordingStatusCard(status, mode, onAction, onSetRecordingState)
         return
     }
     val brand = LocalCvBrand.current

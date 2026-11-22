@@ -10,6 +10,7 @@ package com.baba.callvault.services.recording
 
 import android.app.Notification
 import android.os.SystemClock
+import kotlin.math.abs
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -87,6 +88,18 @@ object SharedStatusNotice {
     private var runningSinceMs = NOT_RUNNING
     private var bankedMs = 0L
 
+    /** What the clock persists so a process kill mid-call does not restart the timer at 00:00. */
+    data class SavedClock(val runningSinceMs: Long, val bankedMs: Long, val bootWallMs: Long, val savedWallMs: Long)
+
+    /** Where the clock is persisted; null (tests, the shell process) means no persistence. */
+    interface ClockStore {
+        fun load(): SavedClock?
+        fun save(clock: SavedClock?)
+    }
+
+    @Volatile
+    var clockStore: ClockStore? = null
+
     /**
      * Milliseconds the current recording has been actively recording at [nowMs] (the same clock [setLive] reads,
      * SystemClock.elapsedRealtime): frozen while paused, 0 when nothing is live.
@@ -95,24 +108,56 @@ object SharedStatusNotice {
         bankedMs + if (runningSinceMs == NOT_RUNNING) 0L else (nowMs - runningSinceMs).coerceAtLeast(0L)
     }
 
-    private fun trackClock(state: Live, nowMs: Long) {
+    /**
+     * A saved clock is trusted only when it was written in this same boot (elapsedRealtime is comparable then),
+     * recently enough to be one call, and is not from the future. Anything else is a different call: start at zero.
+     */
+    internal fun restorable(saved: SavedClock, nowMs: Long, wallMs: Long): Boolean =
+        abs((wallMs - nowMs) - saved.bootWallMs) <= BOOT_TOLERANCE_MS &&
+            wallMs - saved.savedWallMs in 0..MAX_RESTORE_AGE_MS &&
+            saved.runningSinceMs <= nowMs
+
+    private fun trackClock(state: Live, nowMs: Long, wallMs: Long) {
+        val store = clockStore
         when (state) {
-            Live.NONE -> { runningSinceMs = NOT_RUNNING; bankedMs = 0L }
-            Live.RECORDING -> if (runningSinceMs == NOT_RUNNING) runningSinceMs = nowMs
-            Live.PAUSED -> if (runningSinceMs != NOT_RUNNING) {
-                bankedMs += (nowMs - runningSinceMs).coerceAtLeast(0L)
-                runningSinceMs = NOT_RUNNING
+            Live.NONE -> {
+                runningSinceMs = NOT_RUNNING; bankedMs = 0L
+                store?.save(null)
+                return
+            }
+            Live.RECORDING -> {
+                if (runningSinceMs == NOT_RUNNING && bankedMs == 0L) {
+                    // A fresh process joining a call that was already being timed?
+                    store?.load()?.takeIf { restorable(it, nowMs, wallMs) }?.let {
+                        runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs
+                    }
+                }
+                if (runningSinceMs == NOT_RUNNING) runningSinceMs = nowMs
+            }
+            Live.PAUSED -> {
+                if (runningSinceMs == NOT_RUNNING && bankedMs == 0L) {
+                    store?.load()?.takeIf { restorable(it, nowMs, wallMs) }?.let {
+                        runningSinceMs = it.runningSinceMs; bankedMs = it.bankedMs
+                    }
+                }
+                if (runningSinceMs != NOT_RUNNING) {
+                    bankedMs += (nowMs - runningSinceMs).coerceAtLeast(0L)
+                    runningSinceMs = NOT_RUNNING
+                }
             }
         }
+        store?.save(SavedClock(runningSinceMs, bankedMs, wallMs - nowMs, wallMs))
     }
 
     private const val NOT_RUNNING = -1L
+    private const val BOOT_TOLERANCE_MS = 5_000L
+    private const val MAX_RESTORE_AGE_MS = 2 * 60 * 60 * 1000L
 
     /** The live state now. */
     val live: Live get() = liveState.value
 
     /** [owner] is recording ([paused] false) or holding a paused recording; [Live.NONE] clears it. */
-    fun setLive(owner: Owner, state: Live, nowMs: Long = SystemClock.elapsedRealtime()) {
+    fun setLive(owner: Owner, state: Live, nowMs: Long = SystemClock.elapsedRealtime(), wallMs: Long = System.currentTimeMillis()) {
         synchronized(liveByOwner) {
             if (state == Live.NONE) liveByOwner.remove(owner) else liveByOwner[owner] = state
             // Recording wins over paused when two calls overlap.
@@ -121,7 +166,7 @@ object SharedStatusNotice {
                 liveByOwner.containsValue(Live.PAUSED) -> Live.PAUSED
                 else -> Live.NONE
             }
-            trackClock(liveState.value, nowMs)
+            trackClock(liveState.value, nowMs, wallMs)
         }
     }
 
@@ -180,7 +225,9 @@ object SharedStatusNotice {
         synchronized(claims) { claims.clear() }
         synchronized(liveByOwner) { liveByOwner.clear() }
         liveState.value = Live.NONE
-        synchronized(liveByOwner) { trackClock(Live.NONE, 0L) }
+        // The saved clock is left alone on purpose: this is how a test simulates a process kill.
+        synchronized(liveByOwner) { runningSinceMs = NOT_RUNNING; bankedMs = 0L }
+        clockStore = null
         onReleased = null
         foregroundPoster = null
     }

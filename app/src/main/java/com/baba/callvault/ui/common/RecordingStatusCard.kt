@@ -24,17 +24,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.StopCircle
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,6 +51,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.baba.callvault.R
+import com.baba.callvault.data.PrivilegedMode
+import com.baba.callvault.data.RecordingState
 import com.baba.callvault.services.recording.SharedStatusNotice
 import com.baba.callvault.ui.theme.LocalCvBrand
 import com.baba.callvault.ui.viewmodels.HomeViewModel.HomeStatus
@@ -62,29 +69,39 @@ private val BAR_DELAYS_MS = intArrayOf(0, 150, 300, 450, 600, 250)
 /**
  * Home's status card while a call is being recorded ("B · RECORDING RED"): a blinking red dot, the title, a subtitle
  * with the running time, and decorative bars. [status] must be RECORDING or RECORDING_PAUSED; paused keeps the same
- * card with a solid dot and still bars. A tap does what the normal hero card's tap does ([onClick]).
+ * card with a solid dot and still bars. A tap does what the normal hero card's tap does ([onClick]). The mode pill and
+ * the master Stop control stay on the card, as on the normal hero.
  */
 @Composable
-fun RecordingStatusCard(status: HomeStatus, onClick: (() -> Unit)?) {
+fun RecordingStatusCard(
+    status: HomeStatus,
+    mode: PrivilegedMode,
+    onClick: (() -> Unit)?,
+    onSetRecordingState: ((RecordingState) -> Unit)? = null,
+) {
     val brand = LocalCvBrand.current
     val context = LocalContext.current
-    val animationsOn = remember(status) {
-        animationsEnabled(Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f))
-    }
+    // Read on every composition (a cheap settings read) so a changed "remove animations" setting shows up at once.
+    val animationsOn = animationsEnabled(Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f))
     val style = recordingCardStyle(status, animationsOn) ?: return
     val elapsedMs by recordingElapsedMs(running = status == HomeStatus.RECORDING)
     val elapsed = formatRecordingElapsed(elapsedMs)
     val title = stringResource(status.titleResId)
-    val subtitle = stringResource(status.suggestionResId) + " · " + elapsed
+    // Paused: just the frozen time under the title; the long "nothing is being saved" sentence wrapped.
+    val subtitle = if (status == HomeStatus.RECORDING) stringResource(status.suggestionResId) + " · " + elapsed else elapsed
     val description = "$title, $elapsed"
 
     CvCard(
         color = brand.recordingContainer,
         onClick = onClick,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(18.dp),
-        modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = description },
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        // The description covers the header only, so the Stop control below keeps its own semantics.
+        Row(
+            Modifier.semantics(mergeDescendants = true) { contentDescription = description },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
             Box(
                 modifier = Modifier.size(44.dp).clip(CircleShape).background(brand.recording.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center,
@@ -96,6 +113,28 @@ fun RecordingStatusCard(status: HomeStatus, onClick: (() -> Unit)?) {
                 Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = brand.onRecordingMuted)
             }
             RecordingBars(animate = style.animateBars)
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CvStatusPill(
+                text = stringResource(if (mode.needsShizuku) R.string.home_mode_badge_shizuku else R.string.home_mode_badge_standalone),
+                tone = CvTone.Info,
+            )
+            Spacer(Modifier.weight(1f))
+            if (onSetRecordingState != null) {
+                Surface(
+                    onClick = { onSetRecordingState(RecordingState.STOPPED) },
+                    shape = CircleShape,
+                    color = brand.recording.copy(alpha = 0.16f),
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) {
+                    Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.StopCircle, contentDescription = null, tint = brand.recording, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.home_recording_stop), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+                    }
+                }
+            }
         }
     }
 }

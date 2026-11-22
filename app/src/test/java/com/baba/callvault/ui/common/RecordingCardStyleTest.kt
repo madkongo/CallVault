@@ -82,3 +82,77 @@ class RecordingCardStyleTest {
         assertEquals(1_000L, SharedStatusNotice.liveElapsedMs(31_000))
     }
 }
+
+class LiveClockRestoreTest {
+    private class FakeStore : SharedStatusNotice.ClockStore {
+        var saved: SharedStatusNotice.SavedClock? = null
+        override fun load() = saved
+        override fun save(clock: SharedStatusNotice.SavedClock?) { saved = clock }
+    }
+
+    private val store = FakeStore()
+    private val o = SharedStatusNotice.Owner.CARRIER
+    private val boot = 1_000_000_000L // wall clock at boot; wall = boot + elapsed
+
+    @org.junit.Before
+    fun attach() { SharedStatusNotice.resetForTest(); SharedStatusNotice.clockStore = store }
+
+    @After
+    fun reset() = SharedStatusNotice.resetForTest()
+
+    private fun at(elapsed: Long) = elapsed to (boot + elapsed)
+
+    /** A process kill: memory is lost, the stored clock stays. */
+    private fun killProcess() { SharedStatusNotice.resetForTest(); SharedStatusNotice.clockStore = store }
+
+    @Test
+    fun `a fresh process joining the same ongoing call keeps its time`() {
+        val (e0, w0) = at(10_000)
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, e0, w0)
+        killProcess()
+        val (e1, w1) = at(70_000)
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, e1, w1)
+        assertEquals(60_000L, SharedStatusNotice.liveElapsedMs(e1))
+        assertEquals(65_000L, SharedStatusNotice.liveElapsedMs(e1 + 5_000))
+    }
+
+    @Test
+    fun `a paused clock restores frozen and resumes from its banked time`() {
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 0, boot)
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.PAUSED, 20_000, boot + 20_000)
+        killProcess()
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.PAUSED, 50_000, boot + 50_000)
+        assertEquals(20_000L, SharedStatusNotice.liveElapsedMs(90_000))
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 90_000, boot + 90_000)
+        assertEquals(25_000L, SharedStatusNotice.liveElapsedMs(95_000))
+    }
+
+    @Test
+    fun `a start saved before a reboot is ignored`() {
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 500_000, boot + 500_000)
+        killProcess()
+        // new boot: elapsedRealtime restarted, wall clock kept going
+        val newBoot = boot + 3_600_000L
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 30_000, newBoot + 30_000)
+        assertEquals(0L, SharedStatusNotice.liveElapsedMs(30_000))
+    }
+
+    @Test
+    fun `a start older than the cap is ignored even in the same boot`() {
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 0, boot)
+        killProcess()
+        val late = 3 * 3_600_000L
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, late, boot + late)
+        assertEquals(0L, SharedStatusNotice.liveElapsedMs(late))
+    }
+
+    @Test
+    fun `an ended call leaves nothing to restore`() {
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 0, boot)
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.NONE, 30_000, boot + 30_000)
+        assertNull(store.saved)
+        killProcess()
+        SharedStatusNotice.setLive(o, SharedStatusNotice.Live.RECORDING, 60_000, boot + 60_000)
+        assertEquals(0L, SharedStatusNotice.liveElapsedMs(60_000))
+    }
+}

@@ -75,6 +75,7 @@ class CallVaultApplication : Application() {
             return
         }
         AppLogger.init(applicationContext)
+        com.baba.callvault.services.recording.SharedStatusNotice.clockStore = com.baba.callvault.services.recording.LiveClockPrefs(applicationContext)
         // The system lists app starts only from Android 15; keep our own list so a missed-call cause can tell whether
         // the app was running again after a stop (review C141). One small prefs write per main-process start.
         runCatching { com.baba.callvault.system.health.AppStartRing.record(applicationContext) }
