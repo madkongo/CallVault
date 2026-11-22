@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keep_paired_title">Maradjon örökre párosítva?</string>
+    <string name="keep_paired_body">Az Android 7 nap USB-kapcsolat nélkül elfelejti a párosítást, és ezután a hívások rögzítése leáll, amíg újra nem párosítasz. A CallVault kikapcsolhatja ezt az időkorlátot.</string>
+    <string name="keep_paired_note">Ez azt is megtartja engedélyezettként, ha egy számítógépet engedélyeztél USB-hibakereséshez. Újra bekapcsolhatod a Beállítások › Megbízhatóság menüben.</string>
+    <string name="keep_paired_accept">Maradjon párosítva</string>
+    <string name="keep_paired_decline">Korlát megtartása</string>
+    <string name="keep_paired_setting_label">Maradjon örökre párosítva</string>
+    <string name="keep_paired_setting_description">Megakadályozza, hogy az Android 7 nap USB-kapcsolat nélkül elfelejtse a párosítást.</string>
+    <string name="keep_paired_setting_failed">Nem sikerült módosítani a korlátot. A párosítás még lejárhat.</string>
+    <string name="keep_paired_setting_external">Valami más kapcsolta ki a korlátot, ezért a CallVault békén hagyja.</string>
+</resources>

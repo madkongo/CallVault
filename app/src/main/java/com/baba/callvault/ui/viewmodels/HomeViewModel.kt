@@ -28,6 +28,7 @@ import com.baba.callvault.data.calls.CallHistory
 import com.baba.callvault.data.calls.PhoneCall
 import com.baba.callvault.data.calls.PhoneCallReader
 import com.baba.callvault.data.calls.SimLabels
+import com.baba.callvault.integrations.adb.KeepPaired
 import com.baba.callvault.integrations.adb.PairingLoss
 import com.baba.callvault.data.transcripts.FavouriteRepository
 import com.baba.callvault.data.transcripts.LibraryLabels
@@ -294,6 +295,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          * lifecycle event ever fires on the way back.
          */
         val privilegedMode: PrivilegedMode = PrivilegedMode.STANDALONE,
+        /** True while the one-time "Stay paired for good?" question is open (see [KeepPaired]). */
+        val askKeepPaired: Boolean = false,
         /** True while the banner's Update action is downloading/dispatching the install. */
         val isUpdateInstalling: Boolean = false,
         /**
@@ -774,6 +777,29 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Opens the one-time "Stay paired for good?" question when [KeepPaired.shouldAsk] says so. Never while it is open. */
+    private fun evaluateKeepPairedAsk() {
+        if (_uiState.value.askKeepPaired) return
+        viewModelScope.launch {
+            val ask = withContext(Dispatchers.IO) { runCatching { KeepPaired.shouldAsk(appContext) }.getOrDefault(false) }
+            if (ask) _uiState.update { it.copy(askKeepPaired = true) }
+        }
+    }
+
+    /** "Stay paired": switches Android's 7-day pairing limit off, after remembering its value. */
+    fun answerStayPaired() {
+        _uiState.update { it.copy(askKeepPaired = false) }
+        viewModelScope.launch(Dispatchers.IO) {
+            KeepPaired.stayPaired(KeepPaired.systemLimit(appContext), KeepPaired.memory(appContext))
+        }
+    }
+
+    /** "Keep the limit": remembers the answer and never asks again. */
+    fun answerKeepLimit() {
+        _uiState.update { it.copy(askKeepPaired = false) }
+        KeepPaired.keepLimit(KeepPaired.memory(appContext))
+    }
+
     /** Closes the "you stopped CallVault" card for this stop; a later stop shows it again. */
     fun dismissStoppedByUserCard() {
         _uiState.value.stoppedByUserAtMillis?.let { preferences.setStopNoticeCardDismissedAt(it) }
@@ -935,6 +961,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 riskReasons = riskReasons,
             )
         }
+        evaluateKeepPairedAsk()
         // R5: a notice that no longer applies comes down as soon as the user is back on Home.
         com.baba.callvault.system.health.RecordingRiskNotice.evaluate(
             appContext, com.baba.callvault.system.health.RecordingRiskNotice.Trigger.HOME, reasons = riskReasons,

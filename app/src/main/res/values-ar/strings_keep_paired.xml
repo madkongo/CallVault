@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keep_paired_title">هل تريد بقاء الاقتران دائماً؟</string>
+    <string name="keep_paired_body">ينسى Android الاقتران بعد 7 أيام دون اتصال USB، وعندها تتوقف المكالمات عن التسجيل حتى تقوم بالاقتران مجدداً. يمكن لـ CallVault إيقاف هذا الحد الزمني.</string>
+    <string name="keep_paired_note">يُبقي هذا أيضاً أي حاسوب سمحت له بتصحيح أخطاء USB مسموحاً به. يمكنك إعادة تفعيله من الإعدادات › الموثوقية.</string>
+    <string name="keep_paired_accept">ابقَ مقترناً</string>
+    <string name="keep_paired_decline">أبقِ الحد</string>
+    <string name="keep_paired_setting_label">ابقَ مقترناً دائماً</string>
+    <string name="keep_paired_setting_description">يمنع Android من نسيان الاقتران بعد 7 أيام دون اتصال USB.</string>
+    <string name="keep_paired_setting_failed">تعذّر تغيير الحد. قد ينتهي الاقتران رغم ذلك.</string>
+    <string name="keep_paired_setting_external">أوقف شيء آخر هذا الحد، لذلك يتركه CallVault كما هو.</string>
+</resources>

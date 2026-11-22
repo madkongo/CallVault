@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keep_paired_title">Залишити сполучення назавжди?</string>
+    <string name="keep_paired_body">Android забуває сполучення через 7 днів без USB-підключення, і тоді дзвінки перестають записуватися, доки ви не виконаєте сполучення знову. CallVault може вимкнути це обмеження за часом.</string>
+    <string name="keep_paired_note">Це також зберігає доступ для будь-якого комп’ютера, якому ви дозволили налагодження через USB. Повернути обмеження можна в розділі Налаштування › Надійність.</string>
+    <string name="keep_paired_accept">Залишити сполучення</string>
+    <string name="keep_paired_decline">Зберегти обмеження</string>
+    <string name="keep_paired_setting_label">Залишити сполучення назавжди</string>
+    <string name="keep_paired_setting_description">Не дає Android забути сполучення через 7 днів без USB-підключення.</string>
+    <string name="keep_paired_setting_failed">Не вдалося змінити обмеження. Сполучення все ще може завершитися.</string>
+    <string name="keep_paired_setting_external">Обмеження вимкнено чимось іншим, тому CallVault його не чіпає.</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keep_paired_title">Restare associati per sempre?</string>
+    <string name="keep_paired_body">Android dimentica l’associazione dopo 7 giorni senza connessione USB, e da quel momento le chiamate non vengono più registrate finché non associ di nuovo. CallVault può disattivare questo limite di tempo.</string>
+    <string name="keep_paired_note">Questo mantiene anche autorizzato qualsiasi computer che hai consentito per il debug USB. Puoi riattivarlo in Impostazioni › Affidabilità.</string>
+    <string name="keep_paired_accept">Resta associato</string>
+    <string name="keep_paired_decline">Mantieni il limite</string>
+    <string name="keep_paired_setting_label">Resta associato per sempre</string>
+    <string name="keep_paired_setting_description">Impedisce ad Android di dimenticare l’associazione dopo 7 giorni senza connessione USB.</string>
+    <string name="keep_paired_setting_failed">Impossibile modificare il limite. L’associazione può ancora scadere.</string>
+    <string name="keep_paired_setting_external">Qualcos’altro ha disattivato il limite, quindi CallVault non lo tocca.</string>
+</resources>

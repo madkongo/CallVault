@@ -47,6 +47,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.ModeCapability
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.KeepPaired
 import com.baba.callvault.integrations.adb.UsbDebuggingOff
 import com.baba.callvault.integrations.adb.UsbDebuggingOffGuard
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
@@ -542,5 +543,41 @@ internal fun OfflineRecordingToggle() {
             onResult = { nowEnabled -> enabled = nowEnabled },
             onClose = { dialogMode = null },
         )
+    }
+}
+
+/**
+ * "Stay paired for good": Android forgets the ADB pairing after 7 days without a USB connection
+ * (`adb_allowed_connection_time`). On switches that limit off; off puts back the value CallVault replaced —
+ * and only that: a limit someone else set to 0 is shown on, locked, with the reason ("only undo switches we
+ * set"). Hidden in Shizuku mode unless CallVault set it, so it can still be undone there.
+ */
+@Composable
+internal fun KeepPairedToggle() {
+    val context = LocalContext.current
+    val limit = remember(context) { KeepPaired.systemLimit(context) }
+    val memory = remember(context) { KeepPaired.memory(context) }
+    var on by remember { mutableStateOf(KeepPaired.isOn(limit)) }
+    var ours by remember { mutableStateOf(KeepPaired.canRestore(memory)) }
+    var failed by remember { mutableStateOf(false) }
+    val usesEmbeddedAdb = !currentPrivilegedMode().needsShizuku
+    if (!usesEmbeddedAdb && !ours) return
+    SettingsDivider()
+    SettingsToggleRow(
+        icon = Icons.Filled.Shield,
+        label = stringResource(R.string.keep_paired_setting_label),
+        description = stringResource(R.string.keep_paired_setting_description),
+        checked = on,
+        enabled = if (on) ours else usesEmbeddedAdb,
+        onCheckedChange = { turnOn ->
+            val outcome = if (turnOn) KeepPaired.stayPaired(limit, memory) else KeepPaired.restore(limit, memory)
+            failed = outcome != KeepPaired.Outcome.DONE
+            on = KeepPaired.isOn(limit)
+            ours = KeepPaired.canRestore(memory)
+        },
+    )
+    when {
+        failed -> SettingsHint(stringResource(R.string.keep_paired_setting_failed))
+        on && !ours -> SettingsHint(stringResource(R.string.keep_paired_setting_external))
     }
 }

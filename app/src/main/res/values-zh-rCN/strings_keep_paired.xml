@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keep_paired_title">要永久保持配对吗？</string>
+    <string name="keep_paired_body">Android 在 7 天没有 USB 连接后会忘记配对，之后通话将不再被录音，直到你重新配对。CallVault 可以关闭这个时间限制。</string>
+    <string name="keep_paired_note">这也会让你已允许进行 USB 调试的所有电脑保持允许状态。你可以在 设置 › 可靠性 中重新开启限制。</string>
+    <string name="keep_paired_accept">保持配对</string>
+    <string name="keep_paired_decline">保留限制</string>
+    <string name="keep_paired_setting_label">永久保持配对</string>
+    <string name="keep_paired_setting_description">防止 Android 在 7 天没有 USB 连接后忘记配对。</string>
+    <string name="keep_paired_setting_failed">无法更改该限制，配对仍可能过期。</string>
+    <string name="keep_paired_setting_external">该限制已被其他程序关闭，因此 CallVault 不会改动它。</string>
+</resources>

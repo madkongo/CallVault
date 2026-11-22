@@ -429,6 +429,12 @@ object RecorderBackend {
         }
 
         prefs.setPrivilegedMode(to)
+        if (to.needsShizuku) {
+            com.baba.callvault.integrations.adb.KeepPaired.logLeftAsIs(
+                com.baba.callvault.integrations.adb.KeepPaired.systemLimit(context),
+                com.baba.callvault.integrations.adb.KeepPaired.memory(context),
+            )
+        }
 
         // Entering Shizuku mode starts from a clean slate: drop any existing user-service record so the
         // next bind spawns a FRESH process running current code. A daemon(true) service survives app

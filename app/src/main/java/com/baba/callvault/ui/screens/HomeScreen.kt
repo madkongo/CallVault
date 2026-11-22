@@ -645,6 +645,26 @@ fun HomeScreen(
         updatePrompt = tag
         viewModel.markUpdatePopupSeen(tag)
     }
+    if (uiState.askKeepPaired) {
+        AlertDialog(
+            // Not dismissable by a tap outside: either button is an answer, and a stray tap must not
+            // spend the one-time question or leave it open forever.
+            onDismissRequest = {},
+            title = { Text(stringResource(R.string.keep_paired_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.keep_paired_body))
+                    Text(stringResource(R.string.keep_paired_note), style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.answerStayPaired() }) { Text(stringResource(R.string.keep_paired_accept)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.answerKeepLimit() }) { Text(stringResource(R.string.keep_paired_decline)) }
+            },
+        )
+    }
     updatePrompt?.let { tag ->
         AlertDialog(
             onDismissRequest = { updatePrompt = null },
