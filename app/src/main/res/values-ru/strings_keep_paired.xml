@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Если сопряжение CallVault было выполнено более 7 дней назад по Wi-Fi, Android может сразу забыть его, и звонки не будут записываться, пока вы не выполните сопряжение снова.</string>
     <string name="keep_paired_restore_confirm">Включить</string>
     <string name="keep_paired_restore_cancel">Отмена</string>
+    <string name="keep_paired_setting_changed">Ограничение было изменено в другом месте, поэтому CallVault оставляет его как есть.</string>
 </resources>

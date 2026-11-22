@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">If CallVault was paired more than 7 days ago over Wi-Fi, Android may forget the pairing right away and calls won\'t be recorded until you pair again.</string>
     <string name="keep_paired_restore_confirm">Turn it on</string>
     <string name="keep_paired_restore_cancel">Cancel</string>
+    <string name="keep_paired_setting_changed">The limit was changed elsewhere, so CallVault left it as it is.</string>
 </resources>

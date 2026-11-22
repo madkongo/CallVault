@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">CallVault 7 günden uzun süre önce Wi-Fi üzerinden eşleştirildiyse Android eşleşmeyi hemen unutabilir ve yeniden eşleştirene kadar aramalar kaydedilmez.</string>
     <string name="keep_paired_restore_confirm">Aç</string>
     <string name="keep_paired_restore_cancel">İptal</string>
+    <string name="keep_paired_setting_changed">Sınır başka bir yerde değiştirildi, bu yüzden CallVault olduğu gibi bırakır.</string>
 </resources>

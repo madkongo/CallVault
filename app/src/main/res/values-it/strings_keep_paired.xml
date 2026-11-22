@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Se CallVault è stato associato più di 7 giorni fa tramite Wi-Fi, Android può dimenticare subito l’associazione e le chiamate non verranno registrate finché non associ di nuovo.</string>
     <string name="keep_paired_restore_confirm">Riattiva</string>
     <string name="keep_paired_restore_cancel">Annulla</string>
+    <string name="keep_paired_setting_changed">Il limite è stato modificato altrove, quindi CallVault lo lascia com’è.</string>
 </resources>

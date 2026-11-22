@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Si CallVault a été jumelé il y a plus de 7 jours via le Wi-Fi, Android peut oublier le jumelage immédiatement et les appels ne seront plus enregistrés tant que vous ne jumelez pas à nouveau.</string>
     <string name="keep_paired_restore_confirm">Réactiver</string>
     <string name="keep_paired_restore_cancel">Annuler</string>
+    <string name="keep_paired_setting_changed">La limite a été modifiée ailleurs, CallVault la laisse donc telle quelle.</string>
 </resources>

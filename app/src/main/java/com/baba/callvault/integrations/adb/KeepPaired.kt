@@ -121,7 +121,14 @@ object KeepPaired {
         val after = limit.read()
         if (after != 0L) {
             log("Stay paired: the write did not take (read back ${after ?: "unreadable"} ms, was $before ms); putting $before ms back")
-            limit.write(before)
+            val rolledBack = limit.write(before)
+            if (rolledBack) {
+                log("Stay paired: rolled back to $before ms")
+            } else {
+                // The setting may really be 0 now; keep the original so the Settings switch can still undo it.
+                memory.setOriginalMs(before)
+                log("Stay paired: the rollback to $before ms failed too; the original is kept so CallVault can still undo its change")
+            }
             memory.setAnswer(KeepPairedAnswer.WRITE_REFUSED)
             return Outcome.WRITE_FAILED
         }

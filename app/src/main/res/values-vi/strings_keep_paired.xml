@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Nếu CallVault được ghép nối hơn 7 ngày trước qua Wi-Fi, Android có thể quên ghép nối ngay lập tức và cuộc gọi sẽ không được ghi cho đến khi bạn ghép nối lại.</string>
     <string name="keep_paired_restore_confirm">Bật lại</string>
     <string name="keep_paired_restore_cancel">Hủy</string>
+    <string name="keep_paired_setting_changed">Giới hạn đã được thay đổi ở nơi khác, nên CallVault để nguyên.</string>
 </resources>

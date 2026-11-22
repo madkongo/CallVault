@@ -152,6 +152,20 @@ class KeepPairedTest {
     }
 
     @Test
+    fun `stay paired whose rollback also fails keeps the original so it can still be undone`() {
+        val limit = object : AdbConnectionLimit {
+            var value: Long? = 900L
+            var calls = 0
+            override fun read() = value
+            override fun write(ms: Long): Boolean { calls++; if (calls == 1) { value = 900L; return true }; return false }
+        }
+        val memory = FakeMemory()
+        assertEquals(KeepPaired.Outcome.WRITE_FAILED, KeepPaired.stayPaired(limit, memory, log))
+        assertEquals(900L, memory.storedOriginal)
+        assertTrue(logs.any { "rollback" in it })
+    }
+
+    @Test
     fun `stay paired when already zero is not ours and is left alone`() {
         val limit = FakeLimit(0L)
         val memory = FakeMemory()

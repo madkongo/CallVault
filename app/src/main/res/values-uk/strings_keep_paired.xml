@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Якщо сполучення CallVault було виконано понад 7 днів тому через Wi-Fi, Android може одразу забути його, і дзвінки не записуватимуться, доки ви не виконаєте сполучення знову.</string>
     <string name="keep_paired_restore_confirm">Ввімкнути</string>
     <string name="keep_paired_restore_cancel">Скасувати</string>
+    <string name="keep_paired_setting_changed">Обмеження змінено деінде, тому CallVault залишає його як є.</string>
 </resources>

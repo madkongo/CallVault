@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Ha a CallVault párosítása több mint 7 napja történt Wi-Fi-n, az Android azonnal elfelejtheti a párosítást, és a hívások rögzítése leáll, amíg újra nem párosítasz.</string>
     <string name="keep_paired_restore_confirm">Bekapcsolás</string>
     <string name="keep_paired_restore_cancel">Mégse</string>
+    <string name="keep_paired_setting_changed">A korlátot máshol módosították, ezért a CallVault békén hagyja.</string>
 </resources>

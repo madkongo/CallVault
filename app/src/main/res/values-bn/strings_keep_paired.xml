@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">CallVault ৭ দিনের বেশি আগে Wi-Fi দিয়ে পেয়ার করা হলে Android সঙ্গে সঙ্গে পেয়ারিং ভুলে যেতে পারে, আর আবার পেয়ার না করা পর্যন্ত কল রেকর্ড হবে না।</string>
     <string name="keep_paired_restore_confirm">চালু করুন</string>
     <string name="keep_paired_restore_cancel">বাতিল</string>
+    <string name="keep_paired_setting_changed">সীমাটি অন্য কোথাও বদলানো হয়েছে, তাই CallVault এটি যেমন আছে তেমনই রাখছে।</string>
 </resources>

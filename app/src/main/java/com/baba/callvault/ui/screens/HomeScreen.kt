@@ -323,6 +323,8 @@ fun HomeScreen(
     section: HomeSection,
     onSelectSection: (HomeSection) -> Unit,
     onOpenSettings: () -> Unit,
+    /** The Settings page is open over Home: dialogs that are not urgent wait until it closes. */
+    isCoveredBySettings: Boolean = false,
     openRecording: String? = null,
     onOpenRecordingHandled: () -> Unit = {},
     openTranscript: String? = null,
@@ -2250,7 +2252,8 @@ fun HomeScreen(
         showBulkDelete || mergeFor != null || unMergeFor != null || confirmDeleteFor != null ||
         deleteTranscriptFor != null || deleteSummaryFor != null || showLibraryBulkDelete || showModelMissing ||
         transcribeAgainFor != null || confirmTranscribe != null || askLanguageFor != null ||
-        uiState.importRefusal != null || shareRequest != null || showTranscribingSheet
+        uiState.importRefusal != null || shareRequest != null || showTranscribingSheet ||
+        isCoveredBySettings || HomeDialogGate.rowDialogsOpen > 0
     if (uiState.askKeepPaired && !otherDialogOpen) {
         LaunchedEffect(Unit) { viewModel.keepPairedShown() }
         AlertDialog(
@@ -3929,6 +3932,11 @@ private fun RecordingRow(
     // Prefer the contact name, then the parsed number, then the raw file name.
     val primaryLabel = RecordingLabel.of(item) ?: item.displayName
 
+    val deleteDialogOpen = deleteTarget != null
+    androidx.compose.runtime.DisposableEffect(deleteDialogOpen) {
+        if (deleteDialogOpen) HomeDialogGate.rowDialogsOpen++
+        onDispose { if (deleteDialogOpen) HomeDialogGate.rowDialogsOpen-- }
+    }
     deleteTarget?.let { target ->
         if (target is DeleteTarget.Ask) {
             DeleteCopiesDialog(
@@ -4636,3 +4644,8 @@ private fun formatMillis(millis: Int): String {
 /** An open Share sheet: which calls, which part the page is about, and what a selection is called. */
 private data class CallShareRequest(val names: List<String>, val start: SharePart, val subject: String)
 
+
+/** How many per-row dialogs are open (they live in row composables HomeScreen cannot see into). */
+internal object HomeDialogGate {
+    var rowDialogsOpen by androidx.compose.runtime.mutableIntStateOf(0)
+}

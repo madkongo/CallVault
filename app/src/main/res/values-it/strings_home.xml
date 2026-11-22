@@ -219,7 +219,7 @@
         <item>Corretto — niente più falso «Una chiamata è stata interrotta»</item>
     </string-array>
     <string name="whatsnew_244_title">Registrazione più affidabile, riassociazione facile e avvisi di aggiornamento</string>
-    <string name="whatsnew_244_where">Impostazioni ▸ Connessione ▸ Riassocia</string>
+    <string name="whatsnew_244_where">Impostazioni ▸ Connessione ▸ Associa di nuovo</string>
     <string-array name="whatsnew_244_items">
         <item>Nuovo — Se il telefono chiude CallVault durante una chiamata, la parte registrata fino a quel momento viene salvata e te lo diciamo</item>
         <item>Nuovo — Riassocia dalle Impostazioni se si perde la connessione con il registratore, senza reinstallare</item>

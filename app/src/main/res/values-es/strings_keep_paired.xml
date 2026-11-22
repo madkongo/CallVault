@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Si CallVault se emparejó hace más de 7 días por Wi-Fi, Android puede olvidar el emparejamiento de inmediato y las llamadas no se grabarán hasta que vuelvas a emparejar.</string>
     <string name="keep_paired_restore_confirm">Activar</string>
     <string name="keep_paired_restore_cancel">Cancelar</string>
+    <string name="keep_paired_setting_changed">El límite se cambió en otro lugar, así que CallVault lo deja como está.</string>
 </resources>

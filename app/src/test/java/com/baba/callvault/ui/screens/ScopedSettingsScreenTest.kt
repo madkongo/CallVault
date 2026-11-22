@@ -166,7 +166,7 @@ class ScopedSettingsScreenTest {
         "settings_usb_default_busy", "transcription_language_auto_hint",
         "settings_wd_left_on_by_setting", "settings_wd_left_on_by_user",
         // Stay paired for good: the write failed / someone else set the limit.
-        "keep_paired_setting_failed", "keep_paired_setting_external",
+        "keep_paired_setting_failed", "keep_paired_setting_external", "keep_paired_setting_changed",
         // Keep or delete: why the choice did not take yet (a permission is still missing).
         "settings_after_call_needs_notifications", "settings_after_call_needs_overlay",
     )

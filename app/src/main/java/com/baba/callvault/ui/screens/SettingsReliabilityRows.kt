@@ -557,9 +557,12 @@ internal fun KeepPairedToggle() {
     val context = LocalContext.current
     val limit = remember(context) { KeepPaired.systemLimit(context) }
     val memory = remember(context) { KeepPaired.memory(context) }
-    var on by remember { mutableStateOf(KeepPaired.isOn(limit)) }
-    var ours by remember { mutableStateOf(KeepPaired.canRestore(memory)) }
+    // Keyed on the setting's own value so a change made elsewhere (Developer options, another app) shows.
+    val reading = limit.read()
+    var on by remember(reading) { mutableStateOf(KeepPaired.isOn(limit)) }
+    var ours by remember(reading) { mutableStateOf(KeepPaired.canRestore(memory)) }
     var failed by remember { mutableStateOf(false) }
+    var changedElsewhere by remember { mutableStateOf(false) }
     // Turning the limit back on can make Android forget a Wi-Fi-only pairing at once, so it asks first.
     var confirmRestore by remember { mutableStateOf(false) }
     val usesEmbeddedAdb = !currentPrivilegedMode().needsShizuku
@@ -573,7 +576,10 @@ internal fun KeepPairedToggle() {
         enabled = if (on) ours else usesEmbeddedAdb,
         onCheckedChange = { turnOn ->
             if (turnOn) {
-                failed = KeepPaired.stayPaired(limit, memory) != KeepPaired.Outcome.DONE
+                failed = KeepPaired.stayPaired(limit, memory).let {
+                    it != KeepPaired.Outcome.DONE && it != KeepPaired.Outcome.ALREADY_OFF
+                }
+                changedElsewhere = false
                 on = KeepPaired.isOn(limit)
                 ours = KeepPaired.canRestore(memory)
             } else {
@@ -590,9 +596,9 @@ internal fun KeepPairedToggle() {
                 TextButton(onClick = {
                     KeepPaired.logRestoreChoice(true)
                     confirmRestore = false
-                    failed = KeepPaired.restore(limit, memory).let {
-                        it != KeepPaired.Outcome.DONE && it != KeepPaired.Outcome.CHANGED_ELSEWHERE
-                    }
+                    val outcome = KeepPaired.restore(limit, memory)
+                    changedElsewhere = outcome == KeepPaired.Outcome.CHANGED_ELSEWHERE
+                    failed = outcome != KeepPaired.Outcome.DONE && !changedElsewhere
                     on = KeepPaired.isOn(limit)
                     ours = KeepPaired.canRestore(memory)
                 }) { Text(stringResource(R.string.keep_paired_restore_confirm)) }
@@ -606,6 +612,7 @@ internal fun KeepPairedToggle() {
     }
     when {
         failed -> SettingsHint(stringResource(R.string.keep_paired_setting_failed))
+        changedElsewhere -> SettingsHint(stringResource(R.string.keep_paired_setting_changed))
         on && !ours -> SettingsHint(stringResource(R.string.keep_paired_setting_external))
     }
 }

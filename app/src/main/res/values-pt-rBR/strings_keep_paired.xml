@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Se o CallVault foi pareado há mais de 7 dias por Wi-Fi, o Android pode esquecer o pareamento imediatamente e as chamadas não serão gravadas até você parear de novo.</string>
     <string name="keep_paired_restore_confirm">Reativar</string>
     <string name="keep_paired_restore_cancel">Cancelar</string>
+    <string name="keep_paired_setting_changed">O limite foi alterado em outro lugar, por isso o CallVault o deixa como está.</string>
 </resources>

@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Αν το CallVault έγινε σύζευξη πριν από περισσότερες από 7 ημέρες μέσω Wi-Fi, το Android μπορεί να ξεχάσει αμέσως τη σύζευξη και οι κλήσεις δεν θα καταγράφονται μέχρι να κάνετε ξανά σύζευξη.</string>
     <string name="keep_paired_restore_confirm">Ενεργοποίηση</string>
     <string name="keep_paired_restore_cancel">Ακύρωση</string>
+    <string name="keep_paired_setting_changed">Το όριο άλλαξε αλλού, οπότε το CallVault το αφήνει ως έχει.</string>
 </resources>

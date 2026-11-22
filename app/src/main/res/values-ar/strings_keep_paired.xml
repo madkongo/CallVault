@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">إذا كان اقتران CallVault قد تم قبل أكثر من 7 أيام عبر Wi-Fi، فقد ينسى Android الاقتران فوراً ولن تُسجَّل المكالمات حتى تقترن من جديد.</string>
     <string name="keep_paired_restore_confirm">تفعيل</string>
     <string name="keep_paired_restore_cancel">إلغاء</string>
+    <string name="keep_paired_setting_changed">تم تغيير الحد في مكان آخر، لذلك يتركه CallVault كما هو.</string>
 </resources>

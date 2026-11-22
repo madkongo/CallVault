@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">اگر جفت‌شدگی CallVault بیش از ۷ روز پیش از طریق Wi-Fi انجام شده باشد، اندروید ممکن است بلافاصله آن را فراموش کند و تماس‌ها تا جفت‌شدن دوباره ضبط نشوند.</string>
     <string name="keep_paired_restore_confirm">روشن کن</string>
     <string name="keep_paired_restore_cancel">لغو</string>
+    <string name="keep_paired_setting_changed">این محدودیت جای دیگری تغییر کرده است، بنابراین CallVault آن را همان‌طور که هست رها می‌کند.</string>
 </resources>

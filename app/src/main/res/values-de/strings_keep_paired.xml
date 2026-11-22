@@ -13,4 +13,5 @@
     <string name="keep_paired_restore_text">Wenn CallVault vor mehr als 7 Tagen über WLAN gekoppelt wurde, kann Android die Kopplung sofort vergessen, und Anrufe werden erst wieder aufgezeichnet, wenn du erneut koppelst.</string>
     <string name="keep_paired_restore_confirm">Einschalten</string>
     <string name="keep_paired_restore_cancel">Abbrechen</string>
+    <string name="keep_paired_setting_changed">Das Limit wurde anderswo geändert, deshalb lässt CallVault es unverändert.</string>
 </resources>
