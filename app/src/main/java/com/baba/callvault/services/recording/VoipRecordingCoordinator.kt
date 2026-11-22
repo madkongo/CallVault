@@ -557,7 +557,7 @@ object VoipRecordingCoordinator {
         // notification facts: "listener connected, no ring heard" is its outgoing signal, when that absence means
         // anything for THIS recording (C20: watched since before the ring, not a split call's second file).
         VoipDirection.decide(null, ring, listening, absence)?.let {
-            if (isActive && recording) direction.compareAndSet(null, it)
+            if (isActive && recording && direction.compareAndSet(null, it)) refreshStagingNoteName()
         }
         AppLogger.i(
             TAG,
@@ -579,7 +579,7 @@ object VoipRecordingCoordinator {
                 // The first read is the only one that matters, so it is the last (C128): the direction never changes after
                 // it, and reading again cost a recorder dump every 500 ms for a minute. An answer is logged by the ring listener.
                 val decided = VoipDirection.decide(facts, ring, listening, absence)
-                if (isActive && recording) direction.compareAndSet(null, decided)
+                if (isActive && recording && direction.compareAndSet(null, decided)) refreshStagingNoteName()
                 AppLogger.i(
                     TAG,
                     "App-call direction at the first read ($callPackage, ${elapsed}ms in): ${facts.describe()} " +
@@ -593,6 +593,33 @@ object VoipRecordingCoordinator {
             }
             delay(VoipAnswerHold.POLL_MS)
         }
+    }
+
+    /**
+     * Review N16: the note beside the staged file holds the name known at the start. Direction, a late app and a late
+     * caller are learned afterwards, so each is written into the note too; a rescue after the app was killed then names
+     * the file as a normal finish would. Called only after the capture is running (from the direction and late-lookup jobs, never the start path), and never able to
+     * affect it: a failure is only logged (the rescue then uses the start-time name, as before).
+     */
+    private val stagingNoteLock = Any()
+
+    private fun refreshStagingNoteName() {
+        val saf = pending ?: return
+        val staged = saf.stagingFile ?: return
+        val startName = saf.fileName ?: return
+        if (saf.waiting) return
+        // The name is worked out inside the lock, from everything known by then, so two quick updates cannot
+        // land out of order and drop what the earlier one added. One tiny file write.
+        runCatching {
+            synchronized(stagingNoteLock) {
+                StagingNote.updateFileName(
+                    staged,
+                    VoipLateCaller.finalName(startName, lateAppLabel, lateCaller, VoipDirection.nameToken(direction.get())),
+                )
+            }
+        }
+            .onSuccess { if (!it) AppLogger.d(TAG, "Staging note for ${staged.name} not updated (no note, or the recording already ended)") }
+            .onFailure { AppLogger.w(TAG, "Could not update the staging note name for ${staged.name}: ${it.message}") }
     }
 
     /** The answer-hold loop of this call; see [VoipAnswerHoldLoop] for why every step asks [isHoldLive] (N17). */
@@ -701,6 +728,7 @@ object VoipRecordingCoordinator {
         AppLogger.i(TAG, "Call app found ${atMs / 1000} s into the call: $pkg")
         val label = appLabelFor(context, pkg)?.let { sanitiseForFileName(it) }?.takeIf { it.isNotEmpty() }
         lateAppLabel = label
+        refreshStagingNoteName()
         currentAppLabel = label
         currentCallPackage = pkg
         if (directionJob == null) directionJob = readDirection(pkg)
@@ -713,6 +741,7 @@ object VoipRecordingCoordinator {
             return
         }
         lateCaller = found
+        refreshStagingNoteName()
         if (!manual && VoipIgnoredCallers.isIgnored(context, found)) {
             AppLogger.i(TAG, "The caller is on the ignore list; stopping and discarding this recording")
             discardLate = VoipOutcome.Reason.IGNORED_LATE
@@ -730,6 +759,7 @@ object VoipRecordingCoordinator {
             val found = runCatching { service.voipCallerName(callPackage) }.getOrNull()
             if (found != null) {
                 lateCaller = found
+                refreshStagingNoteName()
                 AppLogger.i(TAG, "Caller name found ${at / 1000} s into the call")
                 // The name came too late for the start check (#51). Nothing has been published — the
                 // recording is still in private staging — so ending it here and discarding it leaves no
@@ -1071,12 +1101,7 @@ object VoipRecordingCoordinator {
         directionJob?.cancel()
         directionJob = null
         val callDirection = direction.getAndSet(null)
-        val finalName: (String) -> String = { n ->
-            val withApp = lateApp?.let { VoipLateCaller.withApp(n, it) } ?: n
-            val withCaller = caller?.let { VoipLateCaller.withCaller(withApp, it) } ?: withApp
-            // The badge reads it from here; null leaves the name exactly as it always was.
-            VoipLateCaller.withDirection(withCaller, VoipDirection.nameToken(callDirection))
-        }
+        val finalName: (String) -> String = { n -> VoipLateCaller.finalName(n, lateApp, caller, VoipDirection.nameToken(callDirection)) }
         // Straight away, not after the file work below: the controls describe a recording that has
         // already stopped, and a Stop button that lingers invites a second press at a moment when
         // the next call may already be starting.

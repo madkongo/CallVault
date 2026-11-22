@@ -93,5 +93,19 @@ data class StagingNote(
             val note = noteFile.takeIf { it.exists() }?.let { runCatching { decode(it.readText()) }.getOrNull() } ?: return false
             return runCatching { noteFile.writeText(note.copy(orphanStop = stop, ranOnSeconds = ranOnSeconds, appCall = appCall).encode()); true }.getOrDefault(false)
         }
+
+        /**
+         * Replaces the file name in the note beside [staged], keeping every other field (review N16: an app call's
+         * direction and late app/caller are learned after the note is written; a rescue after a kill would
+         * publish the start-time name). Writes only when the staged file and a readable note both exist, so a
+         * recording that finished meanwhile never gets a stray note back. Returns whether it wrote.
+         */
+        fun updateFileName(staged: File, fileName: String): Boolean {
+            if (fileName.isBlank() || !staged.exists()) return false
+            val noteFile = fileFor(staged)
+            val note = noteFile.takeIf { it.exists() }?.let { runCatching { decode(it.readText()) }.getOrNull() } ?: return false
+            if (note.fileName == fileName) return true
+            return runCatching { noteFile.writeText(note.copy(fileName = fileName).encode()); true }.getOrDefault(false)
+        }
     }
 }
