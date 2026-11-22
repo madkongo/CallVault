@@ -25,8 +25,8 @@
 // Escape hatch: -PallowMissingTranslations=true downgrades failure to a warning, for the case where
 // a fix has to ship ahead of its translations. Deliberately explicit — nobody sets it by accident.
 //
-// Adding a locale: create `values-<lang>[-r<REGION>]/` — Android wants the `r` prefix on the region,
-// so Brazilian Portuguese is `values-pt-rBR`, not `values-pt-BR`. That directory is the whole
+// Adding a locale: create an Android locale directory, such as `values-pt-rBR` for Brazilian
+// Portuguese or `values-b+zh+Hant` for Traditional Chinese. That directory is the whole
 // registration: AGP generates the locale config from the res folders, and SettingsScreen reads that
 // generated config, so the in-app language picker lists it with no code change. Translate every key
 // the base declares except those marked translatable="false" — including those, rather than skipping
@@ -39,8 +39,8 @@ import org.w3c.dom.Element
 /** Resource elements that carry translatable text. Excludes styles, colors, dimens, and the rest. */
 val translatableElements = setOf("string", "string-array", "plurals")
 
-/** `values-de`, `values-zh-rCN`. Deliberately excludes `values-night`, `values-v31`, `values-land`. */
-val localeDirPattern = Regex("""^values-[a-z]{2}(-r[A-Z]{2})?$""")
+/** Matches legacy locale qualifiers and BCP 47 language, script, and region qualifiers. */
+val localeDirPattern = Regex("""^values-(?:[a-z]{2}(?:-r[A-Z]{2})?|b\+[a-z]{2,3}(?:\+[A-Z][a-z]{3})?(?:\+(?:[A-Z]{2}|[0-9]{3}))?)$""")
 
 /** A format specifier: `%1$s`, `%d`, `%%`. */
 val placeholderPattern = Regex("""%(\d+\$[a-zA-Z]|[a-zA-Z%])""")
