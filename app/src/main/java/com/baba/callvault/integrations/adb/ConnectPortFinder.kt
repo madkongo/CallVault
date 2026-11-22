@@ -54,7 +54,8 @@ internal object ConnectPortFinder {
         SCAN("loopback search"),
     }
 
-    data class Found(val port: Int, val source: Source)
+    /** [host] is what mDNS resolved the service to; null for the sources that only ever look at loopback. */
+    data class Found(val port: Int, val source: Source, val host: String? = null)
 
     private val gate = ConnectPortScanGate()
 
@@ -68,7 +69,7 @@ internal object ConnectPortFinder {
      * @param excludePorts adbd's classic `tcpip` listeners (ours and whatever `service.adb.tcp.port` says):
      *   they answer the probe too, but they are not the Wireless-debugging port.
      */
-    fun find(context: Context, mdnsTimeoutMs: Long, excludePorts: Set<Int>, adbd: AdbdState): Found? {
+    fun find(context: Context, mdnsTimeoutMs: Long, excludePorts: Set<Int>, adbd: AdbdState, allowScan: Boolean = true): Found? {
         val prefs = AppPreferences(context)
         val lastGood = prefs.getLastAdbConnectPort()?.takeIf { it !in excludePorts }
         if (lastGood != null && probe(lastGood, LAST_GOOD_CONNECT_TIMEOUT_MS, LAST_GOOD_READ_TIMEOUT_MS) == PortProbe.ADB_TLS) {
@@ -76,8 +77,13 @@ internal object ConnectPortFinder {
         }
         // mDNS's port needs no second check: AdbMdns already accepts only a port something listens on at
         // 127.0.0.1 (MdnsServiceVerdict, the bind-must-fail probe), and the last good port was probed above.
-        AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, mdnsTimeoutMs)?.let {
-            return found(it, Source.MDNS, "")
+        AdbMdns.discoverEndpoint(context, AdbMdns.TLS_CONNECT, mdnsTimeoutMs)?.let { (host, port) ->
+            return found(port, Source.MDNS, "").copy(host = host)
+        }
+        // The cheap look the Wireless-debugging read gets before anything is written (C115): no search.
+        if (!allowScan) {
+            lastOutcome = "no last good port, and mDNS found nothing in ${mdnsTimeoutMs}ms; loopback search not run (a quick look only)"
+            return null
         }
         // Which failure this is: mdnsd running means it advertises but something drops it; stopped or "(unset)"
         // (no such service on this ROM) means adbd had nobody to advertise through — #65's suspected cause.

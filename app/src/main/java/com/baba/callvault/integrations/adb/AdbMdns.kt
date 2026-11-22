@@ -44,6 +44,10 @@ class AdbMdns(
     private var registered = false
     private var running = false
     private var serviceName: String? = null
+
+    /** The address the accepted service resolved to (C115: a connect to it is the fallback when 127.0.0.1 is refused). */
+    @Volatile var resolvedHost: String? = null
+        private set
     private val listener = DiscoveryListener(this)
     private val nsdManager: NsdManager = context.getSystemService(NsdManager::class.java)
 
@@ -103,6 +107,7 @@ class AdbMdns(
         }
         AppLogger.i(TAG, "Accepted ${resolvedService.serviceName} at $host:$port")
         serviceName = resolvedService.serviceName
+        resolvedHost = host
         onPort(port)
     }
 
@@ -169,7 +174,11 @@ class AdbMdns(
          * Blocks (up to [timeoutMs]) until an mDNS service of [serviceType] is found,
          * returning its port or null on timeout. Must be called off the main thread.
          */
-        fun discoverPort(context: Context, serviceType: String, timeoutMs: Long): Int? {
+        fun discoverPort(context: Context, serviceType: String, timeoutMs: Long): Int? =
+            discoverEndpoint(context, serviceType, timeoutMs)?.second
+
+        /** As [discoverPort], with the address the service resolved to (null when it gave none). */
+        fun discoverEndpoint(context: Context, serviceType: String, timeoutMs: Long): Pair<String?, Int>? {
             val portRef = java.util.concurrent.atomic.AtomicInteger(-1)
             val latch = java.util.concurrent.CountDownLatch(1)
             val warning = nothingFound.getOrPut(serviceType) { RepeatedWarning(NOTHING_FOUND_LOG_INTERVAL_MS) }
@@ -194,7 +203,7 @@ class AdbMdns(
                     null
                 } else {
                     warning.reset()
-                    portRef.get().takeIf { it > 0 }
+                    portRef.get().takeIf { it > 0 }?.let { mdns.resolvedHost to it }
                 }
             } finally {
                 mdns.stop()

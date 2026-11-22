@@ -551,6 +551,10 @@ object AdbShell {
             // service.adb.tls.port instead: SELinux gives it only to adbd and system_server.
             if (!isWirelessDebuggingEnabled(context)) {
                 AppLogger.w(TAG, "Android switched Wireless debugging back off after we turned it on (untrusted network or no Wi-Fi)")
+            // A 0 is not proof: Android 17 can hide the switch from apps while it is on, and the enable below
+            // needs a grant that only a first connect brings (C115, GitHub #40). Look for a port first, writing
+            // nothing. If WD is really off nothing answers and we fall through to the rules below, unchanged.
+            if (connectWithoutEnabling(context, mgr)) return BaseConnect.CONNECTED
                 return BaseConnect.WIRELESS_DEBUGGING_REFUSED
             }
         }
@@ -608,6 +612,42 @@ object AdbShell {
      */
     fun forceReconnect(context: Context): Boolean =
         connectLock.withLockOrElse(onBusy = { logConnectBusy("forceReconnect", it); false }) {
+    /**
+     * C115: `adb_wifi_enabled` reads off or absent, so try the connect port anyway — last good port, then a
+     * short `_adb-tls-connect` window, then (if 127.0.0.1 is refused) the address mDNS resolved. **Never writes
+     * the switch and never records ownership**, so the release path cannot later turn off something it did not
+     * turn on, and a user-off switch stays off (nothing answers). Every try is logged with host:port.
+     */
+    private fun connectWithoutEnabling(context: Context, mgr: AdbConnectionManager): Boolean {
+        val adbd = adbdState()
+        val wifi = WifiState.of(context)
+        if (!ConnectBeforeEnable.shouldLook(adbd, wifi)) {
+            AppLogger.i(TAG, "adb_wifi_enabled reads off; adbd=$adbd wifi=$wifi: no connect port to look for")
+            return false
+        }
+        val excluded = setOfNotNull(AppPreferences(context).getLoopbackAdbPort(), adbdTcpPort())
+        val found = ConnectPortFinder.find(context, ConnectBeforeEnable.LOOK_MDNS_MS, excluded, adbd, allowScan = false)
+        if (found == null) {
+            AppLogger.i(TAG, "adb_wifi_enabled reads off; no connect port answered (last good port, ${ConnectBeforeEnable.LOOK_MDNS_MS}ms of mDNS) — going on to the enable rules")
+            return false
+        }
+        for (host in ConnectBeforeEnable.hostsToTry(found.host)) {
+            AppLogger.i(TAG, "adb_wifi_enabled reads off but a connect port answers ($host:${found.port} from ${found.source.label}); trying it without writing the switch")
+            val ok = connectBounded(context, "Wireless debugging $host:${found.port} (switch read off)") { mgr.connect(host, found.port) }
+            if (ok) {
+                AppLogger.i(TAG, "Connected to $host:${found.port} although adb_wifi_enabled reads off — the read is not trusted; nothing was written")
+                ConnectPortFinder.recordSuccess(context, found.port)
+                Thread.sleep(CONNECT_SETTLE_MS)
+                PairingLoss.recordConnected(context)
+                AppPreferences(context).setAdbPaired(true)
+                grantSecureSettingsIfNeeded(context)
+                return true
+            }
+            AppLogger.i(TAG, "Connect to $host:${found.port} did not complete")
+        }
+        return false
+    }
+
             runCatching { AdbConnectionManager.getInstance(context).disconnect() }
                 .onFailure { AppLogger.d(TAG, "forceReconnect disconnect ignored: ${it.message}") }
             ensureConnected(context)
