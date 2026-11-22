@@ -31,8 +31,8 @@ class RestartCycles {
  * daemon's self-stop never ran).
  *  - holds: ANY transaction, the app has the binder (the re-delivery can stop asking);
  *  - owns: a startRecording / startVoipRecording that won the recorder latch, or a stopRecording that tore a session down
- *    (a refused start, e.g. "already recording", only holds); the app claimed or ended the session (this
- *    alone disables the self-stop, since an app that owns it will end it).
+ *    (the callers mark it only after winning, so a refused start, e.g. "already recording", only holds); this alone
+ *    disables the self-stop, since an app that owns the session will end it.
  */
 class ClientSignals {
     @Volatile private var lastHoldAt = Long.MIN_VALUE
@@ -41,13 +41,24 @@ class ClientSignals {
     fun noteHold(now: Long) { lastHoldAt = now }
 
     /** An ownership call is also a hold. */
-    /** Only a call that actually claimed or ended the session counts; a refused one ([won] false) is just a hold. */
-    fun noteOwnerIfWon(won: Boolean, now: Long) { if (won) noteOwner(now) else noteHold(now) }
-
     fun noteOwner(now: Long) { lastOwnAt = now; lastHoldAt = now }
 
     fun holdsSince(diedAt: Long): Boolean = lastHoldAt >= diedAt
     fun ownsSince(diedAt: Long): Boolean = lastOwnAt >= diedAt
+}
+
+/** One extra "is a call up" reading. [absent]: this ROM cannot offer it at all (excluded, never blocks); [read] null = unreadable now. */
+class CallSignal(val name: String, val absent: () -> Boolean, val read: () -> Boolean?)
+
+object CallSignals {
+    class Reading(val values: List<Boolean?>, val unreadable: List<String>)
+
+    /** Reads every present signal. An absent one is left out; only a runtime read failure counts as unreadable. */
+    fun read(signals: List<CallSignal>): Reading {
+        val present = signals.filterNot { it.absent() }
+        val values = present.map { it.read() }
+        return Reading(values, present.filterIndexed { i, _ -> values[i] == null }.map { it.name })
+    }
 }
 
 /**

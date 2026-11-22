@@ -1044,8 +1044,9 @@ class AudioRecordingEngine {
     /** Gives the claim back; [ended] when the recorder's session is known to be over. */
     private fun releaseSession(ended: Boolean = true) {
         val wasOwned = DaemonSessionOwnership.isOwnedBy(this)
-        DaemonSessionOwnership.release(this)
+        // The session record first, then the claim: a check that sees the claim gone must find no stale record to adopt.
         if (wasOwned && ended) appContext?.let { OrphanRecorderSession.noteSessionEnded(it, stagingFile) }
+        DaemonSessionOwnership.release(this)
     }
 
     /**

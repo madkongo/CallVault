@@ -240,15 +240,6 @@ class AppDeathRedeliveryTest {
     }
 
     @Test
-    fun `a refused start only holds the binder and never marks ownership`() {
-        val s = ClientSignals()
-        s.noteOwnerIfWon(won = false, now = 100)
-        assertTrue(s.holdsSince(0)); assertFalse(s.ownsSince(0))
-        s.noteOwnerIfWon(won = true, now = 200)
-        assertTrue(s.ownsSince(0))
-    }
-
-    @Test
     fun `any extra call signal that says up holds the self-stop, an unreadable one is not no-call`() {
         assertEquals(true, OrphanSelfStop.callUpAny(false, false, true, null))
         assertEquals(null, OrphanSelfStop.callUpAny(false, false, null))
@@ -270,5 +261,18 @@ class AppDeathRedeliveryTest {
         w.tick(0, holds = true)
         assertEquals(true, w.consumeRedeliveryCancelled())
         assertEquals(false, w.consumeRedeliveryCancelled())
+    }
+
+    @Test
+    fun `an absent probe is left out and never blocks, an unreadable one blocks and is named`() {
+        val absent = CallSignal("telecom", { true }, { null })
+        val broken = CallSignal("recorder", { false }, { null })
+        val up = CallSignal("playback", { false }, { false })
+        val r = CallSignals.read(listOf(absent, up))
+        assertEquals(listOf<Boolean?>(false), r.values)
+        assertEquals(false, OrphanSelfStop.callUpAny(false, false, *r.values.toTypedArray()))
+        val r2 = CallSignals.read(listOf(absent, broken, up))
+        assertEquals(listOf("recorder"), r2.unreadable)
+        assertEquals(null, OrphanSelfStop.callUpAny(false, false, *r2.values.toTypedArray()))
     }
 }

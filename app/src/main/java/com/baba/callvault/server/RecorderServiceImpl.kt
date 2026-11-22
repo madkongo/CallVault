@@ -139,7 +139,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             AppLogger.w(TAG, "startRecording ignored: already recording")
             return
         }
-        AppStartBinderSender.noteOwnerCall(won = true) // only a start that won the latch owns the session (see ClientSignals)
+        AppStartBinderSender.noteOwnerCall() // only a start that won the latch owns the session (see ClientSignals)
         AppStartBinderSender.noteSessionStarted()
 
         // Resolve cliKey strings to enums on the binder thread (cheap, validates input early).
@@ -178,7 +178,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             AppLogger.d(TAG, "stopRecording ignored: not recording")
             return
         }
-        AppStartBinderSender.noteOwnerCall(won = true) // a stop that really tears a session down ends the app's ownership
+        AppStartBinderSender.noteOwnerCall() // a stop that really tears a session down ends the app's ownership
         AppLogger.i(TAG, "stopRecording requested")
         // BLOCK this (synchronous) binder call until teardown finishes, so when the app's
         // release() returns the .ogg trailer is written and the file is complete. Otherwise the
@@ -328,7 +328,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             runCatching { outFd.close() }
             return false
         }
-        AppStartBinderSender.noteOwnerCall(won = true)
+        AppStartBinderSender.noteOwnerCall()
         // A new session starts the app-restart budget over, as the carrier path does (the handoff paths hold no daemon session).
         AppStartBinderSender.noteSessionStarted()
         val codecEnum = runCatching { ScrcpyAudioCodec.fromKey(codec) }.getOrNull()
@@ -487,6 +487,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
      */
     override fun diagnosticDump(key: String?, arg: String?): String? {
         if (key == null) return null
+        if (key == SELF_STOP_DUMP_KEY) return AppStartBinderSender.selfStopFact()
         return DiagnosticDumps.run(key, arg)
     }
 
@@ -635,6 +636,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
          * Not ours to choose: it is fixed by Shizuku, and confirmed against `RikkaApps/Shizuku-API`'s
          * demo `IUserService.aidl` (`void destroy() = 16777114;`) on 2026-08-24.
          */
+        /** The dump key of the daemon's last self-stop; answered here, not by [DiagnosticDumps]. */
+        const val SELF_STOP_DUMP_KEY = "self_stop"
         const val SHIZUKU_DESTROY_TRANSACTION = 16777114
 
         /** [voipCallAnswered] answers; the binder carries an int, so the enum stops here. */

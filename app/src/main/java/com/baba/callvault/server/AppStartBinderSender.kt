@@ -93,11 +93,17 @@ internal object AppStartBinderSender {
 
     private val clientSignals = ClientSignals()
 
+    /** Wall-clock time this daemon last finished a recording itself (self-stop), or 0. Read through [selfStopFact]. */
+    @Volatile private var selfStopAtMillis = 0L
+
+    /** The dump the app queries ("self_stop"): "self_stop_at=<ms>" or "none". */
+    fun selfStopFact(): String = selfStopAtMillis.takeIf { it > 0L }?.let { "self_stop_at=$it" } ?: "none"
+
     /** Called for every transaction an app process makes on this daemon's binder: the app holds the binder. */
     fun noteClientCall() = clientSignals.noteHold(android.os.SystemClock.elapsedRealtime())
 
     /** Called by a start that won the recording latch or a stop that tore a session down (never by a refused call, nor by the handoff calls: they never touch the daemon's session): the app owns it. */
-    fun noteOwnerCall(won: Boolean) = clientSignals.noteOwnerIfWon(won, android.os.SystemClock.elapsedRealtime())
+    fun noteOwnerCall() = clientSignals.noteOwner(android.os.SystemClock.elapsedRealtime())
 
     private val restartCycles = RestartCycles()
 
@@ -140,10 +146,17 @@ internal object AppStartBinderSender {
         val watch = OrphanWatch(mayRestart = mayRestart, diedAt = diedAt)
         val audio = AudioProbe()
         val telecom = TelecomProbe()
-        var unreadableLogged = false
+        val extras = listOf(
+            CallSignal("foreign voice-communication recorder", { audio.recordingProbeAbsent }, audio::foreignVoiceCommRecorderActive),
+            CallSignal("Telecom in-call flag", { telecom.absent }, telecom::isInCall),
+        )
+        extras.filter { it.absent() }.forEach { AppLogger.i(TAG, "Call signal '${it.name}' is not available on this ROM; the self-stop does not wait for it") }
+        val unreadableLogged = mutableSetOf<String>()
         while (true) {
             val now = android.os.SystemClock.elapsedRealtime()
             val mode = audio.mode()
+            val playback = audio.voiceCommPlaybackActive()
+            val extra = CallSignals.read(extras)
             val step = watch.step(
                 now = now,
                 current = generation == loopGeneration,
@@ -151,16 +164,16 @@ internal object AppStartBinderSender {
                 clientHolds = clientSignals.holdsSince(diedAt),
                 clientOwns = clientSignals.ownsSince(diedAt),
                 callUp = mode?.let(OrphanSelfStop::isCallAudioMode),
-                voiceCommActive = audio.voiceCommPlaybackActive(),
+                voiceCommActive = playback,
                 // A LINE call on hold or muted shows no call mode and no playback: a foreign VOICE_COMMUNICATION recorder or Telecom's
                 // own in-call flag still says it is up.
-                otherCallSignals = listOf(audio.foreignVoiceCommRecorderActive(), telecom.isInCall()),
+                otherCallSignals = extra.values,
                 packageStopped = { isAppStopped(ctx.authority) },
             )
             if (watch.consumeRedeliveryCancelled()) AppLogger.i(TAG, "The app holds the binder; no more re-deliveries (the self-stop still runs until it claims the session)")
-            if (step.audioUnreadable && !unreadableLogged) {
-                unreadableLogged = true
-                AppLogger.w(TAG, "Cannot read the audio state; not stopping the unowned recording")
+            if (step.audioUnreadable) {
+                val names = listOfNotNull("audio mode".takeIf { mode == null }, "voice-communication playback".takeIf { playback == null }) + extra.unreadable
+                names.filter { unreadableLogged.add(it) }.forEach { AppLogger.w(TAG, "Cannot read the call signal '$it'; not stopping the unowned recording") }
             }
             if (step.appForceStopped) AppLogger.i(TAG, "app was force-stopped; not reopening it")
             if (step.stoppedUnknown) AppLogger.w(TAG, "Cannot tell whether the app was force-stopped; delivering at most once")
@@ -182,7 +195,11 @@ internal object AppStartBinderSender {
                     }
                     AppLogger.i(TAG, "the call ended with no app attached; stopping and finalising the recording myself (audio mode $mode)")
                     runCatching { ctx.stopRecording() }.onFailure { AppLogger.e(TAG, "Self-stop failed: ${it.message}", it) }
-                    AppLogger.i(TAG, "Self-stop done; recording=${runCatching { ctx.isRecording() }.getOrDefault(true)}")
+                    val stillRecording = runCatching { ctx.isRecording() }.getOrDefault(true)
+                    // The fact the app asks for over the dump binder call: only a recording this daemon finalised itself is
+                    // saved in full later (a recording cut by SIGTERM never gets one).
+                    if (!stillRecording) selfStopAtMillis = System.currentTimeMillis()
+                    AppLogger.i(TAG, "Self-stop done; recording=$stillRecording")
                     return
                 }
                 OrphanWatch.Action.DELIVER -> {
@@ -215,6 +232,10 @@ internal object AppStartBinderSender {
 
         private val getRecording = runCatching { service?.javaClass?.getMethod("getActiveRecordingConfigurations") }.getOrNull()
 
+        /** True when the shell cannot see which uid owns each recording configuration. */
+        @Volatile var uidsHidden = false
+        val recordingProbeAbsent: Boolean get() = service == null || getRecording == null || uidsHidden
+
         /**
          * Whether a VOICE_COMMUNICATION recorder is active under a uid other than the daemon's own (a LINE/WhatsApp call on
          * hold or muted keeps its mic open). Null = unreadable.
@@ -224,8 +245,10 @@ internal object AppStartBinderSender {
             val own = android.os.Process.myUid()
             list.filterNotNull().any { config ->
                 val source = config.javaClass.getMethod("getClientAudioSource").invoke(config) as? Int
-                val uid = config.javaClass.getMethod("getClientUid").invoke(config) as? Int
-                source == SOURCE_VOICE_COMMUNICATION && uid != null && uid != own
+                val uid = try { config.javaClass.getMethod("getClientUid").invoke(config) as? Int } catch (e: NoSuchMethodException) { null }
+                // No visible uid (missing method, or -1): every recorder would look foreign. The probe is dropped instead.
+                if (uid == null || uid < 0) { uidsHidden = true; return@any false }
+                source == SOURCE_VOICE_COMMUNICATION && uid != own
             }
         }.getOrNull()
 
@@ -250,6 +273,8 @@ internal object AppStartBinderSender {
         private val isInCall = runCatching {
             service?.javaClass?.methods?.firstOrNull { m -> m.name == "isInCall" && m.parameterTypes.all { it == String::class.java } }
         }.getOrNull()
+
+        val absent: Boolean get() = service == null || isInCall == null
 
         /** Null = unreadable. The calling package is the shell's own; the feature id (API 30+) is null. */
         fun isInCall(): Boolean? = runCatching {

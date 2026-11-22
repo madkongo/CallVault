@@ -64,13 +64,20 @@ object OrphanSessionPolicy {
      */
     const val SAME_CALL_MARGIN_MS = 2_000L
 
+    /** How far after the daemon's self-stop a file's last write may fall (clock and filesystem timestamp slack). */
+    const val SELF_STOP_WRITE_SLACK_MS = 5_000L
+
     /**
      * Whether a staged file the recorder no longer writes was finalised by the daemon's own self-stop after its call
-     * ended (the app was gone or frozen then): its call ended no earlier than it began, it was last written at or after
-     * that end, and no call is up now. [inCall] unknown counts as a call (never guess "ended").
+     * ended (the app was gone or frozen then). Needs the daemon's own word ([selfStopAt], null = none: a file cut by a
+     * SIGTERM or an unknown stop keeps the cut-off wording): the self-stop came at or after the call's end, which was no
+     * earlier than the file began, the file was last written no later than the self-stop (plus slack) and not before the
+     * call ended, and no call is up now. [inCall] unknown counts as a call (never guess "ended").
      */
-    fun finalisedAfterCallEnd(startedAt: Long?, callEndedAt: Long?, lastWriteAt: Long, inCall: Boolean?): Boolean =
-        inCall == false && callEndedAt != null && (startedAt == null || callEndedAt >= startedAt) && lastWriteAt >= callEndedAt
+    fun finalisedAfterCallEnd(startedAt: Long?, callEndedAt: Long?, lastWriteAt: Long, inCall: Boolean?, selfStopAt: Long?): Boolean =
+        inCall == false && callEndedAt != null && selfStopAt != null &&
+            (startedAt == null || callEndedAt >= startedAt) &&
+            lastWriteAt >= callEndedAt && selfStopAt >= callEndedAt && lastWriteAt <= selfStopAt + SELF_STOP_WRITE_SLACK_MS
 
     /** A file that runs on past its call's end by more than this is told to the user (a hang-up is never exact). */
     const val RUN_ON_NOTICE_MS = 30_000L

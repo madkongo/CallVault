@@ -100,6 +100,8 @@ object OrphanRecorderSession {
         fun markOrphanStopped(file: File, callEnded: Boolean, ranOnSeconds: Int = 0, appCall: Boolean = false): Boolean = false
         /** When the phone call last ended (noted at IDLE), or null. Read to tell how long a stopped orphan ran on. */
         fun callEndedAt(): Long? = null
+        /** When the daemon last finished a recording itself (its own word, asked over binder); null = none or unknown. */
+        fun daemonSelfStopAt(): Long? = null
         /**
          * A staged file still named by the session record that the recorder is no longer writing and that no one marked:
          * the daemon finalised it on its own. Null when none, or when the facts do not show it ended after its call.
@@ -126,6 +128,9 @@ object OrphanRecorderSession {
 
     private val lock = Any()
 
+    /** Files already told about as "not shown", so the line comes once per file, not at every call end. Guarded by [lock]. */
+    private val notShownLogged = HashSet<String>()
+
     /** The core, free of Android. Serialised: two triggers must never both stop, or decide on a half-stopped session. */
     fun resolve(recorder: Recorder?, env: Environment, trigger: String, exclude: File? = null): Outcome = synchronized(lock) {
         if (recorder == null) {
@@ -139,7 +144,10 @@ object OrphanRecorderSession {
         }
         if (!recording) {
             env.record("orphan session [$trigger]: the recorder is not recording; no orphan")
-            claimDaemonFinalised(env, trigger, exclude)
+            // Not while the app's own session is still winding up: stopRecording clears the recorder's latch at the start of a
+            // ~4 s teardown, and the file is the app's to publish.
+            if (env.ownedHere()) env.record("orphan session [$trigger]: not recording but the session is still owned here (teardown in progress); not claiming its file")
+            else claimDaemonFinalised(env, trigger, exclude)
             env.markNoSession()
             return Outcome(Action.NONE, null)
         }
@@ -224,8 +232,11 @@ object OrphanRecorderSession {
         val found = env.daemonFinalisedOrphan(exclude) ?: return
         val inCall = env.callInProgress()
         val callEndedAt = env.callEndedAt()
-        if (!OrphanSessionPolicy.finalisedAfterCallEnd(found.startedAt, callEndedAt, found.lastWriteAt, inCall)) {
-            env.record("orphan session [$trigger]: ${CallEndLog.safeName(found.file.name)} was finalised by the recorder but its call end is not shown; left to the quiet-wait rescue")
+        if (!OrphanSessionPolicy.finalisedAfterCallEnd(found.startedAt, callEndedAt, found.lastWriteAt, inCall, env.daemonSelfStopAt())) {
+            if (notShownLogged.add(found.file.absolutePath)) {
+                env.record("orphan session [$trigger]: ${CallEndLog.safeName(found.file.name)} is not a recording the daemon finished after its call ended " +
+                    "(no self-stop word, or the call end is not shown); left to the quiet-wait rescue")
+            }
             return
         }
         var callEnded = !env.orphanWasAppCall()
@@ -278,6 +289,7 @@ object OrphanRecorderSession {
      * nobody here owns, i.e. whether [resolve] has anything to settle. One binder call, no stop.
      */
     fun needsSettling(): Boolean {
+        // A synchronous binder call; callers on the main thread (the phone IDLE handler) accept it for one isRecording read.
         if (DaemonSessionOwnership.isOwnedHere) return false
         return runCatching { RecorderConnection.service?.isRecording() == true }
             .onFailure { AppLogger.w(TAG, "needsSettling: could not ask the recorder (${it.javaClass.simpleName}: ${it.message}); treating it as nothing to settle") }
@@ -439,6 +451,11 @@ object OrphanRecorderSession {
             if (note.orphanStop != OrphanStop.NONE || com.baba.callvault.system.storage.LiveStagingFiles.isLive(file)) return null
             return DaemonFinalised(file, file.lastModified(), note.startedAtMillis)
         }
+
+        override fun daemonSelfStopAt(): Long? = runCatching {
+            RecorderConnection.service?.diagnosticDump(com.baba.callvault.server.RecorderServiceImpl.SELF_STOP_DUMP_KEY, null)
+                ?.trim()?.removePrefix("self_stop_at=")?.toLongOrNull()
+        }.getOrNull()
 
         override fun callEndedAt(): Long? = runCatching { prefs.getLong(KEY_CALL_ENDED_AT, 0L) }.getOrDefault(0L).takeIf { it > 0L }
 
