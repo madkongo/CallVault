@@ -314,6 +314,8 @@
     <string name="note_saved">ذخیره شد</string>
     <string name="note_saving">در حال ذخیره…</string>
     <string name="notif_cut_off_saved_text">گوشی شما CallVault را در حین یک تماس بست. آنچه پیش از آن ضبط شده بود به‌صورت %1$s ذخیره شد.</string>
+    <string name="notif_call_saved_after_restart_title">تماس پس از راه‌اندازی دوباره CallVault ذخیره شد</string>
+    <string name="notif_call_saved_after_restart_text">CallVault در حین تماس بسته شد، اما ضبط ادامه یافت و کل تماس را با نام %1$s ذخیره کرد.</string>
     <string name="notif_cut_off_saved_title">یک تماس قطع شد</string>
     <string name="notif_health_channel">مشکلاتی که به شما نیاز دارند</string>
     <string name="notif_health_recorder_text">تا زمانی که این گوشی یک‌بار به یک شبکه Wi-Fi بپیوندد، تماس‌ها ضبط نخواهند شد. هر شبکه‌ای مناسب است و نیازی به اینترنت ندارد — چند ثانیه کافی است، سپس حتی بدون Wi-Fi هم به کار ادامه می‌دهد.</string>

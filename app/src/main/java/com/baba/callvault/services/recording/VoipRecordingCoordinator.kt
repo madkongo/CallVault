@@ -367,7 +367,7 @@ object VoipRecordingCoordinator {
         // Ours from before the start is sent, so no orphan check can take it for a leftover (C2); and the file it
         // writes is remembered across a kill, so a later check knows this session's start exactly.
         DaemonSessionOwnership.claim(this)
-        OrphanRecorderSession.noteSessionStarted(context, saf.stagingFile)
+        OrphanRecorderSession.noteSessionStarted(context, saf.stagingFile, isAppCall = true)
         val started = runCatching {
             DaemonStereo.request(service, prefs.getRecordStereo()) { AppLogger.w(TAG, it) }
             service.startVoipRecording(codec.cliKey, bitRate, saf.descriptor)

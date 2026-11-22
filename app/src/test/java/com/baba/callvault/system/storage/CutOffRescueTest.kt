@@ -10,6 +10,8 @@ package com.baba.callvault.system.storage
 
 import com.baba.callvault.data.health.CallLogEntry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -136,8 +138,62 @@ class CutOffRescueTest {
         ageMs: Long = CutOffRescuePolicy.QUIET_MS,
         callActive: Boolean = false,
         ownedByLiveRecording: Boolean = false,
+        confirmedStopped: Boolean = false,
     ) = CutOffRescuePolicy.decide(
         hasNote = hasNote, sizeBytes = sizeBytes, ageMs = ageMs, callActive = callActive,
-        ownedByLiveRecording = ownedByLiveRecording,
+        ownedByLiveRecording = ownedByLiveRecording, confirmedStopped = confirmedStopped,
     )
+
+    // A file the recorder confirmed stopped skips the 90 s wait and the call-up check, but not a short quiet guard:
+    // the recorder answers "not recording" before the muxer trailer is written.
+    private val guard = CutOffRescuePolicy.CONFIRMED_QUIET_MS
+
+    @Test
+    fun `a confirmed-stopped file is saved once it has been quiet for the short guard, and only when no call is up`() {
+        assertEquals(RescueDecision.SAVE_NAMED, decide(ageMs = guard, callActive = false, confirmedStopped = true))
+        assertEquals(RescueDecision.WAIT, decide(ageMs = guard, callActive = true, confirmedStopped = true))
+    }
+
+    @Test
+    fun `a stopped file whose call end is not proven waits for the call to be over, like any other`() {
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 10 * guard, callActive = true, confirmedStopped = true))
+        assertEquals(RescueDecision.SAVE_NAMED, decide(ageMs = guard, callActive = false, confirmedStopped = true))
+    }
+
+    @Test
+    fun `a marked file that keeps waiting is handed to the quiet-wait request after the re-check cap`() {
+        assertFalse(CutOffRescuePolicy.handOverToQuietWait(0))
+        assertFalse(CutOffRescuePolicy.handOverToQuietWait(CutOffRescuePolicy.CONFIRMED_MAX_RECHECKS - 2))
+        assertTrue(CutOffRescuePolicy.handOverToQuietWait(CutOffRescuePolicy.CONFIRMED_MAX_RECHECKS - 1))
+    }
+
+    @Test
+    fun `a confirmed-stopped file still being written is not saved yet`() {
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 0, confirmedStopped = true))
+        assertEquals(RescueDecision.WAIT, decide(ageMs = guard - 1, confirmedStopped = true))
+    }
+
+    @Test
+    fun `a confirmed-stopped file still held by a live recording here is never touched`() {
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 10 * guard, ownedByLiveRecording = true, confirmedStopped = true))
+    }
+
+    @Test
+    fun `a confirmed-stopped file keeps the note rules`() {
+        assertEquals(RescueDecision.DISCARD_EMPTY, decide(sizeBytes = 0, ageMs = guard, confirmedStopped = true))
+        assertEquals(RescueDecision.LEAVE_UNATTRIBUTED, decide(hasNote = false, ageMs = guard, confirmedStopped = true))
+    }
+
+    @Test
+    fun `a file not confirmed stopped still waits for quiet`() {
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 1, confirmedStopped = false))
+    }
+
+    @Test
+    fun `back-off starts only after an unbroken hour of waiting for a call`() {
+        val now = 10L * 60 * 60_000L
+        assertFalse(CutOffRescuePolicy.shouldBackOff(0L, now))
+        assertFalse(CutOffRescuePolicy.shouldBackOff(now - CutOffRescuePolicy.BUSY_BACKOFF_AFTER_MS + 1, now))
+        assertTrue(CutOffRescuePolicy.shouldBackOff(now - CutOffRescuePolicy.BUSY_BACKOFF_AFTER_MS, now))
+    }
 }

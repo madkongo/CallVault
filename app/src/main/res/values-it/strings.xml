@@ -221,6 +221,8 @@
     <string name="note_saved">Salvato</string>
     <string name="note_saving">Salvataggio…</string>
     <string name="notif_cut_off_saved_text">Il telefono ha chiuso CallVault durante una chiamata. Quanto registrato fino a quel momento è stato salvato come %1$s.</string>
+    <string name="notif_call_saved_after_restart_title">Chiamata salvata dopo il riavvio di CallVault</string>
+    <string name="notif_call_saved_after_restart_text">CallVault è stato chiuso durante una chiamata, ma la registrazione è continuata e ha salvato l’intera chiamata come %1$s.</string>
     <string name="notif_cut_off_saved_title">Una chiamata è stata interrotta</string>
     <string name="notif_health_channel">Problemi che richiedono attenzione</string>
     <string name="notif_health_recorder_text">Le chiamate non verranno registrate finché questo telefono non si collega una volta a una rete Wi-Fi. Va bene qualsiasi rete e non serve internet: bastano pochi secondi, poi continua a funzionare anche senza Wi-Fi.</string>

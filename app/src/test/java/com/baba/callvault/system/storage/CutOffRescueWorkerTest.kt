@@ -64,6 +64,16 @@ class CutOffRescueWorkerTest {
         runBlocking { CutOffRescueWorker.afterPublished(context, "a.ogg", uri, "audio/ogg", 10L, null, 5L) }
     }
 
+    @Test
+    fun a_call_saved_in_full_is_not_reported_as_cut_off_on_the_status_card() {
+        CutOffRescueWorker.handOffs = { _, _, _, _ -> }
+        val uri = Uri.parse("content://x/tree/doc/full.ogg")
+
+        runBlocking { CutOffRescueWorker.afterPublished(context, "full.ogg", uri, "audio/ogg", 10L, 1_000L, 5_000L, completeCall = true) }
+
+        assertEquals(null, com.baba.callvault.data.health.SetupHealthStore(context).read().lastFailureReason)
+    }
+
     // ---- R17 ----
 
     @Test

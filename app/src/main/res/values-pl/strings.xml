@@ -223,6 +223,8 @@
     <string name="note_saved">Zapisano</string>
     <string name="note_saving">Zapisywanie…</string>
     <string name="notif_cut_off_saved_text">Telefon zamknął CallVault podczas połączenia. To, co nagrano do tego momentu, zapisano jako %1$s.</string>
+    <string name="notif_call_saved_after_restart_title">Połączenie zapisane po ponownym uruchomieniu CallVault</string>
+    <string name="notif_call_saved_after_restart_text">CallVault został zamknięty podczas połączenia, ale nagrywanie trwało dalej i zapisało całe połączenie jako %1$s.</string>
     <string name="notif_cut_off_saved_title">Połączenie zostało przerwane</string>
     <string name="notif_health_channel">Problemy wymagające uwagi</string>
     <string name="notif_health_recorder_text">Połączenia nie będą nagrywane, dopóki telefon raz nie połączy się z siecią Wi-Fi. Wystarczy dowolna sieć i nie jest potrzebny internet — kilka sekund wystarczy, potem działa dalej także poza Wi-Fi.</string>

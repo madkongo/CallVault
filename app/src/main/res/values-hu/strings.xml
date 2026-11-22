@@ -221,6 +221,8 @@
     <string name="note_saved">Mentve</string>
     <string name="note_saving">Mentés…</string>
     <string name="notif_cut_off_saved_text">A telefon hívás közben bezárta a CallVaultot. Az addig rögzített részt %1$s néven mentettük.</string>
+    <string name="notif_call_saved_after_restart_title">A hívás mentve a CallVault újraindulása után</string>
+    <string name="notif_call_saved_after_restart_text">A CallVault bezárult egy hívás közben, de a felvétel folytatódott, és a teljes hívást elmentette ezen a néven: %1$s.</string>
     <string name="notif_cut_off_saved_title">Egy hívás megszakadt</string>
     <string name="notif_health_channel">Beavatkozást igénylő problémák</string>
     <string name="notif_health_recorder_text">Addig nem lesz hívásrögzítés, amíg a telefon egyszer nem csatlakozik egy Wi-Fi hálózathoz. Bármelyik hálózat megfelel, és internet sem kell — néhány másodperc elég, utána Wi-Fi nélkül is működik tovább.</string>

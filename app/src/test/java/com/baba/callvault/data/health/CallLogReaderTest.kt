@@ -80,6 +80,32 @@ class CallLogReaderTest {
         )
     }
 
+    @Test
+    fun `the null-on-failure reader tells an unreadable log from an empty one`() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        shadowOf(app).denyPermissions(android.Manifest.permission.READ_CALL_LOG)
+        assertEquals(null, CallLogReader.entriesSinceOrNull(context, 0L))
+
+        shadowOf(app).grantPermissions(android.Manifest.permission.READ_CALL_LOG)
+        listOf<ContentProvider>(StubProvider { throw IllegalStateException("provider died") }, StubProvider { null }).forEach {
+            ShadowContentResolver.registerProviderInternal(CallLog.AUTHORITY, it.apply { attachInfo(context, null) })
+            assertEquals(null, CallLogReader.entriesSinceOrNull(context, 0L))
+        }
+
+        val empty = StubProvider { MatrixCursor(arrayOf(CallLog.Calls.DATE, CallLog.Calls.DURATION, CallLog.Calls.TYPE, CallLog.Calls.CACHED_NAME)) }
+        ShadowContentResolver.registerProviderInternal(CallLog.AUTHORITY, empty.apply { attachInfo(context, null) })
+        assertEquals(emptyList<CallLogEntry>(), CallLogReader.entriesSinceOrNull(context, 0L))
+    }
+
+    private class StubProvider(private val answer: () -> Cursor?) : ContentProvider() {
+        override fun onCreate() = true
+        override fun query(uri: Uri, projection: Array<out String>?, selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): Cursor? = answer()
+        override fun getType(uri: Uri): String? = null
+        override fun insert(uri: Uri, values: ContentValues?): Uri? = null
+        override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?) = 0
+        override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<out String>?) = 0
+    }
+
     private data class Quadruple(val date: Long, val durationSeconds: Long, val type: Int, val name: String)
 
     /**

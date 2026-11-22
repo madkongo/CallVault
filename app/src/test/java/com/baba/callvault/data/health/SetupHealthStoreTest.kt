@@ -250,4 +250,21 @@ class SetupHealthStoreTest {
         }
         assertTrue(done.await(5, java.util.concurrent.TimeUnit.SECONDS))
     }
+
+    @Test
+    fun `a call the recorder saved in full clears its not-recorded warning and claims no cut-off`() {
+        store.recordGap(5_000L, "Anne")
+        store.recordSavedInFull(callStartedAt = 5_000L, callEndedAt = 8_000L)
+        val facts = store.read()
+        assertEquals(0L, facts.lastGapAt)
+        assertNull(facts.lastFailureReason)
+        assertTrue(facts.observedCallEnds.contains(8_000L))
+    }
+
+    @Test
+    fun `a call saved in full leaves another call's not-recorded warning alone`() {
+        store.recordGap(5_000L, "Anne")
+        store.recordSavedInFull(callStartedAt = 7_000L, callEndedAt = 8_000L)
+        assertEquals(5_000L, store.read().lastGapAt)
+    }
 }
