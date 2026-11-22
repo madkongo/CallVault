@@ -53,7 +53,7 @@ object AfterCallSimGate {
         fun cards(context: Context): List<SimCard>
         fun canReadCallLog(context: Context): Boolean
         /** This call's call-log account, or null when its row is not there (yet). One read, no wait. */
-        fun callAt(context: Context, startedAt: Long): CallSim?
+        fun callAt(context: Context, startedAt: Long, allowRingTime: Boolean): CallSim?
     }
 
     internal object AndroidSources : Sources {
@@ -61,8 +61,8 @@ object AfterCallSimGate {
             SimCards.list(context, context.getString(R.string.sim_label_word))
         override fun canReadCallLog(context: Context): Boolean =
             com.baba.callvault.system.permissions.PermissionChecks.hasCallLogPermission(context)
-        override fun callAt(context: Context, startedAt: Long): CallSim? =
-            SimLabels.forJustEnded(context, startedAt, context.getString(R.string.sim_label_word))
+        override fun callAt(context: Context, startedAt: Long, allowRingTime: Boolean): CallSim? =
+            SimLabels.forJustEnded(context, startedAt, context.getString(R.string.sim_label_word), allowRingTime)
     }
 
     @androidx.annotation.VisibleForTesting
@@ -156,7 +156,9 @@ object AfterCallSimGate {
     /** This call's call-log account, waiting briefly while Android writes the row. Null when it never appears. */
     private suspend fun waitForRow(context: Context, startedAt: Long): CallSim? {
         repeat(ATTEMPTS) { attempt ->
-            sources.callAt(context, startedAt)?.let { return it }
+            // Only the last try accepts a ring-time (older) row: until this call's own row is written, an older row
+            // may be a previous call on another SIM (re-review #A).
+            sources.callAt(context, startedAt, allowRingTime = attempt == ATTEMPTS - 1)?.let { return it }
             if (attempt < ATTEMPTS - 1) delay(RETRY_MS)
         }
         return null

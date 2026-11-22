@@ -58,7 +58,15 @@ class AfterCallSimGateTest {
         var callReads = 0
         override fun cards(context: Context): List<SimCard> { cardReads++; return cards }
         override fun canReadCallLog(context: Context): Boolean = callLog
-        override fun callAt(context: Context, startedAt: Long): CallSim? { callReads++; return call }
+        val ringTimeAsked = mutableListOf<Boolean>()
+        /** When set, answers per attempt instead of [call]: (attempt index, allowRingTime) -> row. */
+        var byAttempt: ((Int, Boolean) -> CallSim?)? = null
+        override fun callAt(context: Context, startedAt: Long, allowRingTime: Boolean): CallSim? {
+            val attempt = callReads++
+            ringTimeAsked += allowRingTime
+            val rule = byAttempt
+            return if (rule != null) rule(attempt, allowRingTime) else call
+        }
     }
 
     private fun oneSim(sources: FakeSources): FakeSources {
@@ -135,6 +143,25 @@ class AfterCallSimGateTest {
         val fake = oneSim(FakeSources(listOf(personal), call = CallSim("2", 1)))
         assertEquals(Reason.CHOSEN_ABSENT, AfterCallSimGate.evaluate(context, carrierName).reason)
         assertEquals(0, fake.callReads)
+    }
+
+    @Test
+    fun early_tries_accept_only_a_row_near_the_recording_start_and_ring_time_only_on_the_last() = runTest {
+        // Re-review #A: a previous call's row (older start, other SIM) must not decide while this call's row is late.
+        val fake = oneSim(FakeSources(both))
+        fake.byAttempt = { _, ringTime -> if (ringTime) CallSim("2", 1) else null }
+        AfterCallSimGate.evaluate(context, carrierName)
+        assertEquals(List(fake.ringTimeAsked.size - 1) { false } + true, fake.ringTimeAsked)
+        assertTrue(fake.ringTimeAsked.size > 2)
+    }
+
+    @Test
+    fun this_calls_row_appearing_on_a_later_try_decides() = runTest {
+        val fake = oneSim(FakeSources(both))
+        // The other SIM's older row is only reachable with ring time; this call's own row lands on the third try.
+        fake.byAttempt = { attempt, ringTime -> when { attempt >= 2 -> CallSim("4", 2); ringTime -> CallSim("2", 1); else -> null } }
+        assertEquals(Reason.CHOSEN, AfterCallSimGate.evaluate(context, carrierName).reason)
+        assertEquals(3, fake.callReads)
     }
 
     @Test

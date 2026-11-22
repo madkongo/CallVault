@@ -59,18 +59,23 @@ object PhoneCallMatch {
     /**
      * The answered call that belongs to a recording which has just ended, or null.
      *
-     * Its start may be up to [JUST_ENDED_EARLY_RING_MS] before the recording (ring time) or
-     * [JUST_ENDED_START_SLOP_MS] after it, and its logged end may not be more than [JUST_ENDED_END_SLOP_MS] before
-     * the recording started. A previous call that ended well before is ignored, so a missing new row stays
-     * "unknown" instead of inheriting the previous call's SIM. Of several, the start closest to the recording wins.
+     * Its start may be up to [JUST_ENDED_START_SLOP_MS] after the recording's start, and before it by the same
+     * amount, or by up to [JUST_ENDED_EARLY_RING_MS] when [allowRingTime] (incoming answer, record-from-answer).
+     * Its logged end may not be more than [JUST_ENDED_END_SLOP_MS] before the recording started. A row with a newer
+     * answered row after it (up to the latest start this call's own row could have) is an earlier call, never this
+     * one. Callers ask without ring time first: Telecom writes this call's row late, and until it is there an older
+     * row inside the ring-time window may be a previous call on another SIM (re-review #A).
      */
-    fun justEnded(calls: List<PhoneCall>, recordingStartedAt: Long): PhoneCall? =
-        calls.asSequence()
-            .filter { it.kind == CallKind.INCOMING || it.kind == CallKind.OUTGOING }
-            .filter { it.startedAt >= recordingStartedAt - JUST_ENDED_EARLY_RING_MS }
-            .filter { it.startedAt <= recordingStartedAt + JUST_ENDED_START_SLOP_MS }
+    fun justEnded(calls: List<PhoneCall>, recordingStartedAt: Long, allowRingTime: Boolean = true): PhoneCall? {
+        val latestStart = recordingStartedAt + JUST_ENDED_START_SLOP_MS
+        val earliestStart = recordingStartedAt - if (allowRingTime) JUST_ENDED_EARLY_RING_MS else JUST_ENDED_START_SLOP_MS
+        val answered = calls.filter { it.kind == CallKind.INCOMING || it.kind == CallKind.OUTGOING }
+        return answered.asSequence()
+            .filter { it.startedAt in earliestStart..latestStart }
             .filter { it.startedAt + it.durationSeconds * 1_000 >= recordingStartedAt - JUST_ENDED_END_SLOP_MS }
+            .filter { row -> answered.none { it !== row && it.startedAt > row.startedAt && it.startedAt <= latestStart } }
             .minByOrNull { kotlin.math.abs(it.startedAt - recordingStartedAt) }
+    }
 
     private fun closest(calls: List<PhoneCall>, startedAt: Long, slopMs: Long): PhoneCall? =
         calls.asSequence()

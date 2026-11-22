@@ -110,9 +110,9 @@ object SimLabels {
      * The call that just ended: its phone-account id (stable; not the SIM's display name) and slot.
      * Null when this call has no row yet. A previous call is not used.
      */
-    fun forJustEnded(context: Context, startedAt: Long, simWord: String): CallSim? {
+    fun forJustEnded(context: Context, startedAt: Long, simWord: String, allowRingTime: Boolean = true): CallSim? {
         val calls = PhoneCallReader.since(context, startedAt - PhoneCallMatch.JUST_ENDED_EARLY_RING_MS)
-        val call = PhoneCallMatch.justEnded(calls, startedAt) ?: return null
+        val call = PhoneCallMatch.justEnded(calls, startedAt, allowRingTime) ?: return null
         val slot = Resolver(context, simWord).simFor(call.accountComponent, call.accountId)?.slot
         return CallSim(call.accountId, slot)
     }

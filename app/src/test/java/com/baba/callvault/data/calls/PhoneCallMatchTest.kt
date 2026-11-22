@@ -87,4 +87,43 @@ class PhoneCallMatchTest {
         val current = PhoneCall(t - 30_000, 90, CallKind.INCOMING, accountId = "cur")
         assertEquals("cur", PhoneCallMatch.justEnded(listOf(previous, current), t)?.accountId)
     }
+
+    @Test
+    fun `an unanswered outgoing call on the other SIM 30 seconds earlier is not this call on the early tries`() {
+        // Re-review #A: this call's own row is not written yet.
+        val previous = PhoneCall(t - 30_000, 0, CallKind.OUTGOING, accountId = "other")
+        assertNull(PhoneCallMatch.justEnded(listOf(previous), t, allowRingTime = false))
+    }
+
+    @Test
+    fun `once this call's row appears it wins over the unanswered previous call`() {
+        val previous = PhoneCall(t - 30_000, 0, CallKind.OUTGOING, accountId = "other")
+        val current = PhoneCall(t - 1_000, 40, CallKind.OUTGOING, accountId = "chosen")
+        assertEquals("chosen", PhoneCallMatch.justEnded(listOf(previous, current), t, allowRingTime = false)?.accountId)
+        assertEquals("chosen", PhoneCallMatch.justEnded(listOf(previous, current), t, allowRingTime = true)?.accountId)
+    }
+
+    @Test
+    fun `a short answered call on the other SIM 30 seconds before is not this call on the early tries`() {
+        val previous = PhoneCall(t - 30_000, 5, CallKind.INCOMING, accountId = "other")
+        assertNull(PhoneCallMatch.justEnded(listOf(previous), t, allowRingTime = false))
+        val current = PhoneCall(t - 2_000, 60, CallKind.INCOMING, accountId = "chosen")
+        assertEquals("chosen", PhoneCallMatch.justEnded(listOf(previous, current), t, allowRingTime = true)?.accountId)
+    }
+
+    @Test
+    fun `a row with a newer call after it is never the match`() {
+        // The previous call is closer to the recording start than this call's (late-written, slightly later) row.
+        val previous = PhoneCall(t - 10_000, 5, CallKind.OUTGOING, accountId = "other")
+        val current = PhoneCall(t + 20_000, 30, CallKind.OUTGOING, accountId = "chosen")
+        assertEquals("chosen", PhoneCallMatch.justEnded(listOf(previous, current), t, allowRingTime = false)?.accountId)
+        assertEquals("chosen", PhoneCallMatch.justEnded(listOf(previous, current), t, allowRingTime = true)?.accountId)
+    }
+
+    @Test
+    fun `ring time is still accepted when asked for`() {
+        val call = PhoneCall(t - 30_000, 120, CallKind.INCOMING, accountId = "sim2")
+        assertNull(PhoneCallMatch.justEnded(listOf(call), t, allowRingTime = false))
+        assertEquals("sim2", PhoneCallMatch.justEnded(listOf(call), t, allowRingTime = true)?.accountId)
+    }
 }
