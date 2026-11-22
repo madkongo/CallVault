@@ -118,6 +118,8 @@ class DaemonKeepAliveService : Service() {
     private val watchdog = object : Runnable {
         override fun run() {
             reconcileAdbWatchers("tick")
+            // One look at adbd per tick, so a running adbd clears a stopped streak and a real one accumulates (H1).
+            if (usesAdb()) runCatching { AdbShell.observeAdbd() }
             val alive = isDaemonAlive()
             if (alive != (lastReady == true)) {
                 lastReady = alive
@@ -886,6 +888,8 @@ class DaemonKeepAliveService : Service() {
     private fun onDaemonDiedImmediate() {
         watchdogHandler.post {
             AppLogger.i(TAG, "keep-alive: binder-death signal — ${RecorderLogMarkers.RELAUNCH} immediately")
+            // In every mode, and always on: what the phone says about adbd and the USB gadget right now (GH #89).
+            runCatching { TransportTimeline.recorderDied(applicationContext) }
             if (usesAdb()) {
                 TransportTimeline.event(applicationContext, "recorder died")
                 timelineSnapshot(false, "death")

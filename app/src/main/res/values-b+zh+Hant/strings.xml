@@ -310,7 +310,7 @@
     <string name="recording_error_file_creation">儲存錄音檔案失敗，請檢查輸出目錄的讀寫權限，或者嘗試換一個目錄後重試。</string>
     <string name="recording_error_folder_missing">選擇的輸出目錄被刪除、無效或者權限被復原。請在 App 中重新指定輸出目錄。</string>
     <string name="recording_error_server_missing">Scrcpy-server 二進位檔缺失，或 SHA256 安全檢查失敗。這不應該發生，請回報此問題。</string>
-    <string name="recording_error_start_failed">無法啟動錄音。連線到 ShellService 出錯。</string>
+    <string name="recording_error_start_failed">這通電話沒有被錄音。錄音程式沒有在執行，CallVault 也連不上它。請開啟 CallVault 讓它恢復運作。</string>
     <string name="recording_error_title">錯誤：錄音遇到問題</string>
     <string name="recording_flag_added">已標記 (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐國際電話</string>

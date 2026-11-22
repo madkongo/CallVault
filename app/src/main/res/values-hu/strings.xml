@@ -331,7 +331,7 @@
     <string name="recording_error_file_creation">A felvétel létrehozása sikertelen. Kérjük ellenőrizd a tárhely jogosultságot és/vagy válassz ki egy másik mappát az alkalmazás beállításaiban.</string>
     <string name="recording_error_folder_missing">A kiválasztott könyvtár nem létezik, érvénytelen vagy nincs írási jogosultság hozzá. Kérem válasszon másikat az alkalmazás beállításaiban.</string>
     <string name="recording_error_server_missing">Hiányzik az Scrcpy-server bináris fájl vagy az SHA256 biztonsági ellenőrzés sikertelen volt. Ennek nem szabadna előfordulnia, kérjük jelezd a problémát felénk.</string>
-    <string name="recording_error_start_failed">A felvétel indítása sikertelen. Hiba történt a ShellService binder meghívásakor.</string>
+    <string name="recording_error_start_failed">Ez a hívás nincs rögzítve. A rögzítő nem fut, és a CallVault nem érte el. Nyisd meg a CallVaultot az újraindításához.</string>
     <string name="recording_error_title">Felvétel hiba</string>
     <string name="recording_flag_added">Pillanat megjelölve (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐Külföldi</string>

@@ -446,6 +446,15 @@ class RecordingForegroundService : Service() {
                         if (e is CancellationException) throw e
 
                         AppLogger.e(TAG, "Failed to start recording session.", e)
+                        // Always on: with logging off a failed start left nothing to read (GH #89).
+                        CallEndLog.record(
+                            applicationContext,
+                            CallEndLog.startFailed(
+                                e,
+                                recorderConnected = com.baba.callvault.server.RecorderConnection.isConnected,
+                                adbd = com.baba.callvault.integrations.adb.AdbShell.adbdState().toString(),
+                            ),
+                        )
                         // Don't assert a cause here — this generic catch sees ALL start failures (daemon,
                         // ADB, storage, …). Prefixing "ADB connection failed" mislabels e.g. a SAF storage
                         // error as an ADB problem (real field report: "Unsupported mode: rw"). Just surface

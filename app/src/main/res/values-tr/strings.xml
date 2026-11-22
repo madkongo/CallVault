@@ -370,7 +370,7 @@
     <string name="recording_error_folder_missing">Seçilen çıktı klasörü eksik, geçersiz veya ona yazma iznimiz yok. Uygulama ayarlarından birini seçin.</string>
     <string name="recording_error_server_missing">Scrcpy-server ikili dosyası eksik veya SHA256 güvenlik denetimi başarısız oldu. Bu olmamalı, lütfen bildirin.</string>
     <string name="recording_error_file_creation">Kayıt dosyası oluşturulamadı. Lütfen depolama izinlerini denetleyin ve/veya uygulama ayarlarından yeni bir kayıt klasörü seçin.</string>
-    <string name="recording_error_start_failed">Kayıt başlatılamadı. ShellService binder yöntemi çağrılırken bir hata oluştu.</string>
+    <string name="recording_error_start_failed">Bu arama kaydedilmiyor. Kaydedici çalışmıyor ve CallVault ona ulaşamadı. Yeniden başlatmak için CallVault\'u açın.</string>
     <string name="recording_error_empty_file_shizuku">Kayıt boş — hiç ses yakalanmadı. Shizuku’yu açıp hâlâ çalıştığını denetleyin; telefon yeniden başlayınca durur.</string>
     <string name="recording_error_empty_file">Kayıt boş — kaydedici arka plan hizmeti çalışmadığı için hiç ses yakalanmadı. Geliştirici seçeneklerinin ve Kablosuz hata ayıklamanın açık olduğunu denetleyin.</string>
     <string name="recording_error_daemon_died">Kaydedici arka plan hizmeti durdu — bu arama KAYDEDİLMİYOR. Geliştirici seçeneklerinin ve Kablosuz hata ayıklamanın açık olduğunu denetleyin.</string>

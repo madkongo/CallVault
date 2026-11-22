@@ -341,7 +341,7 @@
     <string name="recording_error_file_creation">Не вдалося створити файл запису. Перевірте дозволи до сховища та/або виберіть нову папку для записів у налаштуваннях застосунку.</string>
     <string name="recording_error_folder_missing">Вибрана папка для записів відсутня, недійсна або немає дозволу на запис до неї. Виберіть папку в налаштуваннях застосунку.</string>
     <string name="recording_error_server_missing">Не знайдено scrcpy-server або не пройдено перевірку SHA-256. Повідомте розробника.</string>
-    <string name="recording_error_start_failed">Не вдалося почати запис через помилку звʼязку зі службою.</string>
+    <string name="recording_error_start_failed">Цей дзвінок не записується. Рекордер не запущений, і CallVault не зміг до нього звернутися. Відкрийте CallVault, щоб його запустити.</string>
     <string name="recording_error_title">Помилка запису</string>
     <string name="recording_flag_added">Позначено момент: %1$d</string>
     <string name="recording_notification_cross_country_tip">🌐Міжнародний</string>

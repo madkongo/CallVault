@@ -333,7 +333,7 @@
     <string name="recording_error_file_creation">Не удалось создать файл записи. Пожалуйста, проверьте разрешения на доступ к памяти и/или выберите новую папку в настройках приложения.</string>
     <string name="recording_error_folder_missing">Выбранная папка для сохранения отсутствует, недоступна или у приложения нет прав на запись в неё. Выберите другую папку в настройках приложения.</string>
     <string name="recording_error_server_missing">Исполняемый файл scrcpy-server отсутствует или не прошёл проверку безопасности SHA256. Этого не должно было случиться, пожалуйста, сообщите об ошибке разработчикам.</string>
-    <string name="recording_error_start_failed">Не удалось зачать запись. Произошла ошибка при вызове метода Binder в ShellService.</string>
+    <string name="recording_error_start_failed">Этот звонок не записывается. Рекордер не запущен, и CallVault не смог до него дотянуться. Откройте CallVault, чтобы его запустить.</string>
     <string name="recording_error_title">Ошибка записи</string>
     <string name="recording_flag_added">Момент отмечен (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐 Международный</string>

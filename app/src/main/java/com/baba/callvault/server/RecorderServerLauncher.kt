@@ -253,8 +253,20 @@ object RecorderServerLauncher {
             // Wireless Debugging — WD's adbd churn is what kills the daemon. Held under heavyOperationLock
             // (this method), so armLoopbackIfNeeded's lock is re-entrant. No-op/fast when already armed.
             if (!connected && AppPreferences(context).isOfflineRecordingEnabled()) {
-                AppLogger.i(TAG, "Attempt $n: offline mode but no connection — re-arming loopback")
-                if (AdbShell.armLoopbackIfNeeded(context)) connected = AdbShell.ensureConnected(context)
+                // adbd stopped: re-arming goes through mDNS, which cannot answer, so it would only burn its
+                // timeout. Take the revival decision first (GH89-4); arm only if adbd is back (or unreadable).
+                var mayRearm = !AdbShell.adbdPersistentlyStopped()
+                if (!mayRearm) {
+                    AppLogger.i(TAG, "Attempt $n: offline mode, no connection and adbd has read stopped for a while — deciding on a revival instead of re-arming through mDNS")
+                    runCatching { AdbShell.reviveAdbdIfStopped(context, "launch attempt $n (adbd stopped)") }
+                        .onFailure { AppLogger.w(TAG, "Attempt $n: could not check adbd: ${it.message}") }
+                    mayRearm = !AdbShell.adbdPersistentlyStopped()
+                    if (!mayRearm) AppLogger.w(TAG, "Attempt $n: adbd is still stopped after the revival decision; not re-arming")
+                }
+                if (mayRearm) {
+                    AppLogger.i(TAG, "Attempt $n: offline mode but no connection — re-arming loopback")
+                    if (AdbShell.armLoopbackIfNeeded(context)) connected = AdbShell.ensureConnected(context)
+                }
             }
             if (!connected) {
                 AppLogger.w(TAG, "Attempt $n/$MAX_LAUNCH_ATTEMPTS: ADB not connected; retrying")

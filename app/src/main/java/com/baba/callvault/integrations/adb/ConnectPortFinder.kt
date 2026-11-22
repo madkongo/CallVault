@@ -54,7 +54,8 @@ internal object ConnectPortFinder {
         SCAN("loopback search"),
     }
 
-    data class Found(val port: Int, val source: Source)
+    /** [host] is what mDNS resolved the service to; null for the sources that only ever look at loopback. */
+    data class Found(val port: Int, val source: Source, val host: String? = null)
 
     private val gate = ConnectPortScanGate()
 
@@ -74,10 +75,18 @@ internal object ConnectPortFinder {
         if (lastGood != null && probe(lastGood, LAST_GOOD_CONNECT_TIMEOUT_MS, LAST_GOOD_READ_TIMEOUT_MS) == PortProbe.ADB_TLS) {
             return found(lastGood, Source.LAST_GOOD, "")
         }
+        // adbd stopped: no service is advertised and none can answer, so do not spend the mDNS window on it (C65).
+        // Only a PERSISTENT stop: one stopped reading is adbd mid-restart, and mDNS finds it once it is back (M1).
+        if (StoppedAdbdWaits.persistentlyStopped(adbd, AdbShell.adbdStoppedForMs())) {
+            val outcome = "adbd has read stopped for over ${StoppedAdbdWaits.GIVE_UP_AFTER_MS}ms; last good port did not answer and mDNS was not asked"
+            if (outcome != lastOutcome) AppLogger.w(TAG, outcome) // once per change, not on every retry
+            lastOutcome = outcome
+            return null
+        }
         // mDNS's port needs no second check: AdbMdns already accepts only a port something listens on at
         // 127.0.0.1 (MdnsServiceVerdict, the bind-must-fail probe), and the last good port was probed above.
-        AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, mdnsTimeoutMs)?.let {
-            return found(it, Source.MDNS, "")
+        AdbMdns.discoverEndpoint(context, AdbMdns.TLS_CONNECT, mdnsTimeoutMs)?.let { (host, port) ->
+            return found(port, Source.MDNS, "").copy(host = host)
         }
         // Which failure this is: mdnsd running means it advertises but something drops it; stopped or "(unset)"
         // (no such service on this ROM) means adbd had nobody to advertise through — #65's suspected cause.
@@ -98,6 +107,38 @@ internal object ConnectPortFinder {
         return search(lastGood, excludePorts, session, now, mdnsd)
     }
 
+    /** After an mDNS look found nothing, the next one waits (same Wi-Fi session, a few minutes) — M2. */
+    private val lookGate = ConnectPortScanGate(ConnectBeforeEnable.MDNS_MISS_RETRY_MS)
+
+    /**
+     * The quick look made when `adb_wifi_enabled` reads off (C115): the last good port always (it costs ~1 ms when
+     * stale), then mDNS for at most [mdnsTimeoutMs] — unless a look just came up empty in this Wi-Fi session, which
+     * would only delay the enable rules by that window again on every call start. No loopback search. Never throws.
+     */
+    fun lookForConnectPort(context: Context, mdnsTimeoutMs: Long, excludePorts: Set<Int>, adbd: AdbdState): Found? = runCatching {
+        val lastGood = AppPreferences(context).getLastAdbConnectPort()?.takeIf { it !in excludePorts }
+        if (lastGood != null && probe(lastGood, LAST_GOOD_CONNECT_TIMEOUT_MS, LAST_GOOD_READ_TIMEOUT_MS) == PortProbe.ADB_TLS) {
+            return@runCatching found(lastGood, Source.LAST_GOOD, "")
+        }
+        val session = sessionKey(context)
+        val now = SystemClock.elapsedRealtime()
+        if (!lookGate.mayScan(session, now)) {
+            lastOutcome = "last good port did not answer; mDNS look skipped (it found nothing a moment ago in this Wi-Fi session)"
+            if (lookGate.shouldLogSkip()) AppLogger.i(TAG, "Not looking for a connect port through mDNS again yet: it found nothing in the last ${ConnectBeforeEnable.MDNS_MISS_RETRY_MS / 60_000} min on this network")
+            return@runCatching null
+        }
+        val endpoint = AdbMdns.discoverEndpoint(context, AdbMdns.TLS_CONNECT, mdnsTimeoutMs)
+        if (endpoint == null) {
+            lookGate.recordFailure(session, now)
+            lastOutcome = "last good port did not answer and mDNS found nothing in ${mdnsTimeoutMs}ms (adbd=$adbd)"
+            return@runCatching null
+        }
+        lookGate.reset()
+        found(endpoint.second, Source.MDNS, "").copy(host = endpoint.first)
+    }.onFailure {
+        AppLogger.w(TAG, "Looking for a connect port failed (${it.javaClass.simpleName}: ${it.message}); treating it as nothing answering")
+    }.getOrNull()
+
     /** A TLS connect on [port] worked: remember it, and let the next miss search again. */
     fun recordSuccess(context: Context, port: Int) {
         runCatching { AppPreferences(context).setLastAdbConnectPort(port) }
@@ -105,7 +146,10 @@ internal object ConnectPortFinder {
     }
 
     /** Wireless debugging was switched (by anyone): adbd's port is new, so a failed search no longer holds. */
-    fun onWirelessDebuggingChanged() = gate.reset()
+    fun onWirelessDebuggingChanged() {
+        gate.reset()
+        lookGate.reset()
+    }
 
     private fun search(
         lastGood: Int?,

@@ -8,6 +8,7 @@
 
 package com.baba.callvault.integrations.adb
 
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -56,5 +57,34 @@ class TransportTimelineTest {
     @Test
     fun `a recorder going down is still a new state`() {
         assertNotEquals(TransportTimeline.changeKey(base), TransportTimeline.changeKey(base.copy(recorderAlive = false)))
+    }
+
+    // --- GH89-5: a death line carries what the phone says about adbd and the USB gadget ---
+
+    @Test
+    fun `the death line names adbd, sys usb config and sys usb state, and says so when one is unreadable`() {
+        val line = TransportTimeline.deathLine(adbd = "STOPPED", usbConfig = "mtp,adb", usbState = "")
+        assertTrue(line, line.contains("init.svc.adbd=STOPPED"))
+        assertTrue(line, line.contains("sys.usb.config=mtp,adb"))
+        assertTrue(line, line.contains("sys.usb.state=(unreadable)"))
+    }
+
+    @Test
+    fun `the state line carries the usb gadget properties too, and a change in them is a new state`() {
+        val moved = base.copy(usbConfig = "none")
+        assertTrue(TransportTimeline.render(moved).contains("sys.usb.config=none"))
+        assertNotEquals(TransportTimeline.changeKey(base), TransportTimeline.changeKey(moved))
+    }
+
+    @Test
+    fun `the keep-alive writes the death line in every mode, before the adb-only branch`() {
+        val src = listOf(
+            "src/main/java/com/baba/callvault/services/recording/DaemonKeepAliveService.kt",
+            "app/src/main/java/com/baba/callvault/services/recording/DaemonKeepAliveService.kt",
+        ).map(::File).first { it.exists() }.readText()
+        val a = src.indexOf("private fun onDaemonDiedImmediate()")
+        val died = src.indexOf("TransportTimeline.recorderDied(", a)
+        val adbOnly = src.indexOf("if (usesAdb())", a)
+        assertTrue(a > 0 && died > a && adbOnly > died)
     }
 }

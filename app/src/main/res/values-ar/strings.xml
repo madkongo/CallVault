@@ -369,7 +369,7 @@
     <string name="recording_error_file_creation">فشل في إنشاء ملف التسجيل. يرجى التحقق من أذونات التخزين و/أو تحديد مجلد تسجيلات جديد في إعدادات التطبيق.</string>
     <string name="recording_error_folder_missing">مجلد الإخراج المحدد مفقود، أو غير صالح، أو ليس لدينا إذن للكتابة فيه. حدد واحدًا في إعدادات التطبيق.</string>
     <string name="recording_error_server_missing">ملف scrcpy-server الثنائي مفقود أو فشل التحقق الأمني SHA256. لا ينبغي أن يحدث هذا، يرجى الإبلاغ عنه.</string>
-    <string name="recording_error_start_failed">فشل في بدء التسجيل. حدث خطأ عند استدعاء طريقة ربط ShellService.</string>
+    <string name="recording_error_start_failed">هذه المكالمة لا تُسجَّل. المسجّل غير قيد التشغيل ولم يتمكن CallVault من الوصول إليه. افتح CallVault لإعادة تشغيله.</string>
     <string name="recording_error_title">خطأ في التسجيل</string>
     <string name="recording_flag_added">تم تحديد اللحظة (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐عبر البلاد</string>

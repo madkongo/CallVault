@@ -330,7 +330,7 @@
     <string name="recording_error_folder_missing">বাছাই করা ফোল্ডারটি নেই, সঠিক নয়, অথবা এতে লেখার অনুমতি নেই। অ্যাপের সেটিংসে একটি ফোল্ডার বাছুন।</string>
     <string name="recording_error_server_missing">Scrcpy-server ফাইলটি নেই বা নিরাপত্তার SHA256 যাচাই ব্যর্থ হয়েছে। এমন হওয়ার কথা নয়, অনুগ্রহ করে এটি জানান।</string>
     <string name="recording_error_file_creation">রেকর্ডিং ফাইল তৈরি করা যায়নি। স্টোরেজের অনুমতি দেখুন এবং/অথবা অ্যাপের সেটিংসে নতুন রেকর্ডিং ফোল্ডার বাছুন।</string>
-    <string name="recording_error_start_failed">রেকর্ডিং শুরু করা যায়নি। ShellService binder মেথড চালানোর সময় একটি ত্রুটি হয়েছে।</string>
+    <string name="recording_error_start_failed">এই কলটি রেকর্ড হচ্ছে না। রেকর্ডার চলছে না এবং CallVault এটির সাথে যোগাযোগ করতে পারেনি। এটি আবার চালু করতে CallVault খুলুন।</string>
     <string name="recording_error_empty_file_shizuku">রেকর্ডিংটি খালি — কোনো অডিও ধরা পড়েনি। Shizuku খুলে দেখুন সেটি এখনও চলছে কি না; ফোন রিস্টার্ট হলেই এটি বন্ধ হয়ে যায়।</string>
     <string name="recording_error_empty_file">রেকর্ডিংটি খালি — রেকর্ডার ডেমন চালু না থাকায় কোনো অডিও ধরা পড়েনি। ডেভেলপার অপশন (Developer options) ও ওয়্যারলেস ডিবাগিং (Wireless debugging) চালু আছে কি না দেখুন।</string>
     <string name="recording_error_daemon_died">রেকর্ডার ডেমন বন্ধ হয়ে গেছে — এই কলটি রেকর্ড হচ্ছে না। ডেভেলপার অপশন (Developer options) ও ওয়্যারলেস ডিবাগিং (Wireless debugging) চালু আছে কি না দেখুন।</string>

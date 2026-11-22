@@ -331,7 +331,7 @@
     <string name="recording_error_file_creation">Die Aufnahmedatei konnte nicht erstellt werden. Bitte überprüfen Sie die Speicherberechtigungen und/oder wählen Sie in den App-Einstellungen einen neuen Aufnahmeordner aus.</string>
     <string name="recording_error_folder_missing">Der ausgewählte Ausgabeordner fehlt, ist ungültig, oder wir haben keine Berechtigung, in ihn zu schreiben. Wählen Sie einen in den App-Einstellungen aus.</string>
     <string name="recording_error_server_missing">Die Scrcpy-Server-Binärdatei fehlt, oder die SHA256-Sicherheitsprüfung ist fehlgeschlagen. Dies sollte nicht vorkommen; bitte melden Sie dies.</string>
-    <string name="recording_error_start_failed">Aufnahme konnte nicht gestartet werden. Beim Aufruf der ShellService-Binder-Methode ist ein Fehler aufgetreten.</string>
+    <string name="recording_error_start_failed">Dieser Anruf wird nicht aufgenommen. Der Recorder läuft nicht und CallVault konnte ihn nicht erreichen. Öffne CallVault, um ihn wieder zu starten.</string>
     <string name="recording_error_title">Aufnahmefehler</string>
     <string name="recording_flag_added">Moment markiert (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐International</string>

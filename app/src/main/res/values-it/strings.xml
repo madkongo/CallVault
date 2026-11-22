@@ -331,7 +331,7 @@
     <string name="recording_error_file_creation">Impossibile creare il file di registrazione. Controlli le autorizzazioni di archiviazione e/o selezioni una nuova cartella di registrazione nelle impostazioni dell\'app.</string>
     <string name="recording_error_folder_missing">La cartella di output selezionata è mancante, non valida oppure non disponiamo dell\'autorizzazione per scriverci. Ne selezioni una nelle impostazioni dell\'app.</string>
     <string name="recording_error_server_missing">Il binario scrcpy-server è mancante oppure il controllo di sicurezza SHA256 non è riuscito. Questo non dovrebbe accadere: la preghiamo di segnalarlo.</string>
-    <string name="recording_error_start_failed">Impossibile avviare la registrazione. Si è verificato un errore durante la chiamata del metodo binder di ShellService.</string>
+    <string name="recording_error_start_failed">Questa chiamata non viene registrata. Il registratore non è in esecuzione e CallVault non è riuscito a raggiungerlo. Apri CallVault per riavviarlo.</string>
     <string name="recording_error_title">Errore di registrazione</string>
     <string name="recording_flag_added">Momento segnato (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐Internazionale</string>
