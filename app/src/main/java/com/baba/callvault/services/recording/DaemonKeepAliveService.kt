@@ -100,6 +100,7 @@ class DaemonKeepAliveService : Service() {
 
     /** Serialises and throttles relaunch attempts, and expires one that never came back. */
     private val rewarmGate = RewarmGate(stuckAfterMs = REWARM_STUCK_MS, throttleMs = REWARM_THROTTLE_MS)
+    private val openPortFailures = OpenPortFailures()
 
     /**
      * Decides how to recover, and notices when recovery itself has stopped working.
@@ -899,6 +900,8 @@ class DaemonKeepAliveService : Service() {
             timelineSkip("a recording on the local fallback is using the ADB connection")
             return
         }
+        // A switch change or confirmed death is new evidence: earn the open-port path a fresh set of tries.
+        if (force) openPortFailures.reset()
         val offline = runCatching { AppPreferences(this).isOfflineRecordingEnabled() }.getOrDefault(false)
         // Every network, not the default one: a Wi-Fi without internet while mobile data is up is still Wi-Fi (review C34).
         if (!RewarmDecisions.wifiAllowsRelaunch(offline, WifiState.of(this))) {
@@ -910,14 +913,16 @@ class DaemonKeepAliveService : Service() {
         // refusal each time, for as long as the switch stayed off. The switch observer comes back here the
         // moment either switch changes, and the watchdog still ticks for Wi-Fi returning.
         val known = ReadinessNoticeText.current(this, ready = false)
-        if (known == ReadinessNotice.WD_OFF_BY_USER || known == ReadinessNotice.NEEDS_WIFI) {
+        if (known == ReadinessNotice.NEEDS_WIFI) {
             timelineSkip("recovery impossible: $known")
             updateNotification(false)
             return
         }
+        // WD_OFF_BY_USER is only "impossible" when adbd's already-open tcp port does not answer either (review C34
+        // retest, OP9: stood down 4+ min with :5555 open). The probe is a network call, so it runs in the thread below.
         // Checked AFTER the Wi-Fi guard so a relaunch we never attempt does not consume the throttle.
         if (!rewarmGate.tryEnter(SystemClock.elapsedRealtime(), force)) return
-        Thread {
+        Thread { rewarmGate.leavingAfter {
             AppLogger.i(TAG, "keep-alive: daemon down — ${RecorderLogMarkers.RELAUNCH} (force=$force offline=$offline)")
             // Restore a usable endpoint FIRST, explicitly. The connect path only rediscovers a missing
             // one after ~12 s of failing loopback probes, so doing it here is the difference between
@@ -932,10 +937,19 @@ class DaemonKeepAliveService : Service() {
             // A switch that reads on is not proof adbd is up: turning USB debugging off stops it while Wireless
             // debugging still reads on, and every attempt below would then dial nothing. Catches the case
             // the switch observer missed — the service was not running when it happened, or it rebooted.
-            if (!adbStillAllowed("revive adbd")) { rewarmGate.leave(); return@Thread }
-            runCatching { AdbShell.reviveAdbdIfStopped(applicationContext, "keep-alive relaunch", mayEnable = usesAdb()) }
+            val plan = RewarmDecisions.relaunchPlan(known, openPortFailures.count) { probeOpenPort() }
+            if (plan == RewarmDecisions.RelaunchPlan.STAND_DOWN) {
+                timelineSkip("recovery impossible: $known (no open adb tcp port answers, or ${openPortFailures.count} launches through it failed)")
+                watchdogHandler.post { updateNotification(false) }
+                return@leavingAfter
+            }
+            // Via the open port the switch is never touched: no adbd revive, no Wireless debugging enable, just connect.
+            val viaOpenPort = plan == RewarmDecisions.RelaunchPlan.VIA_OPEN_PORT
+            if (viaOpenPort) AppLogger.i(TAG, "keep-alive: Wireless debugging is off by the user's choice but adbd answers on an open tcp port — relaunching through it (earlier failures in a row: ${openPortFailures.count})")
+            if (!adbStillAllowed("revive adbd")) return@leavingAfter
+            if (!viaOpenPort) runCatching { AdbShell.reviveAdbdIfStopped(applicationContext, "keep-alive relaunch", mayEnable = usesAdb()) }
                 .onFailure { AppLogger.w(TAG, "keep-alive: could not check adbd: ${it.message}") }
-            when (
+            if (!viaOpenPort) when (
                 recoveryPolicy.nextStep(
                     wirelessDebuggingEnabled = AdbShell.isWirelessDebuggingEnabled(applicationContext),
                     usbDebuggingEnabled = AdbShell.isUsbDebuggingEnabled(applicationContext),
@@ -948,7 +962,7 @@ class DaemonKeepAliveService : Service() {
                     // the user tapped Wireless debugging off and this switched it back on 50 ms later, before
                     // anything had recorded that it was the user's tap. The gate reads that record.
                     Thread.sleep(RESTORE_SETTLE_MS)
-                    if (!adbStillAllowed("re-enable Wireless debugging")) { rewarmGate.leave(); return@Thread }
+                    if (!adbStillAllowed("re-enable Wireless debugging")) { rewarmGate.leave(); return@leavingAfter }
                     runCatching { AdbShell.enableWirelessDebugging(applicationContext) }
                         .onFailure { AppLogger.w(TAG, "keep-alive: could not re-enable Wireless debugging: ${it.message}") }
                 }
@@ -959,10 +973,10 @@ class DaemonKeepAliveService : Service() {
                     // endpoint to reach even if the loopback one is the wedged half. Manually enabling
                     // Wireless debugging is exactly what un-wedged the 2026-08-18 device.
                     AppLogger.w(TAG, "keep-alive: relaunch keeps timing out — ${RecorderLogMarkers.ADB_REBUILD}")
-                    if (!adbStillAllowed("rebuild the ADB connection")) { rewarmGate.leave(); return@Thread }
+                    if (!adbStillAllowed("rebuild the ADB connection")) { rewarmGate.leave(); return@leavingAfter }
                     runCatching { AdbShell.dropConnection(applicationContext) }
                         .onFailure { AppLogger.w(TAG, "keep-alive: could not drop the ADB connection: ${it.message}") }
-                    if (!adbStillAllowed("re-enable Wireless debugging")) { rewarmGate.leave(); return@Thread }
+                    if (!adbStillAllowed("re-enable Wireless debugging")) { rewarmGate.leave(); return@leavingAfter }
                     runCatching { AdbShell.enableWirelessDebugging(applicationContext) }
                         .onFailure { AppLogger.w(TAG, "keep-alive: could not re-enable Wireless debugging: ${it.message}") }
                 }
@@ -971,7 +985,7 @@ class DaemonKeepAliveService : Service() {
             }
             val startedAt = SystemClock.elapsedRealtime()
             val outcome = try {
-                launchDaemonBounded()
+                launchDaemonBounded(noWirelessDebuggingEnable = viaOpenPort)
             } finally {
                 // ALWAYS release, even if the bounded launch threw. The gate expiring is the safety net;
                 // this is the normal path, and leaving it to the net would cost a whole stuck window.
@@ -987,12 +1001,30 @@ class DaemonKeepAliveService : Service() {
             // BEFORE the rescue below on purpose: on 2026-09-14 the rescue itself blocked, this line was never
             // reached, and six hours of relaunches never once escalated or told the user.
             if (ok) recoveryPolicy.onAttemptSucceeded() else recoveryPolicy.onAttemptFailed()
+            if (ok) openPortFailures.reset()
+            else if (viaOpenPort) {
+                val n = openPortFailures.recordFailure()
+                AppLogger.w(TAG, "keep-alive: relaunch through the open tcp port failed ($outcome), $n in a row; stands down at ${RewarmDecisions.MAX_OPEN_PORT_FAILURES}")
+            }
             if (outcome == LaunchOutcome.TIMED_OUT && adbStillAllowed("drop the timed-out ADB connection")) AdbShell.dropConnection(applicationContext)
             // Flip the notification to "ready" the INSTANT the relaunch succeeds — don't wait for the next
             // 60s watchdog tick. Without this the daemon reconnects in seconds but the user would still see
             // "starting up" for up to a minute (a perceived-but-false slow recovery).
             if (ok) watchdogHandler.post { lastReady = true; updateNotification(true) }
-        }.apply { isDaemon = true; name = "cv-keepalive-rewarm" }.start()
+        } }.apply { isDaemon = true; name = "cv-keepalive-rewarm" }.start()
+    }
+
+    /** Asks adbd's already-open tcp port; never throws, and says why when it is not usable (not paired / closed / threw). */
+    private fun probeOpenPort(): Boolean {
+        if (!AppPreferences(applicationContext).isAdbPaired()) {
+            AppLogger.w(TAG, "keep-alive: no open-port relaunch: CallVault's key has not been accepted by adbd yet (not paired)")
+            return false
+        }
+        val reachable = runCatching { AdbShell.isAdbdTcpPortReachable(applicationContext) }
+            .onFailure { AppLogger.w(TAG, "keep-alive: open-port probe threw: ${it.javaClass.simpleName}: ${it.message}") }
+            .getOrDefault(false)
+        if (!reachable) AppLogger.w(TAG, "keep-alive: no open-port relaunch: no adb tcp port answers on loopback")
+        return reachable
     }
 
     /**
@@ -1009,11 +1041,15 @@ class DaemonKeepAliveService : Service() {
      * release the lock. Without that drop the abandoned thread keeps
      * `heavyOperationLock` and every later attempt piles up behind it — bounded, but never succeeding.
      */
-    private fun launchDaemonBounded(): LaunchOutcome {
+    private fun launchDaemonBounded(noWirelessDebuggingEnable: Boolean = false): LaunchOutcome {
         val ok = java.util.concurrent.atomic.AtomicBoolean(false)
         val worker = Thread {
             ok.set(
-                runCatching { RecorderBackend.ensureRunning(applicationContext) }
+                runCatching {
+                    // The flag is thread-scoped, so it is set on the thread that actually launches.
+                    if (noWirelessDebuggingEnable) AdbShell.withoutEnablingWirelessDebugging { RecorderBackend.ensureRunning(applicationContext) }
+                    else RecorderBackend.ensureRunning(applicationContext)
+                }
                     .onFailure { AppLogger.w(TAG, "keep-alive relaunch failed: ${it.message}") }
                     .getOrDefault(false)
             )

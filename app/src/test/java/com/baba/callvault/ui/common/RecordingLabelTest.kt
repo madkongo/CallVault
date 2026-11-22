@@ -75,4 +75,32 @@ class RecordingLabelTest {
         // recording. Showing the raw name is right here; showing nothing would leave a blank sheet.
         assertEquals(BidiText.isolate("gone.ogg"), RecordingLabel.forDisplayName(emptyList(), "gone.ogg"))
     }
+
+    // --- F5: the notification names the call from its own file name, never by listing the folder ---
+
+    @Test
+    fun `fromParts prefers the contact over the number`() {
+        assertEquals(BidiText.isolate("Dana"), RecordingLabel.fromParts("x.ogg", "Dana", "+972500000000"))
+    }
+
+    @Test
+    fun `fromParts uses the number when there is no contact`() {
+        assertEquals(BidiText.isolate("+972500000000"), RecordingLabel.fromParts("x.ogg", null, "+972500000000"))
+    }
+
+    @Test
+    fun `fromParts keeps a number stored in the contact slot`() {
+        assertEquals(BidiText.isolate("0500000000"), RecordingLabel.fromParts("x.ogg", "0500000000", null))
+    }
+
+    @Test
+    fun `fromParts shows the voicemail label the resolver supplies`() {
+        assertEquals(BidiText.isolate("Voicemail"), RecordingLabel.fromParts("x.ogg", "Voicemail", "123"))
+    }
+
+    @Test
+    fun `fromParts falls back to the file label for an import with nothing resolved`() {
+        val name = "20260916_101010.123+0300_import_voice note.opus"
+        assertEquals(RecordingLabel.forName(name), RecordingLabel.fromParts(name, "", null))
+    }
 }

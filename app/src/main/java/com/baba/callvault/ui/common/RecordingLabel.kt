@@ -40,6 +40,16 @@ object RecordingLabel {
         of(recordings.firstOrNull { it.displayName == displayName }) ?: forName(displayName)
 
     /**
+     * The name for one recording from parts the caller already resolved (review F5: no folder listing for a
+     * notification). Same order as [of]: contact, else number, else the file's own label. The caller parses the
+     * name and does the one contact lookup, so this file does not depend on the repository's parser.
+     */
+    fun fromParts(displayName: String, contactName: String?, number: String?): String =
+        (contactName?.takeUnless { it.isBlank() } ?: number?.takeUnless { it.isBlank() })
+            ?.let { BidiText.isolate(it) }
+            ?: forName(displayName)
+
+    /**
      * The best name derivable from the file name alone, for a row whose recording is gone or was
      * never in the list — an orphaned transcript, an orphaned summary, a transcribe-only import.
      *

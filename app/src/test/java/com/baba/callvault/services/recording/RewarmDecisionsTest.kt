@@ -9,12 +9,88 @@
 package com.baba.callvault.services.recording
 
 import com.baba.callvault.integrations.adb.WifiState
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** The pure rules the keep-alive's relaunch uses to decide whether to try (review C34, C130, C89, R8). */
 class RewarmDecisionsTest {
+
+    // --- C34 retest: WD off by the user, adbd still listening on an open tcp port ---
+
+    @Test
+    fun `wd off by user with the open port answering relaunches through the port`() {
+        assertEquals(
+            RewarmDecisions.RelaunchPlan.VIA_OPEN_PORT,
+            RewarmDecisions.relaunchPlan(ReadinessNotice.WD_OFF_BY_USER, 0) { true },
+        )
+    }
+
+    @Test
+    fun `wd off by user with the port closed stands down as before`() {
+        assertEquals(
+            RewarmDecisions.RelaunchPlan.STAND_DOWN,
+            RewarmDecisions.relaunchPlan(ReadinessNotice.WD_OFF_BY_USER, 0) { false },
+        )
+    }
+
+    @Test
+    fun `needs wifi stands down without probing the port`() {
+        var probed = false
+        val plan = RewarmDecisions.relaunchPlan(ReadinessNotice.NEEDS_WIFI, 0) { probed = true; true }
+        assertEquals(RewarmDecisions.RelaunchPlan.STAND_DOWN, plan)
+        assertFalse(probed)
+    }
+
+    @Test
+    fun `other notices take the normal path without probing the port`() {
+        var probed = false
+        val plan = RewarmDecisions.relaunchPlan(ReadinessNotice.STARTING, 0) { probed = true; true }
+        assertEquals(RewarmDecisions.RelaunchPlan.NORMAL, plan)
+        assertFalse(probed)
+    }
+
+    @Test
+    fun `three failed launches through the open port stand down without probing`() {
+        var probed = false
+        val plan = RewarmDecisions.relaunchPlan(ReadinessNotice.WD_OFF_BY_USER, RewarmDecisions.MAX_OPEN_PORT_FAILURES) { probed = true; true }
+        assertEquals(RewarmDecisions.RelaunchPlan.STAND_DOWN, plan)
+        assertFalse(probed)
+    }
+
+    @Test
+    fun `two failures still allow another try through the open port`() {
+        assertEquals(
+            RewarmDecisions.RelaunchPlan.VIA_OPEN_PORT,
+            RewarmDecisions.relaunchPlan(ReadinessNotice.WD_OFF_BY_USER, RewarmDecisions.MAX_OPEN_PORT_FAILURES - 1) { true },
+        )
+    }
+
+    @Test
+    fun `a throwing probe stands down`() {
+        assertEquals(
+            RewarmDecisions.RelaunchPlan.STAND_DOWN,
+            RewarmDecisions.relaunchPlan(ReadinessNotice.WD_OFF_BY_USER, 0) { error("boom") },
+        )
+    }
+
+    @Test
+    fun `the gate is released even when the attempt throws`() {
+        val gate = RewarmGate(stuckAfterMs = 60_000, throttleMs = 0)
+        assertTrue(gate.tryEnter(0, force = false))
+        runCatching { gate.leavingAfter { error("boom") } }
+        assertTrue(gate.tryEnter(1, force = false))
+    }
+
+    @Test
+    fun `the failure count climbs and a reset clears it`() {
+        val f = OpenPortFailures()
+        assertEquals(1, f.recordFailure())
+        assertEquals(2, f.recordFailure())
+        f.reset()
+        assertEquals(0, f.count)
+    }
 
     // --- C34: Wi-Fi without internet is still Wi-Fi ---
 

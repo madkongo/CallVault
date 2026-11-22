@@ -96,8 +96,11 @@ object TranscriptNotifier {
         // Resolved before anything is posted, and best-effort: a folder that cannot be listed is not
         // a reason to swallow the one message telling the user their transcript is ready.
         val label = runCatching {
-            RecordingLabel.forDisplayName(RecordingsRepository.listRecordings(context), displayName)
-        }.getOrElse { RecordingLabel.forName(displayName) }
+            RecordingsRepository.labelFor(context, displayName)
+        }.getOrElse {
+            AppLogger.w(TAG, "Could not name the recording for the notification (${it.javaClass.simpleName}: ${it.message}); using its file label")
+            RecordingLabel.forName(displayName)
+        }
 
         when (outcome) {
             TranscriptNotice.Outcome.Stored -> stored(context, displayName, label, false)

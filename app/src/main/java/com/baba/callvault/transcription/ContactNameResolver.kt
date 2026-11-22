@@ -13,6 +13,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.system.permissions.PermissionChecks
+import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.VoicemailLabel
 
 /**
@@ -43,5 +44,5 @@ internal object ContactNameResolver {
             val index = cursor.getColumnIndex(ContactsContract.PhoneLookup.DISPLAY_NAME)
             if (index == -1) null else cursor.getString(index)
         }
-    }.getOrNull()
+    }.onFailure { AppLogger.w("CV:ContactNameResolver", "Contact lookup failed: ${it.javaClass.simpleName}: ${it.message}") }.getOrNull()
 }

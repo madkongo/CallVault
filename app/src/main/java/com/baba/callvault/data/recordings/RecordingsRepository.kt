@@ -553,6 +553,17 @@ object RecordingsRepository {
     }
 
     /**
+     * One recording's label for a notification: the file name plus at most one contact lookup (shared with the
+     * transcription prompt), no folder listing (review F5). A failure is logged and the file's own label is used.
+     */
+    fun labelFor(context: Context, displayName: String): String {
+        val contact = runCatching { com.baba.callvault.transcription.ContactNameResolver.nameFor(context, displayName) }
+            .onFailure { AppLogger.w(TAG, "Could not resolve a contact name for a notification: ${it.javaClass.simpleName}: ${it.message}") }
+            .getOrNull()
+        return com.baba.callvault.ui.common.RecordingLabel.fromParts(displayName, contact, parseName(displayName).number)
+    }
+
+    /**
      * Resolves [phoneNumber] to a contact display name via [ContactsContract.PhoneLookup].
      * Mirrors the lookup in [com.baba.callvault.utils.RecordingFileNameFormatter] (whose equivalent
      * helper is private and not reusable from here). Caller must verify READ_CONTACTS first.
