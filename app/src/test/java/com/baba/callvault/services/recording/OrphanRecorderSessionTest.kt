@@ -70,6 +70,10 @@ class OrphanRecorderSessionTest {
         override fun markNoCall() { lastNoCall = System.currentTimeMillis(); liveCallBegan = null }
         override fun markNoSession() { noSessionMarks++ }
         override fun scheduleRescue() { rescues++ }
+        var stagingFile: File? = null
+        val rescuedNow = mutableListOf<File>()
+        override fun orphanStagingFile(exclude: File?): File? = stagingFile
+        override fun scheduleRescueNow(file: File) { rescuedNow += file }
         override fun record(line: String) { lines.add(line) }
     }
 
@@ -384,5 +388,39 @@ class OrphanRecorderSessionTest {
 
         assertEquals(StartVerdict.START, OrphanSessionPolicy.forStart(outcome.action, outcome.stillRecording))
         assertEquals(listOf("whatsapp"), recorder.finalised)
+    }
+
+    @Test
+    fun `a stopped orphan whose file is known is rescued at once, not after the quiet wait`() {
+        val recorder = FakeRecorder().apply { start("call1") }
+        val staged = File("/staging/call1.ogg")
+        val env = FakeEnv(inCall = false, orphanStart = call1Start).apply { stagingFile = staged }
+
+        OrphanRecorderSession.resolve(recorder, env, "phone call ended")
+
+        assertEquals(listOf(staged), env.rescuedNow)
+        assertEquals("the quiet-wait request is still queued as the safety net", 1, env.rescues)
+    }
+
+    @Test
+    fun `a failed stop is never rescued at once`() {
+        val recorder = FakeRecorder().apply { start("call1"); stopWorks = false }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start).apply { stagingFile = File("/staging/call1.ogg") }
+
+        OrphanRecorderSession.resolve(recorder, env, "phone call ended")
+
+        assertTrue(env.rescuedNow.isEmpty())
+        assertEquals(1, env.rescues)
+    }
+
+    @Test
+    fun `a stopped orphan with an unknown file only gets the quiet-wait rescue`() {
+        val recorder = FakeRecorder().apply { start("call1") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start)
+
+        OrphanRecorderSession.resolve(recorder, env, "app start")
+
+        assertTrue(env.rescuedNow.isEmpty())
+        assertEquals(1, env.rescues)
     }
 }

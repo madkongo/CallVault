@@ -16,6 +16,7 @@ import android.os.Build
 import android.telephony.TelephonyManager
 import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
+import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -26,8 +27,11 @@ import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.services.recording.aftercall.AfterCallDecision
 import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.health.SilentFailureNotifier
+import com.baba.callvault.system.health.UserStopNotice
 import com.baba.callvault.utils.AppLogger
 import java.io.File
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.TimeUnit
 
 /**
@@ -44,7 +48,12 @@ import java.util.concurrent.TimeUnit
  */
 class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
-    override suspend fun doWork(): Result {
+    // The instant request for a confirmed-stopped orphan and the quiet-wait one may run side by side; one at a time,
+    // so the same file is never published twice.
+    override suspend fun doWork(): Result = runLock.withLock { runOnce() }
+
+    private suspend fun runOnce(): Result {
+        val confirmedPath = inputData.getString(KEY_CONFIRMED_FILE)
         // N37: an app idle in the rare or restricted bucket can lose network, loopback included. Say which bucket the
         // job ran in, so a report of a rescue that could not reach the recorder host can be read against it.
         logStandbyBucket(applicationContext)
@@ -62,13 +71,15 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         if (staged.isEmpty()) return Result.success()
         val callActive = isCallActive()
         var waiting = false
-        staged.forEach { file -> if (rescue(file, callActive) == RescueDecision.WAIT) waiting = true }
+        staged.forEach { file ->
+            if (rescue(file, callActive, confirmedStopped = file.absolutePath == confirmedPath) == RescueDecision.WAIT) waiting = true
+        }
         // Something may still be in use; look again once it has had time to go quiet.
         if (waiting) schedule(applicationContext)
         return Result.success()
     }
 
-    private suspend fun rescue(file: File, callActive: Boolean): RescueDecision {
+    private suspend fun rescue(file: File, callActive: Boolean, confirmedStopped: Boolean): RescueDecision {
         val noteFile = StagingNote.fileFor(file)
         val note = noteFile.takeIf { it.exists() }?.let { runCatching { StagingNote.decode(it.readText()) }.getOrNull() }
         val owned = LiveStagingFiles.isLive(file)
@@ -78,6 +89,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             ageMs = System.currentTimeMillis() - file.lastModified(),
             callActive = callActive,
             ownedByLiveRecording = owned,
+            confirmedStopped = confirmedStopped,
         )
         when (decision) {
             RescueDecision.WAIT -> AppLogger.d(
@@ -89,7 +101,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                 AppLogger.i(TAG, "${file.name} is empty; removing it")
                 runCatching { file.delete(); noteFile.delete() }
             }
-            RescueDecision.SAVE_NAMED -> note?.let { publish(file, noteFile, it.folderUri, it.fileName, it.mimeType, it.startedAtMillis) }
+            RescueDecision.SAVE_NAMED -> note?.let { publish(file, noteFile, it.folderUri, it.fileName, it.mimeType, it.startedAtMillis, completeCall = confirmedStopped) }
             // No note beside it: we cannot tell an interrupted recording from a normally-finished call's
             // orphaned temp, so we say nothing and touch nothing. Left in place (may hold old-build audio).
             RescueDecision.LEAVE_UNATTRIBUTED ->
@@ -98,7 +110,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         return decision
     }
 
-    private suspend fun publish(file: File, noteFile: File, folderUri: String, fileName: String, mimeType: String, startedAt: Long?) {
+    private suspend fun publish(file: File, noteFile: File, folderUri: String, fileName: String, mimeType: String, startedAt: Long?, completeCall: Boolean) {
         val bytes = file.length()
         val uri = SafHelper.publishStagedRecording(applicationContext, folderUri.toUri(), fileName, mimeType, file)
         if (uri == null) {
@@ -115,7 +127,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         AppLogger.w(TAG, "Saved a recording cut off when CallVault was closed: '$fileName' ($bytes bytes) -> $uri")
         val cutAt = file.lastModified()
         runCatching { file.delete(); noteFile.delete() }
-        afterPublished(applicationContext, fileName, uri, mimeType, bytes, startedAt, cutAt)
+        afterPublished(applicationContext, fileName, uri, mimeType, bytes, startedAt, cutAt, completeCall)
     }
 
     private fun isCallActive(): Boolean = runCatching {
@@ -142,9 +154,10 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
          */
         internal suspend fun afterPublished(
             context: Context, fileName: String, uri: Uri, mimeType: String, bytes: Long, startedAt: Long?, cutAt: Long,
+            completeCall: Boolean = false,
         ) {
             RecordingCatalog.recordLocal(context, fileName, uri, bytes, startedAt ?: cutAt)
-            recordSaved(context, fileName, startedAt, cutAt)
+            recordSaved(context, fileName, startedAt, cutAt, completeCall)
             runCatching { handOffs(context, fileName, uri, mimeType) }
                 .onSuccess { CallEndLog.record(context, "cut-off rescue: '$fileName' handed to Drive copy and transcription") }
                 .onFailure {
@@ -214,28 +227,50 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
          * After a cut-off recording is in the library: the health card (the call it belongs to was cut off, not "not
          * recorded") and the notice. Shared with the waiting publisher, which saves a cut-off the same way (F3).
          */
-        fun recordSaved(context: Context, fileName: String, startedAt: Long?, cutAt: Long) {
+        fun recordSaved(context: Context, fileName: String, startedAt: Long?, cutAt: Long, completeCall: Boolean = false) {
             val call = CutOffRescuePolicy.matchCall(
                 CallLogReader.entriesSince(context, cutAt - CALL_LOOKBACK_MS), startedAt, cutAt,
             )
             AppLogger.i(TAG, "The cut-off recording belongs to ${call?.let { "the call at ${it.startedAt}" } ?: "no call in the call log"}")
+            val callEndedAt = call?.let { it.startedAt + it.durationSeconds * 1_000L }
             runCatching {
-                SetupHealthStore(context).recordCutOff(
-                    atMillis = System.currentTimeMillis(),
-                    callStartedAt = call?.startedAt,
-                    callEndedAt = call?.let { it.startedAt + it.durationSeconds * 1_000L },
-                    label = call?.label,
-                )
+                val store = SetupHealthStore(context)
+                if (completeCall) store.recordSavedInFull(call?.startedAt, callEndedAt)
+                else store.recordCutOff(System.currentTimeMillis(), call?.startedAt, callEndedAt, call?.label)
             }.onFailure { AppLogger.w(TAG, "Could not update the status card: ${it.message}") }
-            SilentFailureNotifier.noteCutOffRecordingSaved(context, fileName)
+            if (!completeCall) {
+                SilentFailureNotifier.noteCutOffRecordingSaved(context, fileName)
+                return
+            }
+            // The recorder kept going through the app's death and the whole call is saved: say so, and withdraw a
+            // "calls weren't recorded" stop notice whose stop fell inside this recording.
+            SilentFailureNotifier.noteCallSavedAfterRestart(context, fileName)
+            UserStopNotice.withdrawIfStopDuringRecording(context, startedAt, callEndedAt ?: cutAt)
         }
         private const val WORK_NAME = "cut_off_rescue"
+        private const val WORK_NAME_CONFIRMED = "cut_off_rescue_confirmed"
+        private const val KEY_CONFIRMED_FILE = "confirmed_file"
+        private val runLock = Mutex()
 
         /** How far back the call log is read to find the cut-off call: longer than any plausible call. */
         private const val CALL_LOOKBACK_MS = 12 * 60 * 60_000L
 
         /** A little over [CutOffRescuePolicy.QUIET_MS], so a file abandoned just now is quiet by the time we look. */
         private const val DELAY_MS = CutOffRescuePolicy.QUIET_MS + 30_000L
+
+        /**
+         * Publishes [file] now: the recorder confirmed it stopped, so it is complete and nothing writes it. Its own
+         * unique name, appended, so no later call end (which replaces the quiet-wait request) can push it back.
+         * Files a live recording here owns are still skipped by the worker.
+         */
+        fun scheduleConfirmed(context: Context, file: File) {
+            runCatching {
+                val request = OneTimeWorkRequestBuilder<CutOffRescueWorker>()
+                    .setInputData(Data.Builder().putString(KEY_CONFIRMED_FILE, file.absolutePath).build())
+                    .build()
+                WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME_CONFIRMED, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+            }.onFailure { AppLogger.w(TAG, "Could not schedule the instant rescue: ${it.message}") }
+        }
 
         /** Looks for cut-off recordings shortly. Safe to call often: the latest request replaces earlier ones. */
         fun schedule(context: Context) {

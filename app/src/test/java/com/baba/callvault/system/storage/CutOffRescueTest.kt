@@ -136,8 +136,31 @@ class CutOffRescueTest {
         ageMs: Long = CutOffRescuePolicy.QUIET_MS,
         callActive: Boolean = false,
         ownedByLiveRecording: Boolean = false,
+        confirmedStopped: Boolean = false,
     ) = CutOffRescuePolicy.decide(
         hasNote = hasNote, sizeBytes = sizeBytes, ageMs = ageMs, callActive = callActive,
-        ownedByLiveRecording = ownedByLiveRecording,
+        ownedByLiveRecording = ownedByLiveRecording, confirmedStopped = confirmedStopped,
     )
+
+    // A file the recorder confirmed stopped is finished by definition: no quiet wait, and a later call does not matter.
+    @Test
+    fun `a confirmed-stopped file is saved at once, even when it is fresh and another call is up`() {
+        assertEquals(RescueDecision.SAVE_NAMED, decide(ageMs = 0, callActive = true, confirmedStopped = true))
+    }
+
+    @Test
+    fun `a confirmed-stopped file still held by a live recording here is never touched`() {
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 0, ownedByLiveRecording = true, confirmedStopped = true))
+    }
+
+    @Test
+    fun `a confirmed-stopped file keeps the note rules`() {
+        assertEquals(RescueDecision.DISCARD_EMPTY, decide(sizeBytes = 0, ageMs = 0, confirmedStopped = true))
+        assertEquals(RescueDecision.LEAVE_UNATTRIBUTED, decide(hasNote = false, ageMs = 0, confirmedStopped = true))
+    }
+
+    @Test
+    fun `a file not confirmed stopped still waits for quiet`() {
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 1, confirmedStopped = false))
+    }
 }

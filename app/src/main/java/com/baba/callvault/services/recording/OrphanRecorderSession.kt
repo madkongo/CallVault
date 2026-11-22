@@ -72,6 +72,10 @@ object OrphanRecorderSession {
         /** The recorder is not recording now: no session can be orphaned from before this moment. */
         fun markNoSession()
         fun scheduleRescue()
+        /** The staged file the orphan was writing, when known; null when it cannot be told (then no instant rescue). */
+        fun orphanStagingFile(exclude: File?): File? = null
+        /** [file] is finished (the recorder confirmed it stopped): publish it now, as a call saved in full. */
+        fun scheduleRescueNow(file: File) = scheduleRescue()
         fun record(line: String)
     }
 
@@ -100,6 +104,7 @@ object OrphanRecorderSession {
         val began = env.liveCallBeganAt()
         val ended = OrphanSessionPolicy.orphanCallEnded(startedAt, env.lastNoCallAt(), began)
         val action = OrphanSessionPolicy.decide(true, false, inCall, ended)
+        val stagingFile = if (action == Action.STOP_ORPHAN) env.orphanStagingFile(exclude) else null
         val facts = "callInProgress=$inCall orphanStartedAt=${startedAt ?: "unknown"} liveCallBeganAt=${began ?: "unknown"} orphanCallEnded=$ended"
         return when (action) {
             Action.NONE, Action.OWNED -> Outcome(action, null)
@@ -118,8 +123,10 @@ object OrphanRecorderSession {
                 } else {
                     env.markNoSession()
                     env.record("orphan session [$trigger]: stopped; its file goes to the cut-off rescue under its own call's name")
+                    // The file is finalised and its call is over: publish it now, not after the quiet wait.
+                    stagingFile?.let(env::scheduleRescueNow)
                 }
-                // Scheduled either way: a stopped file is published once quiet, a failed stop is looked at again.
+                // Scheduled either way: the quiet-wait request is the safety net, a failed stop is looked at again.
                 env.scheduleRescue()
                 Outcome(action, still)
             }
@@ -270,6 +277,12 @@ object OrphanRecorderSession {
         override fun markNoSession() = edit(context) { putLong(KEY_LAST_NO_SESSION_AT, System.currentTimeMillis()) }
 
         override fun scheduleRescue() = CutOffRescueWorker.schedule(context)
+
+        override fun orphanStagingFile(exclude: File?): File? =
+            prefs.getString(KEY_SESSION_STAGING, null)?.let(::File)
+                ?.takeIf { it.absolutePath != exclude?.absolutePath && it.exists() }
+
+        override fun scheduleRescueNow(file: File) = CutOffRescueWorker.scheduleConfirmed(context, file)
 
         override fun record(line: String) = CallEndLog.record(context, line)
     }
