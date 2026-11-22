@@ -3009,7 +3009,13 @@ private fun healthMessage(health: SetupHealth): String {
             }
             health.label?.let { stringResource(named, it) } ?: stringResource(unnamed)
         }
-        is SetupHealth.LastCallFailed -> stringResource(
+        // N16: a cut-off names its call by time, because "your last call" may well be a later one that recorded fine.
+        is SetupHealth.LastCallFailed -> if (health.reason == FailureReason.CUT_OFF && health.callAtMillis != null) {
+            val callAt = health.callAtMillis
+            val flags = DateUtils.FORMAT_SHOW_TIME or
+                if (DateUtils.isToday(callAt)) 0 else (DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH)
+            stringResource(R.string.home_health_failed_cut_off_at, DateUtils.formatDateTime(LocalContext.current, callAt, flags))
+        } else stringResource(
             when (health.reason) {
                 FailureReason.EMPTY_FILE -> R.string.home_health_failed_empty
                 FailureReason.NO_AUDIO -> R.string.home_health_failed_no_audio

@@ -276,6 +276,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Με αστέρι</string>
     <string name="home_health_failed_cut_off">Η τελευταία σας κλήση διακόπηκε όταν το τηλέφωνο έκλεισε το CallVault — το μέρος που καταγράφηκε πριν από αυτό αποθηκεύτηκε.</string>
+    <string name="home_health_failed_cut_off_at">Η κλήση σας στις %1$s διακόπηκε όταν το τηλέφωνο έκλεισε το CallVault — το μέρος που καταγράφηκε πριν από αυτό αποθηκεύτηκε.</string>
     <string name="home_health_missed_shizuku">Το %1$s δεν καταγράφηκε — το Shizuku δεν εκτελούνταν</string>
     <string name="home_health_missed_shizuku_unnamed">Μια κλήση δεν καταγράφηκε — το Shizuku δεν εκτελούνταν</string>
     <string name="home_hero_pill_recovery_stuck">Δεν γίνεται εγγραφή</string>

@@ -215,6 +215,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">ستاره‌دار</string>
     <string name="home_health_failed_cut_off">آخرین تماس شما وقتی گوشی CallVault را بست قطع شد — بخشی که پیش از آن ضبط شده بود ذخیره شد.</string>
+    <string name="home_health_failed_cut_off_at">تماس شما در %1$s وقتی گوشی CallVault را بست قطع شد — بخشی که پیش از آن ضبط شده بود ذخیره شد.</string>
     <string name="home_health_missed_shizuku">%1$s ضبط نشد — Shizuku در حال اجرا نبود</string>
     <string name="home_health_missed_shizuku_unnamed">یک تماس ضبط نشد — Shizuku در حال اجرا نبود</string>
     <string name="home_hero_pill_recovery_stuck">ضبط نمی‌شود</string>

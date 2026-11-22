@@ -122,6 +122,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Csillagozott</string>
     <string name="home_health_failed_cut_off">Az utolsó hívásod megszakadt, amikor a telefon bezárta a CallVaultot – az addig rögzített részt mentettük.</string>
+    <string name="home_health_failed_cut_off_at">A(z) %1$s-kor kezdődött hívásod megszakadt, amikor a telefon bezárta a CallVaultot – az addig rögzített részt mentettük.</string>
     <string name="home_health_missed_shizuku">%1$s nem lett rögzítve — a Shizuku nem futott</string>
     <string name="home_health_missed_shizuku_unnamed">Egy hívás nem lett rögzítve — a Shizuku nem futott</string>
     <string name="home_hero_pill_recovery_stuck">Nem rögzít</string>

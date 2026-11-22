@@ -124,6 +124,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Отмеченные</string>
     <string name="home_health_failed_cut_off">Последний звонок прервался, когда телефон закрыл CallVault, — записанная до этого часть сохранена.</string>
+    <string name="home_health_failed_cut_off_at">Звонок в %1$s прервался, когда телефон закрыл CallVault, — записанная до этого часть сохранена.</string>
     <string name="home_health_missed_shizuku">%1$s не записан — Shizuku не был запущен</string>
     <string name="home_health_missed_shizuku_unnamed">Звонок не записан — Shizuku не был запущен</string>
     <string name="home_hero_pill_recovery_stuck">Не записывает</string>

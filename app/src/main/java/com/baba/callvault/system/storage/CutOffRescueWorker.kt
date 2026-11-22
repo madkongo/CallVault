@@ -350,7 +350,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             runCatching {
                 val store = SetupHealthStore(context)
                 if (completeCall) store.recordSavedInFull(call?.startedAt, callEndedAt)
-                else store.recordCutOff(System.currentTimeMillis(), call?.startedAt, callEndedAt, call?.label)
+                else store.recordCutOff(System.currentTimeMillis(), call?.startedAt, callEndedAt, call?.label, callAt = call?.startedAt ?: startedAt ?: cutAt)
             }.onFailure { AppLogger.w(TAG, "Could not update the status card: ${it.message}") }
             if (!completeCall) {
                 SilentFailureNotifier.noteCutOffRecordingSaved(context, fileName)

@@ -122,6 +122,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Preferiti</string>
     <string name="home_health_failed_cut_off">La tua ultima chiamata è stata interrotta quando il telefono ha chiuso CallVault: la parte registrata fino ad allora è stata salvata.</string>
+    <string name="home_health_failed_cut_off_at">La tua chiamata delle %1$s è stata interrotta quando il telefono ha chiuso CallVault: la parte registrata fino ad allora è stata salvata.</string>
     <string name="home_health_missed_shizuku">%1$s non è stata registrata — Shizuku non era in esecuzione</string>
     <string name="home_health_missed_shizuku_unnamed">Una chiamata non è stata registrata — Shizuku non era in esecuzione</string>
     <string name="home_hero_pill_recovery_stuck">Non registra</string>
