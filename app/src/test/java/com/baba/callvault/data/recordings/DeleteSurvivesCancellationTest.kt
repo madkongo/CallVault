@@ -48,6 +48,7 @@ class DeleteSurvivesCancellationTest {
 
     private fun fileThatCancelsOnDelete(job: () -> Job): DocumentFile {
         val doc = mockk<DocumentFile>(relaxed = true)
+        every { doc.exists() } returns true
         every { doc.delete() } answers { job().cancel(); true }
         return doc
     }

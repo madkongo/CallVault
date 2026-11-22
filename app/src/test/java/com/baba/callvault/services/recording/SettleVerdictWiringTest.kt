@@ -52,4 +52,14 @@ class SettleVerdictWiringTest {
         assertTrue(b.contains("!usesAdb()"))
         assertTrue(b.contains("AdbShell.userOffPending.clear()"))
     }
+
+    @Test
+    fun `the runnable clears the pending marker only in a finally, after the flag write`() {
+        val a = src.indexOf("private val settleWirelessDebuggingOffCause = Runnable {")
+        val b = src.indexOf("userOffPending.clear()", a)
+        val fin = src.indexOf("} finally {", a)
+        val write = src.indexOf("setWirelessDebuggingTurnedOffByUser(true)", a)
+        assertTrue(fin in 0..(a + 3500) && write in a until fin)
+        assertTrue("clear must sit in the finally", b > fin)
+    }
 }

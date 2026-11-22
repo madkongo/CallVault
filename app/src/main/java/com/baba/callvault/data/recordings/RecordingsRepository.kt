@@ -420,7 +420,6 @@ object RecordingsRepository {
         val rowCopy = if (item.uri == item.driveUri) DeleteLog.DRIVE else DeleteLog.LOCAL
         val rowOutcome = deleteOne(context, item.uri, rowCopy)
         if (rowOutcome == DeleteLog.Outcome.DELETED) deletedAny = true
-        if (rowCopy == DeleteLog.LOCAL && (rowOutcome == DeleteLog.Outcome.REFUSED || rowOutcome == DeleteLog.Outcome.THREW)) localRefused = true
 
         // 2. Delete any same-named copy in the configured folders: the audio copy, the transcript/notes sidecar AND
         // the .json details file beside it, so neither the text nor the details outlive the recording they belong to
@@ -430,7 +429,11 @@ object RecordingsRepository {
         for ((folderUri, copy) in folderCopies(prefs)) {
             if (deleteNamedIn(context, folderUri, names, copy, onRefused = { if (copy == DeleteLog.LOCAL) localRefused = true })) deletedAny = true
         }
-        if (localRefused) {
+        // Warn only if it is really still there: the row's own delete may have been refused and the name pass then got it.
+        val rowStillThere = rowCopy == DeleteLog.LOCAL && rowOutcome != DeleteLog.Outcome.DELETED && runCatching {
+            DocumentFile.fromSingleUri(context, item.uri)?.exists() == true
+        }.getOrDefault(false)
+        if (localRefused || rowStillThere) {
             AppLogger.w(TAG, "Local copy of '${item.displayName}' survives: the provider refused the delete, so the recording is still on the device")
         }
 
@@ -593,11 +596,11 @@ object RecordingsRepository {
             val doc = DocumentFile.fromSingleUri(context, uri)
             name = doc?.name
             when {
-                doc == null -> DeleteLog.Outcome.ABSENT
+                doc == null || !doc.exists() -> DeleteLog.Outcome.ABSENT
                 doc.delete() -> DeleteLog.Outcome.DELETED
                 else -> DeleteLog.Outcome.REFUSED
             }.also { DeleteLog.log(TAG, copy, name, it) }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             DeleteLog.log(TAG, copy, name, DeleteLog.Outcome.THREW, e.message)
             DeleteLog.Outcome.THREW
         }

@@ -590,33 +590,38 @@ class DaemonKeepAliveService : Service() {
     @Volatile private var pendingOffWifiIdentity: String? = null
 
     private val settleWirelessDebuggingOffCause = Runnable {
-        AdbShell.userOffPending.clear()
-        if (!usesAdb()) return@Runnable
-        val prefs = AppPreferences(applicationContext)
-        // Switched back on during the window: the on branch already handled it.
-        if (AdbShell.isWirelessDebuggingEnabled(applicationContext)) return@Runnable
-        val lostInWindow = lastWifiLostAtMs != 0L && lastWifiLostAtMs >= pendingOffAtMs
-        when (
-            val verdict = WirelessDebuggingSettledVerdict.of(
-                identityAtOff = pendingOffWifiIdentity,
-                identityNow = WifiIdentity.of(applicationContext),
-                wifiNow = WifiState.of(applicationContext),
-                wifiLostInWindow = lostInWindow,
-            )
-        ) {
-            WirelessDebuggingSettledVerdict.USER -> {
-                prefs.setWirelessDebuggingEnabledByUs(false)
-                prefs.setWirelessDebuggingTurnedOffByUser(true)
-                AppLogger.i(
-                    TAG,
-                    "Wireless debugging switched off by hand; " +
-                        if (prefs.isWirelessDebuggingEnforced()) "the override setting is on, so CallVault may switch it back on"
-                        else "CallVault will leave it off",
+        // Cleared only in the finally, after the flag write: a recovery thread must see the marker or the flag, never neither.
+        try {
+            if (!usesAdb()) return@Runnable
+            val prefs = AppPreferences(applicationContext)
+            // Switched back on during the window: the on branch already handled it.
+            if (AdbShell.isWirelessDebuggingEnabled(applicationContext)) return@Runnable
+            val lostInWindow = lastWifiLostAtMs != 0L && lastWifiLostAtMs >= pendingOffAtMs
+            when (
+                val verdict = WirelessDebuggingSettledVerdict.of(
+                    identityAtOff = pendingOffWifiIdentity,
+                    identityNow = WifiIdentity.of(applicationContext),
+                    wifiNow = WifiState.of(applicationContext),
+                    wifiLostInWindow = lostInWindow,
                 )
+            ) {
+                WirelessDebuggingSettledVerdict.USER -> {
+                    prefs.setWirelessDebuggingEnabledByUs(false)
+                    prefs.setWirelessDebuggingTurnedOffByUser(true)
+                    AppLogger.i(
+                        TAG,
+                        "Wireless debugging switched off by hand; " +
+                            if (prefs.isWirelessDebuggingEnforced()) "the override setting is on, so CallVault may switch it back on"
+                            else "CallVault will leave it off",
+                    )
+                }
+                else -> AppLogger.i(TAG, "Wireless debugging went off and Wi-Fi changed within the settle window ($verdict); Android's doing, not the user's")
             }
-            else -> AppLogger.i(TAG, "Wireless debugging went off and Wi-Fi changed within the settle window ($verdict); Android's doing, not the user's")
+            updateNotification(isDaemonAlive())
+    
+        } finally {
+            AdbShell.userOffPending.clear()
         }
-        updateNotification(isDaemonAlive())
     }
 
     /**
