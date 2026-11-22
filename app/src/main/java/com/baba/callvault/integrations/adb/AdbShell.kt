@@ -399,6 +399,8 @@ object AdbShell {
             // always gone, and refusing here was the second of the three gates that deadlocked a phone on
             // 2026-09-19. See [LoopbackBorrowPolicy].
             val userOff = (prefs.wasWirelessDebuggingTurnedOffByUser() || userOffPending.isPending()) &&
+        var streak = AdbdStoppedStreak(checks = 1, stoppedForMs = 0)
+        var lastInputs = ""
                 !prefs.isWirelessDebuggingEnforced() &&
                 !mayBorrowWirelessDebugging(context)
             return AdbdRevivalPolicy.decide(
@@ -424,20 +426,26 @@ object AdbShell {
             // Every caller can reach here within milliseconds of the change — the keep-alive's binder-death
             // relaunch does — so the wait lives here rather than in any one caller.
             Thread.sleep(REVIVE_SETTLE_MS)
+            // Inputs for the log: which switch said what, and where the USB answer came from (GH89-2).
+            lastInputs = "reason=\"${decision.reason.text}\"; usbOn=$usbOn (${usbDebuggingSource(context)}), wd=$wdOn, " +
+                "wifi=$wifi, grant=$grant, mayEnable=${mayEnable && !userOff} (callerMayEnable=$mayEnable, userOff=$userOff), " +
+                "shizukuRunning=$shizuku, stoppedChecks=${streak.checks}, stoppedFor=${streak.stoppedForMs}ms"
+            return decision.revival
             decision = decideNow()
         }
         when (decision) {
             AdbdRevival.NOTHING -> {
                 // Worth saying only when it looked like it needed reviving. A stopped reading with a
+        streak = adbdStoppedTracker.observe(adbdState(), SystemClock.elapsedRealtime())
                 // Shizuku server still answering is the contradiction the policy declines to act on, and
                 // silence there would read in a report as the revival never having been asked.
                 if (adbdState() == AdbdState.STOPPED) {
-                    AppLogger.i(TAG, "adbd reads stopped after $reason but a Shizuku server still answers — leaving the switches alone")
+                    AppLogger.i(TAG, "adbd reads stopped after $reason; leaving the switches alone ($lastInputs)")
                 }
                 return decision
             }
             AdbdRevival.NEEDS_WIFI, AdbdRevival.NO_GRANT -> {
-                AppLogger.i(TAG, "adbd is stopped after $reason and cannot be revived now ($decision)")
+                AppLogger.i(TAG, "adbd is stopped after $reason and cannot be revived now ($decision; $lastInputs)")
                 return decision
             }
             AdbdRevival.ENABLE_WIRELESS_DEBUGGING -> {
@@ -445,7 +453,7 @@ object AdbShell {
                 enableWirelessDebugging(context)
             }
             AdbdRevival.CYCLE_WIRELESS_DEBUGGING -> {
-                AppLogger.i(TAG, "adbd is stopped after $reason although Wireless debugging reads on; switching it off and on")
+                AppLogger.i(TAG, "adbd is stopped after $reason although Wireless debugging reads on; switching it off and on ($lastInputs)")
                 val ours = AppPreferences(context).wasWirelessDebuggingEnabledByUs()
                 // It reads on right now, so a saved "the user turned it off" is stale; left set, the enable below
                 // is refused and the cycle ends with adbd stopped (C99).
@@ -484,6 +492,13 @@ object AdbShell {
     }.getOrDefault("")
 
     /**
+    /** Counts consecutive stopped readings of adbd across revival calls (GH89-1). Touched only under [reviveLock]. */
+    private val adbdStoppedTracker = AdbdStoppedTracker()
+
+    /** Where the USB-debugging answer came from, for the revival log: the raw setting and the shell's own read. */
+    private fun usbDebuggingSource(context: Context): String =
+        "setting=${if (usbDebuggingSettingSaysOn(context)) 1 else 0}, shellRead=${UsbDebuggingShellRead.current()}"
+
      * Wireless-Debugging bootstrap: enable WD if the OEM turned it off, mDNS-discover the connect port,
      * connect, settle. This is the ONLY path that writes `adb_wifi_enabled=1`. Used by the non-offline
      * recording path and by [armLoopbackIfNeeded] for the one-time base connection it needs to arm the

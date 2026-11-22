@@ -28,7 +28,8 @@ class AdbdRevivalPolicyTest {
         hasGrant: Boolean = true,
         mayEnable: Boolean = true,
         shizukuServerRunning: Boolean = false,
-    ) = AdbdRevivalPolicy.decide(adbd, usbOn, wdOn, wifi, hasGrant, mayEnable, shizukuServerRunning)
+        stoppedStreak: AdbdStoppedStreak = AdbdStoppedStreak(checks = 1, stoppedForMs = 0),
+    ) = AdbdRevivalPolicy.decide(adbd, usbOn, wdOn, wifi, hasGrant, mayEnable, shizukuServerRunning, stoppedStreak)
 
     @Test
     fun `a running adbd is left alone`() {
@@ -106,5 +107,91 @@ class AdbdRevivalPolicyTest {
     fun `USB debugging still wins over the Shizuku check`() {
         // Nothing to do either way; the order of the two NOTHING branches must not change the answer.
         assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, shizukuServerRunning = true))
+    }
+
+    // --- GH89-1: USB debugging reads on, but adbd stays stopped (Honor BVL-N49, Android 17, ~48 h) ---
+
+    private val firstSighting = AdbdStoppedStreak(checks = 1, stoppedForMs = 0)
+    private val stuck = AdbdStoppedStreak(checks = 2, stoppedForMs = 60_000)
+
+    @Test
+    fun `usb debugging on and the first stopped sighting still gives init its chance`() {
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, wdOn = true, stoppedStreak = firstSighting))
+    }
+
+    @Test
+    fun `usb debugging on and adbd stopped on two checks cycles wireless debugging`() {
+        assertEquals(AdbdRevival.CYCLE_WIRELESS_DEBUGGING, decide(usbOn = true, wdOn = true, stoppedStreak = stuck))
+    }
+
+    @Test
+    fun `usb debugging on and adbd stopped for a long time cycles even if only one check counted`() {
+        val long = AdbdStoppedStreak(checks = 1, stoppedForMs = AdbdRevivalPolicy.STUCK_AFTER_MS)
+        assertEquals(AdbdRevival.CYCLE_WIRELESS_DEBUGGING, decide(usbOn = true, wdOn = true, stoppedStreak = long))
+    }
+
+    @Test
+    fun `a stuck stop with usb on never switches wireless debugging on from off`() {
+        // WD reads off: the user may have turned it off. Only a cycle of a switch that reads on is allowed.
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, wdOn = false, stoppedStreak = stuck))
+    }
+
+    @Test
+    fun `a stuck stop with usb on still needs wifi, the grant, and no live Shizuku server`() {
+        assertEquals(AdbdRevival.NEEDS_WIFI, decide(usbOn = true, wdOn = true, wifi = WifiState.NOT_CONNECTED, stoppedStreak = stuck))
+        assertEquals(AdbdRevival.NO_GRANT, decide(usbOn = true, wdOn = true, hasGrant = false, stoppedStreak = stuck))
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, wdOn = true, shizukuServerRunning = true, stoppedStreak = stuck))
+    }
+
+    @Test
+    fun `a running adbd is left alone whatever the streak says`() {
+        assertEquals(AdbdRevival.NOTHING, decide(adbd = AdbdState.RUNNING, usbOn = true, wdOn = true, stoppedStreak = stuck))
+    }
+
+    // --- GH89-2: every NOTHING names its real branch ---
+
+    private fun reason(
+        adbd: AdbdState = AdbdState.STOPPED,
+        usbOn: Boolean = false,
+        wdOn: Boolean = false,
+        shizukuServerRunning: Boolean = false,
+        mayEnable: Boolean = true,
+        streak: AdbdStoppedStreak = firstSighting,
+    ) = AdbdRevivalPolicy.decideWithReason(adbd, usbOn, wdOn, WifiState.CONNECTED, true, mayEnable, shizukuServerRunning, streak).reason
+
+    @Test
+    fun `each branch reports its own reason`() {
+        assertEquals(AdbdRevivalReason.ADBD_NOT_STOPPED, reason(adbd = AdbdState.RUNNING))
+        assertEquals(AdbdRevivalReason.SHIZUKU_SERVER_ANSWERS, reason(shizukuServerRunning = true))
+        assertEquals(AdbdRevivalReason.USB_ON_WAITING_FOR_INIT, reason(usbOn = true, wdOn = true))
+        assertEquals(AdbdRevivalReason.USB_ON_STUCK_CYCLE, reason(usbOn = true, wdOn = true, streak = stuck))
+        assertEquals(AdbdRevivalReason.MAY_NOT_ENABLE, reason(mayEnable = false))
+        assertEquals(AdbdRevivalReason.WD_ON_CYCLE, reason(wdOn = true))
+        assertEquals(AdbdRevivalReason.BOTH_OFF_ENABLE, reason())
+    }
+
+    @Test
+    fun `a stuck stop with usb on and wireless debugging off reports that it may not enable`() {
+        assertEquals(AdbdRevivalReason.USB_ON_STUCK_WD_OFF, reason(usbOn = true, wdOn = false, streak = stuck))
+    }
+
+    // --- the streak counter ---
+
+    @Test
+    fun `the tracker counts spaced stopped sightings and resets on any other reading`() {
+        val t = AdbdStoppedTracker()
+        assertEquals(AdbdStoppedStreak(1, 0), t.observe(AdbdState.STOPPED, 1_000))
+        // a second look milliseconds later (the observer and the keep-alive arrive together) is the same sighting
+        assertEquals(AdbdStoppedStreak(1, 100), t.observe(AdbdState.STOPPED, 1_100))
+        assertEquals(AdbdStoppedStreak(2, 9_000), t.observe(AdbdState.STOPPED, 10_000))
+        assertEquals(AdbdStoppedStreak(1, 0), t.observe(AdbdState.RUNNING, 11_000).let { t.observe(AdbdState.STOPPED, 12_000) })
+    }
+
+    @Test
+    fun `an unknown reading also ends the streak`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0)
+        t.observe(AdbdState.STOPPED, 10_000)
+        assertEquals(AdbdStoppedStreak(0, 0), t.observe(AdbdState.UNKNOWN, 20_000))
     }
 }
