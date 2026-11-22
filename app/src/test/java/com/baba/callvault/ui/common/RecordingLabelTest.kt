@@ -75,4 +75,25 @@ class RecordingLabelTest {
         // recording. Showing the raw name is right here; showing nothing would leave a blank sheet.
         assertEquals(BidiText.isolate("gone.ogg"), RecordingLabel.forDisplayName(emptyList(), "gone.ogg"))
     }
+
+    // --- F5: the notification names the call from its own file name, never by listing the folder ---
+
+    @Test
+    fun `resolve prefers the contact looked up from the number`() {
+        val label = RecordingLabel.resolve("20260916_101010.123+0300_in_+972500000000.ogg") { key ->
+            if (key == "+972500000000") "Dana" else null
+        }
+        assertEquals(BidiText.isolate("Dana"), label)
+    }
+
+    @Test
+    fun `resolve falls back to the number when no contact matches`() {
+        val label = RecordingLabel.resolve("20260916_101010.123+0300_in_+972500000000.ogg") { null }
+        assertEquals(BidiText.isolate("+972500000000"), label)
+    }
+
+    @Test
+    fun `resolve falls back to the file label when the name has no number`() {
+        assertEquals(RecordingLabel.forName("odd.ogg"), RecordingLabel.resolve("odd.ogg") { error("no lookup without a key") })
+    }
 }

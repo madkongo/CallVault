@@ -552,6 +552,14 @@ object RecordingsRepository {
         deleted
     }
 
+    /** One recording's label for a notification: parsed from its name plus one contact lookup, no folder listing (review F5). */
+    fun labelFor(context: Context, displayName: String): String {
+        val hasContacts = PermissionChecks.hasContactsPermission(context)
+        return com.baba.callvault.ui.common.RecordingLabel.resolve(displayName) { key ->
+            (if (hasContacts) lookupContactName(context, key) else null) ?: VoicemailLabel.labelOrNull(context, key)
+        }
+    }
+
     /**
      * Resolves [phoneNumber] to a contact display name via [ContactsContract.PhoneLookup].
      * Mirrors the lookup in [com.baba.callvault.utils.RecordingFileNameFormatter] (whose equivalent

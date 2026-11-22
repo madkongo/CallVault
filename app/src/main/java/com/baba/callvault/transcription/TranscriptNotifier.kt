@@ -96,7 +96,7 @@ object TranscriptNotifier {
         // Resolved before anything is posted, and best-effort: a folder that cannot be listed is not
         // a reason to swallow the one message telling the user their transcript is ready.
         val label = runCatching {
-            RecordingLabel.forDisplayName(RecordingsRepository.listRecordings(context), displayName)
+            RecordingsRepository.labelFor(context, displayName)
         }.getOrElse { RecordingLabel.forName(displayName) }
 
         when (outcome) {

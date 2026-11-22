@@ -9,6 +9,7 @@
 package com.baba.callvault.ui.common
 
 import com.baba.callvault.data.recordings.ImportedRecording
+import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 
 /**
@@ -38,6 +39,21 @@ object RecordingLabel {
      */
     fun forDisplayName(recordings: List<RecordingItem>, displayName: String): String =
         of(recordings.firstOrNull { it.displayName == displayName }) ?: forName(displayName)
+
+    /**
+     * The name for [displayName] worked out from the file name alone, plus one contact lookup per call through
+     * [lookupContact] (given the number, or a number-looking contact slot) — no folder listing (review F5: the
+     * "transcript ready" notification listed 136 recordings just to find one name). Same order as [of]:
+     * contact, else number, else the file's own label.
+     */
+    fun resolve(displayName: String, lookupContact: (String) -> String?): String {
+        val parsed = RecordingsRepository.parseName(displayName)
+        val key = parsed.number?.takeUnless { it.isBlank() }
+            ?: parsed.contactName?.takeIf { RecordingsRepository.looksLikePhoneNumber(it) }
+        val contact = key?.let { runCatching { lookupContact(it) }.getOrNull() }?.takeUnless { it.isBlank() }
+        val best = contact ?: parsed.contactName ?: parsed.number
+        return best?.let { BidiText.isolate(it) } ?: forName(displayName)
+    }
 
     /**
      * The best name derivable from the file name alone, for a row whose recording is gone or was
