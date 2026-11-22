@@ -416,19 +416,25 @@ object RecordingsRepository {
         var deletedAny = false
 
         // 1. Delete the exact file this row points at.
-        runCatching {
-            if (DocumentFile.fromSingleUri(context, item.uri)?.delete() == true) deletedAny = true
-        }.onFailure { e ->
-            AppLogger.w(TAG, "Failed to delete ${item.uri}: ${e.message}")
-        }
+        var localRefused = false
+        val rowCopy = if (item.uri == item.driveUri) DeleteLog.DRIVE else DeleteLog.LOCAL
+        val rowOutcome = deleteOne(context, item.uri, rowCopy)
+        if (rowOutcome == DeleteLog.Outcome.DELETED) deletedAny = true
 
         // 2. Delete any same-named copy in the configured folders: the audio copy, the transcript/notes sidecar AND
         // the .json details file beside it, so neither the text nor the details outlive the recording they belong to
         // (the .json used to be missed here, orphaning it on delete, issue #49).
         val prefs = AppPreferences(context)
         val names = RecordingSidecars.namesToDelete(listOf(item.displayName))
-        for (folderUri in listOfNotNull(prefs.getRecordingFolderUri(), prefs.getDriveFolderUri())) {
-            if (deleteNamedIn(context, folderUri, names)) deletedAny = true
+        for ((folderUri, copy) in folderCopies(prefs)) {
+            if (deleteNamedIn(context, folderUri, names, copy, onRefused = { if (copy == DeleteLog.LOCAL) localRefused = true })) deletedAny = true
+        }
+        // Warn only if it is really still there: the row's own delete may have been refused and the name pass then got it.
+        val rowStillThere = rowCopy == DeleteLog.LOCAL && rowOutcome != DeleteLog.Outcome.DELETED && runCatching {
+            DocumentFile.fromSingleUri(context, item.uri)?.exists() == true
+        }.getOrDefault(false)
+        if (localRefused || rowStillThere) {
+            AppLogger.w(TAG, "Local copy of '${item.displayName}' survives: the provider refused the delete, so the recording is still on the device")
         }
 
         // Drop the recording from the catalog (all copies are gone) so Home reflects the deletion. Not cancellable: the
@@ -457,8 +463,7 @@ object RecordingsRepository {
             // The exact file each row points at — the fast path, and the only one that reaches a copy
             // sitting outside the configured folders.
             for (item in items) {
-                runCatching { DocumentFile.fromSingleUri(context, item.uri)?.delete() }
-                    .onFailure { e -> AppLogger.w(TAG, "Failed to delete ${item.uri}: ${e.message}") }
+                deleteOne(context, item.uri, if (item.uri == item.driveUri) DeleteLog.DRIVE else DeleteLog.LOCAL)
             }
 
             // One pass over each folder for the WHOLE set, deleting any audio copy whose name is one
@@ -467,8 +472,8 @@ object RecordingsRepository {
             // The audio, the .md and the .json of each (C41: the .json holds the number and contact name).
             val names = RecordingSidecars.namesToDelete(items.map { it.displayName })
             val prefs = AppPreferences(context)
-            for (folderUri in listOfNotNull(prefs.getRecordingFolderUri(), prefs.getDriveFolderUri())) {
-                deleteNamedIn(context, folderUri, names)
+            for ((folderUri, copy) in folderCopies(prefs)) {
+                deleteNamedIn(context, folderUri, names, copy)
             }
 
             // Drop every one from the catalog by name, so Home reflects the deletion even for a row
@@ -486,7 +491,13 @@ object RecordingsRepository {
      * still checked to be a file before it is deleted. If the one-query listing is not available the old walk runs, so a
      * provider that cannot be listed this way deletes exactly as before. Logs the reason for any failure; never throws.
      */
-    private fun deleteNamedIn(context: Context, folderUri: Uri, names: Set<String>): Boolean {
+    private fun deleteNamedIn(
+        context: Context,
+        folderUri: Uri,
+        names: Set<String>,
+        copy: String,
+        onRefused: () -> Unit = {},
+    ): Boolean {
         var deletedAny = false
         val listing = runCatching { SafHelper.listChildren(context, folderUri) }.getOrNull()
         if (listing != null) {
@@ -494,8 +505,19 @@ object RecordingsRepository {
                 if (name !in names) return@forEachIndexed
                 runCatching {
                     val doc = DocumentFile.fromSingleUri(context, listing.uris[i])
-                    if (doc != null && doc.isFile && doc.delete()) deletedAny = true
-                }.onFailure { e -> AppLogger.w(TAG, "Failed to delete '$name' in $folderUri: ${e.message}") }
+                    if (doc != null && doc.isFile) {
+                        if (doc.delete()) {
+                            deletedAny = true
+                            DeleteLog.log(TAG, copy, name, DeleteLog.Outcome.DELETED)
+                        } else {
+                            onRefused()
+                            DeleteLog.log(TAG, copy, name, DeleteLog.Outcome.REFUSED)
+                        }
+                    }
+                }.onFailure { e ->
+                    onRefused()
+                    DeleteLog.log(TAG, copy, name, DeleteLog.Outcome.THREW, e.message)
+                }
             }
             return deletedAny
         }
@@ -503,7 +525,14 @@ object RecordingsRepository {
         runCatching {
             val tree = DocumentFile.fromTreeUri(context, folderUri) ?: return@runCatching
             for (doc in tree.listFiles()) {
-                if (doc.isFile && doc.name in names && doc.delete()) deletedAny = true
+                if (!doc.isFile || doc.name !in names) continue
+                if (doc.delete()) {
+                    deletedAny = true
+                    DeleteLog.log(TAG, copy, doc.name, DeleteLog.Outcome.DELETED)
+                } else {
+                    onRefused()
+                    DeleteLog.log(TAG, copy, doc.name, DeleteLog.Outcome.REFUSED)
+                }
             }
         }.onFailure { e -> AppLogger.w(TAG, "Failed to delete copies in $folderUri: ${e.message}") }
         return deletedAny
@@ -531,12 +560,7 @@ object RecordingsRepository {
      * it, so deleting thousands of copies lists each folder once instead of once per copy.
      */
     suspend fun deleteCopy(context: Context, uri: Uri, orphanedNames: MutableCollection<String>): Boolean = withContext(Dispatchers.IO) {
-        val deleted = runCatching {
-            DocumentFile.fromSingleUri(context, uri)?.delete() == true
-        }.getOrElse { e ->
-            AppLogger.w(TAG, "Failed to delete file $uri: ${e.message}")
-            false
-        }
+        val deleted = deleteOne(context, uri, copyOf(context, uri)) == DeleteLog.Outcome.DELETED
         // Clear this copy from the catalog ONLY if the file is actually gone (dropping the row if it was
         // the last copy). Clearing it regardless is what stranded 123 recordings on one device's Drive:
         // the Drive delete failed, the row was dropped anyway, and since the retention sweep only walks
@@ -550,6 +574,36 @@ object RecordingsRepository {
             AppLogger.w(TAG, "Keeping the catalog entry for $uri so the next sweep can retry the delete")
         }
         deleted
+    }
+
+    /** The folders a recording can sit in, each tagged with which copy it holds. */
+    private fun folderCopies(prefs: AppPreferences): List<Pair<Uri, String>> =
+        listOfNotNull(
+            prefs.getRecordingFolderUri()?.let { it to DeleteLog.LOCAL },
+            prefs.getDriveFolderUri()?.let { it to DeleteLog.DRIVE },
+        )
+
+    /** Which copy [uri] is, by the folder it is under; "local" when it cannot be told. */
+    private fun copyOf(context: Context, uri: Uri): String {
+        val drive = AppPreferences(context).getDriveFolderUri()?.toString() ?: return DeleteLog.LOCAL
+        return if (uri.toString().startsWith(drive.substringBefore("/document/"))) DeleteLog.DRIVE else DeleteLog.LOCAL
+    }
+
+    /** Deletes the single document at [uri] and logs the outcome (deleted, refused or threw); never throws. */
+    private fun deleteOne(context: Context, uri: Uri, copy: String): DeleteLog.Outcome {
+        var name: String? = null
+        return try {
+            val doc = DocumentFile.fromSingleUri(context, uri)
+            name = doc?.name
+            when {
+                doc == null || !doc.exists() -> DeleteLog.Outcome.ABSENT
+                doc.delete() -> DeleteLog.Outcome.DELETED
+                else -> DeleteLog.Outcome.REFUSED
+            }.also { DeleteLog.log(TAG, copy, name, it) }
+        } catch (e: Throwable) {
+            DeleteLog.log(TAG, copy, name, DeleteLog.Outcome.THREW, e.message)
+            DeleteLog.Outcome.THREW
+        }
     }
 
     /**

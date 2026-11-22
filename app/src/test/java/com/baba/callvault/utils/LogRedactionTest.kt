@@ -34,6 +34,28 @@ class LogRedactionTest {
     // -------- The contact field
 
     @Test
+    fun `a sidecar md name loses the contact name`() {
+        val redacted = redact("Delete local sidecar .md '20260825_130207.420+0300_out_John Doe.md': deleted")
+        assertFalse(redacted, redacted.contains("John"))
+        assertFalse(redacted, redacted.contains("Doe"))
+        assertTrue(redacted, redacted.contains("20260825_130207.420+0300_out_[C:"))
+    }
+
+    @Test
+    fun `a sidecar json name loses the contact name`() {
+        val redacted = redact("Delete Drive sidecar .json '20260825_130207.420+0300_in_John Doe.json': refused")
+        assertFalse(redacted, redacted.contains("John"))
+        assertFalse(redacted, redacted.contains("Doe"))
+    }
+
+    @Test
+    fun `a sidecar name whose contact is a number loses the number`() {
+        val redacted = redact("Delete local sidecar .md '20260825_130207.420+0300_in_0501234567.md': deleted")
+        assertFalse(redacted, redacted.contains("0501234567"))
+    }
+
+
+    @Test
     fun `a latin contact name is replaced by a token and the rest of the filename survives`() {
         val line = "Transcribed 20260825_130207.420+0300_out_Priya Raman.ogg (14 segment(s))"
 

@@ -398,7 +398,7 @@ object AdbShell {
             // A switch we may borrow is not a switch that blocks revival: after a reboot the listener is
             // always gone, and refusing here was the second of the three gates that deadlocked a phone on
             // 2026-09-19. See [LoopbackBorrowPolicy].
-            val userOff = prefs.wasWirelessDebuggingTurnedOffByUser() &&
+            val userOff = (prefs.wasWirelessDebuggingTurnedOffByUser() || userOffPending.isPending()) &&
                 !prefs.isWirelessDebuggingEnforced() &&
                 !mayBorrowWirelessDebugging(context)
             return AdbdRevivalPolicy.decide(
@@ -1005,7 +1005,7 @@ object AdbShell {
             alreadyOn = isWirelessDebuggingEnabled(context),
             hasGrant = hasWriteSecureSettings(context),
             wifi = WifiState.of(context),
-            userTurnedOff = prefs.wasWirelessDebuggingTurnedOffByUser(),
+            userTurnedOff = prefs.wasWirelessDebuggingTurnedOffByUser() || userOffPending.isPending(),
             enforced = prefs.isWirelessDebuggingEnforced(),
             userRequested = userRequest.get() == true,
             borrowingForLoopback = borrowing,
@@ -1151,6 +1151,9 @@ object AdbShell {
     fun didWeJustRestartAdbd(): Boolean =
         ownAdbdRestartAtMs != 0L &&
             android.os.SystemClock.elapsedRealtime() - ownAdbdRestartAtMs < OWN_ADBD_RESTART_WINDOW_MS
+
+    /** A user-off verdict still settling (C99); the enable gate and adbd revival treat it as the user's off. */
+    val userOffPending = UserOffPending()
 
     /** True when the current Wireless-debugging state is one CallVault itself just set. */
     fun didWeJustSetWirelessDebugging(enabled: Boolean): Boolean =

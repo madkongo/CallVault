@@ -42,6 +42,8 @@ import com.baba.callvault.integrations.adb.ShellReadNeed
 import com.baba.callvault.integrations.adb.UsbDebuggingShellRead
 import com.baba.callvault.integrations.adb.TransportTimeline
 import com.baba.callvault.integrations.adb.WifiState
+import com.baba.callvault.integrations.adb.WifiIdentity
+import com.baba.callvault.integrations.adb.WirelessDebuggingSettledVerdict
 import com.baba.callvault.integrations.adb.WirelessDebuggingOffCause
 import com.baba.callvault.integrations.adb.DeveloperOptions
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
@@ -486,6 +488,8 @@ class DaemonKeepAliveService : Service() {
             if (usesAdb()) syncShellUsbRead()
             val prefs = AppPreferences(applicationContext)
             if (on) {
+                watchdogHandler.removeCallbacks(settleWirelessDebuggingOffCause)
+                AdbShell.userOffPending.clear()
                 // On again, by anyone: nothing left to respect.
                 // Remembered first: a quick revert of this on must put back what the user already had.
                 wdUserFlagTracker.onSwitchedOn(prefs.wasWirelessDebuggingTurnedOffByUser(), SystemClock.elapsedRealtime())
@@ -540,21 +544,19 @@ class DaemonKeepAliveService : Service() {
                 WirelessDebuggingOffCause.ANDROID_NO_WIFI ->
                     AppLogger.i(TAG, "Wireless debugging went off with Wi-Fi; Android's doing, not the user's")
                 WirelessDebuggingOffCause.USER -> {
-                    prefs.setWirelessDebuggingEnabledByUs(false)
-                    prefs.setWirelessDebuggingTurnedOffByUser(true)
-                    AppLogger.i(
-                        TAG,
-                        "Wireless debugging switched off by hand; " +
-                            if (prefs.isWirelessDebuggingEnforced()) "the override setting is on, so CallVault may switch it back on"
-                            else "CallVault will leave it off",
-                    )
-                    // Android can write the switch off a moment before Wi-Fi is reported gone, which reads exactly
-                    // like a tap. Measured on the OP9 (2026-09-15): Wi-Fi off, Android's "Disabling adbwifi" 0.18 s
-                    // later, and this branch still saw Wi-Fi connected. Respect it at once, then look again once the
-                    // network has settled. The cost: a user who switches it off and loses Wi-Fi within the recheck
-                    // window is taken for Android — far rarer than every Wi-Fi drop being taken for the user.
-                    watchdogHandler.removeCallbacks(recheckWirelessDebuggingOffCause)
-                    watchdogHandler.postDelayed(recheckWirelessDebuggingOffCause, WD_OFF_RECHECK_MS)
+                    // Known gap: with no location permission BSSID reads as hidden, so identity is the network handle
+                    // alone. A mesh roam between access points of one network (Android: "Detected wifi network
+                    // change") keeps the same handle and can still be blamed on the user.
+                    // C99 (OP9): Android can write the switch off a few ms before Wi-Fi is reported gone, which reads
+                    // exactly like a tap. So no verdict now: look again once the network has settled, and only then
+                    // attribute it to the user (Wi-Fi never dropped, same network). One decision, so it cannot flip.
+                    pendingOffAtMs = SystemClock.elapsedRealtime()
+                    // A fresh read, not a remembered one, which can be older than the flap that caused this off.
+                    pendingOffWifiIdentity = WifiIdentity.of(applicationContext)
+                    AdbShell.userOffPending.start()
+                    AppLogger.i(TAG, "Wireless debugging off with Wi-Fi up; waiting ${WirelessDebuggingSettledVerdict.SETTLE_WINDOW_MS} ms before calling it the user's")
+                    watchdogHandler.removeCallbacks(settleWirelessDebuggingOffCause)
+                    watchdogHandler.postDelayed(settleWirelessDebuggingOffCause, WirelessDebuggingSettledVerdict.SETTLE_WINDOW_MS)
                 }
             }
             updateNotification(isDaemonAlive())
@@ -583,14 +585,43 @@ class DaemonKeepAliveService : Service() {
         AppLogger.i(TAG, "Restored 'Wireless debugging turned off by the user' = $after: the on just before was reverted")
     }
 
-    private val recheckWirelessDebuggingOffCause = Runnable {
-        val prefs = AppPreferences(applicationContext)
-        if (!prefs.wasWirelessDebuggingTurnedOffByUser()) return@Runnable
-        // The Wi-Fi loss can be reported just after the switch went off; looked at again here.
-        if (WifiState.of(applicationContext) != WifiState.NOT_CONNECTED && !wifiLostRecently()) return@Runnable
-        AppLogger.i(TAG, "Wi-Fi went away with Wireless debugging; that was Android switching it off, not the user")
-        prefs.setWirelessDebuggingTurnedOffByUser(false)
-        updateNotification(isDaemonAlive())
+    @Volatile private var pendingOffAtMs = 0L
+
+    @Volatile private var pendingOffWifiIdentity: String? = null
+
+    private val settleWirelessDebuggingOffCause = Runnable {
+        // Cleared only in the finally, after the flag write: a recovery thread must see the marker or the flag, never neither.
+        try {
+            if (!usesAdb()) return@Runnable
+            val prefs = AppPreferences(applicationContext)
+            // Switched back on during the window: the on branch already handled it.
+            if (AdbShell.isWirelessDebuggingEnabled(applicationContext)) return@Runnable
+            val lostInWindow = lastWifiLostAtMs != 0L && lastWifiLostAtMs >= pendingOffAtMs
+            when (
+                val verdict = WirelessDebuggingSettledVerdict.of(
+                    identityAtOff = pendingOffWifiIdentity,
+                    identityNow = WifiIdentity.of(applicationContext),
+                    wifiNow = WifiState.of(applicationContext),
+                    wifiLostInWindow = lostInWindow,
+                )
+            ) {
+                WirelessDebuggingSettledVerdict.USER -> {
+                    prefs.setWirelessDebuggingEnabledByUs(false)
+                    prefs.setWirelessDebuggingTurnedOffByUser(true)
+                    AppLogger.i(
+                        TAG,
+                        "Wireless debugging switched off by hand; " +
+                            if (prefs.isWirelessDebuggingEnforced()) "the override setting is on, so CallVault may switch it back on"
+                            else "CallVault will leave it off",
+                    )
+                }
+                else -> AppLogger.i(TAG, "Wireless debugging went off and Wi-Fi changed within the settle window ($verdict); Android's doing, not the user's")
+            }
+            updateNotification(isDaemonAlive())
+    
+        } finally {
+            AdbShell.userOffPending.clear()
+        }
     }
 
     /**
@@ -735,6 +766,9 @@ class DaemonKeepAliveService : Service() {
         runCatching { contentResolver.unregisterContentObserver(developerOptionsObserver) }
         runCatching { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(wifiJoinCallback) }
         watchdogHandler.removeCallbacks(approveJoinedWifi)
+        // A verdict still settling is dropped with the watchers (onDestroy, or a switch to Shizuku mode).
+        watchdogHandler.removeCallbacks(settleWirelessDebuggingOffCause)
+        AdbShell.userOffPending.clear()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -1302,10 +1336,7 @@ class DaemonKeepAliveService : Service() {
         /** Low-importance channel for one-off explanations, kept apart from the permanent status note. */
         private const val NOTIF_ID = SharedStatusNotice.ID
 
-        /** How long after a "switched off by hand" Wi-Fi is looked at again, in case its loss was the real cause. */
-        private const val WD_OFF_RECHECK_MS = 3_000L
-
-        /** After joining a Wi-Fi, before approving it: Android writes its own "Wi-Fi changed" off first. */
+            /** After joining a Wi-Fi, before approving it: Android writes its own "Wi-Fi changed" off first. */
         private const val WIFI_JOIN_SETTLE_MS = 4_000L
 
         /** A switch-off this close to a Wi-Fi loss (either order, read again at the recheck) is Android's. */

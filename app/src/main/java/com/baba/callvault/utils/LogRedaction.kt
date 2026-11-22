@@ -105,7 +105,10 @@ object LogRedaction {
      */
     internal val NAME_EXTENSIONS = listOf("ogg", "m4a", "opus", "oga", "mp4", "aac", "mp3", "wav")
 
-    private val EXTENSION_PATTERN = "\\.(?i:${NAME_EXTENSIONS.joinToString("|")})"
+    /** Sidecar files beside a recording (.md notes, .json details) carry the same name, so they are redacted too. */
+    private val SIDECAR_EXTENSIONS = listOf("md", "json")
+
+    private val EXTENSION_PATTERN = "\\.(?i:${(NAME_EXTENSIONS + SIDECAR_EXTENSIONS).joinToString("|")})"
 
     /**
      * A recording filename, split into the parts that identify a call and the one part that
@@ -161,7 +164,7 @@ object LogRedaction {
     internal fun mayContainRecordingName(message: String): Boolean {
         var dot = message.indexOf('.')
         while (dot >= 0) {
-            for (ext in NAME_EXTENSIONS) {
+            for (ext in NAME_EXTENSIONS + SIDECAR_EXTENSIONS) {
                 if (message.regionMatches(dot + 1, ext, 0, ext.length, ignoreCase = true)) return true
             }
             dot = message.indexOf('.', dot + 1)
