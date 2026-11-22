@@ -147,8 +147,8 @@ class AppDeathRedeliveryTest {
 
     private fun OrphanWatch.tick(
         now: Long, current: Boolean = true, recording: Boolean = true, clientSeen: Boolean = false,
-        callUp: Boolean? = false, voice: Boolean? = false, stopped: Boolean? = false,
-    ) = step(now, current, recording, clientSeen, callUp, voice) { stopped }
+        callUp: Boolean? = false, voice: Boolean? = false, stopped: Boolean? = false, holds: Boolean = clientSeen,
+    ) = step(now, current, recording, clientHolds = holds, clientOwns = clientSeen, callUp, voice) { stopped }
 
     @Test
     fun `an app that is calling again finishes the watch before any self-stop`() {
@@ -205,5 +205,37 @@ class AppDeathRedeliveryTest {
         val s = w.tick(60_000, callUp = null)
         assertEquals(OrphanWatch.Action.NONE, s.action)
         assertTrue(s.audioUnreadable)
+    }
+
+    @Test
+    fun `an app that only holds the binder does not disable the self-stop`() {
+        val w = watch(mayRestart = false)
+        assertEquals(OrphanWatch.Action.NONE, w.tick(0, holds = true).action)
+        assertEquals(OrphanWatch.Action.SELF_STOP, w.tick(5_000, holds = true).action)
+    }
+
+    @Test
+    fun `an app that only holds the binder stops the re-delivery`() {
+        val w = watch()
+        assertEquals(OrphanWatch.Action.NONE, w.tick(1_000, callUp = true, holds = true).action)
+        assertEquals(OrphanWatch.Action.NONE, w.tick(20_000, callUp = true, holds = true).action)
+    }
+
+    @Test
+    fun `an app that claims the session finishes the watch`() {
+        val w = watch(mayRestart = false)
+        assertEquals(OrphanWatch.Action.APP_RETURNED, w.tick(0, clientSeen = true).action)
+    }
+
+    @Test
+    fun `client signals keep holding and owning apart and per death`() {
+        val s = ClientSignals()
+        assertFalse(s.holdsSince(0)); assertFalse(s.ownsSince(0))
+        s.noteHold(100)
+        assertTrue(s.holdsSince(100)); assertFalse(s.ownsSince(100))
+        assertFalse(s.holdsSince(101)) // a later death resets what counts
+        s.noteOwner(200)
+        assertTrue(s.ownsSince(150)); assertTrue(s.holdsSince(150)) // owning is also holding
+        assertFalse(s.ownsSince(201))
     }
 }

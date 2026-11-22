@@ -27,6 +27,8 @@ import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.services.recording.aftercall.AfterCallDecision
 import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.health.SilentFailureNotifier
+import com.baba.callvault.data.health.CallLogEntry
+import com.baba.callvault.services.recording.OrphanRecorderSession
 import com.baba.callvault.utils.AppLogger
 import java.io.File
 import kotlinx.coroutines.sync.Mutex
@@ -58,7 +60,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         logStandbyBucket(applicationContext)
         // First: a recorder still recording for a process that is gone keeps its file "in use" for ever, so
         // nothing here could ever save it (C2). Stopped when its call is over; kept when it may be live (Q25).
-        runCatching { com.baba.callvault.services.recording.OrphanRecorderSession.settle(applicationContext, "rescue check") }
+        runCatching { com.baba.callvault.services.recording.OrphanRecorderSession.settle(applicationContext, settleTrigger(inputData.getBoolean(KEY_CALL_END_CHECK, false))) }
             .onFailure { AppLogger.e(TAG, "Orphan recorder check failed: ${it.message}", it) }
         sweepStaleTemps(applicationContext)
         val dir = SafHelper.stagingDirOrNull(applicationContext) ?: return Result.success()
@@ -89,7 +91,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                 if (callActive) waitingForCall = true
             }
             // Outside the lock: the library entry, Drive copy and transcription may be slow and need no exclusion.
-            result.published?.let { p -> afterPublished(applicationContext, p.fileName, p.uri, p.mimeType, p.bytes, p.startedAt, p.cutAt, p.savedInFull) }
+            result.published?.let { p -> afterPublished(applicationContext, p.fileName, p.uri, p.mimeType, p.bytes, p.startedAt, p.cutAt, p.savedInFull, p.ranOnSeconds, p.appCall) }
         }
         // A "call up" that never ends (a stuck audio mode) must not wake the phone every two minutes for ever: after an
         // hour the ordinary request backs off to 30 minutes, until the next call end (schedule()) resets it.
@@ -114,7 +116,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         val started = inputData.getLong(KEY_OBSERVE_STARTED, -1L).takeIf { it >= 0 }
         val cutAt = inputData.getLong(KEY_OBSERVE_CUT, 0L)
         val attempt = inputData.getInt(KEY_ATTEMPT, 1)
-        val call = runCatching { matchCall(applicationContext, started, cutAt) }.getOrNull()
+        val call = runCatching { matchCall(applicationContext, started, cutAt, completeCall = true) }.getOrNull()
         if (call != null) {
             runCatching { SetupHealthStore(applicationContext).recordSavedInFull(call.startedAt, call.startedAt + call.durationSeconds * 1_000L) }
             CallEndLog.record(applicationContext, "cut-off rescue: the call of ${CallEndLog.safeName(name)} showed in the call log on re-check $attempt; marked observed")
@@ -131,6 +133,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
 
     private class Published(
         val fileName: String, val uri: Uri, val mimeType: String, val bytes: Long, val startedAt: Long?, val cutAt: Long, val savedInFull: Boolean,
+        val ranOnSeconds: Int = 0, val appCall: Boolean = false,
     )
 
     private class RescueResult(val decision: RescueDecision, val marked: Boolean, val published: Published? = null)
@@ -221,7 +224,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         AppLogger.w(TAG, "Saved a recording cut off when CallVault was closed: '$fileName' ($bytes bytes) -> $uri")
         val cutAt = file.lastModified()
         runCatching { file.delete(); noteFile.delete() }
-        return Published(fileName, uri, note.mimeType, bytes, note.startedAtMillis, cutAt, savedInFull)
+        return Published(fileName, uri, note.mimeType, bytes, note.startedAtMillis, cutAt, savedInFull, note.ranOnSeconds, note.appCall)
     }
 
     private fun isCallActive(): Boolean = runCatching {
@@ -248,10 +251,10 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
          */
         internal suspend fun afterPublished(
             context: Context, fileName: String, uri: Uri, mimeType: String, bytes: Long, startedAt: Long?, cutAt: Long,
-            completeCall: Boolean = false,
+            completeCall: Boolean = false, ranOnSeconds: Int = 0, appCall: Boolean = false,
         ) {
             RecordingCatalog.recordLocal(context, fileName, uri, bytes, startedAt ?: cutAt)
-            recordSaved(context, fileName, startedAt, cutAt, completeCall)
+            recordSaved(context, fileName, startedAt, cutAt, completeCall, ranOnSeconds, appCall)
             runCatching { handOffs(context, fileName, uri, mimeType) }
                 .onSuccess { CallEndLog.record(context, "cut-off rescue: '$fileName' handed to Drive copy and transcription") }
                 .onFailure {
@@ -300,6 +303,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         }
 
         internal fun standbyBucketName(bucket: Int): String = when (bucket) {
+            5 -> "EXEMPTED"
             10 -> "ACTIVE"
             20 -> "WORKING_SET"
             30 -> "FREQUENT"
@@ -321,13 +325,16 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
          * After a cut-off recording is in the library: the health card (the call it belongs to was cut off, not "not
          * recorded") and the notice. Shared with the waiting publisher, which saves a cut-off the same way (F3).
          */
-        fun recordSaved(context: Context, fileName: String, startedAt: Long?, cutAt: Long, completeCall: Boolean = false) {
-            val call = matchCall(context, startedAt, cutAt)
+        fun recordSaved(
+            context: Context, fileName: String, startedAt: Long?, cutAt: Long, completeCall: Boolean = false,
+            ranOnSeconds: Int = 0, appCall: Boolean = false,
+        ) {
+            val call = matchCall(context, startedAt, cutAt, completeCall)
             AppLogger.i(TAG, "The cut-off recording belongs to ${call?.let { "the call at ${it.startedAt}" } ?: "no call in the call log"}")
             if (call == null) {
                 CallEndLog.record(
                     context,
-                    "cut-off rescue: ${CallEndLog.safeName(fileName)} matches no call in the call log (an app call never does)" +
+                    "cut-off rescue: ${CallEndLog.safeName(fileName)} matches no call in the call log" + (if (appCall) " (an app call never does)" else "") +
                         if (completeCall) "; saved in full, so the status card gets no update for it yet" else "",
                 )
                 // The call log may lag the call's end: look again a few times (saved in full only; the cut-off path is as before).
@@ -345,7 +352,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                 return
             }
             // The recorder kept going through the app's death and the phone call's end is inside the file: say so.
-            SilentFailureNotifier.noteCallSavedAfterRestart(context, fileName)
+            SilentFailureNotifier.noteCallSavedAfterRestart(context, fileName, ranOnSeconds)
         }
         private const val WORK_NAME = "cut_off_rescue"
         private const val STATE_PREFS = "cut_off_rescue_state"
@@ -437,9 +444,35 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             }.onFailure { CallEndLog.record(context, "cut-off rescue: could not queue the call-log re-check for ${CallEndLog.safeName(name)} ${CallEndLog.describe(it)}") }
         }
 
-        private fun matchCall(context: Context, startedAt: Long?, cutAt: Long) = CutOffRescuePolicy.matchCall(
-            CallLogReader.entriesSince(context, cutAt - CALL_LOOKBACK_MS), startedAt, cutAt,
-        )
+        /** A saved-in-full file is matched on "started with the recording, ended before the cut"; a cut-off on "up at the cut". */
+        private fun matchCall(context: Context, startedAt: Long?, cutAt: Long, completeCall: Boolean): CallLogEntry? {
+            val entries = CallLogReader.entriesSince(context, cutAt - CALL_LOOKBACK_MS)
+            return if (completeCall) CutOffRescuePolicy.matchCompleteCall(entries, startedAt, cutAt)
+            else CutOffRescuePolicy.matchCall(entries, startedAt, cutAt)
+        }
+
+        /** The orphan-check trigger a run uses: the short safety net's own name, else the ordinary rescue's. */
+        internal fun settleTrigger(callEndCheck: Boolean): String =
+            if (callEndCheck) OrphanRecorderSession.TRIGGER_CALL_END_CHECK else "rescue check"
+
+        /** How long after a phone call ends the safety net runs, should the in-process 3 s check never have run (frozen app). */
+        internal const val CALL_END_CHECK_DELAY_MS = 20_000L
+        private const val WORK_NAME_CALL_END = "cut_off_rescue_call_end"
+        private const val KEY_CALL_END_CHECK = "call_end_check"
+
+        /**
+         * A phone call ended with a recording nobody here owns: a second orphan check ~20 s later, from WorkManager, which
+         * runs even when the app process was frozen at +3 s (OnePlus 9, 2026-11-22). The 2-minute rescue stays as is.
+         */
+        fun scheduleCallEndCheck(context: Context) {
+            runCatching {
+                val request = OneTimeWorkRequestBuilder<CutOffRescueWorker>()
+                    .setInitialDelay(CALL_END_CHECK_DELAY_MS, TimeUnit.MILLISECONDS)
+                    .setInputData(Data.Builder().putBoolean(KEY_CALL_END_CHECK, true).build())
+                    .build()
+                WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME_CALL_END, ExistingWorkPolicy.REPLACE, request)
+            }.onFailure { CallEndLog.record(context, "cut-off rescue: could not queue the call-end check ${CallEndLog.describe(it)}") }
+        }
 
         /** Looks for cut-off recordings shortly. Safe to call often: the latest request replaces earlier ones. */
         fun schedule(context: Context) {

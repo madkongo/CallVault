@@ -223,6 +223,7 @@
     <string name="notif_cut_off_saved_text">Dein Handy hat CallVault während eines Anrufs geschlossen. Was bis dahin aufgenommen wurde, ist als %1$s gespeichert.</string>
     <string name="notif_call_saved_after_restart_title">Anruf nach Neustart von CallVault gespeichert</string>
     <string name="notif_call_saved_after_restart_text">CallVault wurde während eines Anrufs geschlossen, aber die Aufnahme lief weiter und hat den ganzen Anruf als %1$s gespeichert.</string>
+    <string name="notif_call_saved_after_restart_ran_on_text">CallVault wurde während eines Anrufs geschlossen, aber die Aufnahme lief weiter und hat den ganzen Anruf als %1$s gespeichert. Sie nahm noch %2$d s nach dem Ende des Anrufs weiter auf.</string>
     <string name="notif_cut_off_saved_title">Ein Anruf wurde abgeschnitten</string>
     <string name="notif_health_channel">Probleme, die Sie betreffen</string>
     <string name="notif_health_recorder_text">Anrufe werden erst aufgezeichnet, wenn sich dieses Telefon einmal mit einem WLAN verbindet. Jedes Netz genügt, Internet ist nicht nötig — ein paar Sekunden reichen, danach funktioniert es auch ohne WLAN weiter.</string>

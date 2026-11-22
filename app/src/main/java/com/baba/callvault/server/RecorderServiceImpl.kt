@@ -128,6 +128,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         bitRate: Int,
         outFd: ParcelFileDescriptor?
     ) {
+        AppStartBinderSender.noteOwnerCall() // the app claims or ends the session (see ClientSignals)
         // Taken first, so even a start that is refused below leaves no stereo request behind.
         val stereo = consumeEncodeStereo()
         if (outFd == null || source == null || codec == null) {
@@ -172,6 +173,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     }
 
     override fun stopRecording() {
+        AppStartBinderSender.noteOwnerCall() // the app claims or ends the session (see ClientSignals)
         // Only the CAS winner tears down; idempotent against repeat/late calls.
         if (!recordingActive.compareAndSet(true, false)) {
             AppLogger.d(TAG, "stopRecording ignored: not recording")
@@ -224,6 +226,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     // extract the IAudioRecord + cblk, and DELIVER them to the app. Runs on the binder thread so the
     // synchronous push completes (app is capturing) before this returns true. Fast (create+extract).
     override fun startHandoff(source: String?, sampleRate: Int, channels: Int): Boolean {
+        AppStartBinderSender.noteOwnerCall() // the app claims or ends the session (see ClientSignals)
         if (source == null) { AppLogger.e(TAG, "startHandoff: null source"); return false }
         AppLogger.i(TAG, "startHandoff source=$source rate=$sampleRate channels=$channels")
         speakerTurnsHold.beginCall() // a handoff call has no daemon turns; the last daemon call's are not its own (review C60)
@@ -310,6 +313,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     }
 
     override fun startVoipRecording(codec: String?, bitRate: Int, outFd: ParcelFileDescriptor?): Boolean {
+        AppStartBinderSender.noteOwnerCall() // the app claims or ends the session (see ClientSignals)
         val stereo = consumeEncodeStereo() // first, for the same reason as startRecording
         if (outFd == null || codec == null) {
             AppLogger.e(TAG, "startVoipRecording: null arg (codec=$codec fd=${outFd != null})")
@@ -370,6 +374,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     // Releases the daemon's held handoff AudioRecord (the app owns capture after the handoff; this
     // just frees the daemon's now-unneeded input so the next call can create a fresh one).
     override fun startHandoffHeld(source: String?, sampleRate: Int, channels: Int): Boolean {
+        AppStartBinderSender.noteOwnerCall() // the app claims or ends the session (see ClientSignals)
         AppLogger.i(TAG, "startHandoffHeld source=$source rate=$sampleRate channels=$channels")
         speakerTurnsHold.beginCall() // review C60
         // Same lazy load the normal handoff does — the binder + cblk extraction is native, and
@@ -552,6 +557,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     }
 
     override fun stopHandoff() {
+        AppStartBinderSender.noteOwnerCall() // the app claims or ends the session (see ClientSignals)
         AppLogger.i(TAG, "stopHandoff requested")
         runCatching { HandoffSource.releaseHeld() }
             .onFailure { AppLogger.w(TAG, "stopHandoff error: ${it.message}") }

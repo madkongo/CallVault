@@ -255,12 +255,16 @@ class CallVaultApplication : Application() {
         //
         // Safe to run unconditionally: stop() is a no-op when there is nothing to remove.
         runCatching {
-            if (AppPreferences(applicationContext).getPrivilegedMode().needsShizuku) {
+            val startPrefs = AppPreferences(applicationContext)
+            val startMode = startPrefs.getPrivilegedMode()
+            if (!startMode.needsShizuku) ShizukuBackend.stop(remove = true)
+            // Standalone too (owner decision 2026-11-22): a force-stop cancels the keep-alive's sticky restart, and Android
+            // revives the process only to re-bind a listener; without this it stayed without its foreground service and
+            // was frozen mid-call-end. A refused background start is caught and logged inside start() (ForegroundStartGuard).
+            if (com.baba.callvault.services.recording.KeepAlivePolicy.shouldStartAtAppStart(startMode, startPrefs.isPrivilegedTransportSetUp())) {
                 // Also on every start, not only on a switch: a keep-alive can outlive the process that
                 // started it, and the foreground service is what keeps Android from hibernating the app. It runs in Shizuku mode too (process anchor, P1a); start() logs the decision once per change.
                 DaemonKeepAliveService.start(applicationContext)
-            } else {
-                ShizukuBackend.stop(remove = true)
             }
         }.onFailure { AppLogger.d(TAG, "Nothing left over to clear: ${it.message}") }
 

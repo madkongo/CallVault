@@ -223,6 +223,7 @@
     <string name="notif_cut_off_saved_text">Tu teléfono cerró CallVault durante una llamada. Lo grabado hasta ese momento se guardó como %1$s.</string>
     <string name="notif_call_saved_after_restart_title">Llamada guardada tras reiniciarse CallVault</string>
     <string name="notif_call_saved_after_restart_text">CallVault se cerró durante una llamada, pero la grabación continuó y guardó la llamada completa como %1$s.</string>
+    <string name="notif_call_saved_after_restart_ran_on_text">CallVault se cerró durante una llamada, pero la grabación continuó y guardó la llamada completa como %1$s. Siguió grabando %2$d s después de que terminó la llamada.</string>
     <string name="notif_cut_off_saved_title">Una llamada se cortó</string>
     <string name="notif_health_channel">Problemas que requieren tu atención</string>
     <string name="notif_health_recorder_text">No se grabarán llamadas hasta que este teléfono se conecte una vez a una red Wi-Fi. Sirve cualquier red y no necesita internet: bastan unos segundos y luego sigue funcionando incluso sin Wi-Fi.</string>

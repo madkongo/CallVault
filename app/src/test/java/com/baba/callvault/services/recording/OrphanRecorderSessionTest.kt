@@ -82,8 +82,16 @@ class OrphanRecorderSessionTest {
         var laterCallFn: ((Long) -> Boolean?)? = null
         override fun callLoggedAfter(sinceMillis: Long): Boolean? = laterCallFn?.invoke(sinceMillis) ?: laterCall
         val marks = mutableListOf<Pair<File, Boolean>>()
+        val ranOnMarks = mutableListOf<Int>()
+        val appCallMarks = mutableListOf<Boolean>()
         var markWorks = true
-        override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean { marks += file to callEnded; return markWorks }
+        var callEnded: Long? = null
+        var nowMs: Long = 0L
+        override fun callEndedAt(): Long? = callEnded
+        override fun now(): Long = nowMs
+        override fun markOrphanStopped(file: File, callEnded: Boolean, ranOnSeconds: Int, appCall: Boolean): Boolean {
+            marks += file to callEnded; ranOnMarks += ranOnSeconds; appCallMarks += appCall; return markWorks
+        }
         override fun record(line: String) { lines.add(line) }
     }
 
@@ -532,5 +540,64 @@ class OrphanRecorderSessionTest {
 
         assertTrue(env.rescuedNow.isEmpty())
         assertTrue(env.lines.any { it.contains("could not mark") })
+    }
+
+    @Test
+    fun `the three quiet returns are logged with the trigger`() {
+        val noRecorder = FakeEnv()
+        OrphanRecorderSession.resolve(null, noRecorder, "call end check")
+        assertTrue(noRecorder.lines.single().contains("[call end check]") && noRecorder.lines.single().contains("no recorder"))
+
+        val idle = FakeEnv()
+        OrphanRecorderSession.resolve(FakeRecorder(), idle, "rescue check")
+        assertTrue(idle.lines.single().contains("[rescue check]") && idle.lines.single().contains("not recording"))
+
+        val owned = FakeEnv(owned = true)
+        OrphanRecorderSession.resolve(FakeRecorder().apply { start("x") }, owned, "phone call ended")
+        assertTrue(owned.lines.single().contains("[phone call ended]") && owned.lines.single().contains("owned"))
+    }
+
+    @Test
+    fun `an orphan stopped long after its call ended is marked with how long it ran on`() {
+        val recorder = FakeRecorder().apply { start("c") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 600_000L).apply {
+            stagingFile = File("c"); callEnded = call1Start + 300_000L; nowMs = call1Start + 300_000L + 125_000L
+        }
+        OrphanRecorderSession.resolve(recorder, env, "rescue check")
+        assertEquals(listOf(125), env.ranOnMarks)
+        assertTrue(env.lines.any { it.contains("file outlasts its call by 125 s") })
+    }
+
+    @Test
+    fun `an orphan stopped soon after its call ended carries no run-on`() {
+        val recorder = FakeRecorder().apply { start("c") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 600_000L).apply {
+            stagingFile = File("c"); callEnded = call1Start + 300_000L; nowMs = call1Start + 300_000L + 20_000L
+        }
+        OrphanRecorderSession.resolve(recorder, env, "phone call ended")
+        assertEquals(listOf(0), env.ranOnMarks)
+    }
+
+    @Test
+    fun `the app-call flag travels with the stop mark`() {
+        val recorder = FakeRecorder().apply { start("c") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 600_000L).apply { stagingFile = File("c"); appCall = true }
+        OrphanRecorderSession.resolve(recorder, env, "rescue check")
+        assertEquals(listOf(true), env.appCallMarks)
+    }
+
+    @Test
+    fun `run-on is told only past 30 s and only for the same call`() {
+        assertEquals(null, OrphanSessionPolicy.ranOnSeconds(stoppedAt = 130_000, callEndedAt = 100_000, orphanStartedAt = 0))
+        assertEquals(31, OrphanSessionPolicy.ranOnSeconds(stoppedAt = 131_000, callEndedAt = 100_000, orphanStartedAt = 0))
+        assertEquals(null, OrphanSessionPolicy.ranOnSeconds(200_000, callEndedAt = null, orphanStartedAt = 0))
+        assertEquals("an earlier call's end", null, OrphanSessionPolicy.ranOnSeconds(900_000, callEndedAt = 100_000, orphanStartedAt = 500_000))
+        assertEquals(null, OrphanSessionPolicy.ranOnSeconds(stoppedAt = 50_000, callEndedAt = 100_000, orphanStartedAt = 0))
+    }
+
+    @Test
+    fun `the call-end check lines say when it was scheduled and how late it ran`() {
+        assertEquals("orphan check scheduled for +3 s", OrphanRecorderSession.scheduledLine(3_000))
+        assertEquals("orphan check running (late by 61000 ms)", OrphanRecorderSession.runningLine(61_000))
     }
 }

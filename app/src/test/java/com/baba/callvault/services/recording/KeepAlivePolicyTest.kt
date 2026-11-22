@@ -85,4 +85,16 @@ class KeepAlivePolicyTest {
         assertEquals(KeepAlivePolicy.WatcherAction.NONE, KeepAlivePolicy.reconcileWatchers(registered = false, mayUseAdb = false))
         assertEquals(3, w.size)
     }
+
+    @Test
+    fun `app start runs the keep-alive in shizuku mode and in standalone once set up`() {
+        assertTrue(KeepAlivePolicy.shouldStartAtAppStart(PrivilegedMode.SHIZUKU, transportSetUp = false))
+        assertTrue(KeepAlivePolicy.shouldStartAtAppStart(PrivilegedMode.SHIZUKU, transportSetUp = true))
+        assertTrue(KeepAlivePolicy.shouldStartAtAppStart(PrivilegedMode.STANDALONE, transportSetUp = true))
+    }
+
+    @Test
+    fun `app start does not run the keep-alive in standalone before set-up is done`() {
+        assertFalse(KeepAlivePolicy.shouldStartAtAppStart(PrivilegedMode.STANDALONE, transportSetUp = false))
+    }
 }

@@ -91,13 +91,13 @@ internal object AppStartBinderSender {
         }
     }
 
-    @Volatile
-    private var lastClientCallAt = 0L
+    private val clientSignals = ClientSignals()
 
-    /** Called for every transaction an app process makes on this daemon's binder. */
-    fun noteClientCall() {
-        lastClientCallAt = android.os.SystemClock.elapsedRealtime()
-    }
+    /** Called for every transaction an app process makes on this daemon's binder: the app holds the binder. */
+    fun noteClientCall() = clientSignals.noteHold(android.os.SystemClock.elapsedRealtime())
+
+    /** Called by the calls that claim or end a session (start/stop recording, handoff, VoIP): the app owns it. */
+    fun noteOwnerCall() = clientSignals.noteOwner(android.os.SystemClock.elapsedRealtime())
 
     private val restartCycles = RestartCycles()
 
@@ -147,7 +147,8 @@ internal object AppStartBinderSender {
                 now = now,
                 current = generation == loopGeneration,
                 recording = runCatching { ctx.isRecording() }.getOrDefault(false),
-                clientSeen = lastClientCallAt >= diedAt,
+                clientHolds = clientSignals.holdsSince(diedAt),
+                clientOwns = clientSignals.ownsSince(diedAt),
                 callUp = mode?.let(OrphanSelfStop::isCallAudioMode),
                 voiceCommActive = audio.voiceCommPlaybackActive(),
                 packageStopped = { isAppStopped(ctx.authority) },
@@ -161,7 +162,7 @@ internal object AppStartBinderSender {
             when (step.action) {
                 OrphanWatch.Action.SUPERSEDED -> return
                 OrphanWatch.Action.APP_RETURNED -> {
-                    AppLogger.i(TAG, "The app is calling this daemon again; watch over (after ${watch.attempts} delivery attempt(s))")
+                    AppLogger.i(TAG, "The app claimed the session again; watch over (after ${watch.attempts} delivery attempt(s))")
                     return
                 }
                 OrphanWatch.Action.RECORDING_ENDED -> {
@@ -170,8 +171,8 @@ internal object AppStartBinderSender {
                 }
                 OrphanWatch.Action.SELF_STOP -> {
                     // The app may have come back during this very tick: never stop a recording it now owns.
-                    if (lastClientCallAt >= diedAt) {
-                        AppLogger.i(TAG, "The app called this daemon just before the self-stop; leaving the recording to it")
+                    if (clientSignals.ownsSince(diedAt)) {
+                        AppLogger.i(TAG, "The app claimed the session just before the self-stop; leaving the recording to it")
                         return
                     }
                     AppLogger.i(TAG, "the call ended with no app attached; stopping and finalising the recording myself (audio mode $mode)")

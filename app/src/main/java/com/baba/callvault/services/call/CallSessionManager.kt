@@ -17,6 +17,7 @@ import android.os.SystemClock
 import android.provider.ContactsContract
 import android.telephony.PhoneNumberUtils
 import android.telephony.TelephonyManager
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.health.SetupHealthStore
@@ -254,8 +255,15 @@ class CallSessionManager private constructor(context: Context) {
             // restarted mid-call) left its recording running (C2). A moment later, so our own session's stop (sent
             // below) has claimed it and the audio mode has left the call; and only then is a call-free moment
             // noted, if no call of either kind is still up (a WhatsApp call under this IDLE is not one, Q28).
+            OrphanRecorderSession.noteCallEnded(appContext)
+            val orphanCheckScheduledAt = System.currentTimeMillis()
+            CallEndLog.record(appContext, OrphanRecorderSession.scheduledLine(ORPHAN_CHECK_AFTER_IDLE_MS))
+            // Safety net for a process the phone freezes before the 3 s check runs (ColorOS "Hans", OnePlus 9 2026-11-22):
+            // WorkManager runs it ~20 s later. Only when something may be orphaned (a cheap binder read, main-thread safe).
+            if (OrphanRecorderSession.needsSettling()) CutOffRescueWorker.scheduleCallEndCheck(appContext)
             managerScope.launch(Dispatchers.IO) {
                 delay(ORPHAN_CHECK_AFTER_IDLE_MS)
+                CallEndLog.record(appContext, OrphanRecorderSession.runningLine(System.currentTimeMillis() - orphanCheckScheduledAt - ORPHAN_CHECK_AFTER_IDLE_MS))
                 runCatching { OrphanRecorderSession.settle(appContext, OrphanRecorderSession.TRIGGER_PHONE_CALL_ENDED) }
                     .onFailure { AppLogger.e(TAG, "Orphan recorder check after the call failed: ${it.message}", it) }
             }

@@ -69,6 +69,20 @@ object OrphanSessionPolicy {
      * purpose: an incoming call is logged at its ring (before the recording) and an outgoing one at its dial (about the
      * recording's start), so only clock slack is needed, and a quick redial within a minute must still be seen.
      */
+    /** A file that runs on past its call's end by more than this is told to the user (a hang-up is never exact). */
+    const val RUN_ON_NOTICE_MS = 30_000L
+
+    /**
+     * Seconds the recording ran on after its call ended, when that is worth saying (more than [RUN_ON_NOTICE_MS]), else
+     * null. [callEndedAt] counts only when it is not older than the orphan's start (it may be an earlier call's end).
+     */
+    fun ranOnSeconds(stoppedAt: Long, callEndedAt: Long?, orphanStartedAt: Long?): Int? {
+        if (callEndedAt == null) return null
+        if (orphanStartedAt != null && callEndedAt < orphanStartedAt) return null
+        val gap = stoppedAt - callEndedAt
+        return if (gap > RUN_ON_NOTICE_MS) (gap / 1_000L).toInt() else null
+    }
+
     const val SAME_CALL_LOG_SLACK_MS = 10_000L
 
     /** True when the orphan's recording began clearly before the live call did, so it cannot be that call's. */

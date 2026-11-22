@@ -116,4 +116,16 @@ object CutOffRescuePolicy {
                 call.startedAt in (recordingStartedAt - MAX_RING_BEFORE_RECORDING_MS)..(recordingStartedAt + CALL_MATCH_SLACK_MS)
             upAtCut && startsWithRecording
         }.maxByOrNull { it.startedAt }
+
+    /**
+     * The call a SAVED-IN-FULL file belongs to: it started with the recording and ended before the cut (a recording that
+     * ran on past its call's end has its last write long after the call, so "up at the cut" would miss it). The newest wins.
+     */
+    fun matchCompleteCall(entries: List<CallLogEntry>, recordingStartedAt: Long?, cutAt: Long): CallLogEntry? =
+        entries.filter { call ->
+            val end = call.startedAt + call.durationSeconds * 1_000L
+            val startsWithRecording = recordingStartedAt == null ||
+                call.startedAt in (recordingStartedAt - MAX_RING_BEFORE_RECORDING_MS)..(recordingStartedAt + CALL_MATCH_SLACK_MS)
+            startsWithRecording && end <= cutAt + CALL_MATCH_SLACK_MS
+        }.maxByOrNull { it.startedAt }
 }

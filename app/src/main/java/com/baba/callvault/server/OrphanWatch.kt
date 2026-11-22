@@ -26,6 +26,27 @@ class RestartCycles {
 }
 
 /**
+ * What the daemon knows about the app since each of its deaths, kept in two kinds so an app that merely talks to the
+ * daemon is not mistaken for one that owns the recording (2026-11-22, OnePlus 9: the restarted app only queried, and the
+ * daemon's self-stop never ran).
+ *  - holds: ANY transaction, the app has the binder (the re-delivery can stop asking);
+ *  - owns: startRecording / stopRecording / a handoff or VoIP start or stop, the app claimed or ended the session (this
+ *    alone disables the self-stop, since an app that owns it will end it).
+ */
+class ClientSignals {
+    @Volatile private var lastHoldAt = Long.MIN_VALUE
+    @Volatile private var lastOwnAt = Long.MIN_VALUE
+
+    fun noteHold(now: Long) { lastHoldAt = now }
+
+    /** An ownership call is also a hold. */
+    fun noteOwner(now: Long) { lastOwnAt = now; lastHoldAt = now }
+
+    fun holdsSince(diedAt: Long): Boolean = lastHoldAt >= diedAt
+    fun ownsSince(diedAt: Long): Boolean = lastOwnAt >= diedAt
+}
+
+/**
  * One tick of the daemon's watch over a recording whose app died, as a pure step so the order of the checks can be
  * tested: a newer death supersedes this watch; an app that is calling the daemon again, or a recording that ended,
  * finishes it (before any self-stop); then the self-stop; then the re-delivery, which a force-stopped app never gets.
@@ -53,14 +74,16 @@ class OrphanWatch(
         now: Long,
         current: Boolean,
         recording: Boolean,
-        clientSeen: Boolean,
+        clientHolds: Boolean,
+        clientOwns: Boolean,
         callUp: Boolean?,
         voiceCommActive: Boolean?,
         packageStopped: () -> Boolean?,
     ): Step {
         if (!current) return Step(Action.SUPERSEDED)
-        val decision = selfStop.onPoll(now, recording, clientSeen, OrphanSelfStop.callUp(callUp, voiceCommActive))
-        if (clientSeen) return Step(Action.APP_RETURNED)
+        val decision = selfStop.onPoll(now, recording, clientOwns, OrphanSelfStop.callUp(callUp, voiceCommActive))
+        if (clientOwns) return Step(Action.APP_RETURNED)
+        if (clientHolds) deliveryDue = null // the app has the binder: no more offers, but the self-stop still runs
         if (!recording) return Step(Action.RECORDING_ENDED)
         if (decision == OrphanSelfStop.Decision.STOP) return Step(Action.SELF_STOP)
         val unreadable = decision == OrphanSelfStop.Decision.UNREADABLE

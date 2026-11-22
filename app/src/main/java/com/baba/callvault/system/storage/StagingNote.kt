@@ -35,6 +35,10 @@ data class StagingNote(
     val mimeType: String,
     val startedAtMillis: Long,
     val orphanStop: OrphanStop = OrphanStop.NONE,
+    /** Seconds the recording ran on after its call ended (only set past 30 s, by the orphan stop); 0 = not told. */
+    val ranOnSeconds: Int = 0,
+    /** The orphaned session was an app call (those never appear in the call log). */
+    val appCall: Boolean = false,
 ) {
     fun encode(): String = listOf(
         "v=1",
@@ -42,7 +46,9 @@ data class StagingNote(
         "name=$fileName",
         "mime=$mimeType",
         "started=$startedAtMillis",
-    ).plus(if (orphanStop == OrphanStop.NONE) emptyList() else listOf("orphan=${orphanStop.name}")).joinToString("\n")
+    ).plus(if (orphanStop == OrphanStop.NONE) emptyList() else listOf("orphan=${orphanStop.name}"))
+        .plus(if (ranOnSeconds > 0) listOf("ranon=$ranOnSeconds") else emptyList())
+        .plus(if (appCall) listOf("appcall=1") else emptyList()).joinToString("\n")
 
     companion object {
         /** Appended to the staged file's name: `rec_stage_123.tmp` → `rec_stage_123.tmp.note`. */
@@ -73,6 +79,8 @@ data class StagingNote(
                 mimeType = fields["mime"]?.takeIf { it.isNotBlank() } ?: return null,
                 startedAtMillis = fields["started"]?.toLongOrNull() ?: return null,
                 orphanStop = fields["orphan"]?.let { v -> OrphanStop.entries.firstOrNull { it.name == v } } ?: OrphanStop.NONE,
+                ranOnSeconds = fields["ranon"]?.toIntOrNull()?.coerceAtLeast(0) ?: 0,
+                appCall = fields["appcall"] == "1",
             )
         }
 
@@ -80,10 +88,10 @@ data class StagingNote(
          * Writes [stop] into the note beside [staged]. Returns false when there is no readable note (nothing is written).
          * The mark travels with the file, whichever worker publishes it, even after it moved into waiting storage.
          */
-        fun markOrphanStop(staged: File, stop: OrphanStop): Boolean {
+        fun markOrphanStop(staged: File, stop: OrphanStop, ranOnSeconds: Int = 0, appCall: Boolean = false): Boolean {
             val noteFile = fileFor(staged)
             val note = noteFile.takeIf { it.exists() }?.let { runCatching { decode(it.readText()) }.getOrNull() } ?: return false
-            return runCatching { noteFile.writeText(note.copy(orphanStop = stop).encode()); true }.getOrDefault(false)
+            return runCatching { noteFile.writeText(note.copy(orphanStop = stop, ranOnSeconds = ranOnSeconds, appCall = appCall).encode()); true }.getOrDefault(false)
         }
     }
 }

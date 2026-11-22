@@ -226,6 +226,7 @@
     <string name="notif_cut_off_saved_text">Seu telefone fechou o CallVault durante uma chamada. O que foi gravado até ali foi salvo como %1$s.</string>
     <string name="notif_call_saved_after_restart_title">Chamada salva após o CallVault reiniciar</string>
     <string name="notif_call_saved_after_restart_text">O CallVault foi fechado durante uma chamada, mas a gravação continuou e salvou a chamada inteira como %1$s.</string>
+    <string name="notif_call_saved_after_restart_ran_on_text">O CallVault foi fechado durante uma chamada, mas a gravação continuou e salvou a chamada inteira como %1$s. Ela continuou gravando por %2$d s depois que a chamada terminou.</string>
     <string name="notif_cut_off_saved_title">Uma chamada foi interrompida</string>
     <string name="notif_health_channel">Problemas que precisam de você</string>
     <string name="notif_health_recorder_text">As chamadas não serão gravadas até este telefone entrar uma vez em uma rede Wi-Fi. Qualquer rede serve e não precisa de internet — alguns segundos bastam, e depois continua funcionando mesmo fora do Wi-Fi.</string>
