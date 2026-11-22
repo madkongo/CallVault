@@ -910,11 +910,13 @@ class DaemonKeepAliveService : Service() {
         // refusal each time, for as long as the switch stayed off. The switch observer comes back here the
         // moment either switch changes, and the watchdog still ticks for Wi-Fi returning.
         val known = ReadinessNoticeText.current(this, ready = false)
-        if (known == ReadinessNotice.WD_OFF_BY_USER || known == ReadinessNotice.NEEDS_WIFI) {
+        if (known == ReadinessNotice.NEEDS_WIFI) {
             timelineSkip("recovery impossible: $known")
             updateNotification(false)
             return
         }
+        // WD_OFF_BY_USER is only "impossible" when adbd's already-open tcp port does not answer either (review C34
+        // retest, OP9: stood down 4+ min with :5555 open). The probe is a network call, so it runs in the thread below.
         // Checked AFTER the Wi-Fi guard so a relaunch we never attempt does not consume the throttle.
         if (!rewarmGate.tryEnter(SystemClock.elapsedRealtime(), force)) return
         Thread {
@@ -932,10 +934,20 @@ class DaemonKeepAliveService : Service() {
             // A switch that reads on is not proof adbd is up: turning USB debugging off stops it while Wireless
             // debugging still reads on, and every attempt below would then dial nothing. Catches the case
             // the switch observer missed — the service was not running when it happened, or it rebooted.
+            val plan = RewarmDecisions.relaunchPlan(known) { AdbShell.isAdbdTcpPortReachable(applicationContext) }
+            if (plan == RewarmDecisions.RelaunchPlan.STAND_DOWN) {
+                rewarmGate.leave()
+                timelineSkip("recovery impossible: $known (no open adb tcp port answers)")
+                watchdogHandler.post { updateNotification(false) }
+                return@Thread
+            }
+            // Via the open port the switch is never touched: no adbd revive, no Wireless debugging enable, just connect.
+            val viaOpenPort = plan == RewarmDecisions.RelaunchPlan.VIA_OPEN_PORT
+            if (viaOpenPort) AppLogger.i(TAG, "keep-alive: Wireless debugging is off by the user's choice but adbd answers on an open tcp port — relaunching through it")
             if (!adbStillAllowed("revive adbd")) { rewarmGate.leave(); return@Thread }
-            runCatching { AdbShell.reviveAdbdIfStopped(applicationContext, "keep-alive relaunch", mayEnable = usesAdb()) }
+            if (!viaOpenPort) runCatching { AdbShell.reviveAdbdIfStopped(applicationContext, "keep-alive relaunch", mayEnable = usesAdb()) }
                 .onFailure { AppLogger.w(TAG, "keep-alive: could not check adbd: ${it.message}") }
-            when (
+            if (!viaOpenPort) when (
                 recoveryPolicy.nextStep(
                     wirelessDebuggingEnabled = AdbShell.isWirelessDebuggingEnabled(applicationContext),
                     usbDebuggingEnabled = AdbShell.isUsbDebuggingEnabled(applicationContext),

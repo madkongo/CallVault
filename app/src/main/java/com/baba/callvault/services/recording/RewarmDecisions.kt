@@ -25,6 +25,31 @@ object RewarmDecisions {
      */
     fun wifiAllowsRelaunch(offlineRecording: Boolean, wifi: WifiState): Boolean =
         offlineRecording || wifi != WifiState.NOT_CONNECTED
+
+    /** What the keep-alive does about a down daemon, given the notice that describes why recovery may be blocked. */
+    enum class RelaunchPlan {
+        /** Nothing can be dialled: stand down, as before. */
+        STAND_DOWN,
+
+        /** Wireless debugging is off by the user's choice but adbd answers on an already-open tcp port: dial that, never touch the switch. */
+        VIA_OPEN_PORT,
+
+        /** The ordinary relaunch path. */
+        NORMAL,
+    }
+
+    /**
+     * Review C34 retest (OP9 rf26): `WD_OFF_BY_USER` used to stand the keep-alive down at once, although adbd was
+     * listening on loopback :5555 and had worked a minute earlier. Before standing down, ask the open port; only
+     * when it does not answer is recovery really impossible. [openPortReachable] is a network probe, so it is
+     * evaluated only for the one notice that needs it. The plan never includes turning Wireless debugging on.
+     */
+    fun relaunchPlan(notice: ReadinessNotice, openPortReachable: () -> Boolean): RelaunchPlan = when (notice) {
+        ReadinessNotice.NEEDS_WIFI -> RelaunchPlan.STAND_DOWN
+        ReadinessNotice.WD_OFF_BY_USER ->
+            if (openPortReachable()) RelaunchPlan.VIA_OPEN_PORT else RelaunchPlan.STAND_DOWN
+        else -> RelaunchPlan.NORMAL
+    }
 }
 
 /**

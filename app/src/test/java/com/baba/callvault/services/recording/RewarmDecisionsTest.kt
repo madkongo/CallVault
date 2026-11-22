@@ -9,12 +9,47 @@
 package com.baba.callvault.services.recording
 
 import com.baba.callvault.integrations.adb.WifiState
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** The pure rules the keep-alive's relaunch uses to decide whether to try (review C34, C130, C89, R8). */
 class RewarmDecisionsTest {
+
+    // --- C34 retest: WD off by the user, adbd still listening on an open tcp port ---
+
+    @Test
+    fun `wd off by user with the open port answering relaunches through the port`() {
+        assertEquals(
+            RewarmDecisions.RelaunchPlan.VIA_OPEN_PORT,
+            RewarmDecisions.relaunchPlan(ReadinessNotice.WD_OFF_BY_USER) { true },
+        )
+    }
+
+    @Test
+    fun `wd off by user with the port closed stands down as before`() {
+        assertEquals(
+            RewarmDecisions.RelaunchPlan.STAND_DOWN,
+            RewarmDecisions.relaunchPlan(ReadinessNotice.WD_OFF_BY_USER) { false },
+        )
+    }
+
+    @Test
+    fun `needs wifi stands down without probing the port`() {
+        var probed = false
+        val plan = RewarmDecisions.relaunchPlan(ReadinessNotice.NEEDS_WIFI) { probed = true; true }
+        assertEquals(RewarmDecisions.RelaunchPlan.STAND_DOWN, plan)
+        assertFalse(probed)
+    }
+
+    @Test
+    fun `other notices take the normal path without probing the port`() {
+        var probed = false
+        val plan = RewarmDecisions.relaunchPlan(ReadinessNotice.STARTING) { probed = true; true }
+        assertEquals(RewarmDecisions.RelaunchPlan.NORMAL, plan)
+        assertFalse(probed)
+    }
 
     // --- C34: Wi-Fi without internet is still Wi-Fi ---
 
