@@ -175,22 +175,15 @@ object CloudCopyPolicy {
     fun mayGoToCloud(displayName: String): Boolean = !ImportedRecording.isImported(displayName)
 
     /**
-     * Why the Drive sweep must NOT copy a file, or null when it may (review N10).
-     *
-     * Two things were reaching the user's Drive that are not recordings: another app's audio sitting in the folder
-     * (the rescan catalogues it, so catalogued is no proof) and the header-only stub a call that never connected
-     * leaves (N1). Only a name that passes [AuthoredName] against [activeTemplate], or a merge output, is ours;
-     * an audio file under [CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES] holds no audio. Sidecars (.json, .md) are
-     * judged by name alone: a small one is normal.
+     * Why the Drive sweep must not copy [displayName], or null when it may (review N10): an audio file under
+     * [CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES] is a header-only stub from a call that never connected and holds no
+     * audio. Ownership is NOT judged here: for copying, the safe direction is to copy (a name the grammar misses, a
+     * " (1)" suffix or a changed template must not keep a real recording off Drive). Sidecars are never stubs.
      */
-    fun sweepSkipReason(displayName: String, sizeBytes: Long, activeTemplate: String, mergedNames: Set<String>): String? {
-        if (!RetentionPolicy.isOursToSweep(displayName, activeTemplate, mergedNames)) {
-            return "not written by CallVault (name matches no CallVault grammar)"
-        }
+    fun noAudioStubReason(displayName: String, sizeBytes: Long): String? {
         val isAudio = LogRedaction.NAME_EXTENSIONS.any { displayName.endsWith(".$it", ignoreCase = true) }
-        if (isAudio && sizeBytes < CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES) {
-            return "holds no audio ($sizeBytes bytes, under ${CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES})"
-        }
-        return null
+        return if (isAudio && sizeBytes < CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES) {
+            "holds no audio ($sizeBytes bytes, under ${CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES})"
+        } else null
     }
 }

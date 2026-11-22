@@ -235,6 +235,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         var newestFailedAt = 0L
         val newestListedAt = listed.names.maxOfOrNull { startedAtOf(it) ?: 0L } ?: 0L
         var skipped = 0
+        var stubs = 0
         var deleted = 0
         var kept = 0
         var unverified = 0
@@ -244,14 +245,6 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // sidecars go to Drive until the user says keep: copying one they then delete would leave the call
         // in the cloud, and under DRIVE-only the copy would take it off the phone before they had answered.
         val heldNames = AfterCallDecisions.pendingNames(applicationContext)
-        val template = AppPreferences(applicationContext).getFileNameTemplate()
-        // Merge outputs may carry any name; if they cannot be read they simply are not treated as ours (nothing extra goes to Drive).
-        val mergedNames = runCatching {
-            com.baba.callvault.data.recordings.db.RecordingDatabase.get(applicationContext).mergePartDao().allMergedNames().toSet()
-        }.getOrElse {
-            journal("merge outputs could not be read (${it.javaClass.simpleName}); only name-proven recordings are copied this run")
-            emptySet()
-        }
         for (file in sourceDir.listFiles()) {
             val name = file.name ?: continue
             if (!file.isFile) continue
@@ -271,14 +264,6 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             if (sourceSize <= 0L) {
                 skipped++
                 continue // an empty file means capture never ran; copying it would fake a backup
-            }
-            // Only what CallVault wrote, and never a stub with no audio (review N10). Said once per file per process:
-            // the sweep runs often and a foreign file would otherwise fill the journal.
-            val notOurs = CloudCopyPolicy.sweepSkipReason(name, sourceSize, template, mergedNames)
-            if (notOurs != null) {
-                if (loggedSkips.add(name)) journal("not copied to Drive: '$name' ($sourceSize bytes) is $notOurs")
-                skipped++
-                continue
             }
             val alreadyThere = existingInDrive[name]
             if (alreadyThere == null) {
@@ -309,6 +294,13 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 continue
             }
 
+            // A header-only stub (a call that never connected, N1) holds no audio: copying it would fake a backup. Only
+            // AFTER the already-in-Drive branch above, which must still stamp the catalog. Said once per file per process.
+            CloudCopyPolicy.noAudioStubReason(name, sourceSize)?.let { why ->
+                stubs++
+                if (loggedSkips.add(name)) journal("not copied to Drive: '$name' $why")
+                continue
+            }
             pending += DriveSweepOrder.Pending(
                 name, runCatching { file.lastModified() }.getOrDefault(0L), SweepFile(file, sourceSize),
             )
@@ -320,7 +312,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         var stoppedByUser = false
         if (total > 0) showProgress(done, total)
         val copyStart = SystemClock.elapsedRealtime()
-        journal("sweep start: $total to copy, ready after ${copyStart - sweepStart}ms (Drive folder holds ${existingInDrive.size}), skipped $skipped empty, copying in the :drive process")
+        journal("sweep start: $total to copy, ready after ${copyStart - sweepStart}ms (Drive folder holds ${existingInDrive.size}), skipped $skipped empty and $stubs no-audio stub(s), copying in the :drive process")
         var stalls = 0
         for (entry in DriveSweepOrder.newestFirst(pending)) {
             // Between files, and also inside one: the copier call below is abandoned within about half a
@@ -435,7 +427,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // what is still unproven as really waiting for Drive (review C7/N3).
         if (!isStopped && done == total) RecordingCatalog.markDriveSizesReconfirmed(applicationContext)
         AppLogger.i(TAG, "Sweep complete (target=$target copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal).")
-        journal("sweep complete: copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal deleted=$deleted kept=$kept unverified=$unverified")
+        journal("sweep complete: copied=$copied failures=$failures skipped=$skipped stubs=$stubs deleteLocal=$deleteLocal deleted=$deleted kept=$kept unverified=$unverified")
         if (!isStopped) DriveBackupNotice.onCopyRunEnd(applicationContext, driveProved || (failures > 0 && newestListedAt > newestFailedAt), tried = done, failures = failures)
         // A sweep that keeps failing backs off rather than hammering the provider: the next scheduled run
         // picks the stragglers up anyway, so there is nothing to gain from an unbounded retry chain.
@@ -486,7 +478,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
 
         private const val TAG = "CV:SyncSweep"
 
-        /** Names already reported as skipped by N10, so each is journalled once per process. */
+        /** Names already reported as a skipped no-audio stub (N10), so each is journalled once per process. */
         private val loggedSkips: MutableSet<String> = java.util.Collections.synchronizedSet(HashSet())
         private const val DEFAULT_MIME = "audio/ogg"
         private const val PACE_EVERY = 10
