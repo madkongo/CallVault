@@ -135,4 +135,21 @@ class UserStopNoticeTest {
     fun `an unknown install time filters nothing`() {
         assertEquals(listOf(installKill), AppStopHistory.withoutInstallKills(listOf(installKill), lastUpdateMillis = 0))
     }
+
+    @Test
+    fun `a stop that fell inside a recorded session did not lose that call`() {
+        val stop = stopApp.copy(atMillis = 5_000L)
+        assertTrue(UserStopNotice.stopDuringRecording(listOf(stop), sessionStartedAt = 1_000L, sessionEndedAt = 9_000L) == stop)
+    }
+
+    @Test
+    fun `a stop outside any recorded session is still announced`() {
+        val stop = stopApp.copy(atMillis = 20_000L)
+        assertNull(UserStopNotice.stopDuringRecording(listOf(stop), sessionStartedAt = 1_000L, sessionEndedAt = 9_000L))
+    }
+
+    @Test
+    fun `an unknown session start never hides a stop`() {
+        assertNull(UserStopNotice.stopDuringRecording(listOf(stopApp.copy(atMillis = 5_000L)), sessionStartedAt = null, sessionEndedAt = 9_000L))
+    }
 }

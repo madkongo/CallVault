@@ -37,6 +37,31 @@ object UserStopNotice {
     fun stopForCard(exits: List<ExitRecord>, dismissedAtMillis: Long, nowMillis: Long): ExitRecord? =
         AppStopHistory.latestUserStop(exits)?.takeIf { it.atMillis > dismissedAtMillis && nowMillis - it.atMillis <= MAX_AGE_MILLIS }
 
+    /**
+     * The newest user stop that fell inside a recording that ran to the call's end, or null. The recorder lives in
+     * its own process and is not stopped with the app, so a call being recorded across the stop was not lost, and
+     * "calls weren't recorded while it was stopped" is untrue for it. Null start = unknown = no claim either way.
+     */
+    fun stopDuringRecording(exits: List<ExitRecord>, sessionStartedAt: Long?, sessionEndedAt: Long): ExitRecord? {
+        if (sessionStartedAt == null) return null
+        return AppStopHistory.latestUserStop(exits.filter { it.atMillis in sessionStartedAt..sessionEndedAt })
+    }
+
+    /**
+     * After a call was saved in full across an app restart: when the user stop being announced fell inside that
+     * recording, remove its notification and card, and mark it announced so it is not posted again. Never throws.
+     */
+    fun withdrawIfStopDuringRecording(context: Context, sessionStartedAt: Long?, sessionEndedAt: Long) {
+        runCatching {
+            val stop = stopDuringRecording(AppStopHistory.exits(context), sessionStartedAt, sessionEndedAt) ?: return
+            val prefs = AppPreferences(context)
+            prefs.setStopNoticeNotifiedAt(maxOf(stop.atMillis, prefs.getStopNoticeNotifiedAt()))
+            prefs.setStopNoticeCardDismissedAt(maxOf(stop.atMillis, prefs.getStopNoticeCardDismissedAt()))
+            SilentFailureNotifier.clearStoppedByUser(context)
+            AppLogger.i(TAG, "The stop at ${stop.atMillis} fell inside a call the recorder saved in full; its notice is withdrawn")
+        }.onFailure { AppLogger.w(TAG, "Could not withdraw the stop notice: ${it.message}") }
+    }
+
     /** At app start: post the notification once for the newest user stop. Never throws. */
     fun onAppStart(context: Context) {
         runCatching {

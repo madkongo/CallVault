@@ -133,6 +133,20 @@ class SetupHealthStore(context: Context) {
         }
     }
 
+    /**
+     * A call whose app process died mid-call but whose recorder kept going, saved in full (rescue of a stopped
+     * orphan). Unlike [recordCutOff] nothing was lost: the call is marked observed and its own not-recorded warning
+     * is cleared; no cut-off failure is claimed.
+     */
+    fun recordSavedInFull(callStartedAt: Long?, callEndedAt: Long?) {
+        if (callEndedAt != null) observeCall(callEndedAt)
+        prefs.edit {
+            if (callStartedAt != null && prefs.getLong(KEY_GAP_AT, 0L) == callStartedAt) {
+                remove(KEY_GAP_AT); remove(KEY_GAP_LABEL)
+            }
+        }
+    }
+
     /** Calls [listener] when the card's facts change; see [CARD_KEYS]. Keep the returned listener to remove it. */
     fun registerCardListener(listener: () -> Unit): android.content.SharedPreferences.OnSharedPreferenceChangeListener {
         val l = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key -> if (key in CARD_KEYS) listener() }

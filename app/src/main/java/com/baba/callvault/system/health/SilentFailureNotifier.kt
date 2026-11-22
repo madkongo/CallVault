@@ -156,6 +156,19 @@ object SilentFailureNotifier {
         publicText = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text_public),
     )
 
+    /** The app was killed mid-call but the recorder kept going and the whole call was saved (not a cut-off). */
+    fun noteCallSavedAfterRestart(context: Context, fileName: String) = post(
+        context,
+        id = ID_CUT_OFF_SAVED,
+        info = true,
+        title = LocalizedContext.of(context).getString(R.string.notif_call_saved_after_restart_title),
+        text = LocalizedContext.of(context).getString(R.string.notif_call_saved_after_restart_text, fileName),
+        publicText = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text_public),
+    )
+
+    /** Withdraws the "You stopped CallVault" notice, when a call recorded through that stop makes it untrue. */
+    fun clearStoppedByUser(context: Context) = clear(context, ID_STOPPED_BY_USER)
+
     /**
      * Settings this phone's Android version can never honour were switched off (backlog #1).
      *
