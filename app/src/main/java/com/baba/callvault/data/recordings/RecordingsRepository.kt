@@ -221,10 +221,11 @@ object RecordingsRepository {
                 // has an answer. A merged one is the exception, and has to be — see above.
                 //
                 // Only for a device copy: the Drive one would be a network read per row.
+                val known = preferredKnownSeconds(fromCallLog, item.durationSeconds)
                 val seconds = when {
                     // The recording's own stored length (a rescue, an import, a merge, an earlier probe) wins: the call
                     // log knows only the call it logged, not a file that holds more or less (review N9).
-                    preferredKnownSeconds(fromCallLog, item.durationSeconds) != null -> preferredKnownSeconds(fromCallLog, item.durationSeconds)
+                    known != null -> known
                     // A file whose length could not be read is not opened again on every pass (R46): it is
                     // marked by size and modified time and tried again when either changes or after a wait.
                     item.localUri != null && failedProbes.shouldSkip(

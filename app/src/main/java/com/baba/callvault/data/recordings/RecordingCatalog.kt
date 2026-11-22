@@ -121,7 +121,11 @@ object RecordingCatalog {
      * cannot become a permanent wrong answer, which is the behaviour before this cache existed.
      */
     suspend fun setDuration(context: Context, displayName: String, durationSeconds: Long) {
-        runCatching { dao(context).setDuration(displayName, durationSeconds) }
+        runCatching {
+            if (dao(context).setDuration(displayName, durationSeconds) == 0) {
+                AppLogger.w(TAG, "setDuration('$displayName'): no catalog row by that name, so the ${durationSeconds}s was not stored")
+            }
+        }
             .onFailure { AppLogger.w(TAG, "setDuration('$displayName') failed: ${it.message}") }
     }
 
