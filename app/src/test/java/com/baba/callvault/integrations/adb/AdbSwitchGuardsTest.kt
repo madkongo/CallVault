@@ -118,4 +118,11 @@ class OfflineRecordingOrderTest {
     fun `disable says it closed the listener when nothing is recording`() {
         assertEquals(true, OfflineRecording.disableInOrder(true, { }, { }) { })
     }
+
+    @Test
+    fun `the left-open message needs a skipped disarm and a listener that is really open`() {
+        assertEquals(true, OfflineRecording.isLeftOpen(mayDisarm = false, ownListenerOpen = true))
+        assertEquals(false, OfflineRecording.isLeftOpen(mayDisarm = false, ownListenerOpen = false))
+        assertEquals(false, OfflineRecording.isLeftOpen(mayDisarm = true, ownListenerOpen = true))
+    }
 }

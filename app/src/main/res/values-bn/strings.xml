@@ -980,8 +980,8 @@
     <string name="retention_link_confirm_message">Linking the periods sets Google Drive to the same period as this device. Recordings on Drive older than that will be permanently deleted from Drive, and a Drive copy may be the only copy. This can\'t be undone.</string>
     <string name="carrier_call_silent">No sound was captured on this call. The file is kept in case you want to check it. If it keeps happening on calls that connected, tell us your phone model.</string>
     <!-- batch B4: English fallback, pending translation -->
-    <string name="offline_failed_recording">A call is being recorded right now. Switching this on restarts Android\'s debugging service and would end it. Try again after the call.</string>
-    <string name="offline_left_open_recording">Saved. A call is being recorded, so the off-Wi-Fi connection stays open until you restart the phone. Everything else is switched off.</string>
+    <string name="offline_failed_recording">এই মুহূর্তে একটি কল রেকর্ড হচ্ছে। এটি চালু করলে Android-এর ডিবাগিং সার্ভিস রিস্টার্ট হবে এবং কলটি শেষ হয়ে যাবে। কলের পরে আবার চেষ্টা করুন।</string>
+    <string name="offline_left_open_recording">এখন একটি কল রেকর্ড হচ্ছে, তাই Wi-Fi ছাড়া সংযোগটি কল শেষ হওয়া পর্যন্ত খোলা থাকবে, এরপর এটি আবার চালু ও বন্ধ করুন, অথবা ফোন রিস্টার্ট করুন। বাকি সবকিছু বন্ধ করা হয়েছে।</string>
     <!-- batch B22: English fallback, pending translation -->
     <string name="permission_battery_hint_xiaomi">Battery exemption set. On this App info page, open \"Battery saver\" and choose \"No restrictions\". Also turn on \"Autostart\" for CallVault (Security app > Permissions > Autostart) so it can start in the background. More: dontkillmyapp.com/xiaomi</string>
     <string name="permission_battery_hint_samsung">Battery exemption set. On this App info page, tap \"Battery\" and choose \"Unrestricted\". Also remove CallVault from \"Sleeping apps\" and \"Deep sleeping apps\" (Settings > Battery > Background usage limits). More: dontkillmyapp.com/samsung</string>
