@@ -233,6 +233,7 @@
     <string name="notif_cut_off_saved_text">Android закрив CallVault під час дзвінка. Збережено записаний фрагмент: %1$s.</string>
     <string name="notif_call_saved_after_restart_title">Дзвінок збережено після перезапуску CallVault</string>
     <string name="notif_call_saved_after_restart_text">CallVault закрився під час дзвінка, але запис тривав і зберіг увесь дзвінок як %1$s.</string>
+    <string name="notif_call_saved_after_restart_ran_on_text">CallVault закрився під час дзвінка, але запис тривав і зберіг увесь дзвінок як %1$s. Запис тривав ще %2$d с після завершення дзвінка.</string>
     <string name="notif_cut_off_saved_title">Запис дзвінка перервано</string>
     <string name="notif_health_channel">Проблеми, які потребують уваги</string>
     <string name="notif_health_recorder_text">Для відновлення запису підключіть телефон до будь-якої мережі Wi-Fi один раз. Доступ до інтернету не потрібен: достатньо кількох секунд.</string>

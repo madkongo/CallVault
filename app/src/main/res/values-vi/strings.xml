@@ -222,6 +222,7 @@
     <string name="notif_cut_off_saved_text">Điện thoại đã đóng CallVault trong khi gọi. Phần đã ghi trước đó được lưu thành %1$s.</string>
     <string name="notif_call_saved_after_restart_title">Đã lưu cuộc gọi sau khi CallVault khởi động lại</string>
     <string name="notif_call_saved_after_restart_text">CallVault đã bị đóng trong lúc gọi, nhưng trình ghi vẫn tiếp tục và đã lưu toàn bộ cuộc gọi thành %1$s.</string>
+    <string name="notif_call_saved_after_restart_ran_on_text">CallVault đã bị đóng trong lúc gọi, nhưng trình ghi vẫn tiếp tục và đã lưu toàn bộ cuộc gọi thành %1$s. Nó vẫn ghi thêm %2$d giây sau khi cuộc gọi kết thúc.</string>
     <string name="notif_cut_off_saved_title">Một cuộc gọi đã bị cắt</string>
     <string name="notif_health_channel">Sự cố cần bạn xử lý</string>
     <string name="notif_health_recorder_text">Cuộc gọi sẽ không được ghi cho đến khi điện thoại này kết nối một lần vào mạng Wi-Fi. Mạng nào cũng được và không cần internet — vài giây là đủ, sau đó vẫn hoạt động kể cả khi không có Wi-Fi.</string>

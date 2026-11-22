@@ -377,6 +377,7 @@
     <string name="notif_cut_off_saved_text">Το τηλέφωνό σας έκλεισε το CallVault κατά τη διάρκεια μιας κλήσης. Ό,τι καταγράφηκε πριν από αυτό αποθηκεύτηκε ως %1$s.</string>
     <string name="notif_call_saved_after_restart_title">Η κλήση αποθηκεύτηκε μετά την επανεκκίνηση του CallVault</string>
     <string name="notif_call_saved_after_restart_text">Το CallVault έκλεισε κατά τη διάρκεια μιας κλήσης, αλλά η εγγραφή συνεχίστηκε και αποθήκευσε ολόκληρη την κλήση ως %1$s.</string>
+    <string name="notif_call_saved_after_restart_ran_on_text">Το CallVault έκλεισε κατά τη διάρκεια μιας κλήσης, αλλά η εγγραφή συνεχίστηκε και αποθήκευσε ολόκληρη την κλήση ως %1$s. Συνέχισε να καταγράφει για %2$d δευτ. μετά το τέλος της κλήσης.</string>
     <string name="notif_cut_off_saved_title">Μια κλήση διακόπηκε</string>
     <string name="notif_health_channel">Προβλήματα που σας χρειάζονται</string>
     <string name="notif_health_recorder_text">Οι κλήσεις δεν θα καταγράφονται μέχρι αυτό το τηλέφωνο να συνδεθεί σε δίκτυο Wi-Fi μία φορά. Οποιοδήποτε δίκτυο αρκεί και δεν χρειάζεται internet — λίγα δευτερόλεπτα είναι αρκετά, και μετά συνεχίζει να λειτουργεί ακόμα και εκτός Wi-Fi.</string>

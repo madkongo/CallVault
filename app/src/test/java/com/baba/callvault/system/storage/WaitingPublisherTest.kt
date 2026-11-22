@@ -92,7 +92,7 @@ class WaitingPublisherTest {
         override fun record(line: String) { lines += line }
         val cutOffs = mutableListOf<String>()
         val savedInFullFlags = mutableListOf<Boolean>()
-        override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long, savedInFull: Boolean) { cutOffs += name; savedInFullFlags += savedInFull }
+        override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long, savedInFull: Boolean, ranOnSeconds: Int, appCall: Boolean) { cutOffs += name; savedInFullFlags += savedInFull }
     }
 
     @Test

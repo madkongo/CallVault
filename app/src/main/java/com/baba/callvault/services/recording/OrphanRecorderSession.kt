@@ -55,6 +55,18 @@ object OrphanRecorderSession {
     private const val KEY_SESSION_STAGING = "session_staging"
     private const val KEY_SESSION_APP_CALL = "session_app_call"
     private const val KEY_LAST_NO_SESSION_AT = "last_no_session_at"
+    private const val KEY_CALL_ENDED_AT = "call_ended_at"
+
+    /** The trigger of the short WorkManager safety net queued at a phone call's end. */
+    const val TRIGGER_CALL_END_CHECK = "call end check"
+
+    fun scheduledLine(delayMs: Long) = "orphan check scheduled for +${delayMs / 1_000} s"
+    fun runningLine(lateMs: Long) = "orphan check running (late by $lateMs ms)"
+
+    /** The phone call ended now (IDLE): kept across a kill, to tell later how long an orphan ran on. */
+    fun noteCallEnded(context: Context, atMillis: Long = System.currentTimeMillis()) {
+        edit(context) { putLong(KEY_CALL_ENDED_AT, atMillis) }
+    }
 
     /** The recorder calls this needs; a fake in tests. */
     interface Recorder {
@@ -85,7 +97,17 @@ object OrphanRecorderSession {
          * Marks [file] as stopped by the recorder ([callEnded]: and its call's end is inside it), so whichever worker
          * publishes it knows. False when it could not be marked (no readable note).
          */
-        fun markOrphanStopped(file: File, callEnded: Boolean): Boolean = false
+        fun markOrphanStopped(file: File, callEnded: Boolean, ranOnSeconds: Int = 0, appCall: Boolean = false): Boolean = false
+        /** When the phone call last ended (noted at IDLE), or null. Read to tell how long a stopped orphan ran on. */
+        fun callEndedAt(): Long? = null
+        /** When the daemon last finished a recording itself (its own word, asked over binder); null = none or unknown. */
+        fun daemonSelfStopAt(): Long? = null
+        /**
+         * A staged file still named by the session record that the recorder is no longer writing and that no one marked:
+         * the daemon finalised it on its own. Null when none, or when the facts do not show it ended after its call.
+         */
+        fun daemonFinalisedOrphan(exclude: File?): DaemonFinalised? = null
+        fun now(): Long = System.currentTimeMillis()
         /** Queue the short-guard rescue of the marked [file]: published once it has been quiet for a few seconds. */
         fun scheduleRescueNow(file: File) = scheduleRescue()
         /**
@@ -98,24 +120,41 @@ object OrphanRecorderSession {
         fun record(line: String)
     }
 
+    /** [file] was finalised by the daemon's self-stop; [lastWriteAt] is its last write, [startedAt] the orphan's start. */
+    data class DaemonFinalised(val file: File, val lastWriteAt: Long, val startedAt: Long?)
+
     /** What happened, for the caller. [stillRecording] is the recorder's answer after a stop, null when none was asked. */
     data class Outcome(val action: Action, val stillRecording: Boolean?)
 
     private val lock = Any()
 
+    /** Files already told about as "not shown", so the line comes once per file, not at every call end. Guarded by [lock]. */
+    private val notShownLogged = HashSet<String>()
+
     /** The core, free of Android. Serialised: two triggers must never both stop, or decide on a half-stopped session. */
     fun resolve(recorder: Recorder?, env: Environment, trigger: String, exclude: File? = null): Outcome = synchronized(lock) {
-        if (recorder == null) return Outcome(Action.NONE, null)
+        if (recorder == null) {
+            env.record("orphan session [$trigger]: no recorder connection; nothing to check")
+            return Outcome(Action.NONE, null)
+        }
         val recording = recorder.isRecording()
         if (recording == null) {
             env.record("orphan session [$trigger]: could not ask the recorder whether it is recording; leaving it")
             return Outcome(Action.NONE, null)
         }
         if (!recording) {
+            env.record("orphan session [$trigger]: the recorder is not recording; no orphan")
+            // Not while the app's own session is still winding up: stopRecording clears the recorder's latch at the start of a
+            // ~4 s teardown, and the file is the app's to publish.
+            if (env.ownedHere()) env.record("orphan session [$trigger]: not recording but the session is still owned here (teardown in progress); not claiming its file")
+            else claimDaemonFinalised(env, trigger, exclude)
             env.markNoSession()
             return Outcome(Action.NONE, null)
         }
-        if (env.ownedHere()) return Outcome(Action.OWNED, null)
+        if (env.ownedHere()) {
+            env.record("orphan session [$trigger]: the recording is owned by this process; not an orphan")
+            return Outcome(Action.OWNED, null)
+        }
         val readCall = env.callInProgress()
         if (readCall == null) env.record("orphan session [$trigger]: could not read the call state; treating it as a call in progress")
         val inCall = readCall ?: true // unknown: keeping a session costs a late stop, cutting a live one costs the call
@@ -130,6 +169,8 @@ object OrphanRecorderSession {
             Action.KEEP_LIVE_CALL -> {
                 env.record("orphan session [$trigger]: recorder is recording for a process that is gone, $facts; " +
                     "keeping it, it may be the live call's own recording (Q25)")
+                // Note (owner decision 2026-11-22): the app start now runs DaemonKeepAliveService in standalone too
+                // (CallVaultApplication.onCreate); a KEEP here does not start it separately.
                 Outcome(action, null)
             }
             Action.STOP_ORPHAN -> {
@@ -165,7 +206,9 @@ object OrphanRecorderSession {
                                     if (other == true) "a later call is in the call log (the file may span two calls)" else "the call log could not be read")
                             }
                         }
-                        if (env.markOrphanStopped(stagingFile, callEnded)) {
+                        val ranOn = OrphanSessionPolicy.ranOnSeconds(env.now(), env.callEndedAt(), startedAt)
+                        if (ranOn != null) env.record("orphan session [$trigger]: file outlasts its call by $ranOn s (stopped that long after the call ended)")
+                        if (env.markOrphanStopped(stagingFile, callEnded, ranOn ?: 0, env.orphanWasAppCall())) {
                             env.record("orphan session [$trigger]: instant rescue queued for ${CallEndLog.safeName(stagingFile.name)} (savedInFull=$callEnded)")
                             env.scheduleRescueNow(stagingFile)
                         } else {
@@ -177,6 +220,35 @@ object OrphanRecorderSession {
                 env.scheduleRescue()
                 Outcome(action, still)
             }
+        }
+    }
+
+    /**
+     * The daemon stopped a recording itself after its call ended (the app was frozen or gone): the staged file is finished
+     * but nothing marked it, so the rescue would call a whole call "cut off". Marked here, with the same guards as an
+     * app-side stop (not an app call, no later call in the log), so it is published as saved in full.
+     */
+    private fun claimDaemonFinalised(env: Environment, trigger: String, exclude: File?) {
+        val found = env.daemonFinalisedOrphan(exclude) ?: return
+        val inCall = env.callInProgress()
+        val callEndedAt = env.callEndedAt()
+        if (!OrphanSessionPolicy.finalisedAfterCallEnd(found.startedAt, callEndedAt, found.lastWriteAt, inCall, env.daemonSelfStopAt())) {
+            if (notShownLogged.add(found.file.absolutePath)) {
+                env.record("orphan session [$trigger]: ${CallEndLog.safeName(found.file.name)} is not a recording the daemon finished after its call ended " +
+                    "(no self-stop word, or the call end is not shown); left to the quiet-wait rescue")
+            }
+            return
+        }
+        var callEnded = !env.orphanWasAppCall()
+        if (callEnded && found.startedAt != null && env.callLoggedAfter(found.startedAt + OrphanSessionPolicy.SAME_CALL_LOG_SLACK_MS) != false) callEnded = false
+        val ranOn = OrphanSessionPolicy.ranOnSeconds(found.lastWriteAt, callEndedAt, found.startedAt) ?: 0
+        if (ranOn > 0) env.record("orphan session [$trigger]: file outlasts its call by $ranOn s (the recorder stopped itself)")
+        if (env.markOrphanStopped(found.file, callEnded, ranOn, env.orphanWasAppCall())) {
+            env.clearSessionRecord(exclude)
+            env.record("orphan session [$trigger]: the recorder stopped ${CallEndLog.safeName(found.file.name)} itself after the call ended; instant rescue queued (savedInFull=$callEnded)")
+            env.scheduleRescueNow(found.file)
+        } else {
+            env.record("orphan session [$trigger]: could not mark ${CallEndLog.safeName(found.file.name)} as stopped (no readable note)")
         }
     }
 
@@ -217,8 +289,11 @@ object OrphanRecorderSession {
      * nobody here owns, i.e. whether [resolve] has anything to settle. One binder call, no stop.
      */
     fun needsSettling(): Boolean {
+        // A synchronous binder call; callers on the main thread (the phone IDLE handler) accept it for one isRecording read.
         if (DaemonSessionOwnership.isOwnedHere) return false
-        return runCatching { RecorderConnection.service?.isRecording() == true }.getOrDefault(false)
+        return runCatching { RecorderConnection.service?.isRecording() == true }
+            .onFailure { AppLogger.w(TAG, "needsSettling: could not ask the recorder (${it.javaClass.simpleName}: ${it.message}); treating it as nothing to settle") }
+            .getOrDefault(false)
     }
 
     /** When the call in progress began, as noted by whichever process saw it begin (kept across a kill); null = unknown. */
@@ -365,8 +440,24 @@ object OrphanRecorderSession {
 
         override fun orphanWasAppCall(): Boolean = runCatching { prefs.getBoolean(KEY_SESSION_APP_CALL, false) }.getOrDefault(false)
 
-        override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean =
-            StagingNote.markOrphanStop(file, if (callEnded) OrphanStop.CALL_ENDED else OrphanStop.STOPPED)
+        override fun markOrphanStopped(file: File, callEnded: Boolean, ranOnSeconds: Int, appCall: Boolean): Boolean =
+            StagingNote.markOrphanStop(file, if (callEnded) OrphanStop.CALL_ENDED else OrphanStop.STOPPED, ranOnSeconds, appCall)
+
+        override fun daemonFinalisedOrphan(exclude: File?): DaemonFinalised? {
+            val file = prefs.getString(KEY_SESSION_STAGING, null)?.let(::File) ?: return null
+            if (file.absolutePath == exclude?.absolutePath || !file.exists() || file.length() <= 0L) return null
+            val note = StagingNote.fileFor(file).takeIf { it.exists() }
+                ?.let { runCatching { StagingNote.decode(it.readText()) }.getOrNull() } ?: return null
+            if (note.orphanStop != OrphanStop.NONE || com.baba.callvault.system.storage.LiveStagingFiles.isLive(file)) return null
+            return DaemonFinalised(file, file.lastModified(), note.startedAtMillis)
+        }
+
+        override fun daemonSelfStopAt(): Long? = runCatching {
+            RecorderConnection.service?.diagnosticDump(com.baba.callvault.server.RecorderServiceImpl.SELF_STOP_DUMP_KEY, null)
+                ?.trim()?.removePrefix("self_stop_at=")?.toLongOrNull()
+        }.getOrNull()
+
+        override fun callEndedAt(): Long? = runCatching { prefs.getLong(KEY_CALL_ENDED_AT, 0L) }.getOrDefault(0L).takeIf { it > 0L }
 
         override fun scheduleRescueNow(file: File) = CutOffRescueWorker.scheduleConfirmed(context, file)
 

@@ -119,7 +119,11 @@ class CutOffRescueWorkerTest {
 
     @Test
     fun the_standby_bucket_is_named_for_the_log() {
+        assertEquals("EXEMPTED", CutOffRescueWorker.standbyBucketName(5))
         assertEquals("ACTIVE", CutOffRescueWorker.standbyBucketName(10))
+        assertEquals("rescue check", CutOffRescueWorker.settleTrigger(callEndCheck = false))
+        assertEquals("call end check", CutOffRescueWorker.settleTrigger(callEndCheck = true))
+        assertEquals(20_000L, CutOffRescueWorker.CALL_END_CHECK_DELAY_MS)
         assertEquals("WORKING_SET", CutOffRescueWorker.standbyBucketName(20))
         assertEquals("FREQUENT", CutOffRescueWorker.standbyBucketName(30))
         assertEquals("RARE", CutOffRescueWorker.standbyBucketName(40))

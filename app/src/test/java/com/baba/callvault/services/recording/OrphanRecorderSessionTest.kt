@@ -82,8 +82,20 @@ class OrphanRecorderSessionTest {
         var laterCallFn: ((Long) -> Boolean?)? = null
         override fun callLoggedAfter(sinceMillis: Long): Boolean? = laterCallFn?.invoke(sinceMillis) ?: laterCall
         val marks = mutableListOf<Pair<File, Boolean>>()
+        val ranOnMarks = mutableListOf<Int>()
+        val appCallMarks = mutableListOf<Boolean>()
         var markWorks = true
-        override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean { marks += file to callEnded; return markWorks }
+        var callEnded: Long? = null
+        var finalised: OrphanRecorderSession.DaemonFinalised? = null
+        var selfStopAt: Long? = null
+        override fun daemonSelfStopAt(): Long? = selfStopAt
+        override fun daemonFinalisedOrphan(exclude: File?) = finalised
+        var nowMs: Long = 0L
+        override fun callEndedAt(): Long? = callEnded
+        override fun now(): Long = nowMs
+        override fun markOrphanStopped(file: File, callEnded: Boolean, ranOnSeconds: Int, appCall: Boolean): Boolean {
+            marks += file to callEnded; ranOnMarks += ranOnSeconds; appCallMarks += appCall; return markWorks
+        }
         override fun record(line: String) { lines.add(line) }
     }
 
@@ -532,5 +544,129 @@ class OrphanRecorderSessionTest {
 
         assertTrue(env.rescuedNow.isEmpty())
         assertTrue(env.lines.any { it.contains("could not mark") })
+    }
+
+    @Test
+    fun `the three quiet returns are logged with the trigger`() {
+        val noRecorder = FakeEnv()
+        OrphanRecorderSession.resolve(null, noRecorder, "call end check")
+        assertTrue(noRecorder.lines.single().contains("[call end check]") && noRecorder.lines.single().contains("no recorder"))
+
+        val idle = FakeEnv()
+        OrphanRecorderSession.resolve(FakeRecorder(), idle, "rescue check")
+        assertTrue(idle.lines.single().contains("[rescue check]") && idle.lines.single().contains("not recording"))
+
+        val owned = FakeEnv(owned = true)
+        OrphanRecorderSession.resolve(FakeRecorder().apply { start("x") }, owned, "phone call ended")
+        assertTrue(owned.lines.single().contains("[phone call ended]") && owned.lines.single().contains("owned"))
+    }
+
+    @Test
+    fun `an orphan stopped long after its call ended is marked with how long it ran on`() {
+        val recorder = FakeRecorder().apply { start("c") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 600_000L).apply {
+            stagingFile = File("c"); callEnded = call1Start + 300_000L; nowMs = call1Start + 300_000L + 125_000L
+        }
+        OrphanRecorderSession.resolve(recorder, env, "rescue check")
+        assertEquals(listOf(125), env.ranOnMarks)
+        assertTrue(env.lines.any { it.contains("file outlasts its call by 125 s") })
+    }
+
+    @Test
+    fun `an orphan stopped soon after its call ended carries no run-on`() {
+        val recorder = FakeRecorder().apply { start("c") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 600_000L).apply {
+            stagingFile = File("c"); callEnded = call1Start + 300_000L; nowMs = call1Start + 300_000L + 20_000L
+        }
+        OrphanRecorderSession.resolve(recorder, env, "phone call ended")
+        assertEquals(listOf(0), env.ranOnMarks)
+    }
+
+    @Test
+    fun `the app-call flag travels with the stop mark`() {
+        val recorder = FakeRecorder().apply { start("c") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 600_000L).apply { stagingFile = File("c"); appCall = true }
+        OrphanRecorderSession.resolve(recorder, env, "rescue check")
+        assertEquals(listOf(true), env.appCallMarks)
+    }
+
+    @Test
+    fun `run-on is told only past 30 s and only for the same call`() {
+        assertEquals(null, OrphanSessionPolicy.ranOnSeconds(stoppedAt = 130_000, callEndedAt = 100_000, orphanStartedAt = 0))
+        assertEquals(31, OrphanSessionPolicy.ranOnSeconds(stoppedAt = 131_000, callEndedAt = 100_000, orphanStartedAt = 0))
+        assertEquals(null, OrphanSessionPolicy.ranOnSeconds(200_000, callEndedAt = null, orphanStartedAt = 0))
+        assertEquals("an earlier call's end", null, OrphanSessionPolicy.ranOnSeconds(900_000, callEndedAt = 100_000, orphanStartedAt = 500_000))
+        assertEquals(null, OrphanSessionPolicy.ranOnSeconds(stoppedAt = 50_000, callEndedAt = 100_000, orphanStartedAt = 0))
+    }
+
+    @Test
+    fun `the call-end check lines say when it was scheduled and how late it ran`() {
+        assertEquals("orphan check scheduled for +3 s", OrphanRecorderSession.scheduledLine(3_000))
+        assertEquals("orphan check running (late by 61000 ms)", OrphanRecorderSession.runningLine(61_000))
+    }
+
+    @Test
+    fun `a recording the daemon stopped itself after its call ended is marked saved in full with its run-on`() {
+        val env = FakeEnv(inCall = false).apply {
+            callEnded = call1Start + 300_000L; selfStopAt = call1Start + 300_000L + 41_000L
+            finalised = OrphanRecorderSession.DaemonFinalised(File("c"), lastWriteAt = call1Start + 300_000L + 40_000L, startedAt = call1Start)
+        }
+        OrphanRecorderSession.resolve(FakeRecorder(), env, "rescue check")
+        assertEquals(listOf(File("c") to true), env.marks)
+        assertEquals(listOf(40), env.ranOnMarks)
+        assertEquals(listOf(File("c")), env.rescuedNow)
+    }
+
+    @Test
+    fun `a daemon-finalised file is not saved in full when the call log shows a later call or a call is up`() {
+        val later = FakeEnv(inCall = false).apply {
+            callEnded = call1Start + 1L; laterCall = true; selfStopAt = call1Start + 20L
+            finalised = OrphanRecorderSession.DaemonFinalised(File("c"), call1Start + 10L, call1Start)
+        }
+        OrphanRecorderSession.resolve(FakeRecorder(), later, "rescue check")
+        assertEquals(listOf(File("c") to false), later.marks)
+
+        val inCall = FakeEnv(inCall = true).apply {
+            callEnded = call1Start + 1L; selfStopAt = call1Start + 20L
+            finalised = OrphanRecorderSession.DaemonFinalised(File("c"), call1Start + 10L, call1Start)
+        }
+        OrphanRecorderSession.resolve(FakeRecorder(), inCall, "rescue check")
+        assertTrue(inCall.marks.isEmpty())
+    }
+
+    @Test
+    fun `a file with no self-stop word from the daemon keeps the cut-off wording`() {
+        val env = FakeEnv(inCall = false).apply {
+            callEnded = call1Start + 1L; selfStopAt = null
+            finalised = OrphanRecorderSession.DaemonFinalised(File("nosig"), call1Start + 10L, call1Start)
+        }
+        OrphanRecorderSession.resolve(FakeRecorder(), env, "rescue check")
+        OrphanRecorderSession.resolve(FakeRecorder(), env, "rescue check")
+        assertTrue(env.marks.isEmpty())
+        assertEquals("the not-shown line comes once per file", 1, env.lines.count { it.contains("not a recording the daemon finished") })
+    }
+
+    @Test
+    fun `not recording but owned here - the app's own file mid-teardown is never claimed`() {
+        val env = FakeEnv(owned = true, inCall = false).apply {
+            callEnded = call1Start + 1L; selfStopAt = call1Start + 20L
+            finalised = OrphanRecorderSession.DaemonFinalised(File("own"), call1Start + 10L, call1Start)
+        }
+        OrphanRecorderSession.resolve(FakeRecorder(), env, "phone call ended")
+        assertTrue(env.marks.isEmpty())
+        assertTrue(env.rescuedNow.isEmpty())
+        assertTrue(env.lines.any { it.contains("still owned here") })
+    }
+
+    @Test
+    fun `finalised-after-call-end needs the daemon's word, a known call end before the last write, and no call now`() {
+        assertTrue(OrphanSessionPolicy.finalisedAfterCallEnd(0, 100, 150, false, selfStopAt = 160))
+        assertFalse("no self-stop word", OrphanSessionPolicy.finalisedAfterCallEnd(0, 100, 150, false, null))
+        assertFalse("written long after the self-stop", OrphanSessionPolicy.finalisedAfterCallEnd(0, 100, 150 + 10_000, false, selfStopAt = 160))
+        assertFalse("self-stop before the call ended", OrphanSessionPolicy.finalisedAfterCallEnd(0, 100, 150, false, selfStopAt = 90))
+        assertFalse(OrphanSessionPolicy.finalisedAfterCallEnd(0, 100, 99, false, 160))
+        assertFalse(OrphanSessionPolicy.finalisedAfterCallEnd(0, null, 150, false, 160))
+        assertFalse(OrphanSessionPolicy.finalisedAfterCallEnd(200, 100, 150, false, 160))
+        assertFalse(OrphanSessionPolicy.finalisedAfterCallEnd(0, 100, 150, null, 160))
     }
 }

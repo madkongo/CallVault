@@ -26,6 +26,42 @@ class RestartCycles {
 }
 
 /**
+ * What the daemon knows about the app since each of its deaths, kept in two kinds so an app that merely talks to the
+ * daemon is not mistaken for one that owns the recording (2026-11-22, OnePlus 9: the restarted app only queried, and the
+ * daemon's self-stop never ran).
+ *  - holds: ANY transaction, the app has the binder (the re-delivery can stop asking);
+ *  - owns: a startRecording / startVoipRecording that won the recorder latch, or a stopRecording that tore a session down
+ *    (the callers mark it only after winning, so a refused start, e.g. "already recording", only holds); this alone
+ *    disables the self-stop, since an app that owns the session will end it.
+ */
+class ClientSignals {
+    @Volatile private var lastHoldAt = Long.MIN_VALUE
+    @Volatile private var lastOwnAt = Long.MIN_VALUE
+
+    fun noteHold(now: Long) { lastHoldAt = now }
+
+    /** An ownership call is also a hold. */
+    fun noteOwner(now: Long) { lastOwnAt = now; lastHoldAt = now }
+
+    fun holdsSince(diedAt: Long): Boolean = lastHoldAt >= diedAt
+    fun ownsSince(diedAt: Long): Boolean = lastOwnAt >= diedAt
+}
+
+/** One extra "is a call up" reading. [absent]: this ROM cannot offer it at all (excluded, never blocks); [read] null = unreadable now. */
+class CallSignal(val name: String, val absent: () -> Boolean, val read: () -> Boolean?)
+
+object CallSignals {
+    class Reading(val values: List<Boolean?>, val unreadable: List<String>)
+
+    /** Reads every present signal. An absent one is left out; only a runtime read failure counts as unreadable. */
+    fun read(signals: List<CallSignal>): Reading {
+        val present = signals.filterNot { it.absent() }
+        val values = present.map { it.read() }
+        return Reading(values, present.filterIndexed { i, _ -> values[i] == null }.map { it.name })
+    }
+}
+
+/**
  * One tick of the daemon's watch over a recording whose app died, as a pure step so the order of the checks can be
  * tested: a newer death supersedes this watch; an app that is calling the daemon again, or a recording that ended,
  * finishes it (before any self-stop); then the self-stop; then the re-delivery, which a force-stopped app never gets.
@@ -43,6 +79,10 @@ class OrphanWatch(
     private var unknownDelivered = false
     private var deliveryDue: Long? = if (mayRestart) diedAt + (AppDeathRedelivery.nextDelayMs(0, true, false) ?: 0L) else null
 
+    /** True once, after a hold cancelled a due re-delivery: the caller logs it ([consumeRedeliveryCancelled]). */
+    private var redeliveryCancelledByHold = false
+    fun consumeRedeliveryCancelled(): Boolean = redeliveryCancelledByHold.also { redeliveryCancelledByHold = false }
+
     val attempts: Int get() = attempt
 
     /**
@@ -53,14 +93,17 @@ class OrphanWatch(
         now: Long,
         current: Boolean,
         recording: Boolean,
-        clientSeen: Boolean,
+        clientHolds: Boolean,
+        clientOwns: Boolean,
         callUp: Boolean?,
         voiceCommActive: Boolean?,
+        otherCallSignals: List<Boolean?> = emptyList(),
         packageStopped: () -> Boolean?,
     ): Step {
         if (!current) return Step(Action.SUPERSEDED)
-        val decision = selfStop.onPoll(now, recording, clientSeen, OrphanSelfStop.callUp(callUp, voiceCommActive))
-        if (clientSeen) return Step(Action.APP_RETURNED)
+        val decision = selfStop.onPoll(now, recording, clientOwns, OrphanSelfStop.callUpAny(callUp, voiceCommActive, *otherCallSignals.toTypedArray()))
+        if (clientOwns) return Step(Action.APP_RETURNED)
+        if (clientHolds && deliveryDue != null) { deliveryDue = null; redeliveryCancelledByHold = true } // the app has the binder: no more offers, but the self-stop still runs
         if (!recording) return Step(Action.RECORDING_ENDED)
         if (decision == OrphanSelfStop.Decision.STOP) return Step(Action.SELF_STOP)
         val unreadable = decision == OrphanSelfStop.Decision.UNREADABLE

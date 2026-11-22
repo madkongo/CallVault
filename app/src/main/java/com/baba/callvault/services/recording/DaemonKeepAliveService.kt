@@ -1335,6 +1335,14 @@ class DaemonKeepAliveService : Service() {
             if (!startOnce(context, retryAttempt = 0)) KeepAliveRetry.schedule(context, 1, "start refused")
         }
 
+        /**
+         * The start from Application.onCreate: like [start], but a refusal never resets a queued retry chain back to
+         * attempt 1 (each retry's own process start would otherwise re-run this and loop for ever).
+         */
+        fun startAtAppStart(context: Context) {
+            if (!startOnce(context, retryAttempt = 0)) KeepAliveRetry.schedule(context, 1, "start refused at app start", fromAppStart = true)
+        }
+
         /** One start attempt. False only when Android refused the foreground start; a switched-off recorder counts as done. */
         internal fun startOnce(context: Context, retryAttempt: Int): Boolean {
             // The user turned recording off — honour it here so EVERY caller (boot, app launch,

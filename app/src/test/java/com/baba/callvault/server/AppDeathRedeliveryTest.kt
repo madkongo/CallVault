@@ -147,8 +147,8 @@ class AppDeathRedeliveryTest {
 
     private fun OrphanWatch.tick(
         now: Long, current: Boolean = true, recording: Boolean = true, clientSeen: Boolean = false,
-        callUp: Boolean? = false, voice: Boolean? = false, stopped: Boolean? = false,
-    ) = step(now, current, recording, clientSeen, callUp, voice) { stopped }
+        callUp: Boolean? = false, voice: Boolean? = false, stopped: Boolean? = false, holds: Boolean = clientSeen,
+    ) = step(now, current, recording, clientHolds = holds, clientOwns = clientSeen, callUp, voice) { stopped }
 
     @Test
     fun `an app that is calling again finishes the watch before any self-stop`() {
@@ -205,5 +205,74 @@ class AppDeathRedeliveryTest {
         val s = w.tick(60_000, callUp = null)
         assertEquals(OrphanWatch.Action.NONE, s.action)
         assertTrue(s.audioUnreadable)
+    }
+
+    @Test
+    fun `an app that only holds the binder does not disable the self-stop`() {
+        val w = watch(mayRestart = false)
+        assertEquals(OrphanWatch.Action.NONE, w.tick(0, holds = true).action)
+        assertEquals(OrphanWatch.Action.SELF_STOP, w.tick(5_000, holds = true).action)
+    }
+
+    @Test
+    fun `an app that only holds the binder stops the re-delivery`() {
+        val w = watch()
+        assertEquals(OrphanWatch.Action.NONE, w.tick(1_000, callUp = true, holds = true).action)
+        assertEquals(OrphanWatch.Action.NONE, w.tick(20_000, callUp = true, holds = true).action)
+    }
+
+    @Test
+    fun `an app that claims the session finishes the watch`() {
+        val w = watch(mayRestart = false)
+        assertEquals(OrphanWatch.Action.APP_RETURNED, w.tick(0, clientSeen = true).action)
+    }
+
+    @Test
+    fun `client signals keep holding and owning apart and per death`() {
+        val s = ClientSignals()
+        assertFalse(s.holdsSince(0)); assertFalse(s.ownsSince(0))
+        s.noteHold(100)
+        assertTrue(s.holdsSince(100)); assertFalse(s.ownsSince(100))
+        assertFalse(s.holdsSince(101)) // a later death resets what counts
+        s.noteOwner(200)
+        assertTrue(s.ownsSince(150)); assertTrue(s.holdsSince(150)) // owning is also holding
+        assertFalse(s.ownsSince(201))
+    }
+
+    @Test
+    fun `any extra call signal that says up holds the self-stop, an unreadable one is not no-call`() {
+        assertEquals(true, OrphanSelfStop.callUpAny(false, false, true, null))
+        assertEquals(null, OrphanSelfStop.callUpAny(false, false, null))
+        assertEquals(false, OrphanSelfStop.callUpAny(false, false, false, false))
+        val w = watch(mayRestart = false)
+        // LINE on hold: audio mode and playback say no call, but a foreign VOICE_COMMUNICATION recorder is open.
+        fun tick(now: Long, other: List<Boolean?>) = w.step(now, true, true, false, false, callUp = false, voiceCommActive = false, otherCallSignals = other) { false }
+        assertEquals(OrphanWatch.Action.NONE, tick(0, listOf(true, false)).action)
+        assertEquals(OrphanWatch.Action.NONE, tick(60_000, listOf(true, false)).action)
+        assertEquals(OrphanWatch.Action.NONE, tick(61_000, listOf(null, false)).action)
+        assertEquals(OrphanWatch.Action.NONE, tick(130_000, listOf(false, false)).action)
+        assertEquals(OrphanWatch.Action.SELF_STOP, tick(135_000, listOf(false, false)).action)
+    }
+
+    @Test
+    fun `a hold that cancels a due re-delivery is reported once`() {
+        val w = watch()
+        assertEquals(false, w.consumeRedeliveryCancelled())
+        w.tick(0, holds = true)
+        assertEquals(true, w.consumeRedeliveryCancelled())
+        assertEquals(false, w.consumeRedeliveryCancelled())
+    }
+
+    @Test
+    fun `an absent probe is left out and never blocks, an unreadable one blocks and is named`() {
+        val absent = CallSignal("telecom", { true }, { null })
+        val broken = CallSignal("recorder", { false }, { null })
+        val up = CallSignal("playback", { false }, { false })
+        val r = CallSignals.read(listOf(absent, up))
+        assertEquals(listOf<Boolean?>(false), r.values)
+        assertEquals(false, OrphanSelfStop.callUpAny(false, false, *r.values.toTypedArray()))
+        val r2 = CallSignals.read(listOf(absent, broken, up))
+        assertEquals(listOf("recorder"), r2.unreadable)
+        assertEquals(null, OrphanSelfStop.callUpAny(false, false, *r2.values.toTypedArray()))
     }
 }

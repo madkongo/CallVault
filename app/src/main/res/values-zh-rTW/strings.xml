@@ -222,6 +222,7 @@
     <string name="notif_cut_off_saved_text">手機在通話過程中關閉了 CallVault。此前錄下的內容已儲存為 %1$s。</string>
     <string name="notif_call_saved_after_restart_title">CallVault 重新啟動後已儲存通話</string>
     <string name="notif_call_saved_after_restart_text">通話期間 CallVault 被關閉，但錄音沒有中斷，已將完整通話儲存為 %1$s。</string>
+    <string name="notif_call_saved_after_restart_ran_on_text">通話期間 CallVault 被關閉，但錄音沒有中斷，已將完整通話儲存為 %1$s。通話結束後錄音又持續了 %2$d 秒。</string>
     <string name="notif_cut_off_saved_title">一次通話被中斷</string>
     <string name="notif_health_channel">需要你處理的問題</string>
     <string name="notif_health_recorder_text">在本機連線一次 Wi-Fi 網路之前，通話不會被錄製。任何網路都可以，也不需要聯網——幾秒鐘即可，之後即使離開 Wi-Fi 也能繼續工作。</string>

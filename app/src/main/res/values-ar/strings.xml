@@ -261,6 +261,7 @@
     <string name="notif_cut_off_saved_text">أغلق هاتفك CallVault أثناء مكالمة. تم حفظ ما سُجِّل قبل ذلك باسم %1$s.</string>
     <string name="notif_call_saved_after_restart_title">حُفظت المكالمة بعد إعادة تشغيل CallVault</string>
     <string name="notif_call_saved_after_restart_text">أُغلق CallVault أثناء مكالمة، لكن المسجّل واصل العمل وحفظ المكالمة كاملة باسم %1$s.</string>
+    <string name="notif_call_saved_after_restart_ran_on_text">أُغلق CallVault أثناء مكالمة، لكن المسجّل واصل العمل وحفظ المكالمة كاملة باسم %1$s. وظل يسجّل لمدة %2$d ثانية بعد انتهاء المكالمة.</string>
     <string name="notif_cut_off_saved_title">قُطِعت مكالمة</string>
     <string name="notif_health_channel">مشكلات تحتاج إليك</string>
     <string name="notif_health_recorder_text">لن يتم تسجيل المكالمات حتى يتصل هذا الهاتف بشبكة Wi-Fi مرة واحدة. ستفي أي شبكة بالغرض ولا تحتاج إلى إنترنت؛ بضع ثوانٍ تكفي، ثم يستمر في العمل حتى بدون Wi-Fi.</string>

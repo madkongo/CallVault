@@ -132,6 +132,25 @@ class CutOffRescueTest {
         assertNull(CutOffRescuePolicy.matchCall(listOf(longEarlier), recordingStartedAt = callStart + 3_000, cutAt = callStart + 13 * minute))
     }
 
+    @Test
+    fun a_saved_in_full_file_matches_the_call_that_ended_before_the_cut_even_minutes_earlier() {
+        // The recording ran 2 min past the call's end: "up at cutAt" fails, "started with it, ended before the cut" holds.
+        val cutAt = callStart + 19 * minute + 2 * minute + 30_000
+        assertNull(CutOffRescuePolicy.matchCall(listOf(theCall), callStart + 3_000, cutAt))
+        assertEquals(theCall, CutOffRescuePolicy.matchCompleteCall(listOf(theCall, earlierCall), callStart + 3_000, cutAt))
+    }
+
+    @Test
+    fun a_saved_in_full_match_never_takes_a_call_that_ends_after_the_cut_or_started_long_before() {
+        assertNull(CutOffRescuePolicy.matchCompleteCall(listOf(theCall), callStart + 3_000, callStart + 5 * minute))
+        assertNull(CutOffRescuePolicy.matchCompleteCall(listOf(earlierCall), callStart + 3_000, callStart + 13 * minute))
+    }
+
+    @Test
+    fun a_saved_in_full_match_without_a_start_time_claims_no_call() {
+        assertNull(CutOffRescuePolicy.matchCompleteCall(listOf(earlierCall, theCall), null, callStart + 25 * minute))
+    }
+
     private fun decide(
         hasNote: Boolean = true,
         sizeBytes: Long = 900_000,

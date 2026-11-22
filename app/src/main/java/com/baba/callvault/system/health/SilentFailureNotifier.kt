@@ -160,12 +160,13 @@ object SilentFailureNotifier {
     )
 
     /** The app was killed mid-call but the recorder kept going and the whole call was saved (not a cut-off). */
-    fun noteCallSavedAfterRestart(context: Context, fileName: String) = post(
+    fun noteCallSavedAfterRestart(context: Context, fileName: String, ranOnSeconds: Int = 0) = post(
         context,
         id = ID_CALL_SAVED_AFTER_RESTART,
         info = true,
         title = LocalizedContext.of(context).getString(R.string.notif_call_saved_after_restart_title),
-        text = LocalizedContext.of(context).getString(R.string.notif_call_saved_after_restart_text, fileName),
+        text = if (ranOnSeconds > 0) LocalizedContext.of(context).getString(R.string.notif_call_saved_after_restart_ran_on_text, fileName, ranOnSeconds)
+        else LocalizedContext.of(context).getString(R.string.notif_call_saved_after_restart_text, fileName),
         publicText = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text_public),
     )
 

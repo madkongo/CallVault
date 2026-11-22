@@ -24,3 +24,11 @@ Known residual cases
   and spares A's daemon; B is then not recorded separately (it lands in A's file). The call log cannot show it either.
 - A spared daemon that cannot be reached makes the call's start stand the service down quietly (the daemon's recording is
   the call's recording); the foreground notice is the one for a kept session, not an error.
+
+## Force-stop is undone by the listener re-bind + our keep-alive start (owner decision 2026-11-22) 🧪 VERIFYING
+
+`am force-stop` cancels the keep-alive's sticky restart, but Android re-binds the NotificationListenerService within
+~70 ms, which starts a fresh app process. That process now starts `DaemonKeepAliveService` from `Application.onCreate`
+in standalone too (`KeepAlivePolicy.shouldStartAtAppStart`; a refusal never resets a queued retry chain,
+`KeepAliveRetry.workPolicy`). The "You stopped CallVault" notice is unchanged. Not yet confirmed on a real phone:
+what you need to do is force-stop mid-call on the OnePlus 9 and check the log for the keep-alive start and the call-end check.

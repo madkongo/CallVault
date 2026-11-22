@@ -71,6 +71,14 @@ object KeepAlivePolicy {
         )
     }
 
+    /**
+     * Whether Application.onCreate starts the keep-alive. Shizuku: always (as before). Standalone: once the transport is
+     * set up, so a process Android revived after a force-stop (only to re-bind a listener) runs normally again and its
+     * daemon's orphan watch finds an app that can settle the call (owner decision 2026-11-22). The user's "recording
+     * stopped" switch is honoured inside the start itself.
+     */
+    fun shouldStartAtAppStart(mode: PrivilegedMode, transportSetUp: Boolean): Boolean = mode.needsShizuku || transportSetUp
+
     fun shouldRun(mode: PrivilegedMode, voipEnabled: Boolean): Boolean = decision(mode, voipEnabled).run
 
     /**
