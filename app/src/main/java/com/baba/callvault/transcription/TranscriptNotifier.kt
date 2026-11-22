@@ -97,7 +97,10 @@ object TranscriptNotifier {
         // a reason to swallow the one message telling the user their transcript is ready.
         val label = runCatching {
             RecordingsRepository.labelFor(context, displayName)
-        }.getOrElse { RecordingLabel.forName(displayName) }
+        }.getOrElse {
+            AppLogger.w(TAG, "Could not name the recording for the notification (${it.javaClass.simpleName}: ${it.message}); using its file label")
+            RecordingLabel.forName(displayName)
+        }
 
         when (outcome) {
             TranscriptNotice.Outcome.Stored -> stored(context, displayName, label, false)
