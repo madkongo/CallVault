@@ -330,7 +330,7 @@
     <string name="recording_error_file_creation">Không thể tạo tệp ghi âm. Vui lòng kiểm tra quyền truy cập bộ nhớ và/hoặc chọn thư mục ghi âm mới trong cài đặt ứng dụng.</string>
     <string name="recording_error_folder_missing">Thư mục đầu ra đã chọn bị thiếu, không hợp lệ hoặc chúng tôi không có quyền ghi vào đó. Vui lòng chọn một thư mục trong cài đặt ứng dụng.</string>
     <string name="recording_error_server_missing">Tệp nhị phân Scrcpy-server bị thiếu hoặc quá trình kiểm tra bảo mật SHA256 thất bại. Điều này không nên xảy ra, vui lòng báo cáo lại.</string>
-    <string name="recording_error_start_failed">Không thể bắt đầu ghi âm. Đã xảy ra lỗi khi gọi phương thức liên kết ShellService.</string>
+    <string name="recording_error_start_failed">Cuộc gọi này không được ghi âm. Trình ghi âm không chạy và CallVault không kết nối được với nó. Hãy mở CallVault để khởi động lại.</string>
     <string name="recording_error_title">Lỗi ghi âm</string>
     <string name="recording_flag_added">Đã đánh dấu (%1$d)</string>
     <string name="recording_notification_cross_country_tip">Xuyên quốc gia</string>

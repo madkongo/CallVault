@@ -179,3 +179,9 @@ Callers to touch (from `grep isWirelessDebuggingEnabled`): `AdbPairingService.kt
 - 🧪 A test build with unconditional discovery, run by the reporter on `DP11.261002.005`.
 - Or `adb shell settings get global adb_wifi_enabled` (1) next to our app's own reading (0 or exception)
   on a QPR3 Beta 2 phone. We have no Pixel on the beta.
+
+## 2026-11-23 addendum: stuck adbd with USB debugging on (GH #89, rf/a17transport) — 🧪 VERIFYING
+
+Honor BVL-N49 (Android 17) sat with adbd stopped ~48 h while USB debugging and Wireless debugging both read on; the old policy returned NOTHING ("init restarts adbd") forever. `AdbdRevivalPolicy` now cycles Wireless debugging when adbd stays stopped (two looks, at least 30 s, streak kept alive by the keep-alive tick; a gap over 150 s starts a new streak), never during a call or behind a connected recorder, at most 3 cycles an hour, spaced 10 min (doubling to 2 h after a cycle that did not help, cleared only after adbd stays running 5 min).
+
+Trade-off, stated plainly: if adbd is stuck when a call starts, that call is NOT recorded. Recovery happens between calls, on a tick, because a cycle drops the recorder. All thresholds (30 s, 150 s, 4 s wait give-up, 10 min, 5 min, 3/hour) were chosen, not measured. Needs a real stuck-adbd phone to settle: marked 🧪 VERIFYING, not done until the owner confirms.

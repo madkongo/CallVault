@@ -45,6 +45,167 @@ enum class AdbdRevival {
     NO_GRANT,
 }
 
+/** Why [AdbdRevivalPolicy] chose what it did — one per branch, so the log can name the real one (GH89-2). */
+enum class AdbdRevivalReason(val text: String) {
+    ADBD_NOT_STOPPED("adbd does not read stopped"),
+    SHIZUKU_SERVER_ANSWERS("a Shizuku server still answers, which proves adbd is up"),
+    USB_ON_WAITING_FOR_INIT("USB debugging reads on and adbd was first seen stopped just now; init gets a chance to restart it"),
+    USB_ON_STUCK_CYCLE("USB debugging reads on but adbd has stayed stopped; init is not restarting it"),
+    USB_ON_STUCK_WD_OFF("USB debugging reads on and adbd has stayed stopped, but Wireless debugging reads off, so there is nothing of ours to cycle"),
+    USB_ON_STUCK_NOT_OURS("USB debugging reads on and adbd has stayed stopped, but the switches are not ours to cycle here (Shizuku mode, or the user turned Wireless debugging off)"),
+    NO_WIFI("no Wi-Fi, so Wireless debugging cannot run"),
+    NO_GRANT("WRITE_SECURE_SETTINGS is not granted"),
+    WD_ON_CYCLE("Wireless debugging reads on while adbd is stopped (what turning USB debugging off leaves)"),
+    MAY_NOT_ENABLE("both switches read off and we may not switch Wireless debugging on here (Shizuku mode, or the user turned it off)"),
+    BOTH_OFF_ENABLE("both switches read off"),
+}
+
+data class AdbdRevivalDecision(val revival: AdbdRevival, val reason: AdbdRevivalReason)
+
+/**
+ * How long `init.svc.adbd` has been reading stopped, as the revival logic has seen it. [checks] counts
+ * sightings at least [AdbdStoppedTracker.MIN_GAP_MS] apart, so the switch observer and the keep-alive
+ * arriving together are one sighting, not two.
+ */
+data class AdbdStoppedStreak(val checks: Int, val stoppedForMs: Long)
+
+/**
+ * Counts consecutive stopped readings of adbd. Thread-safe: the revival path and the keep-alive tick both feed it.
+ *
+ * A streak is only real while it is kept alive by looks: a sighting more than [STALE_GAP_MS] after the last one
+ * starts a new streak (H1). Without that an old stop plus a brief one days later read as "stopped for days" and
+ * cycled Wireless debugging on a healthy phone. Any reading other than stopped ends the streak at once.
+ */
+class AdbdStoppedTracker {
+    private var firstMs = -1L
+    private var lastCountedMs = -1L
+    private var lastSeenMs = -1L
+    private var continuousFirstMs = -1L
+    private var checks = 0
+
+    /**
+     * How long adbd has read stopped **without a gap** of more than [CONTINUOUS_GAP_MS] between looks, as of the last
+     * [observe]. This, not the streak, is what a wait loop may give up on (R1): a stale sighting from a keep-alive tick a
+     * minute ago keeps the streak alive for the cycle decision but says nothing about the restart being waited on now.
+     */
+    @Volatile var continuousStoppedMs = 0L
+        private set
+
+    @Synchronized
+    fun observe(state: AdbdState, nowMs: Long): AdbdStoppedStreak {
+        if (state != AdbdState.STOPPED) {
+            firstMs = -1L; lastCountedMs = -1L; lastSeenMs = -1L; continuousFirstMs = -1L; checks = 0
+            continuousStoppedMs = 0L
+            return AdbdStoppedStreak(0, 0)
+        }
+        if (firstMs >= 0 && nowMs - lastSeenMs > STALE_GAP_MS) {
+            firstMs = -1L; checks = 0
+        }
+        if (firstMs < 0) {
+            firstMs = nowMs; lastCountedMs = nowMs; checks = 1
+        } else if (nowMs - lastCountedMs >= MIN_GAP_MS) {
+            lastCountedMs = nowMs; checks++
+        }
+        if (continuousFirstMs < 0 || (lastSeenMs >= 0 && nowMs - lastSeenMs > CONTINUOUS_GAP_MS)) continuousFirstMs = nowMs
+        continuousStoppedMs = nowMs - continuousFirstMs
+        lastSeenMs = nowMs
+        return AdbdStoppedStreak(checks, nowMs - firstMs)
+    }
+
+    companion object {
+        const val MIN_GAP_MS = 5_000L
+
+        /** Looks closer together than this are one continuous stop, for the waits (R1). */
+        const val CONTINUOUS_GAP_MS = 10_000L
+
+        /**
+         * Looks further apart than this are not one streak. The keep-alive ticks every 60 s, so 60 s itself would
+         * be a coin flip against its jitter and a real stuck adbd could never accumulate; two ticks and a margin.
+         */
+        const val STALE_GAP_MS = 150_000L
+    }
+}
+
+/**
+ * Limits on Wireless-debugging cycles (H2, R2). Thread-safe.
+ *
+ * - After a cycle that left adbd not running: at most one per [BASE_MS], doubling to [CAP_MS].
+ * - After one that worked: still [BASE_MS] before the next, so a phone whose USB rule stops adbd again seconds later
+ *   does not ping-pong every minute.
+ * - Whatever the outcome, at most [MAX_CYCLES_PER_WINDOW] per [WINDOW_MS].
+ * - The spacing and the doubling are cleared only after adbd has stayed running for [STABLE_RUNNING_MS]; a running
+ *   reading right after a cycle proves nothing. The per-window count is never cleared, only aged out.
+ */
+class AdbdRevivalBackoff {
+    @Volatile var nextAllowedMs = 0L
+        private set
+    @Volatile var lastDelayMs = 0L
+        private set
+    private var runningSinceMs = -1L
+    private val cycleTimes = ArrayDeque<Long>()
+
+    @Synchronized
+    fun mayCycle(nowMs: Long): Boolean = blockReason(nowMs) == null
+
+    /** Why no cycle may run now, or null. The text is for the log. */
+    @Synchronized
+    fun blockReason(nowMs: Long): String? {
+        prune(nowMs)
+        if (cycleTimes.size >= MAX_CYCLES_PER_WINDOW) {
+            return "already cycled $MAX_CYCLES_PER_WINDOW times in the last hour (at most $MAX_CYCLES_PER_WINDOW per hour)"
+        }
+        if (nowMs < nextAllowedMs) return "the last cycle was recently, next one allowed in ${(nextAllowedMs - nowMs) / 1000}s"
+        return null
+    }
+
+    /** A cycle just finished; [adbdRunning] is what adbd read afterwards. */
+    @Synchronized
+    fun onCycleEnded(now: Long, adbdRunning: Boolean) {
+        cycleTimes.addLast(now)
+        prune(now)
+        if (!adbdRunning) lastDelayMs = if (lastDelayMs == 0L) BASE_MS else minOf(lastDelayMs * 2, CAP_MS)
+        nextAllowedMs = now + (if (adbdRunning && lastDelayMs == 0L) BASE_MS else lastDelayMs)
+        runningSinceMs = -1L
+    }
+
+    /** adbd read running at [now]. Only a long enough unbroken run clears the spacing. */
+    @Synchronized
+    fun onRunningSeen(now: Long) {
+        if (runningSinceMs < 0) runningSinceMs = now
+        if (now - runningSinceMs >= STABLE_RUNNING_MS) { nextAllowedMs = 0L; lastDelayMs = 0L }
+    }
+
+    /** adbd read anything but running: the unbroken run starts over. */
+    @Synchronized
+    fun onNotRunningSeen() { runningSinceMs = -1L }
+
+    private fun prune(now: Long) {
+        while (cycleTimes.isNotEmpty() && now - cycleTimes.first() >= WINDOW_MS) cycleTimes.removeFirst()
+    }
+
+    companion object {
+        const val BASE_MS = 10 * 60_000L
+        const val CAP_MS = 2 * 60 * 60_000L
+        const val STABLE_RUNNING_MS = 5 * 60_000L
+        const val WINDOW_MS = 60 * 60_000L
+        const val MAX_CYCLES_PER_WINDOW = 3
+    }
+}
+
+/**
+ * Switching Wireless debugging off and on restarts adbd and drops every shell child, the recorder included. So
+ * never while a call is up (M4: a recording may be running, or about to start), and never while a recorder is
+ * connected (it is the proof adbd is up, whatever `init.svc.adbd` says).
+ */
+object AdbdCycleGuard {
+    /** Why a cycle must not run now, or null when it may. */
+    fun blockReason(callInProgress: Boolean, recorderConnected: Boolean): String? = when {
+        callInProgress -> "a call is in progress (a cycle would drop the recorder)"
+        recorderConnected -> "a recorder is connected, so adbd is up whatever its property says"
+        else -> null
+    }
+}
+
 /**
  * Decides how to bring adbd back. Free of `Context` so every branch is tested.
  *
@@ -56,40 +217,65 @@ enum class AdbdRevival {
  */
 object AdbdRevivalPolicy {
 
+    /** Stopped this long with USB debugging reading on: init is not going to restart it (GH89-1, ~48 h on an Honor). */
+    const val STUCK_AFTER_MS = 30_000L
+
     fun decide(
         adbd: AdbdState,
         usbDebuggingOn: Boolean,
         wirelessDebuggingOn: Boolean,
         wifi: WifiState,
         hasGrant: Boolean,
-        /**
-         * Whether switching Wireless debugging ON from off is allowed here. False in Shizuku mode (CallVault
-         * does not own the switches there) and when the user turned the switch off themselves. A cycle is
-         * still allowed: it ends with the switch exactly as it was.
-         */
         mayEnable: Boolean = true,
-        /**
-         * Whether a Shizuku server answers right now. A Shizuku server is a shell-uid process hosted by
-         * `adbd` and dies with it, so one that answers is proof `adbd` is up — whatever `init.svc.adbd`
-         * said a moment ago.
-         */
         shizukuServerRunning: Boolean = false,
-    ): AdbdRevival = when {
-        adbd != AdbdState.STOPPED -> AdbdRevival.NOTHING
-        // Two readings that contradict each other, and this one is the reliable half: a binder that
-        // answers cannot belong to a process whose cgroup has been killed, while `init.svc.adbd` is a
-        // property that lags a restart. Cycling on the stale reading would restart a perfectly live adbd
-        // and kill the Shizuku server with it — #39's "when it starts it disables automatically within a
-        // second and wireless debugging seems to restart". Nothing is lost by waiting: the caller looks
-        // again on its next tick, and with adbd actually up the connection is what needs retrying, not
-        // the switches.
-        shizukuServerRunning -> AdbdRevival.NOTHING
-        // With USB debugging on, init starts adbd itself; a stopped reading is a moment in a restart.
-        usbDebuggingOn -> AdbdRevival.NOTHING
-        wifi == WifiState.NOT_CONNECTED -> AdbdRevival.NEEDS_WIFI
-        !hasGrant -> AdbdRevival.NO_GRANT
-        wirelessDebuggingOn -> AdbdRevival.CYCLE_WIRELESS_DEBUGGING
-        !mayEnable -> AdbdRevival.NOTHING
-        else -> AdbdRevival.ENABLE_WIRELESS_DEBUGGING
+        stoppedStreak: AdbdStoppedStreak = AdbdStoppedStreak(checks = 1, stoppedForMs = 0),
+    ): AdbdRevival = decideWithReason(
+        adbd, usbDebuggingOn, wirelessDebuggingOn, wifi, hasGrant, mayEnable, shizukuServerRunning, stoppedStreak,
+    ).revival
+
+    /**
+     * @param mayEnable Whether switching Wireless debugging ON from off is allowed here. False in Shizuku mode
+     *   (CallVault does not own the switches there) and when the user turned the switch off themselves. A cycle
+     *   of a switch that reads on is still allowed: it ends with the switch exactly as it was.
+     * @param shizukuServerRunning Whether a Shizuku server answers right now. It is a shell-uid process hosted
+     *   by adbd and dies with it, so one that answers is proof adbd is up whatever `init.svc.adbd` said a
+     *   moment ago. Cycling on the stale reading would restart a live adbd and kill the server (#39).
+     * @param stoppedStreak how long adbd has read stopped. With USB debugging on, init normally restarts adbd
+     *   within a moment, so the first sighting waits; but on an Honor BVL-N49 (Android 17, GH #89) it stayed
+     *   stopped ~48 h with both switches reading on, and "init restarts it" blocked revival forever. Two spaced checks AND
+     *   a stop past [STUCK_AFTER_MS] is that case: cycle Wireless debugging, the measured fix.
+     */
+    fun decideWithReason(
+        adbd: AdbdState,
+        usbDebuggingOn: Boolean,
+        wirelessDebuggingOn: Boolean,
+        wifi: WifiState,
+        hasGrant: Boolean,
+        mayEnable: Boolean = true,
+        shizukuServerRunning: Boolean = false,
+        stoppedStreak: AdbdStoppedStreak = AdbdStoppedStreak(checks = 1, stoppedForMs = 0),
+    ): AdbdRevivalDecision {
+        fun d(r: AdbdRevival, why: AdbdRevivalReason) = AdbdRevivalDecision(r, why)
+        if (adbd != AdbdState.STOPPED) return d(AdbdRevival.NOTHING, AdbdRevivalReason.ADBD_NOT_STOPPED)
+        if (shizukuServerRunning) return d(AdbdRevival.NOTHING, AdbdRevivalReason.SHIZUKU_SERVER_ANSWERS)
+        if (usbDebuggingOn) {
+            // Both: two looks AND stopped for a while (H1). One long-ago sighting is not a stuck adbd.
+            val stuck = stoppedStreak.checks >= 2 && stoppedStreak.stoppedForMs >= STUCK_AFTER_MS
+            if (!stuck) return d(AdbdRevival.NOTHING, AdbdRevivalReason.USB_ON_WAITING_FOR_INIT)
+            // Never switches Wireless debugging on from off: only a switch that reads on is cycled.
+            if (!wirelessDebuggingOn) return d(AdbdRevival.NOTHING, AdbdRevivalReason.USB_ON_STUCK_WD_OFF)
+            // Shizuku mode does not own the switches, and a user-off switch is theirs: leave both alone.
+            if (!mayEnable) return d(AdbdRevival.NOTHING, AdbdRevivalReason.USB_ON_STUCK_NOT_OURS)
+        }
+        return when {
+            wifi == WifiState.NOT_CONNECTED -> d(AdbdRevival.NEEDS_WIFI, AdbdRevivalReason.NO_WIFI)
+            !hasGrant -> d(AdbdRevival.NO_GRANT, AdbdRevivalReason.NO_GRANT)
+            wirelessDebuggingOn -> d(
+                AdbdRevival.CYCLE_WIRELESS_DEBUGGING,
+                if (usbDebuggingOn) AdbdRevivalReason.USB_ON_STUCK_CYCLE else AdbdRevivalReason.WD_ON_CYCLE,
+            )
+            !mayEnable -> d(AdbdRevival.NOTHING, AdbdRevivalReason.MAY_NOT_ENABLE)
+            else -> d(AdbdRevival.ENABLE_WIRELESS_DEBUGGING, AdbdRevivalReason.BOTH_OFF_ENABLE)
+        }
     }
 }

@@ -9,6 +9,7 @@
 package com.baba.callvault.integrations.adb
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -28,7 +29,8 @@ class AdbdRevivalPolicyTest {
         hasGrant: Boolean = true,
         mayEnable: Boolean = true,
         shizukuServerRunning: Boolean = false,
-    ) = AdbdRevivalPolicy.decide(adbd, usbOn, wdOn, wifi, hasGrant, mayEnable, shizukuServerRunning)
+        stoppedStreak: AdbdStoppedStreak = AdbdStoppedStreak(checks = 1, stoppedForMs = 0),
+    ) = AdbdRevivalPolicy.decide(adbd, usbOn, wdOn, wifi, hasGrant, mayEnable, shizukuServerRunning, stoppedStreak)
 
     @Test
     fun `a running adbd is left alone`() {
@@ -106,5 +108,170 @@ class AdbdRevivalPolicyTest {
     fun `USB debugging still wins over the Shizuku check`() {
         // Nothing to do either way; the order of the two NOTHING branches must not change the answer.
         assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, shizukuServerRunning = true))
+    }
+
+    // --- GH89-1: USB debugging reads on, but adbd stays stopped (Honor BVL-N49, Android 17, ~48 h) ---
+
+    private val firstSighting = AdbdStoppedStreak(checks = 1, stoppedForMs = 0)
+    private val stuck = AdbdStoppedStreak(checks = 2, stoppedForMs = 60_000)
+
+    @Test
+    fun `usb debugging on and the first stopped sighting still gives init its chance`() {
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, wdOn = true, stoppedStreak = firstSighting))
+    }
+
+    @Test
+    fun `usb debugging on and adbd stopped on two checks cycles wireless debugging`() {
+        assertEquals(AdbdRevival.CYCLE_WIRELESS_DEBUGGING, decide(usbOn = true, wdOn = true, stoppedStreak = stuck))
+    }
+
+    @Test
+    fun `usb debugging on needs both two checks and the long stop before it cycles`() {
+        val longOneCheck = AdbdStoppedStreak(checks = 1, stoppedForMs = AdbdRevivalPolicy.STUCK_AFTER_MS * 10)
+        val twoChecksShort = AdbdStoppedStreak(checks = 2, stoppedForMs = AdbdRevivalPolicy.STUCK_AFTER_MS - 1)
+        val both = AdbdStoppedStreak(checks = 2, stoppedForMs = AdbdRevivalPolicy.STUCK_AFTER_MS)
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, wdOn = true, stoppedStreak = longOneCheck))
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, wdOn = true, stoppedStreak = twoChecksShort))
+        assertEquals(AdbdRevival.CYCLE_WIRELESS_DEBUGGING, decide(usbOn = true, wdOn = true, stoppedStreak = both))
+    }
+
+    @Test
+    fun `a stuck stop never cycles a switch that is not ours to cycle, as in Shizuku mode`() {
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, wdOn = true, mayEnable = false, stoppedStreak = stuck))
+        assertEquals(
+            AdbdRevivalReason.USB_ON_STUCK_NOT_OURS,
+            AdbdRevivalPolicy.decideWithReason(AdbdState.STOPPED, true, true, WifiState.CONNECTED, true, false, false, stuck).reason,
+        )
+    }
+
+    @Test
+    fun `a stuck stop with usb on never switches wireless debugging on from off`() {
+        // WD reads off: the user may have turned it off. Only a cycle of a switch that reads on is allowed.
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, wdOn = false, stoppedStreak = stuck))
+    }
+
+    @Test
+    fun `a stuck stop with usb on still needs wifi, the grant, and no live Shizuku server`() {
+        assertEquals(AdbdRevival.NEEDS_WIFI, decide(usbOn = true, wdOn = true, wifi = WifiState.NOT_CONNECTED, stoppedStreak = stuck))
+        assertEquals(AdbdRevival.NO_GRANT, decide(usbOn = true, wdOn = true, hasGrant = false, stoppedStreak = stuck))
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, wdOn = true, shizukuServerRunning = true, stoppedStreak = stuck))
+    }
+
+    @Test
+    fun `a running adbd is left alone whatever the streak says`() {
+        assertEquals(AdbdRevival.NOTHING, decide(adbd = AdbdState.RUNNING, usbOn = true, wdOn = true, stoppedStreak = stuck))
+    }
+
+    // --- GH89-2: every NOTHING names its real branch ---
+
+    private fun reason(
+        adbd: AdbdState = AdbdState.STOPPED,
+        usbOn: Boolean = false,
+        wdOn: Boolean = false,
+        shizukuServerRunning: Boolean = false,
+        mayEnable: Boolean = true,
+        streak: AdbdStoppedStreak = firstSighting,
+    ) = AdbdRevivalPolicy.decideWithReason(adbd, usbOn, wdOn, WifiState.CONNECTED, true, mayEnable, shizukuServerRunning, streak).reason
+
+    @Test
+    fun `each branch reports its own reason`() {
+        assertEquals(AdbdRevivalReason.ADBD_NOT_STOPPED, reason(adbd = AdbdState.RUNNING))
+        assertEquals(AdbdRevivalReason.SHIZUKU_SERVER_ANSWERS, reason(shizukuServerRunning = true))
+        assertEquals(AdbdRevivalReason.USB_ON_WAITING_FOR_INIT, reason(usbOn = true, wdOn = true))
+        assertEquals(AdbdRevivalReason.USB_ON_STUCK_CYCLE, reason(usbOn = true, wdOn = true, streak = stuck))
+        assertEquals(AdbdRevivalReason.MAY_NOT_ENABLE, reason(mayEnable = false))
+        assertEquals(AdbdRevivalReason.WD_ON_CYCLE, reason(wdOn = true))
+        assertEquals(AdbdRevivalReason.BOTH_OFF_ENABLE, reason())
+    }
+
+    @Test
+    fun `a stuck stop with usb on and wireless debugging off reports that it may not enable`() {
+        assertEquals(AdbdRevivalReason.USB_ON_STUCK_WD_OFF, reason(usbOn = true, wdOn = false, streak = stuck))
+    }
+
+    // --- the streak counter ---
+
+    @Test
+    fun `the tracker counts spaced stopped sightings and resets on any other reading`() {
+        val t = AdbdStoppedTracker()
+        assertEquals(AdbdStoppedStreak(1, 0), t.observe(AdbdState.STOPPED, 1_000))
+        // a second look milliseconds later (the observer and the keep-alive arrive together) is the same sighting
+        assertEquals(AdbdStoppedStreak(1, 100), t.observe(AdbdState.STOPPED, 1_100))
+        assertEquals(AdbdStoppedStreak(2, 9_000), t.observe(AdbdState.STOPPED, 10_000))
+        t.observe(AdbdState.RUNNING, 11_000)
+        assertEquals(AdbdStoppedStreak(1, 0), t.observe(AdbdState.STOPPED, 12_000))
+    }
+
+    @Test
+    fun `an unknown reading also ends the streak`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0)
+        t.observe(AdbdState.STOPPED, 10_000)
+        assertEquals(AdbdStoppedStreak(0, 0), t.observe(AdbdState.UNKNOWN, 20_000))
+    }
+
+    @Test
+    fun `an old sighting does not make a brief stop days later look stuck (H1)`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0)
+        t.observe(AdbdState.STOPPED, 10_000)
+        val days = 3L * 24 * 3_600_000
+        // the phone was healthy in between but nobody looked: the old streak must not carry over
+        assertEquals(AdbdStoppedStreak(1, 0), t.observe(AdbdState.STOPPED, days))
+    }
+
+    @Test
+    fun `sightings further apart than the stale gap restart the streak, closer ones keep it`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0)
+        assertEquals(2, t.observe(AdbdState.STOPPED, AdbdStoppedTracker.STALE_GAP_MS).checks)
+        assertEquals(AdbdStoppedStreak(1, 0), t.observe(AdbdState.STOPPED, AdbdStoppedTracker.STALE_GAP_MS * 2 + 1))
+    }
+
+    @Test
+    fun `a keep-alive tick every minute keeps a real streak alive long enough to reach the stuck rule`() {
+        val t = AdbdStoppedTracker()
+        var streak = AdbdStoppedStreak(0, 0)
+        for (tick in 0..1) streak = t.observe(AdbdState.STOPPED, tick * 60_000L)
+        assertEquals(AdbdRevival.CYCLE_WIRELESS_DEBUGGING, decide(usbOn = true, wdOn = true, stoppedStreak = streak))
+    }
+
+    // --- R1: a stale streak must not make a live wait give up at once ---
+
+    @Test
+    fun `the continuous stop clock restarts when looks are far apart, though the streak survives`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0)
+        // a keep-alive tick 60 s later, then the self-heal loop polls at 61 s
+        t.observe(AdbdState.STOPPED, 60_000)
+        assertEquals(0L, t.continuousStoppedMs)
+        t.observe(AdbdState.STOPPED, 61_500)
+        assertEquals(1_500L, t.continuousStoppedMs)
+        // the streak itself (for the cycle decision) is still alive
+        assertEquals(3, t.observe(AdbdState.STOPPED, 66_000).checks)
+    }
+
+    @Test
+    fun `a wait loop polling every 1500 ms reaches the give-up only after its own continuous stop`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0) // stale sighting from an earlier tick
+        var now = 90_000L
+        var gaveUpAt = -1L
+        while (gaveUpAt < 0 && now < 120_000) {
+            t.observe(AdbdState.STOPPED, now)
+            if (StoppedAdbdWaits.persistentlyStopped(AdbdState.STOPPED, t.continuousStoppedMs)) gaveUpAt = now
+            now += 1_500
+        }
+        // first poll at 90 s must not give up; it takes GIVE_UP_AFTER_MS of this loop's own looks
+        assertTrue(gaveUpAt >= 90_000 + StoppedAdbdWaits.GIVE_UP_AFTER_MS)
+    }
+
+    @Test
+    fun `a running reading clears the continuous clock`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0)
+        t.observe(AdbdState.STOPPED, 3_000)
+        t.observe(AdbdState.RUNNING, 4_000)
+        assertEquals(0L, t.continuousStoppedMs)
     }
 }

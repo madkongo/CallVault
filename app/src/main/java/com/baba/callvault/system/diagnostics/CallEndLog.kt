@@ -90,6 +90,13 @@ object CallEndLog {
         else -> "local scrcpy over ADB (muxer)"
     }
 
+    /**
+     * A call that could not start, with the cause (GH #89): the failure's class and message, whether the recorder
+     * was connected, and what `init.svc.adbd` said. Without this a start that failed with logging off left nothing.
+     */
+    fun startFailed(failure: Throwable, recorderConnected: Boolean, adbd: String): String =
+        "call start FAILED: ${describe(failure)} recorderConnected=$recorderConnected adbd=$adbd"
+
     /** [line] with its line breaks turned into spaces: the always-on file holds one entry per line. */
     fun singleLine(line: String): String = line.replace(LINE_BREAKS, " ")
 

@@ -331,7 +331,7 @@
     <string name="recording_error_file_creation">No se pudo crear el archivo de grabación. Comprueba los permisos de almacenamiento y/o selecciona una nueva carpeta de grabación en los ajustes de la aplicación.</string>
     <string name="recording_error_folder_missing">La carpeta de salida seleccionada no existe, no es válida o no tenemos permiso para escribir en ella. Selecciona una en los ajustes de la aplicación.</string>
     <string name="recording_error_server_missing">Falta el binario de scrcpy‑server o la verificación de seguridad SHA256 ha fallado. Esto no debería ocurrir; por favor, informa de este problema.</string>
-    <string name="recording_error_start_failed">No se pudo iniciar la grabación. Ocurrió un error al llamar al método Binder de ShellService.</string>
+    <string name="recording_error_start_failed">Esta llamada no se está grabando. El grabador no está en ejecución y CallVault no pudo comunicarse con él. Abre CallVault para reactivarlo.</string>
     <string name="recording_error_title">Error de grabación</string>
     <string name="recording_flag_added">Momento marcado (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐Nacional de larga distancia</string>

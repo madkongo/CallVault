@@ -334,7 +334,7 @@
     <string name="recording_error_file_creation">Falha ao criar o arquivo de gravação. Verifique as permissões de armazenamento e/ou escolha uma nova pasta de gravação nas configurações do app.</string>
     <string name="recording_error_folder_missing">A pasta de destino escolhida está ausente, é inválida ou não temos permissão para gravar nela. Escolha uma nas configurações do app.</string>
     <string name="recording_error_server_missing">O binário do scrcpy-server está ausente ou falhou na verificação de segurança SHA256. Isso não deveria acontecer; por favor, relate o problema.</string>
-    <string name="recording_error_start_failed">Falha ao iniciar a gravação. Ocorreu um erro ao chamar o método binder do ShellService.</string>
+    <string name="recording_error_start_failed">Esta chamada não está sendo gravada. O gravador não está em execução e o CallVault não conseguiu alcançá-lo. Abra o CallVault para reativá-lo.</string>
     <string name="recording_error_title">Erro de gravação</string>
     <string name="recording_flag_added">Momento marcado (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐Internacional</string>

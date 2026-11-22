@@ -48,6 +48,10 @@ object TransportTimeline {
         val backgroundRestricted: Boolean,
         /** App standby bucket is RESTRICTED (review R5). */
         val bucketRestricted: Boolean,
+        /** `sys.usb.config` as the app can read it; "" when unreadable. */
+        val usbConfig: String = "",
+        /** `sys.usb.state` as the app can read it; "" when unreadable. */
+        val usbState: String = "",
     )
 
     /** Writes the current state if it differs from the last one written. [why] says what prompted the look. */
@@ -58,6 +62,26 @@ object TransportTimeline {
         last = key
         UsbDebuggingEvents.record(context, "state ($why): ${render(facts)}")
     }
+
+    private const val UNREADABLE = "(unreadable)"
+
+    /**
+     * What the phone says about the transport at the moment the recorder died (GH #89): `init.svc.adbd`,
+     * `sys.usb.config` and `sys.usb.state`, each "(unreadable)" when an app cannot read it.
+     */
+    fun deathLine(adbd: String, usbConfig: String, usbState: String): String =
+        "recorder died: init.svc.adbd=${adbd.ifBlank { UNREADABLE }} " +
+            "sys.usb.config=${usbConfig.ifBlank { UNREADABLE }} sys.usb.state=${usbState.ifBlank { UNREADABLE }}"
+
+    /** Writes [deathLine] from the live properties. Reads three properties; cheap. */
+    fun recorderDied(context: Context) = event(
+        context,
+        deathLine(
+            adbd = AdbShell.adbdState().toString(),
+            usbConfig = AdbShell.systemPropertyForReport("sys.usb.config"),
+            usbState = AdbShell.systemPropertyForReport("sys.usb.state"),
+        ),
+    )
 
     /** A one-off event: a death, a relaunch and its outcome, a decision not to try. */
     fun event(context: Context, text: String) = UsbDebuggingEvents.record(context, "event: $text")
@@ -82,6 +106,8 @@ object TransportTimeline {
         append(" batteryOpt=").append(if (f.batteryExempt) "exempt" else "ON")
         append(" bgRestricted=").append(if (f.backgroundRestricted) "YES" else "no")
         append(" bucket=").append(if (f.bucketRestricted) "RESTRICTED" else "ok")
+        append(" sys.usb.config=").append(f.usbConfig.ifBlank { UNREADABLE })
+        append(" sys.usb.state=").append(f.usbState.ifBlank { UNREADABLE })
     }
 
     private fun factsOf(context: Context, alive: Boolean): Facts {
@@ -112,6 +138,8 @@ object TransportTimeline {
             bucketRestricted = runCatching {
                 context.getSystemService(UsageStatsManager::class.java)?.appStandbyBucket
             }.getOrNull() == UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
+            usbConfig = AdbShell.systemPropertyForReport("sys.usb.config"),
+            usbState = AdbShell.systemPropertyForReport("sys.usb.state"),
         )
     }
 }

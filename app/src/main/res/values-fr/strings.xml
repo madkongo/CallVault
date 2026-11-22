@@ -331,7 +331,7 @@
     <string name="recording_error_file_creation">Impossible de créer le fichier d\'enregistrement. Veuillez vérifier les autorisations de stockage et/ou sélectionner un nouveau dossier d\'enregistrement dans les paramètres de l\'application.</string>
     <string name="recording_error_folder_missing">Le dossier de sortie sélectionné est manquant, invalide ou nous n\'avons pas l\'autorisation d\'y écrire. Veuillez en sélectionner un dans les paramètres de l\'application.</string>
     <string name="recording_error_server_missing">Le fichier du serveur Scrcpy est manquant ou la vérification de sécurité SHA256 a échoué. Ceci ne devrait pas se produire, veuillez le signaler.</string>
-    <string name="recording_error_start_failed">L\'enregistrement n\'a pas pu démarrer. Une erreur s\'est produite lors de l\'appel de ShellService binder method.</string>
+    <string name="recording_error_start_failed">Cet appel n\'est pas enregistré. L\'enregistreur ne fonctionne pas et CallVault n\'a pas pu le joindre. Ouvrez CallVault pour le relancer.</string>
     <string name="recording_error_title">Erreur d\'enregistrement</string>
     <string name="recording_flag_added">Moment repéré (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐International</string>

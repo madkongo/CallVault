@@ -9,6 +9,7 @@
 package com.baba.callvault.integrations.adb
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -123,5 +124,27 @@ class WirelessDebuggingOffCauseTest {
     @Test
     fun `the older named causes keep their reason`() {
         assertEquals(WirelessDebuggingOffCause.ANDROID_NO_WIFI, cause(msSinceLastOn = 100, lastSeenOn = true, wifi = WifiState.NOT_CONNECTED))
+    }
+
+    // --- L1: the revival cycle's own off (then on) is never read as the user's choice ---
+
+    @Test
+    fun `a cycle's own off, and an Android revert of its on, are not the user`() {
+        assertEquals(WirelessDebuggingOffCause.OURS, WirelessDebuggingOffCause.of(weJustTurnedItOff = true, weJustTurnedItOn = false, wifi = WifiState.CONNECTED))
+        // another write landed in the 1.5 s gap and the "off" value slot now says on: still not USER
+        assertEquals(WirelessDebuggingOffCause.ANDROID_REFUSED, WirelessDebuggingOffCause.of(weJustTurnedItOff = false, weJustTurnedItOn = true, wifi = WifiState.CONNECTED))
+    }
+
+    @Test
+    fun `the cycle marks its own off before writing it and never sets the user-off flag`() {
+        val src = java.io.File(listOf(
+            "src/main/java/com/baba/callvault/integrations/adb/AdbShell.kt",
+            "app/src/main/java/com/baba/callvault/integrations/adb/AdbShell.kt",
+        ).first { java.io.File(it).exists() }).readText()
+        val a = src.indexOf("AdbdRevival.CYCLE_WIRELESS_DEBUGGING -> {")
+        val end = src.indexOf("val deadline = android.os.SystemClock.elapsedRealtime() + ADBD_REVIVE_WAIT_MS", a)
+        val cycle = src.substring(a, end)
+        assertTrue(cycle.indexOf("markOwnWirelessDebuggingWrite(0)") in 0 until cycle.indexOf("putInt(context.contentResolver, \"adb_wifi_enabled\", 0)"))
+        assertTrue(!cycle.contains("setWirelessDebuggingTurnedOffByUser(true)"))
     }
 }

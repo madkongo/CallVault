@@ -333,7 +333,7 @@
     <string name="recording_error_file_creation">Nie udało się utworzyć pliku nagrania. Sprawdź uprawnienia do dostępu do pamięci i/lub wybierz nowy folder na nagrania w ustawieniach aplikacji.</string>
     <string name="recording_error_folder_missing">Wybrany folder wyjściowy nie istnieje, jest nieprawidłowy lub nie mamy uprawnień do zapisu w nim. Wybierz folder w ustawieniach aplikacji.</string>
     <string name="recording_error_server_missing">Brakuje pliku wykonywalnego serwera Scrcpy lub nie powiodła się kontrola bezpieczeństwa SHA256. Nie powinno tak być, prosimy o zgłoszenie tego problemu.</string>
-    <string name="recording_error_start_failed">Nie udało się rozpocząć nagrywania. Wystąpił błąd podczas wywoływania metody wiązania ShellService.</string>
+    <string name="recording_error_start_failed">Ta rozmowa nie jest nagrywana. Rejestrator nie działa, a CallVault nie mógł się z nim połączyć. Otwórz CallVault, aby go uruchomić.</string>
     <string name="recording_error_title">Błąd nagrywania</string>
     <string name="recording_flag_added">Oznaczono moment (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐 Międzynarodowe</string>

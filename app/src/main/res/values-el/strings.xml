@@ -485,7 +485,7 @@
     <string name="recording_error_file_creation">Αποτυχία δημιουργίας αρχείου εγγραφής. Ελέγξτε τα δικαιώματα αποθηκευτικού χώρου ή/και επιλέξτε έναν νέο φάκελο εγγραφών στις ρυθμίσεις της εφαρμογής.</string>
     <string name="recording_error_folder_missing">Ο επιλεγμένος φάκελος εξόδου λείπει, δεν είναι έγκυρος, ή δεν έχουμε δικαίωμα εγγραφής σε αυτόν. Επιλέξτε έναν στις ρυθμίσεις της εφαρμογής.</string>
     <string name="recording_error_server_missing">Το δυαδικό αρχείο Scrcpy-server λείπει ή ο έλεγχος ασφαλείας SHA256 απέτυχε. Αυτό δεν θα έπρεπε να συμβαίνει, παρακαλούμε αναφέρετέ το.</string>
-    <string name="recording_error_start_failed">Αποτυχία έναρξης της εγγραφής. Παρουσιάστηκε σφάλμα κατά την κλήση της μεθόδου binder του ShellService.</string>
+    <string name="recording_error_start_failed">Αυτή η κλήση δεν ηχογραφείται. Ο καταγραφέας δεν εκτελείται και το CallVault δεν μπόρεσε να επικοινωνήσει μαζί του. Ανοίξτε το CallVault για να τον επαναφέρετε.</string>
     <string name="recording_error_title">Σφάλμα εγγραφής</string>
     <string name="recording_flag_added">Σημειώθηκε στιγμή (%1$d)</string>
     <string name="recording_notification_cross_country_tip">🌐Διεθνής</string>

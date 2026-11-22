@@ -62,6 +62,26 @@ object CallInProgressGate {
 
     /** Reads the live state. Any failure reads as "safe", for the same fail-open reason. */
     fun mayInstall(context: Context): Boolean {
+        val state = readState(context)
+        val allowed = mayInstall(state.telephony, state.voip, state.mode)
+        if (!allowed) {
+            AppLogger.i(TAG, "Deferring the update install: a call is in progress (telephony=${state.telephony} voip=${state.voip} mode=${state.mode})")
+        }
+        return allowed
+    }
+
+    /**
+     * The same rule for callers that are not installing (the adbd revival cycle): no log of its own, so it is not
+     * reported as a deferred update. Failures read as "no call", as in [mayInstall].
+     */
+    fun isCallInProgress(context: Context): Boolean {
+        val state = readState(context)
+        return !mayInstall(state.telephony, state.voip, state.mode)
+    }
+
+    private class CallState(val telephony: Int, val voip: Boolean, val mode: Int)
+
+    private fun readState(context: Context): CallState {
         val telephony = runCatching {
             context.getSystemService(TelephonyManager::class.java)?.callState
                 ?: TelephonyManager.CALL_STATE_IDLE
@@ -69,10 +89,6 @@ object CallInProgressGate {
         val voip = runCatching { VoipRecordingCoordinator.isRecording }.getOrDefault(false)
         val mode = runCatching { context.getSystemService(AudioManager::class.java)?.mode ?: MODE_NORMAL }
             .getOrDefault(MODE_NORMAL)
-        val allowed = mayInstall(telephony, voip, mode)
-        if (!allowed) {
-            AppLogger.i(TAG, "Deferring the update install: a call is in progress (telephony=$telephony voip=$voip mode=$mode)")
-        }
-        return allowed
+        return CallState(telephony, voip, mode)
     }
 }
