@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Surface
@@ -2833,7 +2834,7 @@ private fun HeroStatusCard(
     // Off is the user's own choice, not a fault — show it calmly (neutral), never as a warning.
     val isUserOff = status == HomeViewModel.HomeStatus.STOPPED
     // Warming up after a Start: in progress, not a fault — also calm/neutral, never a warning.
-    val isStarting = status == HomeViewModel.HomeStatus.STARTING
+    val isStarting = status == HomeViewModel.HomeStatus.STARTING || status == HomeViewModel.HomeStatus.RECORDING
     // A healthy setup that has never been proved still reads as ready; only a real problem flips the card.
     val showsProblem = !isUserOff && !isStarting && (!status.isReady || health.isProblem)
     val accent: Color = when {
@@ -2844,6 +2845,7 @@ private fun HeroStatusCard(
     val icon: ImageVector = when {
         status == HomeViewModel.HomeStatus.STOPPED -> Icons.Filled.StopCircle
         status == HomeViewModel.HomeStatus.STARTING -> Icons.Filled.Sync
+        status == HomeViewModel.HomeStatus.RECORDING -> Icons.Filled.Mic
         showsProblem -> Icons.Filled.WarningAmber
         else -> Icons.Filled.CheckCircle
     }
@@ -2874,6 +2876,8 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.STOPPED -> CvTone.Neutral
         // Warming up — in progress, neutral while it settles.
         HomeViewModel.HomeStatus.STARTING -> CvTone.Neutral
+        // A call is being recorded: calm, in progress.
+        HomeViewModel.HomeStatus.RECORDING -> CvTone.Neutral
     }
     val pillText = when (status) {
         HomeViewModel.HomeStatus.READY -> stringResource(R.string.home_hero_pill_ready)
@@ -2891,6 +2895,7 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.SHIZUKU_NOT_READY -> stringResource(R.string.home_hero_pill_shizuku)
         HomeViewModel.HomeStatus.STOPPED -> stringResource(R.string.home_hero_pill_stopped)
         HomeViewModel.HomeStatus.STARTING -> stringResource(R.string.home_hero_pill_starting)
+        HomeViewModel.HomeStatus.RECORDING -> stringResource(R.string.recording_notification_title)
     }
 
     // Subtle accent-tinted surface so the banner reads as a confident state, not a stock card.

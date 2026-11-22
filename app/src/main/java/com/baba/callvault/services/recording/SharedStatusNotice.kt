@@ -10,6 +10,8 @@ package com.baba.callvault.services.recording
 
 import android.app.Notification
 import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * The one notification CallVault keeps in the shade: "Ready to record calls" while idle, and the call being
@@ -57,6 +59,11 @@ object SharedStatusNotice {
     @Volatile
     var foregroundPoster: ((Notification) -> Boolean)? = null
 
+    private val heldFlow = MutableStateFlow(false)
+
+    /** [isHeldByRecording] as a flow, so Home's status card follows a call starting and ending while it is open (UI-1). */
+    val heldByRecordingFlow: StateFlow<Boolean> get() = heldFlow
+
     /** True while any recorded call owns the notification. */
     val isHeldByRecording: Boolean get() = synchronized(claims) { claims.isNotEmpty() }
 
@@ -71,6 +78,7 @@ object SharedStatusNotice {
         synchronized(claims) {
             claims.remove(owner)
             claims[owner] = notification
+            heldFlow.value = true
         }
     }
 
@@ -79,7 +87,11 @@ object SharedStatusNotice {
      * owner's claim is left alone: the keep-alive then re-posts that one, not "Ready".
      */
     fun release(owner: Owner) {
-        val released = synchronized(claims) { claims.remove(owner) != null }
+        val released = synchronized(claims) {
+            val removed = claims.remove(owner) != null
+            heldFlow.value = claims.isNotEmpty()
+            removed
+        }
         if (released) onReleased?.invoke()
     }
 
@@ -110,6 +122,7 @@ object SharedStatusNotice {
     @VisibleForTesting
     fun resetForTest() {
         synchronized(claims) { claims.clear() }
+        heldFlow.value = false
         onReleased = null
         foregroundPoster = null
     }
