@@ -114,6 +114,6 @@ object SimLabels {
         val calls = PhoneCallReader.since(context, startedAt - PhoneCallMatch.JUST_ENDED_EARLY_RING_MS)
         val call = PhoneCallMatch.justEnded(calls, startedAt, allowRingTime) ?: return null
         val slot = Resolver(context, simWord).simFor(call.accountComponent, call.accountId)?.slot
-        return CallSim(call.accountId, slot)
+        return CallSim(call.accountId, slot, call.durationSeconds)
     }
 }

@@ -165,6 +165,28 @@ class AfterCallSimGateTest {
     }
 
     @Test
+    fun a_zero_duration_row_on_the_other_sim_never_skips() = runTest {
+        // Dial on SIM 2, cancel, redial on SIM 1 within 25 s: the cancelled dial's row (duration 0) is found
+        // before this call's own row is written.
+        oneSim(FakeSources(both, call = CallSim("2", 1, durationSeconds = 0)))
+        val outcome = AfterCallSimGate.evaluate(context, carrierName)
+        assertEquals(Reason.ZERO_DURATION_ROW, outcome.reason)
+        assertFalse(outcome.verdict.skip)
+    }
+
+    @Test
+    fun a_zero_duration_row_on_the_chosen_sim_still_confirms_it() = runTest {
+        oneSim(FakeSources(both, call = CallSim("4", 2, durationSeconds = 0)))
+        assertEquals(Reason.CHOSEN, AfterCallSimGate.evaluate(context, carrierName).reason)
+    }
+
+    @Test
+    fun an_answered_row_on_the_other_sim_still_skips() = runTest {
+        oneSim(FakeSources(both, call = CallSim("2", 1, durationSeconds = 42)))
+        assertEquals(Reason.OTHER, AfterCallSimGate.evaluate(context, carrierName).reason)
+    }
+
+    @Test
     fun a_row_found_only_through_ring_time_never_skips() = runTest {
         // Coordinator, after re-review #A: an older row accepted only on the last try may be a previous call.
         val fake = oneSim(FakeSources(both))

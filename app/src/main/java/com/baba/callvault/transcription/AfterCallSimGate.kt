@@ -90,7 +90,7 @@ object AfterCallSimGate {
             .getOrDefault(false)
 
     /** Why the SIM rule transcribed or skipped; logged, and read by tests. */
-    internal enum class Reason { ALL_SIMS, NOT_AFTER_CALL_MODE, CHOSEN_ABSENT, NO_CALL_LOG_PERMISSION, APP_CALL, NO_START_TIME, NO_ROW, ROW_WITHOUT_ACCOUNT, UNRECOGNISED_ACCOUNT, RING_TIME_ONLY, CHOSEN, OTHER }
+    internal enum class Reason { ALL_SIMS, NOT_AFTER_CALL_MODE, CHOSEN_ABSENT, NO_CALL_LOG_PERMISSION, APP_CALL, NO_START_TIME, NO_ROW, ROW_WITHOUT_ACCOUNT, UNRECOGNISED_ACCOUNT, RING_TIME_ONLY, ZERO_DURATION_ROW, CHOSEN, OTHER }
 
     internal data class Outcome(val verdict: Verdict, val reason: Reason)
 
@@ -118,8 +118,13 @@ object AfterCallSimGate {
         if (!SimMatch.recognised(call, cards)) return Outcome(Verdict.UNKNOWN, Reason.UNRECOGNISED_ACCOUNT)
         return when (verdict(choice, cards, call)) {
             // A row found only through the ring-time allowance may be a previous call: it can confirm, never skip.
-            Verdict.OTHER ->
-                if (ringTimeOnly) Outcome(Verdict.UNKNOWN, Reason.RING_TIME_ONLY) else Outcome(Verdict.OTHER, Reason.OTHER)
+            // A row with duration 0 was never answered: likely a dial cancelled and redialled on the other SIM, found
+            // before this call's own row is written. It can confirm, never skip.
+            Verdict.OTHER -> when {
+                ringTimeOnly -> Outcome(Verdict.UNKNOWN, Reason.RING_TIME_ONLY)
+                call.durationSeconds == 0L -> Outcome(Verdict.UNKNOWN, Reason.ZERO_DURATION_ROW)
+                else -> Outcome(Verdict.OTHER, Reason.OTHER)
+            }
             else -> Outcome(Verdict.CHOSEN, Reason.CHOSEN)
         }
     }
@@ -136,6 +141,7 @@ object AfterCallSimGate {
             Reason.NO_ROW -> "No call-log row for this call after $ATTEMPTS tries; transcribing (choice=$key)"
             Reason.ROW_WITHOUT_ACCOUNT -> "Call-log row has no phone account; transcribing (choice=$key)"
             Reason.UNRECOGNISED_ACCOUNT -> "Call-log account matches no SIM in this phone; transcribing (choice=$key)"
+            Reason.ZERO_DURATION_ROW -> "Call-log row has duration 0 (maybe a cancelled dial); not skipping on it, transcribing (choice=$key)"
             Reason.RING_TIME_ONLY -> "Only an older ring-time row found; not skipping on a guess, transcribing (choice=$key)"
             Reason.ALL_SIMS, Reason.NOT_AFTER_CALL_MODE -> return
         }

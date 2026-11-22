@@ -106,7 +106,12 @@ enum class SimHit { CHOSEN, OTHER, UNKNOWN }
  * A call we could identify, from the call log's phone-account id and/or its slot.
  * Either field may be null. Both null means the call's SIM is unknown.
  */
-data class CallSim(val accountId: String?, val slot: Int?)
+data class CallSim(
+    val accountId: String?,
+    val slot: Int?,
+    /** The call-log DURATION in seconds; 0 for a call never answered (a dial cancelled before it connected). */
+    val durationSeconds: Long? = null,
+)
 
 object SimMatch {
 
