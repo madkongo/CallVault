@@ -191,6 +191,10 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             }
             RescueDecision.DISCARD_EMPTY -> {
                 AppLogger.i(TAG, "${file.name} is empty; removing it")
+                CallEndLog.record(
+                    applicationContext,
+                    "cut-off rescue: ${CallEndLog.safeName(file.name)} holds no audio (${file.length()} bytes, under ${CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES}); removed, not published",
+                )
                 runCatching { file.delete(); noteFile.delete() }
             }
             RescueDecision.SAVE_NAMED -> note?.let {
@@ -254,6 +258,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             completeCall: Boolean = false, ranOnSeconds: Int = 0, appCall: Boolean = false,
         ) {
             RecordingCatalog.recordLocal(context, fileName, uri, bytes, startedAt ?: cutAt)
+            RescuedDuration.store(context, fileName, uri)
             recordSaved(context, fileName, startedAt, cutAt, completeCall, ranOnSeconds, appCall)
             runCatching { handOffs(context, fileName, uri, mimeType) }
                 .onSuccess { CallEndLog.record(context, "cut-off rescue: '$fileName' handed to Drive copy and transcription") }
@@ -345,7 +350,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             runCatching {
                 val store = SetupHealthStore(context)
                 if (completeCall) store.recordSavedInFull(call?.startedAt, callEndedAt)
-                else store.recordCutOff(System.currentTimeMillis(), call?.startedAt, callEndedAt, call?.label)
+                else store.recordCutOff(System.currentTimeMillis(), call?.startedAt, callEndedAt, call?.label, callAt = call?.startedAt ?: startedAt ?: cutAt)
             }.onFailure { AppLogger.w(TAG, "Could not update the status card: ${it.message}") }
             if (!completeCall) {
                 SilentFailureNotifier.noteCutOffRecordingSaved(context, fileName)

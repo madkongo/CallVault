@@ -276,6 +276,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Με αστέρι</string>
     <string name="home_health_failed_cut_off">Η τελευταία σας κλήση διακόπηκε όταν το τηλέφωνο έκλεισε το CallVault — το μέρος που καταγράφηκε πριν από αυτό αποθηκεύτηκε.</string>
+    <string name="home_health_failed_cut_off_at">Η κλήση σας (%1$s) διακόπηκε όταν το τηλέφωνο έκλεισε το CallVault — το μέρος που καταγράφηκε πριν από αυτό αποθηκεύτηκε.</string>
     <string name="home_health_missed_shizuku">Το %1$s δεν καταγράφηκε — το Shizuku δεν εκτελούνταν</string>
     <string name="home_health_missed_shizuku_unnamed">Μια κλήση δεν καταγράφηκε — το Shizuku δεν εκτελούνταν</string>
     <string name="home_hero_pill_recovery_stuck">Δεν γίνεται εγγραφή</string>
@@ -397,6 +398,7 @@
     <string name="notif_drive_backup_reason_no_answer">το Google Drive δεν απαντά</string>
     <string name="notif_drive_backup_reason_folder">ο φάκελος του Drive δεν μπορεί να διαβαστεί</string>
     <string name="notif_drive_backup_reason_error">ένα σφάλμα το σταμάτησε (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">το Google Drive δεν δέχεται αντίγραφα</string>
     <string name="notif_health_sync_title">Οι εγγραφές δεν φτάνουν στο Drive</string>
     <string name="notif_info_channel">Ειδοποιήσεις CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Το Android ξέχασε τη σύζευξη του CallVault, οπότε οι κλήσεις δεν μπορούν να καταγραφούν. Ανοίξτε το CallVault και πατήστε την κάρτα κατάστασης για να κάνετε σύζευξη ξανά.</string>

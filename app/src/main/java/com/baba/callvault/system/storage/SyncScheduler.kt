@@ -64,6 +64,9 @@ object SyncScheduler {
             scheduler.edit().remove(KEY_SIGNATURE).apply()
             AppLogger.i(TAG, "Periodic sweep cancelled (target=$target mode=$mode).")
             DriveCopyJournal.record(context, "scheduler: periodic sweep CANCELLED (target=$target mode=$mode; was '${oldSignature ?: "none"}')")
+            // Only when Drive sync is really off. IMMEDIATE still copies to Drive after each call, and apply() runs at
+            // every app start, so a notice about a still-active backup must stay (review N7).
+            if (target == StorageTarget.LOCAL) DriveBackupNotice.onDriveSyncOff(context, "target=$target")
             return
         }
 

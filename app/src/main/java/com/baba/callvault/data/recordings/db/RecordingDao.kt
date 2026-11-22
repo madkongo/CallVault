@@ -102,7 +102,7 @@ interface RecordingDao {
 
     /** Remembers the length read off the file, so it is never read twice. */
     @Query("UPDATE recordings SET durationSeconds = :durationSeconds WHERE displayName = :displayName")
-    suspend fun setDuration(displayName: String, durationSeconds: Long)
+    suspend fun setDuration(displayName: String, durationSeconds: Long): Int
 
     @Query("DELETE FROM recordings WHERE displayName = :displayName")
     suspend fun deleteByName(displayName: String)

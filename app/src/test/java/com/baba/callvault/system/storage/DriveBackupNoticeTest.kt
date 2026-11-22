@@ -40,9 +40,14 @@ class DriveBackupNoticeTest {
     @Before
     fun setUp() {
         shadowOf(context as Application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        DriveBackupNotice.onDriveSyncOff(context, "test reset")
         DriveBackupNotice.onDriveReached(context, "test reset")
         nm.cancelAll()
+        DriveBackupNotice.clock = { now }
     }
+
+    @org.junit.After
+    fun tearDown() { DriveBackupNotice.clock = System::currentTimeMillis }
 
     @Test
     fun `giving up posts once, reaching Drive clears, nothing else does anything`() {
@@ -87,5 +92,76 @@ class DriveBackupNoticeTest {
     fun `only the attempt that gives up tells the user`() {
         assertTrue(DriveBackupNotice.isGivingUp(CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS - 1))
         assertEquals(false, DriveBackupNotice.isGivingUp(0))
+    }
+
+    @Test
+    fun `turning Drive sync off clears a posted notice and lets a later failure post again`() {
+        DriveBackupNotice.onGaveUp(context, DriveBackupNotice.Reason.NO_ANSWER, "no answer")
+        assertEquals(1, shown())
+
+        DriveBackupNotice.onDriveSyncOff(context, "storage switched to device-only")
+
+        assertEquals(0, shown())
+        DriveBackupNotice.onGaveUp(context, DriveBackupNotice.Reason.NO_ANSWER, "after re-enabling")
+        assertEquals("the posted flag was reset", 1, shown())
+    }
+
+    @Test
+    fun `turning Drive sync off with nothing posted does nothing`() {
+        DriveBackupNotice.onDriveSyncOff(context, "storage switched to device-only")
+        assertEquals(0, shown())
+    }
+
+    @Test
+    fun `the failed-copy spell counts fruitless runs and any proof that Drive works ends it`() {
+        assertEquals(1, DriveBackupNotice.nextFailedRuns(previous = 0, driveProved = false, failures = 2))
+        assertEquals(5, DriveBackupNotice.nextFailedRuns(previous = 4, driveProved = false, failures = 1))
+        assertEquals("a straggler beside files Drive holds", 0, DriveBackupNotice.nextFailedRuns(9, driveProved = true, failures = 1))
+        assertEquals("a run with no failures", 0, DriveBackupNotice.nextFailedRuns(9, driveProved = false, failures = 0))
+        val day = DriveBackupNotice.MIN_SPELL_MS
+        assertEquals(false, DriveBackupNotice.isCopySpellGivingUp(CloudCopyPolicy.MAX_ATTEMPTS - 1, day))
+        assertEquals("one retry chain is not a spell", false, DriveBackupNotice.isCopySpellGivingUp(CloudCopyPolicy.MAX_ATTEMPTS, day - 1))
+        assertTrue(DriveBackupNotice.isCopySpellGivingUp(CloudCopyPolicy.MAX_ATTEMPTS, day))
+    }
+
+    @Test
+    fun `a notice about failing copies survives a listing and is cleared by a copy`() {
+        failSpell()
+        assertEquals(1, shown())
+        val text = shadowOf(shadowOf(nm).allNotifications.single()).contentText.toString()
+        assertTrue(text, text.contains("Google Drive is not accepting copies"))
+
+        DriveBackupNotice.onDriveReached(context, "listing ok", byListing = true)
+        assertEquals("a listing must not clear it", 1, shown())
+
+        DriveBackupNotice.onDriveReached(context, "copy ok")
+        assertEquals(0, shown())
+    }
+
+    private var now = 1_000_000L
+    private fun failSpell() = repeat(CloudCopyPolicy.MAX_ATTEMPTS) {
+        DriveBackupNotice.onCopyRunEnd(context, driveProved = false, tried = 3, failures = 3)
+        now += DriveBackupNotice.MIN_SPELL_MS / 5
+    }
+
+    @Test
+    fun `ten fruitless runs inside one day do not tell the user`() {
+        repeat(CloudCopyPolicy.MAX_ATTEMPTS + 3) { DriveBackupNotice.onCopyRunEnd(context, driveProved = false, tried = 1, failures = 1) }
+        assertEquals(0, shown())
+    }
+
+    @Test
+    fun `a notice about listing is still cleared by a listing`() {
+        DriveBackupNotice.onGaveUp(context, DriveBackupNotice.Reason.NO_ANSWER, "no answer")
+        DriveBackupNotice.onDriveReached(context, "listing ok", byListing = true)
+        assertEquals(0, shown())
+    }
+
+    @Test
+    fun `a copy in the middle of a spell restarts the count`() {
+        repeat(CloudCopyPolicy.MAX_ATTEMPTS - 1) { DriveBackupNotice.onCopyRunEnd(context, driveProved = false, tried = 1, failures = 1) }
+        DriveBackupNotice.onDriveReached(context, "copy ok")
+        DriveBackupNotice.onCopyRunEnd(context, driveProved = false, tried = 1, failures = 1)
+        assertEquals(0, shown())
     }
 }

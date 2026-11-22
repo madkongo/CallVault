@@ -90,12 +90,18 @@ object CutOffRescuePolicy {
         // A note is what proves this file is an interrupted recording (the publish path deletes the temp
         // on success, so a note-bearing temp that survived is genuinely a cut-off). Empty-vs-note order:
         // an empty note-bearing temp still holds no audio, so cleaning it is right.
-        hasNote && sizeBytes <= 0L -> RescueDecision.DISCARD_EMPTY
+        hasNote && sizeBytes < NO_AUDIO_BELOW_BYTES -> RescueDecision.DISCARD_EMPTY
         hasNote -> RescueDecision.SAVE_NAMED
         // No note: unclassifiable. Leave it — do not publish, do not notify, do not delete (it may hold
         // audio from an old-build cut-off the user could still want).
         else -> RescueDecision.LEAVE_UNATTRIBUTED
     }
+
+    /**
+     * Below this a staged file holds only container headers, no audio (review N1: a call that never connected left a
+     * 191-byte, 0.04 s Ogg). Opus at the app's rates is several KB per second, so nothing with real audio is this small.
+     */
+    const val NO_AUDIO_BELOW_BYTES = 256L
 
     /** Slack around a call's logged start/end: the log's clock, ringing and hang-up are all a little off. */
     private const val CALL_MATCH_SLACK_MS = 60_000L

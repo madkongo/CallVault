@@ -46,6 +46,9 @@ import java.util.Locale
  */
 object RecordingsRepository {
 
+    /** The length to show when one is already known: the file's own stored length first, then the call log's (review N9). */
+    internal fun preferredKnownSeconds(fromCallLog: Long?, stored: Long?): Long? = stored ?: fromCallLog
+
     private const val TAG = "CV:RecordingsRepo"
 
     /**
@@ -218,9 +221,11 @@ object RecordingsRepository {
                 // has an answer. A merged one is the exception, and has to be — see above.
                 //
                 // Only for a device copy: the Drive one would be a network read per row.
+                val known = preferredKnownSeconds(fromCallLog, item.durationSeconds)
                 val seconds = when {
-                    fromCallLog != null -> fromCallLog
-                    item.durationSeconds != null -> item.durationSeconds
+                    // The recording's own stored length (a rescue, an import, a merge, an earlier probe) wins: the call
+                    // log knows only the call it logged, not a file that holds more or less (review N9).
+                    known != null -> known
                     // A file whose length could not be read is not opened again on every pass (R46): it is
                     // marked by size and modified time and tried again when either changes or after a wait.
                     item.localUri != null && failedProbes.shouldSkip(

@@ -132,6 +132,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Обрані</string>
     <string name="home_health_failed_cut_off">Останній дзвінок перервано, але записаний фрагмент збережено.</string>
+    <string name="home_health_failed_cut_off_at">Дзвінок (%1$s) перервано, але записаний фрагмент збережено.</string>
     <string name="home_health_missed_shizuku">Дзвінок %1$s не записано — Shizuku не працював</string>
     <string name="home_health_missed_shizuku_unnamed">Дзвінок не записано — Shizuku не працював</string>
     <string name="home_hero_pill_recovery_stuck">Не записує</string>
@@ -253,6 +254,7 @@
     <string name="notif_drive_backup_reason_no_answer">Google Drive не відповідає</string>
     <string name="notif_drive_backup_reason_folder">не вдається прочитати папку Drive</string>
     <string name="notif_drive_backup_reason_error">його зупинила помилка (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">Google Drive не приймає копії</string>
     <string name="notif_health_sync_title">Записи не копіюються на Drive</string>
     <string name="notif_info_channel">Повідомлення CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android забув сполучення CallVault. Відкрийте застосунок і налаштуйте його знову.</string>

@@ -215,6 +215,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">ستاره‌دار</string>
     <string name="home_health_failed_cut_off">آخرین تماس شما وقتی گوشی CallVault را بست قطع شد — بخشی که پیش از آن ضبط شده بود ذخیره شد.</string>
+    <string name="home_health_failed_cut_off_at">تماس شما (%1$s) وقتی گوشی CallVault را بست قطع شد — بخشی که پیش از آن ضبط شده بود ذخیره شد.</string>
     <string name="home_health_missed_shizuku">%1$s ضبط نشد — Shizuku در حال اجرا نبود</string>
     <string name="home_health_missed_shizuku_unnamed">یک تماس ضبط نشد — Shizuku در حال اجرا نبود</string>
     <string name="home_hero_pill_recovery_stuck">ضبط نمی‌شود</string>
@@ -336,6 +337,7 @@
     <string name="notif_drive_backup_reason_no_answer">Google Drive پاسخ نمی‌دهد</string>
     <string name="notif_drive_backup_reason_folder">پوشه Drive خوانده نمی‌شود</string>
     <string name="notif_drive_backup_reason_error">خطایی آن را متوقف کرد (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">Google Drive کپی‌ها را نمی‌پذیرد</string>
     <string name="notif_health_sync_title">فایل‌های ضبط‌شده به Drive نمی‌رسند</string>
     <string name="notif_info_channel">اطلاعیه‌های CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android مرتبط‌سازی CallVault را فراموش کرد، بنابراین تماس‌ها ضبط نمی‌شوند. CallVault را باز کنید و روی کارت وضعیت بزنید تا دوباره مرتبط‌سازی کنید.</string>

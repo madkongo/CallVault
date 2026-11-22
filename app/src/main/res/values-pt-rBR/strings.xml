@@ -125,6 +125,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Marcadas</string>
     <string name="home_health_failed_cut_off">Sua última chamada foi interrompida quando o telefone fechou o CallVault — a parte gravada até ali foi salva.</string>
+    <string name="home_health_failed_cut_off_at">Sua chamada (%1$s) foi interrompida quando o telefone fechou o CallVault — a parte gravada até ali foi salva.</string>
     <string name="home_health_missed_shizuku">%1$s não foi gravada — o Shizuku não estava em execução</string>
     <string name="home_health_missed_shizuku_unnamed">Uma chamada não foi gravada — o Shizuku não estava em execução</string>
     <string name="home_hero_pill_recovery_stuck">Sem gravar</string>
@@ -246,6 +247,7 @@
     <string name="notif_drive_backup_reason_no_answer">o Google Drive não está respondendo</string>
     <string name="notif_drive_backup_reason_folder">a pasta do Drive não pode ser lida</string>
     <string name="notif_drive_backup_reason_error">um erro o interrompeu (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">o Google Drive não está aceitando cópias</string>
     <string name="notif_health_sync_title">As gravações não estão chegando ao Drive</string>
     <string name="notif_info_channel">Avisos do CallVault</string>
     <string name="notif_readiness_pairing_lost_text">O Android esqueceu o pareamento do CallVault, então as chamadas não podem ser gravadas. Abra o CallVault e toque no cartão de status para parear de novo.</string>

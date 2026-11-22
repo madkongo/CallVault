@@ -39,6 +39,8 @@ data class HealthFacts(
     val lastFailureAt: Long = 0L,
     val lastFailureReason: FailureReason? = null,
     val lastFailureLabel: String? = null,
+    /** When the failed call happened (cut-offs only; 0 = unknown), so the card can name that call, not "the last" one. */
+    val lastFailureCallAt: Long = 0L,
     val lastGapAt: Long = 0L,
     val lastGapLabel: String? = null,
     /**
@@ -82,6 +84,7 @@ class SetupHealthStore(context: Context) {
             FailureReason.entries.firstOrNull { it.name == name }
         },
         lastFailureLabel = prefs.getString(KEY_FAILURE_LABEL, null),
+        lastFailureCallAt = prefs.getLong(KEY_FAILURE_CALL_AT, 0L),
         lastGapAt = prefs.getLong(KEY_GAP_AT, 0L),
         lastGapLabel = prefs.getString(KEY_GAP_LABEL, null),
         lastNotReadyAt = prefs.getLong(KEY_NOTREADY_AT, 0L),
@@ -101,7 +104,7 @@ class SetupHealthStore(context: Context) {
     fun recordVerified(atMillis: Long, fingerprint: String) = prefs.edit {
         putLong(KEY_VERIFIED_AT, atMillis)
         putString(KEY_VERIFIED_FINGERPRINT, fingerprint)
-        remove(KEY_FAILURE_AT); remove(KEY_FAILURE_REASON); remove(KEY_FAILURE_LABEL)
+        remove(KEY_FAILURE_AT); remove(KEY_FAILURE_REASON); remove(KEY_FAILURE_LABEL); remove(KEY_FAILURE_CALL_AT)
         remove(KEY_GAP_AT); remove(KEY_GAP_LABEL)
         remove(KEY_NOTREADY_AT); remove(KEY_NOTREADY_LABEL); remove(KEY_NOTREADY_PREREQUISITE)
     }
@@ -111,6 +114,7 @@ class SetupHealthStore(context: Context) {
         putLong(KEY_FAILURE_AT, atMillis)
         putString(KEY_FAILURE_REASON, reason.name)
         putString(KEY_FAILURE_LABEL, label)
+        remove(KEY_FAILURE_CALL_AT)
     }
 
     /**
@@ -121,7 +125,7 @@ class SetupHealthStore(context: Context) {
      * raise it again), its own not-recorded warning is cleared (matched on the call-log start the sweep
      * stored), and the card says it was cut off instead. Any other call's warning is left alone.
      */
-    fun recordCutOff(atMillis: Long, callStartedAt: Long?, callEndedAt: Long?, label: String?) {
+    fun recordCutOff(atMillis: Long, callStartedAt: Long?, callEndedAt: Long?, label: String?, callAt: Long? = null) {
         if (callEndedAt != null) observeCall(callEndedAt)
         prefs.edit {
             if (callStartedAt != null && prefs.getLong(KEY_GAP_AT, 0L) == callStartedAt) {
@@ -130,6 +134,7 @@ class SetupHealthStore(context: Context) {
             putLong(KEY_FAILURE_AT, atMillis)
             putString(KEY_FAILURE_REASON, FailureReason.CUT_OFF.name)
             putString(KEY_FAILURE_LABEL, label)
+            if (callAt != null && callAt > 0L) putLong(KEY_FAILURE_CALL_AT, callAt) else remove(KEY_FAILURE_CALL_AT)
         }
     }
 
@@ -147,7 +152,7 @@ class SetupHealthStore(context: Context) {
             // The card says "your LAST call failed": a newer, complete call replaces that line, like a verified call does.
             // Only when this call ended after the stored failure; an unknown end cannot be ordered, so it clears nothing.
             if (callEndedAt != null && callEndedAt > prefs.getLong(KEY_FAILURE_AT, 0L)) {
-                remove(KEY_FAILURE_AT); remove(KEY_FAILURE_REASON); remove(KEY_FAILURE_LABEL)
+                remove(KEY_FAILURE_AT); remove(KEY_FAILURE_REASON); remove(KEY_FAILURE_LABEL); remove(KEY_FAILURE_CALL_AT)
             }
         }
     }
@@ -252,6 +257,7 @@ class SetupHealthStore(context: Context) {
         private const val KEY_FAILURE_AT = "last_failure_at"
         private const val KEY_FAILURE_REASON = "last_failure_reason"
         private const val KEY_FAILURE_LABEL = "last_failure_label"
+        private const val KEY_FAILURE_CALL_AT = "last_failure_call_at"
         private const val KEY_GAP_AT = "last_gap_at"
         private const val KEY_GAP_LABEL = "last_gap_label"
         private const val KEY_NOTREADY_AT = "last_notready_at"

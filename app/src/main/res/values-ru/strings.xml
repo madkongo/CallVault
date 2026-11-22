@@ -124,6 +124,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Отмеченные</string>
     <string name="home_health_failed_cut_off">Последний звонок прервался, когда телефон закрыл CallVault, — записанная до этого часть сохранена.</string>
+    <string name="home_health_failed_cut_off_at">Звонок (%1$s) прервался, когда телефон закрыл CallVault, — записанная до этого часть сохранена.</string>
     <string name="home_health_missed_shizuku">%1$s не записан — Shizuku не был запущен</string>
     <string name="home_health_missed_shizuku_unnamed">Звонок не записан — Shizuku не был запущен</string>
     <string name="home_hero_pill_recovery_stuck">Не записывает</string>
@@ -245,6 +246,7 @@
     <string name="notif_drive_backup_reason_no_answer">Google Drive не отвечает</string>
     <string name="notif_drive_backup_reason_folder">не удаётся прочитать папку Drive</string>
     <string name="notif_drive_backup_reason_error">его остановила ошибка (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">Google Drive не принимает копии</string>
     <string name="notif_health_sync_title">Записи не попадают в Drive</string>
     <string name="notif_info_channel">Уведомления CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android забыл сопряжение CallVault, поэтому звонки не записываются. Откройте CallVault и нажмите на карточку состояния, чтобы выполнить сопряжение заново.</string>

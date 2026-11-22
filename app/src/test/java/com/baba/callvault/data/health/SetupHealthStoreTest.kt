@@ -238,6 +238,33 @@ class SetupHealthStoreTest {
         assertEquals(5_000L, store.read().lastGapAt)
     }
 
+    // N16: Home words the cut-off by the CALL's time, not "your last call", so the store keeps when the call happened.
+    @Test
+    fun `a cut-off remembers when its call happened and the failure clears it`() {
+        store.recordCutOff(atMillis = 9_000L, callStartedAt = 5_000L, callEndedAt = 8_000L, label = "Anne", callAt = 5_000L)
+        assertEquals(5_000L, store.read().lastFailureCallAt)
+        store.recordFailure(20_000L, FailureReason.NO_AUDIO, null)
+        assertEquals(0L, store.read().lastFailureCallAt)
+    }
+
+    @Test
+    fun `a verified call and a newer saved-in-full call clear the cut-off's call time`() {
+        store.recordCutOff(10_000L, callStartedAt = 5_000L, callEndedAt = 9_000L, label = "Anne", callAt = 5_000L)
+        store.recordSavedInFull(callStartedAt = 20_000L, callEndedAt = 30_000L)
+        assertEquals(0L, store.read().lastFailureCallAt)
+        store.recordCutOff(40_000L, callStartedAt = null, callEndedAt = null, label = null, callAt = 35_000L)
+        store.recordVerified(50_000L, "fp")
+        assertEquals(0L, store.read().lastFailureCallAt)
+    }
+
+    @Test
+    fun `the derived failure carries the call time`() {
+        val facts = HealthFacts(lastFailureAt = 9_000L, lastFailureReason = FailureReason.CUT_OFF, lastFailureCallAt = 5_000L)
+        assertEquals(SetupHealth.LastCallFailed(9_000L, FailureReason.CUT_OFF, 5_000L), SetupHealthDeriver.derive(facts, "fp"))
+        val old = HealthFacts(lastFailureAt = 9_000L, lastFailureReason = FailureReason.CUT_OFF)
+        assertEquals(SetupHealth.LastCallFailed(9_000L, FailureReason.CUT_OFF, null), SetupHealthDeriver.derive(old, "fp"))
+    }
+
     // C139: stores are built wherever needed; the read-then-write sections must exclude each other across instances.
     @Test
     fun `two stores on the same file exclude each other while one is inside a read-then-write`() {

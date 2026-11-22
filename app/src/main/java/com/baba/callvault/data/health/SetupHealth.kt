@@ -18,7 +18,7 @@ sealed interface SetupHealth {
     /** It worked, but the setup has changed since; the next call will confirm it still does. */
     data object StaleAfterChange : SetupHealth
 
-    data class LastCallFailed(val atMillis: Long, val reason: FailureReason) : SetupHealth
+    data class LastCallFailed(val atMillis: Long, val reason: FailureReason, val callAtMillis: Long? = null) : SetupHealth
 
     /** A call happened that CallVault never saw at all. */
     data class CallNotRecorded(val atMillis: Long, val label: String?) : SetupHealth
@@ -79,7 +79,7 @@ object SetupHealthDeriver {
 
         val reason = facts.lastFailureReason
         if (reason != null && facts.lastFailureAt > facts.lastVerifiedAt) {
-            return SetupHealth.LastCallFailed(facts.lastFailureAt, reason)
+            return SetupHealth.LastCallFailed(facts.lastFailureAt, reason, facts.lastFailureCallAt.takeIf { it > 0L })
         }
         if (facts.lastVerifiedAt <= 0L) return SetupHealth.Unverified
         if (facts.verifiedFingerprint != currentFingerprint) return SetupHealth.StaleAfterChange

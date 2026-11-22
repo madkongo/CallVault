@@ -122,6 +122,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Preferiti</string>
     <string name="home_health_failed_cut_off">La tua ultima chiamata è stata interrotta quando il telefono ha chiuso CallVault: la parte registrata fino ad allora è stata salvata.</string>
+    <string name="home_health_failed_cut_off_at">La tua chiamata (%1$s) è stata interrotta quando il telefono ha chiuso CallVault: la parte registrata fino ad allora è stata salvata.</string>
     <string name="home_health_missed_shizuku">%1$s non è stata registrata — Shizuku non era in esecuzione</string>
     <string name="home_health_missed_shizuku_unnamed">Una chiamata non è stata registrata — Shizuku non era in esecuzione</string>
     <string name="home_hero_pill_recovery_stuck">Non registra</string>
@@ -243,6 +244,7 @@
     <string name="notif_drive_backup_reason_no_answer">Google Drive non risponde</string>
     <string name="notif_drive_backup_reason_folder">la cartella di Drive non può essere letta</string>
     <string name="notif_drive_backup_reason_error">un errore l’ha interrotto (%1$s)</string>
+    <string name="notif_drive_backup_reason_copies">Google Drive non accetta le copie</string>
     <string name="notif_health_sync_title">Le registrazioni non arrivano su Drive</string>
     <string name="notif_info_channel">Avvisi di CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android ha dimenticato l\'associazione di CallVault, quindi le chiamate non possono essere registrate. Apri CallVault e tocca la scheda di stato per associare di nuovo.</string>

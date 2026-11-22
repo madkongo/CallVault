@@ -46,6 +46,8 @@ object WaitingPublisher {
          * only the waveform and the question (Keep runs the rest, Delete removes it).
          */
         fun afterPublish(name: String, uri: Uri, mimeType: String, held: Boolean)
+        /** A cut-off's own length, read off the saved file for the list (review N9). Default: nothing to store. */
+        suspend fun storeCutOffLength(name: String, uri: Uri) {}
         /** One always-on line. */
         fun record(line: String)
         /** A cut-off was saved: what today's cut-off rescue does after its library entry (health record and notice). */
@@ -218,6 +220,8 @@ object WaitingPublisher {
             // A cut-off is saved exactly as today's cut-off rescue saves one (third review 2026-11-20, F3): library entry,
             // health record and notice; no automatic Drive copy or transcription, since it never got the keep-or-delete
             // question.
+            runCatching { env.storeCutOffLength(name, uri) }
+                .onFailure { env.record("length of ${CallEndLog.safeName(name)} could not be stored: ${CallEndLog.describe(it)}") }
             runCatching { env.cutOffSaved(name, note.startedAtMillis, cutAt, note.orphanStop == OrphanStop.CALL_ENDED, note.ranOnSeconds, note.appCall) }
                 .onFailure { env.record("cut-off steps for ${CallEndLog.safeName(name)} failed: ${CallEndLog.describe(it)}") }
             return@withContext Outcome.SAVED

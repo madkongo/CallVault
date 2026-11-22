@@ -121,6 +121,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">星标</string>
     <string name="home_health_failed_cut_off">你上一次通话在手机关闭 CallVault 时被中断——此前录下的部分已保存。</string>
+    <string name="home_health_failed_cut_off_at">你的通话（%1$s）在手机关闭 CallVault 时被中断——此前录下的部分已保存。</string>
     <string name="home_health_missed_shizuku">%1$s 未被录制——Shizuku 当时未运行</string>
     <string name="home_health_missed_shizuku_unnamed">有一通来电未被录制——Shizuku 当时未运行</string>
     <string name="home_hero_pill_recovery_stuck">未在录音</string>
@@ -242,6 +243,7 @@
     <string name="notif_drive_backup_reason_no_answer">Google 云端硬盘没有响应</string>
     <string name="notif_drive_backup_reason_folder">无法读取云端硬盘文件夹</string>
     <string name="notif_drive_backup_reason_error">出错而停止（%1$s）</string>
+    <string name="notif_drive_backup_reason_copies">Google 云端硬盘不接受副本</string>
     <string name="notif_health_sync_title">录音没有传到云端硬盘</string>
     <string name="notif_info_channel">CallVault 通知</string>
     <string name="notif_readiness_pairing_lost_text">Android 忘记了 CallVault 的配对，因此无法录制通话。打开 CallVault 并点按状态卡片以重新配对。</string>
