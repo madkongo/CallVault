@@ -132,7 +132,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Обрані</string>
     <string name="home_health_failed_cut_off">Останній дзвінок перервано, але записаний фрагмент збережено.</string>
-    <string name="home_health_failed_cut_off_at">Дзвінок о %1$s перервано, але записаний фрагмент збережено.</string>
+    <string name="home_health_failed_cut_off_at">Дзвінок (%1$s) перервано, але записаний фрагмент збережено.</string>
     <string name="home_health_missed_shizuku">Дзвінок %1$s не записано — Shizuku не працював</string>
     <string name="home_health_missed_shizuku_unnamed">Дзвінок не записано — Shizuku не працював</string>
     <string name="home_hero_pill_recovery_stuck">Не записує</string>

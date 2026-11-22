@@ -121,7 +121,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Gắn sao</string>
     <string name="home_health_failed_cut_off">Cuộc gọi gần nhất bị cắt khi điện thoại đóng CallVault — phần đã ghi trước đó đã được lưu.</string>
-    <string name="home_health_failed_cut_off_at">Cuộc gọi lúc %1$s bị cắt khi điện thoại đóng CallVault — phần đã ghi trước đó đã được lưu.</string>
+    <string name="home_health_failed_cut_off_at">Cuộc gọi của bạn (%1$s) bị cắt khi điện thoại đóng CallVault — phần đã ghi trước đó đã được lưu.</string>
     <string name="home_health_missed_shizuku">%1$s không được ghi âm — Shizuku không chạy</string>
     <string name="home_health_missed_shizuku_unnamed">Một cuộc gọi không được ghi âm — Shizuku không chạy</string>
     <string name="home_hero_pill_recovery_stuck">Không ghi âm</string>

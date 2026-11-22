@@ -124,7 +124,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Oznaczone</string>
     <string name="home_health_failed_cut_off">Twoje ostatnie połączenie zostało przerwane, gdy telefon zamknął CallVault — nagrana do tego momentu część została zapisana.</string>
-    <string name="home_health_failed_cut_off_at">Twoje połączenie z %1$s zostało przerwane, gdy telefon zamknął CallVault — nagrana do tego momentu część została zapisana.</string>
+    <string name="home_health_failed_cut_off_at">Twoje połączenie (%1$s) zostało przerwane, gdy telefon zamknął CallVault — nagrana do tego momentu część została zapisana.</string>
     <string name="home_health_missed_shizuku">%1$s nie zostało nagrane — Shizuku nie działało</string>
     <string name="home_health_missed_shizuku_unnamed">Połączenie nie zostało nagrane — Shizuku nie działało</string>
     <string name="home_hero_pill_recovery_stuck">Nie nagrywa</string>

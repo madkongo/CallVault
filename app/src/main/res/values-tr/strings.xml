@@ -975,7 +975,7 @@
     <string name="notif_call_saved_after_restart_text">CallVault bir arama sırasında kapandı, ancak kayıt devam etti ve aramanın tamamını %1$s olarak kaydetti.</string>
     <string name="notif_call_saved_after_restart_ran_on_text">CallVault bir arama sırasında kapandı, ancak kayıt devam etti ve aramanın tamamını %1$s olarak kaydetti. Arama bittikten sonra da %2$d sn kayıt etmeye devam etti.</string>
     <string name="home_health_failed_cut_off">Telefon CallVault’u kapattığında son aramanız kesildi — bundan önce kaydedilen kısım saklandı.</string>
-    <string name="home_health_failed_cut_off_at">Telefon CallVault’u kapattığında %1$s’deki aramanız kesildi — bundan önce kaydedilen kısım saklandı.</string>
+    <string name="home_health_failed_cut_off_at">Aramanız (%1$s) telefon CallVault’u kapattığında kesildi — bundan önce kaydedilen kısım saklandı.</string>
     <string name="settings_needs_newer_android">Android %1$s veya daha yenisi gerekir — bu telefon Android %2$s çalıştırıyor.</string>
     <string name="notif_turned_off_for_android_title">Bazı ayarlar kapatıldı</string>
     <string name="notif_turned_off_for_android_text">%1$s: bunun için bu telefondakinden (Android %2$s) daha yeni bir Android sürümü gerekir, bu yüzden kapatıldı. Telefon aramaları yine kaydedilir.</string>

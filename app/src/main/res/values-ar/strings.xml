@@ -164,7 +164,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">المفضلة</string>
     <string name="home_health_failed_cut_off">قُطِعت مكالمتك الأخيرة عندما أغلق الهاتف CallVault؛ تم حفظ الجزء الذي سُجِّل قبل ذلك.</string>
-    <string name="home_health_failed_cut_off_at">قُطِعت مكالمتك في %1$s عندما أغلق الهاتف CallVault؛ تم حفظ الجزء الذي سُجِّل قبل ذلك.</string>
+    <string name="home_health_failed_cut_off_at">قُطِعت مكالمتك (%1$s) عندما أغلق الهاتف CallVault؛ تم حفظ الجزء الذي سُجِّل قبل ذلك.</string>
     <string name="home_health_missed_shizuku">%1$s لم يتم تسجيلها: لم يكن Shizuku قيد التشغيل</string>
     <string name="home_health_missed_shizuku_unnamed">لم يتم تسجيل مكالمة: لم يكن Shizuku قيد التشغيل</string>
     <string name="home_hero_pill_recovery_stuck">لا يتم التسجيل</string>

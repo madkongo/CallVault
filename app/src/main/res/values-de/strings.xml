@@ -122,7 +122,7 @@
     <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
     <string name="home_filter_favourites_chip">Markiert</string>
     <string name="home_health_failed_cut_off">Dein letzter Anruf wurde abgeschnitten, als das Handy CallVault geschlossen hat – der bis dahin aufgenommene Teil wurde gespeichert.</string>
-    <string name="home_health_failed_cut_off_at">Dein Anruf um %1$s wurde abgeschnitten, als das Handy CallVault geschlossen hat – der bis dahin aufgenommene Teil wurde gespeichert.</string>
+    <string name="home_health_failed_cut_off_at">Dein Anruf (%1$s) wurde abgeschnitten, als das Handy CallVault geschlossen hat – der bis dahin aufgenommene Teil wurde gespeichert.</string>
     <string name="home_health_missed_shizuku">%1$s wurde nicht aufgezeichnet — Shizuku lief nicht</string>
     <string name="home_health_missed_shizuku_unnamed">Ein Anruf wurde nicht aufgezeichnet — Shizuku lief nicht</string>
     <string name="home_hero_pill_recovery_stuck">Nimmt nicht auf</string>
