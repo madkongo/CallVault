@@ -9,7 +9,7 @@
     <string name="after_call_keep">保留</string>
     <string name="after_call_delete">刪除</string>
     <string name="after_call_deleted_title">錄音已刪除</string>
-    <string name="after_call_deleted_text">幾秒後將被移除。點按“撤消”可保留。</string>
+    <string name="after_call_deleted_text">幾秒後將被移除。輕觸「撤消」可保留。</string>
     <string name="after_call_undo">撤消</string>
     <string name="after_call_popup_title">保留這段錄音？</string>
     <string name="after_call_popup_call">通話</string>
