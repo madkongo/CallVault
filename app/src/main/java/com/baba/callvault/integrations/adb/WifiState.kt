@@ -42,3 +42,21 @@ enum class WifiState {
         }.getOrDefault(UNKNOWN)
     }
 }
+
+/**
+ * Which Wi-Fi network the phone is on right now: network handle plus BSSID when the platform lets us read it.
+ * Null when there is no Wi-Fi or it cannot be read; callers treat null as "cannot tell", never as "changed".
+ */
+object WifiIdentity {
+    @Suppress("DEPRECATION")
+    fun of(context: Context): String? = runCatching {
+        val cm = context.getSystemService(ConnectivityManager::class.java) ?: return null
+        cm.allNetworks.filter { cm.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true }
+            .map { network ->
+                val info = cm.getNetworkCapabilities(network)?.transportInfo as? android.net.wifi.WifiInfo
+                val bssid = info?.bssid?.takeIf { it != "02:00:00:00:00:00" }.orEmpty()
+                "${network.networkHandle}|$bssid"
+            }
+            .sorted().joinToString(",").ifEmpty { null }
+    }.getOrNull()
+}
