@@ -177,6 +177,13 @@ class RecordingForegroundService : Service() {
             if (field != value) {
                 val oldState = field
                 field = value
+                // Home's card follows the engine's own state, not the notification (UI-1).
+                SharedStatusNotice.setLive(
+                    SharedStatusNotice.Owner.CARRIER,
+                    (value as? RecordingServiceState.Active)?.let {
+                        if (it.isPaused) SharedStatusNotice.Live.PAUSED else SharedStatusNotice.Live.RECORDING
+                    } ?: SharedStatusNotice.Live.NONE,
+                )
                 updateNotification()
                 notificationHelper.handleStateChangeToasts(oldState, value)
             }
@@ -559,6 +566,7 @@ class RecordingForegroundService : Service() {
         stopRequested = true
         serviceScope.cancel()
         stopRecordingSessionAndService()
+        SharedStatusNotice.setLive(SharedStatusNotice.Owner.CARRIER, SharedStatusNotice.Live.NONE)
         super.onDestroy()
     }
 

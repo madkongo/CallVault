@@ -2834,7 +2834,7 @@ private fun HeroStatusCard(
     // Off is the user's own choice, not a fault — show it calmly (neutral), never as a warning.
     val isUserOff = status == HomeViewModel.HomeStatus.STOPPED
     // Warming up after a Start: in progress, not a fault — also calm/neutral, never a warning.
-    val isStarting = status == HomeViewModel.HomeStatus.STARTING || status == HomeViewModel.HomeStatus.RECORDING
+    val isStarting = status == HomeViewModel.HomeStatus.STARTING || status == HomeViewModel.HomeStatus.RECORDING || status == HomeViewModel.HomeStatus.RECORDING_PAUSED
     // A healthy setup that has never been proved still reads as ready; only a real problem flips the card.
     val showsProblem = !isUserOff && !isStarting && (!status.isReady || health.isProblem)
     val accent: Color = when {
@@ -2846,6 +2846,7 @@ private fun HeroStatusCard(
         status == HomeViewModel.HomeStatus.STOPPED -> Icons.Filled.StopCircle
         status == HomeViewModel.HomeStatus.STARTING -> Icons.Filled.Sync
         status == HomeViewModel.HomeStatus.RECORDING -> Icons.Filled.Mic
+        status == HomeViewModel.HomeStatus.RECORDING_PAUSED -> Icons.Filled.Mic
         showsProblem -> Icons.Filled.WarningAmber
         else -> Icons.Filled.CheckCircle
     }
@@ -2877,7 +2878,7 @@ private fun HeroStatusCard(
         // Warming up — in progress, neutral while it settles.
         HomeViewModel.HomeStatus.STARTING -> CvTone.Neutral
         // A call is being recorded: calm, in progress.
-        HomeViewModel.HomeStatus.RECORDING -> CvTone.Neutral
+        HomeViewModel.HomeStatus.RECORDING, HomeViewModel.HomeStatus.RECORDING_PAUSED -> CvTone.Neutral
     }
     val pillText = when (status) {
         HomeViewModel.HomeStatus.READY -> stringResource(R.string.home_hero_pill_ready)
@@ -2896,6 +2897,7 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.STOPPED -> stringResource(R.string.home_hero_pill_stopped)
         HomeViewModel.HomeStatus.STARTING -> stringResource(R.string.home_hero_pill_starting)
         HomeViewModel.HomeStatus.RECORDING -> stringResource(R.string.recording_notification_title)
+        HomeViewModel.HomeStatus.RECORDING_PAUSED -> stringResource(R.string.recording_toast_paused)
     }
 
     // Subtle accent-tinted surface so the banner reads as a confident state, not a stock card.

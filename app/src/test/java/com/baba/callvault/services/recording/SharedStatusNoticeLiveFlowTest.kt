@@ -1,43 +1,50 @@
 package com.baba.callvault.services.recording
 
-import android.app.Notification
-import android.content.Context
-import androidx.core.app.NotificationCompat
-import androidx.test.core.app.ApplicationProvider
 import org.junit.After
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
-/** UI-1: Home follows "a call is being recorded" live, through [SharedStatusNotice.heldByRecordingFlow]. */
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
+/** UI-1: Home follows the real recording state through [SharedStatusNotice.liveFlow], independent of notification claims. */
 class SharedStatusNoticeLiveFlowTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private fun notification(): Notification = NotificationCompat.Builder(context, "test").setContentTitle("x").build()
 
     @After
     fun reset() = SharedStatusNotice.resetForTest()
 
+    private val carrier = SharedStatusNotice.Owner.CARRIER
+    private val voip = SharedStatusNotice.Owner.VOIP
+
     @Test
-    fun `the flow follows claim and release`() {
-        assertFalse(SharedStatusNotice.heldByRecordingFlow.value)
-        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, notification())
-        assertTrue(SharedStatusNotice.heldByRecordingFlow.value)
-        SharedStatusNotice.claim(SharedStatusNotice.Owner.VOIP, notification())
-        SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
-        assertTrue("an app call still holds it", SharedStatusNotice.heldByRecordingFlow.value)
-        SharedStatusNotice.release(SharedStatusNotice.Owner.VOIP)
-        assertFalse(SharedStatusNotice.heldByRecordingFlow.value)
+    fun `nothing is live at first`() = assertEquals(SharedStatusNotice.Live.NONE, SharedStatusNotice.live)
+
+    @Test
+    fun `recording then paused then ended`() {
+        SharedStatusNotice.setLive(carrier, SharedStatusNotice.Live.RECORDING)
+        assertEquals(SharedStatusNotice.Live.RECORDING, SharedStatusNotice.liveFlow.value)
+        SharedStatusNotice.setLive(carrier, SharedStatusNotice.Live.PAUSED)
+        assertEquals(SharedStatusNotice.Live.PAUSED, SharedStatusNotice.live)
+        SharedStatusNotice.setLive(carrier, SharedStatusNotice.Live.NONE)
+        assertEquals(SharedStatusNotice.Live.NONE, SharedStatusNotice.live)
     }
 
     @Test
-    fun `reset clears the flow`() {
-        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, notification())
+    fun `an app call needs no notification claim to count`() {
+        SharedStatusNotice.setLive(voip, SharedStatusNotice.Live.RECORDING)
+        assertEquals(SharedStatusNotice.Live.RECORDING, SharedStatusNotice.live)
+    }
+
+    @Test
+    fun `two overlapping calls keep it recording until both end, and recording wins over paused`() {
+        SharedStatusNotice.setLive(carrier, SharedStatusNotice.Live.PAUSED)
+        SharedStatusNotice.setLive(voip, SharedStatusNotice.Live.RECORDING)
+        assertEquals(SharedStatusNotice.Live.RECORDING, SharedStatusNotice.live)
+        SharedStatusNotice.setLive(voip, SharedStatusNotice.Live.NONE)
+        assertEquals(SharedStatusNotice.Live.PAUSED, SharedStatusNotice.live)
+    }
+
+    @Test
+    fun `reset clears it`() {
+        SharedStatusNotice.setLive(carrier, SharedStatusNotice.Live.RECORDING)
         SharedStatusNotice.resetForTest()
-        assertFalse(SharedStatusNotice.heldByRecordingFlow.value)
+        assertEquals(SharedStatusNotice.Live.NONE, SharedStatusNotice.live)
     }
 }

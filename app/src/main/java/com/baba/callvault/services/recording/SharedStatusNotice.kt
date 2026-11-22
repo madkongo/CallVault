@@ -59,10 +59,34 @@ object SharedStatusNotice {
     @Volatile
     var foregroundPoster: ((Notification) -> Boolean)? = null
 
-    private val heldFlow = MutableStateFlow(false)
+    /** What Home's card should say about the recording that is really running (UI-1). */
+    enum class Live { NONE, RECORDING, PAUSED }
 
-    /** [isHeldByRecording] as a flow, so Home's status card follows a call starting and ending while it is open (UI-1). */
-    val heldByRecordingFlow: StateFlow<Boolean> get() = heldFlow
+    private val liveByOwner = LinkedHashMap<Owner, Live>()
+    private val liveState = MutableStateFlow(Live.NONE)
+
+    /**
+     * The live recording state as a flow, so Home follows a call starting, pausing and ending while it is open.
+     * Set by the engine's own state (carrier) or by the app-call recorder, NOT by the notification claim: an app
+     * call recorded with notification permission denied has no claim but is still recording.
+     */
+    val liveFlow: StateFlow<Live> get() = liveState
+
+    /** The live state now. */
+    val live: Live get() = liveState.value
+
+    /** [owner] is recording ([paused] false) or holding a paused recording; [Live.NONE] clears it. */
+    fun setLive(owner: Owner, state: Live) {
+        synchronized(liveByOwner) {
+            if (state == Live.NONE) liveByOwner.remove(owner) else liveByOwner[owner] = state
+            // Recording wins over paused when two calls overlap.
+            liveState.value = when {
+                liveByOwner.containsValue(Live.RECORDING) -> Live.RECORDING
+                liveByOwner.containsValue(Live.PAUSED) -> Live.PAUSED
+                else -> Live.NONE
+            }
+        }
+    }
 
     /** True while any recorded call owns the notification. */
     val isHeldByRecording: Boolean get() = synchronized(claims) { claims.isNotEmpty() }
@@ -78,7 +102,6 @@ object SharedStatusNotice {
         synchronized(claims) {
             claims.remove(owner)
             claims[owner] = notification
-            heldFlow.value = true
         }
     }
 
@@ -87,11 +110,7 @@ object SharedStatusNotice {
      * owner's claim is left alone: the keep-alive then re-posts that one, not "Ready".
      */
     fun release(owner: Owner) {
-        val released = synchronized(claims) {
-            val removed = claims.remove(owner) != null
-            heldFlow.value = claims.isNotEmpty()
-            removed
-        }
+        val released = synchronized(claims) { claims.remove(owner) != null }
         if (released) onReleased?.invoke()
     }
 
@@ -122,7 +141,8 @@ object SharedStatusNotice {
     @VisibleForTesting
     fun resetForTest() {
         synchronized(claims) { claims.clear() }
-        heldFlow.value = false
+        synchronized(liveByOwner) { liveByOwner.clear() }
+        liveState.value = Live.NONE
         onReleased = null
         foregroundPoster = null
     }

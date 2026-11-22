@@ -51,6 +51,12 @@ object VoipRecordingNotification {
         // Its channel is created by the phone-call service; a phone that only records app calls may not have it yet.
         RecordingNotificationHelper.ensureChannels(context)
         val notification = build(context, appLabel, marks, paused, heldForCall)
+        // Before the permission check: an app call recorded with notifications denied is still being recorded,
+        // and Home's card must say so (UI-1).
+        SharedStatusNotice.setLive(
+            SharedStatusNotice.Owner.VOIP,
+            if (paused || heldForCall) SharedStatusNotice.Live.PAUSED else SharedStatusNotice.Live.RECORDING,
+        )
         if (!PermissionChecks.hasNotificationPermission(context)) return
         // Posted under the keep-alive's id and claimed, exactly like a carrier call (issue #31): one
         // notification during the call, with Pause, Mark and Stop, instead of this one beside "Ready"
@@ -136,6 +142,7 @@ object VoipRecordingNotification {
 
     fun dismiss(context: Context) {
         runCatching { NotificationManagerCompat.from(context).cancel(LEGACY_NOTIFICATION_ID) }
+        SharedStatusNotice.setLive(SharedStatusNotice.Owner.VOIP, SharedStatusNotice.Live.NONE)
         // Hands the shared id back: the keep-alive puts "Ready to record calls" in its place.
         SharedStatusNotice.release(SharedStatusNotice.Owner.VOIP)
     }

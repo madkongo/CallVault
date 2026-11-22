@@ -31,7 +31,7 @@ object ReadinessRecompute {
         connected: Flow<Boolean>,
         wifiChanges: Flow<Unit>,
         folderChanges: StateFlow<Long>? = null,
-        recordingLive: StateFlow<Boolean>? = null,
+        recordingLive: StateFlow<*>? = null,
     ): Flow<Unit> {
         val sources = ArrayList<Flow<Unit>>(4)
         sources += connected.drop(1).map { }

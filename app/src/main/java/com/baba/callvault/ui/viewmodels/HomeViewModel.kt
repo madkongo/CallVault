@@ -170,9 +170,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         STARTING(R.string.notif_readiness_starting_title, R.string.notif_readiness_starting_text),
         /**
          * A call is being recorded right now (UI-1): Home used to keep saying "Ready to record". Reuses the recording
-         * notification's own wording, so the card and the notification say one thing. Neutral on the card, not a fault.
+         * notification's own wording. Shown only while the engine (or the app-call recorder) really is recording, so
+         * a recorder that is down or any other warning is never hidden behind it.
          */
         RECORDING(R.string.recording_notification_title, R.string.recording_notification_recording),
+        /** The same call, paused: "Recording paused." / "Paused. Nothing is being saved right now." (existing strings). */
+        RECORDING_PAUSED(R.string.recording_toast_paused, R.string.voip_recording_paused),
         READY(R.string.home_status_ready_title, R.string.home_status_ready_suggestion, isReady = true)
     }
 
@@ -632,7 +635,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val wifiChanges = WifiChanges.of(appContext.getSystemService(android.net.ConnectivityManager::class.java))
         viewModelScope.launch {
             ReadinessRecompute.triggers(
-                RecorderConnection.connected, wifiChanges, RecordingFolderCheck.changes, SharedStatusNotice.heldByRecordingFlow,
+                RecorderConnection.connected, wifiChanges, RecordingFolderCheck.changes, SharedStatusNotice.liveFlow,
             ).collect {
                 _uiState.update { state -> state.copy(status = computeStatus()) }
             }
@@ -1305,7 +1308,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             RecordingState.ACTIVE -> Unit
         }
         // A call is being recorded: that is the truth to show, whatever the setup checks below would say.
-        if (SharedStatusNotice.isHeldByRecording) return statusWhileRecording(HomeStatus.READY, true)
+        statusForLive(SharedStatusNotice.live)?.let { return it }
         // Just turned on and still warming up past the grace: say "Starting up…" honestly rather than
         // claiming Ready. A fast warm-up (~1s) never crosses STARTING_GRACE_MS, so this never flashes for
         // the common case; capped at STARTING_MAX_MS so a long-settled daemon that later drops is left to
@@ -1697,9 +1700,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         ): HomeStatus =
             recorderDown() ?: battery() ?: if (recoveryStuck()) HomeStatus.RECOVERY_STUCK else HomeStatus.READY
 
-        /** [base], or [HomeStatus.RECORDING] while a call is being recorded (UI-1). */
-        internal fun statusWhileRecording(base: HomeStatus, recordingLive: Boolean): HomeStatus =
-            if (recordingLive) HomeStatus.RECORDING else base
+        /** The card for a live recording (UI-1), or null when none is running and the normal checks decide. */
+        internal fun statusForLive(live: SharedStatusNotice.Live): HomeStatus? = when (live) {
+            SharedStatusNotice.Live.NONE -> null
+            SharedStatusNotice.Live.RECORDING -> HomeStatus.RECORDING
+            SharedStatusNotice.Live.PAUSED -> HomeStatus.RECORDING_PAUSED
+        }
 
         internal fun statusForNotice(notice: ReadinessNotice, usbDebuggingOn: Boolean = false): HomeStatus? = when (notice) {
             ReadinessNotice.NEEDS_WIFI, ReadinessNotice.NEEDS_WIFI_TO_RESTART -> HomeStatus.NEEDS_WIFI
