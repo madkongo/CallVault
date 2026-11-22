@@ -74,6 +74,9 @@ class OrphanRecorderSessionTest {
         val rescuedNow = mutableListOf<File>()
         override fun orphanStagingFile(exclude: File?): File? = stagingFile
         override fun scheduleRescueNow(file: File) { rescuedNow += file }
+        val marks = mutableListOf<Pair<File, Boolean>>()
+        var markWorks = true
+        override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean { marks += file to callEnded; return markWorks }
         override fun record(line: String) { lines.add(line) }
     }
 
@@ -391,24 +394,39 @@ class OrphanRecorderSessionTest {
     }
 
     @Test
-    fun `a stopped orphan whose file is known is rescued at once, not after the quiet wait`() {
+    fun `a stopped orphan whose file is known is marked and queued for the short-guard rescue`() {
         val recorder = FakeRecorder().apply { start("call1") }
         val staged = File("/staging/call1.ogg")
         val env = FakeEnv(inCall = false, orphanStart = call1Start).apply { stagingFile = staged }
 
-        OrphanRecorderSession.resolve(recorder, env, "phone call ended")
+        OrphanRecorderSession.resolve(recorder, env, OrphanRecorderSession.TRIGGER_PHONE_CALL_ENDED)
 
+        assertEquals(listOf(staged to true), env.marks)
         assertEquals(listOf(staged), env.rescuedNow)
         assertEquals("the quiet-wait request is still queued as the safety net", 1, env.rescues)
+        assertTrue(env.lines.any { it.contains("instant rescue queued") && it.contains("savedInFull=true") })
     }
 
     @Test
-    fun `a failed stop is never rescued at once`() {
+    fun `only the phone-call-ended stop claims the call was saved in full`() {
+        listOf("app start", "call start, /x", "rescue check", "app call ended").forEach { trigger ->
+            val recorder = FakeRecorder().apply { start("call1") }
+            val env = FakeEnv(inCall = false, orphanStart = call1Start).apply { stagingFile = File("/staging/call1.ogg") }
+
+            OrphanRecorderSession.resolve(recorder, env, trigger)
+
+            assertEquals(trigger, listOf(File("/staging/call1.ogg") to false), env.marks)
+        }
+    }
+
+    @Test
+    fun `a failed stop is never marked or rescued at once`() {
         val recorder = FakeRecorder().apply { start("call1"); stopWorks = false }
         val env = FakeEnv(inCall = false, orphanStart = call1Start).apply { stagingFile = File("/staging/call1.ogg") }
 
-        OrphanRecorderSession.resolve(recorder, env, "phone call ended")
+        OrphanRecorderSession.resolve(recorder, env, OrphanRecorderSession.TRIGGER_PHONE_CALL_ENDED)
 
+        assertTrue(env.marks.isEmpty())
         assertTrue(env.rescuedNow.isEmpty())
         assertEquals(1, env.rescues)
     }
@@ -422,5 +440,16 @@ class OrphanRecorderSessionTest {
 
         assertTrue(env.rescuedNow.isEmpty())
         assertEquals(1, env.rescues)
+    }
+
+    @Test
+    fun `a file that cannot be marked is not queued for the instant rescue, and the log says so`() {
+        val recorder = FakeRecorder().apply { start("call1") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start).apply { stagingFile = File("/staging/call1.ogg"); markWorks = false }
+
+        OrphanRecorderSession.resolve(recorder, env, OrphanRecorderSession.TRIGGER_PHONE_CALL_ENDED)
+
+        assertTrue(env.rescuedNow.isEmpty())
+        assertTrue(env.lines.any { it.contains("could not mark") })
     }
 }

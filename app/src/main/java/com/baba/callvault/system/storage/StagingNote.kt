@@ -10,6 +10,17 @@ package com.baba.callvault.system.storage
 
 import java.io.File
 
+/** What the app knows about how a recorder session that outlived the app ended; see [StagingNote.orphanStop]. */
+enum class OrphanStop {
+    NONE,
+
+    /** The recorder confirmed it stopped this file; whether the call's end was inside it is not known. */
+    STOPPED,
+
+    /** As [STOPPED], and the stop came when the phone call ended: the file covers the call to its end. */
+    CALL_ENDED,
+}
+
 /**
  * Where a staged recording was going, written beside it the moment it starts.
  *
@@ -23,6 +34,7 @@ data class StagingNote(
     val fileName: String,
     val mimeType: String,
     val startedAtMillis: Long,
+    val orphanStop: OrphanStop = OrphanStop.NONE,
 ) {
     fun encode(): String = listOf(
         "v=1",
@@ -30,7 +42,7 @@ data class StagingNote(
         "name=$fileName",
         "mime=$mimeType",
         "started=$startedAtMillis",
-    ).joinToString("\n")
+    ).plus(if (orphanStop == OrphanStop.NONE) emptyList() else listOf("orphan=${orphanStop.name}")).joinToString("\n")
 
     companion object {
         /** Appended to the staged file's name: `rec_stage_123.tmp` → `rec_stage_123.tmp.note`. */
@@ -60,7 +72,18 @@ data class StagingNote(
                 fileName = fields["name"]?.takeIf { it.isNotBlank() } ?: return null,
                 mimeType = fields["mime"]?.takeIf { it.isNotBlank() } ?: return null,
                 startedAtMillis = fields["started"]?.toLongOrNull() ?: return null,
+                orphanStop = fields["orphan"]?.let { v -> OrphanStop.entries.firstOrNull { it.name == v } } ?: OrphanStop.NONE,
             )
+        }
+
+        /**
+         * Writes [stop] into the note beside [staged]. Returns false when there is no readable note (nothing is written).
+         * The mark travels with the file, whichever worker publishes it, even after it moved into waiting storage.
+         */
+        fun markOrphanStop(staged: File, stop: OrphanStop): Boolean {
+            val noteFile = fileFor(staged)
+            val note = noteFile.takeIf { it.exists() }?.let { runCatching { decode(it.readText()) }.getOrNull() } ?: return false
+            return runCatching { noteFile.writeText(note.copy(orphanStop = stop).encode()); true }.getOrDefault(false)
         }
     }
 }

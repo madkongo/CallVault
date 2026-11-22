@@ -91,7 +91,7 @@ class WaitingPublisherTest {
         override fun afterPublish(name: String, uri: Uri, mimeType: String, held: Boolean) { after += name; this.held += held }
         override fun record(line: String) { lines += line }
         val cutOffs = mutableListOf<String>()
-        override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long) { cutOffs += name }
+        override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long, savedInFull: Boolean) { cutOffs += name }
     }
 
     @Test

@@ -970,6 +970,8 @@
     <string name="notif_readiness_pairing_lost_text">Android CallVault’un eşleştirmesini unuttu, bu yüzden aramalar kaydedilemiyor. CallVault’u açın ve yeniden eşleştirmek için durum kartına dokunun.</string>
     <string name="notif_cut_off_saved_title">Bir arama kesildi</string>
     <string name="notif_cut_off_saved_text">Telefonunuz bir arama sırasında CallVault’u kapattı. Bundan önce kaydedilenler %1$s olarak kaydedildi.</string>
+    <string name="notif_call_saved_after_restart_title">CallVault yeniden başladıktan sonra arama kaydedildi</string>
+    <string name="notif_call_saved_after_restart_text">CallVault bir arama sırasında kapandı, ancak kayıt devam etti ve aramanın tamamını %1$s olarak kaydetti.</string>
     <string name="home_health_failed_cut_off">Telefon CallVault’u kapattığında son aramanız kesildi — bundan önce kaydedilen kısım saklandı.</string>
     <string name="settings_needs_newer_android">Android %1$s veya daha yenisi gerekir — bu telefon Android %2$s çalıştırıyor.</string>
     <string name="notif_turned_off_for_android_title">Bazı ayarlar kapatıldı</string>

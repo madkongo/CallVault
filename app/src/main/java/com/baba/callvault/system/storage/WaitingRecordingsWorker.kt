@@ -143,8 +143,8 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
 
         override fun record(line: String) = CallEndLog.record(context, line)
 
-        override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long) =
-            CutOffRescueWorker.recordSaved(context, name, startedAt, cutAt)
+        override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long, savedInFull: Boolean) =
+            CutOffRescueWorker.recordSaved(context, name, startedAt, cutAt, savedInFull)
     }
 
     companion object {

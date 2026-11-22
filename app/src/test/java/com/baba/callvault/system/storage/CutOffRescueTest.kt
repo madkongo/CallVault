@@ -142,21 +142,30 @@ class CutOffRescueTest {
         ownedByLiveRecording = ownedByLiveRecording, confirmedStopped = confirmedStopped,
     )
 
-    // A file the recorder confirmed stopped is finished by definition: no quiet wait, and a later call does not matter.
+    // A file the recorder confirmed stopped skips the 90 s wait and the call-up check, but not a short quiet guard:
+    // the recorder answers "not recording" before the muxer trailer is written.
+    private val guard = CutOffRescuePolicy.CONFIRMED_QUIET_MS
+
     @Test
-    fun `a confirmed-stopped file is saved at once, even when it is fresh and another call is up`() {
-        assertEquals(RescueDecision.SAVE_NAMED, decide(ageMs = 0, callActive = true, confirmedStopped = true))
+    fun `a confirmed-stopped file is saved once it has been quiet for the short guard, even with another call up`() {
+        assertEquals(RescueDecision.SAVE_NAMED, decide(ageMs = guard, callActive = true, confirmedStopped = true))
+    }
+
+    @Test
+    fun `a confirmed-stopped file still being written is not saved yet`() {
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 0, confirmedStopped = true))
+        assertEquals(RescueDecision.WAIT, decide(ageMs = guard - 1, confirmedStopped = true))
     }
 
     @Test
     fun `a confirmed-stopped file still held by a live recording here is never touched`() {
-        assertEquals(RescueDecision.WAIT, decide(ageMs = 0, ownedByLiveRecording = true, confirmedStopped = true))
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 10 * guard, ownedByLiveRecording = true, confirmedStopped = true))
     }
 
     @Test
     fun `a confirmed-stopped file keeps the note rules`() {
-        assertEquals(RescueDecision.DISCARD_EMPTY, decide(sizeBytes = 0, ageMs = 0, confirmedStopped = true))
-        assertEquals(RescueDecision.LEAVE_UNATTRIBUTED, decide(hasNote = false, ageMs = 0, confirmedStopped = true))
+        assertEquals(RescueDecision.DISCARD_EMPTY, decide(sizeBytes = 0, ageMs = guard, confirmedStopped = true))
+        assertEquals(RescueDecision.LEAVE_UNATTRIBUTED, decide(hasNote = false, ageMs = guard, confirmedStopped = true))
     }
 
     @Test

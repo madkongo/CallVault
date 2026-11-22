@@ -47,12 +47,15 @@ object CutOffRescuePolicy {
      */
     const val QUIET_MS = 90_000L
 
+    /** The quiet a file the recorder confirmed stopped must still show: more than twice the recorder's 6 s stop wait. */
+    const val CONFIRMED_QUIET_MS = 15_000L
+
     /**
      * @param ownedByLiveRecording a recording in this process still owns the file ([LiveStagingFiles]): a paused
      *   recording is quiet for as long as the pause lasts, and a LINE call shows no call mode (review C12).
      * @param confirmedStopped the recorder was asked to stop this very file and confirmed it no longer records
-     *   ([com.baba.callvault.services.recording.OrphanRecorderSession]). Nothing writes it any more, so the quiet
-     *   wait and the call-up check, which only exist to guess that, do not apply. A live recording here still wins.
+     *   ([com.baba.callvault.services.recording.OrphanRecorderSession]). The 90 s quiet wait and the call-up check,
+     *   which only exist to guess that, do not apply; the short [CONFIRMED_QUIET_MS] does. A live recording here wins.
      */
     fun decide(
         hasNote: Boolean,
@@ -65,6 +68,9 @@ object CutOffRescuePolicy {
         ownedByLiveRecording -> RescueDecision.WAIT
         !confirmedStopped && callActive -> RescueDecision.WAIT
         !confirmedStopped && ageMs < QUIET_MS -> RescueDecision.WAIT
+        // The recorder answers "not recording" before the muxer's trailer is written (stopRecording returns after
+        // its 6 s wait even if teardown still runs). A short quiet guard keeps a truncated copy from being published.
+        confirmedStopped && ageMs < CONFIRMED_QUIET_MS -> RescueDecision.WAIT
         // A note is what proves this file is an interrupted recording (the publish path deletes the temp
         // on success, so a note-bearing temp that survived is genuinely a cut-off). Empty-vs-note order:
         // an empty note-bearing temp still holds no audio, so cleaning it is right.

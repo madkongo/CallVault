@@ -223,6 +223,8 @@
     <string name="note_saved">Сохранено</string>
     <string name="note_saving">Сохранение…</string>
     <string name="notif_cut_off_saved_text">Телефон закрыл CallVault во время звонка. Записанное до этого момента сохранено как %1$s.</string>
+    <string name="notif_call_saved_after_restart_title">Звонок сохранён после перезапуска CallVault</string>
+    <string name="notif_call_saved_after_restart_text">CallVault закрылся во время звонка, но запись продолжилась и сохранила весь звонок как %1$s.</string>
     <string name="notif_cut_off_saved_title">Звонок был прерван</string>
     <string name="notif_health_channel">Проблемы, требующие внимания</string>
     <string name="notif_health_recorder_text">Звонки не будут записываться, пока телефон один раз не подключится к сети Wi-Fi. Подойдёт любая сеть, интернет не нужен — хватит нескольких секунд, дальше всё работает и без Wi-Fi.</string>

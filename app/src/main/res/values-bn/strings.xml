@@ -899,6 +899,8 @@
     <string name="notif_readiness_pairing_lost_text">Android CallVault-এর পেয়ারিং ভুলে গেছে, তাই কল রেকর্ড করা যাচ্ছে না। আবার পেয়ার করতে CallVault খুলে স্ট্যাটাস কার্ডে ট্যাপ করুন।</string>
     <string name="notif_cut_off_saved_title">একটি কল মাঝপথে কেটে গেছে</string>
     <string name="notif_cut_off_saved_text">কলের সময় আপনার ফোন CallVault বন্ধ করে দিয়েছে। তার আগে যা রেকর্ড হয়েছিল তা %1$s নামে সেভ হয়েছে।</string>
+    <string name="notif_call_saved_after_restart_title">CallVault আবার চালু হওয়ার পর কল সংরক্ষিত হয়েছে</string>
+    <string name="notif_call_saved_after_restart_text">কলের সময় CallVault বন্ধ হয়ে গিয়েছিল, কিন্তু রেকর্ডার চলতে থাকে এবং পুরো কলটি %1$s নামে সংরক্ষণ করেছে।</string>
     <string name="home_health_failed_cut_off">ফোন CallVault বন্ধ করে দেওয়ায় আপনার শেষ কলটি মাঝপথে কেটে গেছে — তার আগে রেকর্ড হওয়া অংশ সেভ হয়েছে।</string>
     <string name="settings_needs_newer_android">Android %1$s বা নতুন দরকার — এই ফোনে Android %2$s চলছে।</string>
     <string name="notif_turned_off_for_android_title">কিছু সেটিং বন্ধ করা হয়েছে</string>

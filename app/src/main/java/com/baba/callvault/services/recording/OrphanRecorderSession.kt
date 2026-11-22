@@ -20,6 +20,7 @@ import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.system.storage.SafHelper
+import com.baba.callvault.system.storage.OrphanStop
 import com.baba.callvault.system.storage.StagingNote
 import com.baba.callvault.utils.AppLogger
 import java.io.File
@@ -45,6 +46,9 @@ import java.io.File
 object OrphanRecorderSession {
 
     private const val TAG = "CV:OrphanSession"
+
+    /** The trigger of the settle that follows a phone call ending: the only stop that proves the file holds the call's end. */
+    const val TRIGGER_PHONE_CALL_ENDED = "phone call ended"
     private const val PREFS = "orphan_session"
     private const val KEY_LAST_NO_CALL_AT = "last_no_call_at"
     private const val KEY_LIVE_CALL_BEGAN_AT = "live_call_began_at"
@@ -74,7 +78,12 @@ object OrphanRecorderSession {
         fun scheduleRescue()
         /** The staged file the orphan was writing, when known; null when it cannot be told (then no instant rescue). */
         fun orphanStagingFile(exclude: File?): File? = null
-        /** [file] is finished (the recorder confirmed it stopped): publish it now, as a call saved in full. */
+        /**
+         * Marks [file] as stopped by the recorder ([callEnded]: and its call's end is inside it), so whichever worker
+         * publishes it knows. False when it could not be marked (no readable note).
+         */
+        fun markOrphanStopped(file: File, callEnded: Boolean): Boolean = false
+        /** Queue the short-guard rescue of the marked [file]: published once it has been quiet for a few seconds. */
         fun scheduleRescueNow(file: File) = scheduleRescue()
         fun record(line: String)
     }
@@ -123,8 +132,17 @@ object OrphanRecorderSession {
                 } else {
                     env.markNoSession()
                     env.record("orphan session [$trigger]: stopped; its file goes to the cut-off rescue under its own call's name")
-                    // The file is finalised and its call is over: publish it now, not after the quiet wait.
-                    stagingFile?.let(env::scheduleRescueNow)
+                    // Finalised, call over: publish after a short guard (the recorder answers before the trailer is
+                    // written), not after the 2-minute quiet wait. Only the phone-call-ended stop is "saved in full".
+                    if (stagingFile != null) {
+                        val callEnded = trigger == TRIGGER_PHONE_CALL_ENDED
+                        if (env.markOrphanStopped(stagingFile, callEnded)) {
+                            env.record("orphan session [$trigger]: instant rescue queued for ${CallEndLog.safeName(stagingFile.name)} (savedInFull=$callEnded)")
+                            env.scheduleRescueNow(stagingFile)
+                        } else {
+                            env.record("orphan session [$trigger]: could not mark ${CallEndLog.safeName(stagingFile.name)} as stopped (no readable note); it waits for the quiet-wait rescue")
+                        }
+                    }
                 }
                 // Scheduled either way: the quiet-wait request is the safety net, a failed stop is looked at again.
                 env.scheduleRescue()
@@ -278,9 +296,21 @@ object OrphanRecorderSession {
 
         override fun scheduleRescue() = CutOffRescueWorker.schedule(context)
 
-        override fun orphanStagingFile(exclude: File?): File? =
-            prefs.getString(KEY_SESSION_STAGING, null)?.let(::File)
-                ?.takeIf { it.absolutePath != exclude?.absolutePath && it.exists() }
+        override fun orphanStagingFile(exclude: File?): File? {
+            val path = prefs.getString(KEY_SESSION_STAGING, null)
+            val file = path?.let(::File)
+            val why = when {
+                file == null -> "no session file was recorded"
+                file.absolutePath == exclude?.absolutePath -> "the recorded session file is the starting call's own"
+                !file.exists() -> "the recorded session file is gone"
+                else -> null
+            }
+            if (why != null) record("orphan session: no instant rescue, $why; the quiet-wait rescue covers it")
+            return if (why == null) file else null
+        }
+
+        override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean =
+            StagingNote.markOrphanStop(file, if (callEnded) OrphanStop.CALL_ENDED else OrphanStop.STOPPED)
 
         override fun scheduleRescueNow(file: File) = CutOffRescueWorker.scheduleConfirmed(context, file)
 
