@@ -635,8 +635,6 @@ class DaemonKeepAliveService : Service() {
     private val wifiJoinCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onLost(network: Network) {
             lastWifiLostAtMs = SystemClock.elapsedRealtime()
-            // A run queued for "last start + 30 s" would fire while Wi-Fi is down; the next onAvailable reschedules it.
-            watchdogHandler.removeCallbacks(approveJoinedWifi)
         }
 
         override fun onAvailable(network: Network) {
