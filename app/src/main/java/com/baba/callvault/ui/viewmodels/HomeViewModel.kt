@@ -595,6 +595,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     private var listJob: Job? = null
     private var listReloadPending = false
+    private val quietReloadGate = QuietReloadGate()
     private var watchingCatalog = false
     private val _isPullRefreshing = MutableStateFlow(false)
     /** N26: the proactive battery-exemption ask is written to the always-on log once per process. */
@@ -957,7 +958,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Told by the screen when the app comes to the front or leaves it; see [QuietReloadGate]. */
+    fun setUiVisible(visible: Boolean) = quietReloadGate.setUiVisible(visible)
+
     private fun reloadListQuietly() {
+        if (!quietReloadGate.mayReloadQuietly()) {
+            AppLogger.d(TAG, "Catalog changed with no UI visible; the list reloads on the next resume")
+            return
+        }
         if (listJob?.isActive == true) {
             listReloadPending = true
             return
@@ -1102,7 +1110,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             // Exactly one catch-up pass, whatever number of refreshes arrived while this one ran.
             if (listReloadPending) {
                 listReloadPending = false
-                startListPass(computeStatus())
+                // Hidden meanwhile: the resume refresh does this pass for a user who can see it.
+                if (quietReloadGate.mayReloadQuietly()) startListPass(computeStatus())
             }
         }
     }

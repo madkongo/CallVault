@@ -272,6 +272,8 @@ fun AppNavigationScreen(
                 // building HomeViewModel there would start a full recordings pass behind the wizard.
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_START) homeViewModel.setUiVisible(true)
+                        if (event == Lifecycle.Event.ON_STOP) homeViewModel.setUiVisible(false)
                         if (event == Lifecycle.Event.ON_RESUME) {
                             homeViewModel.onHomeVisible()
                             homeViewModel.refresh()
