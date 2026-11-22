@@ -8,6 +8,7 @@
 
 package com.baba.callvault.system.storage
 
+import com.baba.callvault.utils.LogRedaction
 import com.baba.callvault.data.recordings.ImportedRecording
 
 /** What an already-present destination file (same display name) means for a pending copy. */
@@ -172,4 +173,17 @@ object CloudCopyPolicy {
      * is no gate at all.
      */
     fun mayGoToCloud(displayName: String): Boolean = !ImportedRecording.isImported(displayName)
+
+    /**
+     * Why the Drive sweep must not copy [displayName], or null when it may (review N10): an audio file under
+     * [CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES] is a header-only stub from a call that never connected and holds no
+     * audio. Ownership is NOT judged here: for copying, the safe direction is to copy (a name the grammar misses, a
+     * " (1)" suffix or a changed template must not keep a real recording off Drive). Sidecars are never stubs.
+     */
+    fun noAudioStubReason(displayName: String, sizeBytes: Long): String? {
+        val isAudio = LogRedaction.NAME_EXTENSIONS.any { displayName.endsWith(".$it", ignoreCase = true) }
+        return if (isAudio && sizeBytes < CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES) {
+            "holds no audio ($sizeBytes bytes, under ${CutOffRescuePolicy.NO_AUDIO_BELOW_BYTES})"
+        } else null
+    }
 }

@@ -177,6 +177,15 @@ class RecordingForegroundService : Service() {
             if (field != value) {
                 val oldState = field
                 field = value
+                // Home's card follows the engine's own state, not the notification (UI-1).
+                SharedStatusNotice.setLive(
+                    SharedStatusNotice.Owner.CARRIER,
+                    SharedStatusNotice.carrierLive(
+                        isActive = value is RecordingServiceState.Active,
+                        isPaused = (value as? RecordingServiceState.Active)?.isPaused == true,
+                        recorderLostOrNeverStarted = daemonLossNotified || captureNeverStartedNotified,
+                    ),
+                )
                 updateNotification()
                 notificationHelper.handleStateChangeToasts(oldState, value)
             }
@@ -559,6 +568,7 @@ class RecordingForegroundService : Service() {
         stopRequested = true
         serviceScope.cancel()
         stopRecordingSessionAndService()
+        SharedStatusNotice.setLive(SharedStatusNotice.Owner.CARRIER, SharedStatusNotice.Live.NONE)
         super.onDestroy()
     }
 
@@ -653,6 +663,8 @@ class RecordingForegroundService : Service() {
         // proves the dispatch worked, and a daemon that dies right after leaves an empty file.
         onDaemonLostDuringRecording = {
             daemonLossNotified = true
+            // The recorder died: nothing is being recorded, whatever the engine state still says (UI-1).
+            SharedStatusNotice.setLive(SharedStatusNotice.Owner.CARRIER, SharedStatusNotice.Live.NONE)
             notificationHelper.showErrorNotification(getString(R.string.recording_error_daemon_died))
         }
         // A live daemon that never started a capture — typically a codec or bit rate the device
@@ -660,6 +672,7 @@ class RecordingForegroundService : Service() {
         // messages say different things.
         onCaptureNeverStarted = {
             captureNeverStartedNotified = true
+            SharedStatusNotice.setLive(SharedStatusNotice.Owner.CARRIER, SharedStatusNotice.Live.NONE)
             val storageFull = FreeSpacePolicy.startFailureIsStorageFull(
                 freeNowBytes = FreeSpaceMonitor.freeBytes(applicationContext),
                 folderOnPhoneStorage = FreeSpaceMonitor.folderOnPhoneStorage(applicationContext),

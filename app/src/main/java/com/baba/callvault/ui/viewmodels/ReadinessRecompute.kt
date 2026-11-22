@@ -27,7 +27,18 @@ object ReadinessRecompute {
      * One event per change. The current values of [connected] and [folderChanges] are skipped: Home has just computed
      * the status from them.
      */
-    fun triggers(connected: Flow<Boolean>, wifiChanges: Flow<Unit>, folderChanges: StateFlow<Long>? = null): Flow<Unit> =
-        if (folderChanges == null) merge(connected.drop(1).map { }, wifiChanges)
-        else merge(connected.drop(1).map { }, wifiChanges, folderChanges.drop(1).map { })
+    fun triggers(
+        connected: Flow<Boolean>,
+        wifiChanges: Flow<Unit>,
+        folderChanges: StateFlow<Long>? = null,
+        recordingLive: StateFlow<*>? = null,
+    ): Flow<Unit> {
+        val sources = ArrayList<Flow<Unit>>(4)
+        sources += connected.drop(1).map { }
+        sources += wifiChanges
+        folderChanges?.let { sources += it.drop(1).map { } }
+        // A call starting or ending: the card says "Recording in progress" meanwhile (UI-1).
+        recordingLive?.let { sources += it.drop(1).map { } }
+        return merge(*sources.toTypedArray())
+    }
 }

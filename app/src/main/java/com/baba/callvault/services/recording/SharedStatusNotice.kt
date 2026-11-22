@@ -10,6 +10,8 @@ package com.baba.callvault.services.recording
 
 import android.app.Notification
 import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * The one notification CallVault keeps in the shade: "Ready to record calls" while idle, and the call being
@@ -56,6 +58,45 @@ object SharedStatusNotice {
      */
     @Volatile
     var foregroundPoster: ((Notification) -> Boolean)? = null
+
+    /** What Home's card should say about the recording that is really running (UI-1). */
+    enum class Live { NONE, RECORDING, PAUSED }
+
+    private val liveByOwner = LinkedHashMap<Owner, Live>()
+    private val liveState = MutableStateFlow(Live.NONE)
+
+    /**
+     * The live recording state as a flow, so Home follows a call starting, pausing and ending while it is open.
+     * Set by the engine's own state (carrier) or by the app-call recorder, NOT by the notification claim: an app
+     * call recorded with notification permission denied has no claim but is still recording.
+     */
+    val liveFlow: StateFlow<Live> get() = liveState
+
+    /**
+     * What the carrier service's state means for Home's card: RECORDING/PAUSED only for an Active session whose recorder
+     * has not been lost and whose capture did start; a lost recorder or a capture that never started is NONE.
+     */
+    fun carrierLive(isActive: Boolean, isPaused: Boolean, recorderLostOrNeverStarted: Boolean): Live = when {
+        !isActive || recorderLostOrNeverStarted -> Live.NONE
+        isPaused -> Live.PAUSED
+        else -> Live.RECORDING
+    }
+
+    /** The live state now. */
+    val live: Live get() = liveState.value
+
+    /** [owner] is recording ([paused] false) or holding a paused recording; [Live.NONE] clears it. */
+    fun setLive(owner: Owner, state: Live) {
+        synchronized(liveByOwner) {
+            if (state == Live.NONE) liveByOwner.remove(owner) else liveByOwner[owner] = state
+            // Recording wins over paused when two calls overlap.
+            liveState.value = when {
+                liveByOwner.containsValue(Live.RECORDING) -> Live.RECORDING
+                liveByOwner.containsValue(Live.PAUSED) -> Live.PAUSED
+                else -> Live.NONE
+            }
+        }
+    }
 
     /** True while any recorded call owns the notification. */
     val isHeldByRecording: Boolean get() = synchronized(claims) { claims.isNotEmpty() }
@@ -110,6 +151,8 @@ object SharedStatusNotice {
     @VisibleForTesting
     fun resetForTest() {
         synchronized(claims) { claims.clear() }
+        synchronized(liveByOwner) { liveByOwner.clear() }
+        liveState.value = Live.NONE
         onReleased = null
         foregroundPoster = null
     }

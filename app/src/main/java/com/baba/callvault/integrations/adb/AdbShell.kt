@@ -356,6 +356,10 @@ object AdbShell {
     private fun isOwnLoopbackArmed(context: Context): Boolean =
         LoopbackPorts.isOurs(AppPreferences(context).getLoopbackAdbPort(), adbdTcpPort())
 
+    /** True when the listener CallVault armed is open right now (UI-2: it is what a "left open" message is about). */
+    internal fun isOwnLoopbackListenerOpen(context: Context): Boolean =
+        runCatching { LoopbackPorts.isListening(adbdTcpPort()) && isOwnLoopbackArmed(context) }.getOrDefault(false)
+
     private fun adbdTcpPort(): Int? = LoopbackPorts.parse(getSystemProperty("service.adb.tcp.port"))
 
     /**

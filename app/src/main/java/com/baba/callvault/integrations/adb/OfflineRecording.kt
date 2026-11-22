@@ -79,10 +79,18 @@ object OfflineRecording {
         return result
     }
 
-    /** Turns offline recording OFF: clears the opt-in and closes the loopback port (best-effort). */
-    fun disable(context: Context) {
+    /**
+     * Turns offline recording OFF: clears the opt-in and closes the loopback port (best-effort).
+     *
+     * Returns true when nothing was left open. False means a call is being recorded AND the listener CallVault armed is
+     * open: closing it restarts adbd and would end the call (C35), and nothing closes it afterwards, so it stays until
+     * the phone restarts or the user switches this on and off again once the call is over (UI-2). The screen says so.
+     */
+    fun disable(context: Context): Boolean {
+        val mayDisarm = OfflineToggleGuard.mayRestartAdbd(isRecordingLive())
+        val listenerOpen = !mayDisarm && AdbShell.isOwnLoopbackListenerOpen(context)
         disableInOrder(
-            mayDisarm = OfflineToggleGuard.mayRestartAdbd(isRecordingLive()),
+            mayDisarm = mayDisarm,
             disarm = {
                 // Under the lease, like arming: disarming needs the connection alive to send `usb:`.
                 runCatching { AdbShell.asAdbUser(context, "disabling offline recording") { AdbShell.disarmLoopback(context) } }
@@ -90,12 +98,16 @@ object OfflineRecording {
             },
             skipped = {
                 // Closing the listener restarts adbd and would end the call being recorded (C35).
-                TransportTimeline.event(context, "off-Wi-Fi listener left open: a call is being recorded (it closes on reboot)")
-                AppLogger.i(TAG, "Not closing the off-Wi-Fi listener: a call is being recorded")
+                TransportTimeline.event(context, "off-Wi-Fi listener left open: a call is being recorded (it closes on reboot, or when this is switched on and off again after the call); listener open=$listenerOpen")
+                AppLogger.i(TAG, "Not closing the off-Wi-Fi listener: a call is being recorded (listener open=$listenerOpen)")
             },
             clearOptIn = { AppPreferences(context).setOfflineRecordingEnabled(false) },
         )
+        return !isLeftOpen(mayDisarm, listenerOpen)
     }
+
+    /** UI-2: the listener stays open when the disarm was skipped for a call and a listener of ours is really open. */
+    internal fun isLeftOpen(mayDisarm: Boolean, ownListenerOpen: Boolean): Boolean = !mayDisarm && ownListenerOpen
 
     /** The C56 ordering for enabling, free of Android so it is tested: opt-in on, arm, put back unless armed. */
     internal fun enableWithOptIn(wasOn: Boolean, setOptIn: (Boolean) -> Unit, arm: () -> LoopbackArm): LoopbackArm {
@@ -111,13 +123,17 @@ object OfflineRecording {
         return result
     }
 
-    /** The C56 ordering for disabling: disarm (or skip) FIRST, and clear the opt-in whatever happens. */
-    internal fun disableInOrder(mayDisarm: Boolean, disarm: () -> Unit, skipped: () -> Unit, clearOptIn: () -> Unit) {
+    /**
+     * The C56 ordering for disabling: disarm (or skip) FIRST, and clear the opt-in whatever happens.
+     * True when the disarm was attempted, false when it was skipped and the listener stays open.
+     */
+    internal fun disableInOrder(mayDisarm: Boolean, disarm: () -> Unit, skipped: () -> Unit, clearOptIn: () -> Unit): Boolean {
         try {
             if (mayDisarm) disarm() else skipped()
         } finally {
             clearOptIn()
         }
+        return mayDisarm
     }
 
     /** A call is being recorded: the daemon says so, or a recording owns the shared notification (VoIP or carrier). */

@@ -76,14 +76,26 @@ object LogRedaction {
      */
     private const val MEASUREMENT_UNITS = "frames|samples|bytes|ms|Hz|kHz|KB|MB|GB"
 
+    /**
+     * Keys we log a measurement under (`initialDelayMs=3600000`, `size=1234567`, `pid: 4242`): a number right after
+     * one is not a person (review N12). Matched as the END of the key so camelCase and snake_case keys count; the
+     * key must start at a word or camelCase boundary (`initialDelayMs`, `frame_count`), so `account=`, `phoneAccount=` and `discount=` are still redacted.
+     * Deliberately short: `number`, `phone`, `from`, `to`, `id` are not here, and an unknown key still redacts.
+     */
+    private const val MEASUREMENT_KEYS =
+        "(?:(?:(?<![A-Za-z0-9])|(?<=_))(?i:ms|millis|bytes|size|elapsed|pid|uid|version|length|duration|delay|timeout|count|frames|samples)" +
+            "|(?<=[a-z0-9])(?:Ms|Millis|Bytes|Size|Elapsed|Pid|Uid|Version|Length|Duration|Delay|Timeout|Count|Frames|Samples))"
+
     private val PHONE_REGEX = Regex(
         "(?<!\\d)" +                      // Negative Lookbehind: Don't start in the middle of another number
+            "(?<!(?:$MEASUREMENT_KEYS)[=:]\\s?)" + // ...nor right after a measurement key
             "(?:\\+?\\d{1,3}[-.\\s]?)?" + // Optional Country Code (e.g., +1 or 33)
             "(?:\\(\\d{1,4}\\)|\\d{1,4})" + // Area code (with or without parentheses)
             "[-.\\s]?\\d{3,4}" +          // Prefix
             "[-.\\s]?\\d{3,4}" +          // Line number
             "(?!\\d)" +                   // Negative Lookahead: Don't end in the middle of another number
-            "(?!\\s*(?:$MEASUREMENT_UNITS)\\b)" // ...and it is a measurement, not a number to hide
+            "(?!\\s*(?:$MEASUREMENT_UNITS)\\b)" + // ...and it is a measurement, not a number to hide
+            "(?![sB]\\b)"                    // ...or carries a short unit stuck to it (4096000B, 1234567s)
     )
 
     /**
