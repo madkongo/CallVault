@@ -75,7 +75,10 @@ class OrphanRecorderSessionTest {
         override fun orphanStagingFile(exclude: File?): File? = stagingFile
         override fun scheduleRescueNow(file: File) { rescuedNow += file }
         var laterCall: Boolean? = false
-        override fun callLoggedAfter(sinceMillis: Long): Boolean? = laterCall
+        var appCall = false
+        override fun orphanWasAppCall() = appCall
+        var laterCallFn: ((Long) -> Boolean?)? = null
+        override fun callLoggedAfter(sinceMillis: Long): Boolean? = laterCallFn?.invoke(sinceMillis) ?: laterCall
         val marks = mutableListOf<Pair<File, Boolean>>()
         var markWorks = true
         override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean { marks += file to callEnded; return markWorks }
@@ -443,6 +446,35 @@ class OrphanRecorderSessionTest {
             assertEquals("later=$later", listOf(File("/staging/call1.ogg") to false), env.marks)
             assertTrue(env.lines.any { it.contains("not marked saved-in-full") })
         }
+    }
+
+    @Test
+    fun `an app-call orphan is never saved in full, the call log cannot see a second app call`() {
+        val recorder = FakeRecorder().apply { start("wa1") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 1)
+            .apply { stagingFile = File("/staging/wa1.ogg"); appCall = true }
+
+        OrphanRecorderSession.resolve(recorder, env, "app call ended")
+
+        assertEquals(listOf(File("/staging/wa1.ogg") to false), env.marks)
+        assertTrue(env.lines.any { it.contains("app call") })
+    }
+
+    @Test
+    fun `a quick redial is seen by the log guard, the slack is only clock slack`() {
+        // A drops, the user redials within a minute: B is logged ~20 s after A's recording began; the guard must be asked
+        // about a moment earlier than that.
+        var asked = 0L
+        val recorder = FakeRecorder().apply { start("call1") }
+        val env = FakeEnv(inCall = false, orphanStart = call1Start, lastNoCall = call1Start + 1).apply {
+            stagingFile = File("/staging/call1.ogg")
+            laterCallFn = { since -> asked = since; (call1Start + 20_000L) > since }
+        }
+
+        OrphanRecorderSession.resolve(recorder, env, "app start")
+
+        assertTrue("asked since ${asked - call1Start} ms after the start", asked - call1Start <= 10_000L)
+        assertEquals(listOf(false), env.marks.map { it.second })
     }
 
     @Test

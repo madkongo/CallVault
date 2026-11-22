@@ -53,6 +53,7 @@ object OrphanRecorderSession {
     private const val KEY_LAST_NO_CALL_AT = "last_no_call_at"
     private const val KEY_LIVE_CALL_BEGAN_AT = "live_call_began_at"
     private const val KEY_SESSION_STAGING = "session_staging"
+    private const val KEY_SESSION_APP_CALL = "session_app_call"
     private const val KEY_LAST_NO_SESSION_AT = "last_no_session_at"
 
     /** The recorder calls this needs; a fake in tests. */
@@ -90,6 +91,8 @@ object OrphanRecorderSession {
          * another call the file may span. Null when the log cannot be read. Used only to downgrade a "saved in full".
          */
         fun callLoggedAfter(sinceMillis: Long): Boolean? = null
+        /** The session was an app call (WhatsApp etc.): those never appear in the call log, so no log check can vouch for it. */
+        fun orphanWasAppCall(): Boolean = false
         fun record(line: String)
     }
 
@@ -145,6 +148,12 @@ object OrphanRecorderSession {
                         var callEnded = !inCall && ended
                         // Downgrade only (it can never cut a live call): a call logged after the orphan began means the file
                         // may span two calls (call B's start went unseen); then it is not "the whole call". Unreadable log: same.
+                        // An app call's orphan is never "saved in full": the call log cannot show a second app call, so the
+                        // guard below could not see a file spanning two. It keeps the cut-off wording.
+                        if (callEnded && env.orphanWasAppCall()) {
+                            callEnded = false
+                            env.record("orphan session [$trigger]: not marked saved-in-full, the session was an app call (not in the call log)")
+                        }
                         if (callEnded && startedAt != null) {
                             val other = env.callLoggedAfter(startedAt + OrphanSessionPolicy.SAME_CALL_LOG_SLACK_MS)
                             if (other != false) {
@@ -218,11 +227,12 @@ object OrphanRecorderSession {
     }
 
     /** The app handed [staging] to the recorder for a session it now owns. */
-    fun noteSessionStarted(context: Context, staging: File?) {
+    fun noteSessionStarted(context: Context, staging: File?, isAppCall: Boolean = false) {
         synchronized(sessionRecordLock) {
             runCatching {
                 context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().apply {
                     if (staging != null) putString(KEY_SESSION_STAGING, staging.absolutePath) else remove(KEY_SESSION_STAGING)
+                    putBoolean(KEY_SESSION_APP_CALL, isAppCall && staging != null)
                 }.commit()
             }.onFailure { AppLogger.w(TAG, "Could not update the orphan-session facts: ${it.message}") }
         }
@@ -327,9 +337,11 @@ object OrphanRecorderSession {
         }
 
         override fun callLoggedAfter(sinceMillis: Long): Boolean? {
-            if (!com.baba.callvault.system.permissions.PermissionChecks.hasCallLogPermission(context)) return null
-            return runCatching { com.baba.callvault.data.health.CallLogReader.entriesSince(context, sinceMillis).isNotEmpty() }.getOrNull()
+            // Null (unknown) for a missing permission, a failed query or a null cursor: never read as "no later call".
+            return com.baba.callvault.data.health.CallLogReader.entriesSinceOrNull(context, sinceMillis)?.isNotEmpty()
         }
+
+        override fun orphanWasAppCall(): Boolean = runCatching { prefs.getBoolean(KEY_SESSION_APP_CALL, false) }.getOrDefault(false)
 
         override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean =
             StagingNote.markOrphanStop(file, if (callEnded) OrphanStop.CALL_ENDED else OrphanStop.STOPPED)

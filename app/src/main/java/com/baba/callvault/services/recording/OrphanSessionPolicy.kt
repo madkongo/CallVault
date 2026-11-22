@@ -64,8 +64,12 @@ object OrphanSessionPolicy {
      */
     const val SAME_CALL_MARGIN_MS = 2_000L
 
-    /** A call logged this long after the orphan's recording began is another call, not the orphan's own (ring/clock slack). */
-    const val SAME_CALL_LOG_SLACK_MS = 60_000L
+    /**
+     * A call logged more than this after the orphan's recording began is another call, not the orphan's own. Short on
+     * purpose: an incoming call is logged at its ring (before the recording) and an outgoing one at its dial (about the
+     * recording's start), so only clock slack is needed, and a quick redial within a minute must still be seen.
+     */
+    const val SAME_CALL_LOG_SLACK_MS = 10_000L
 
     /** True when the orphan's recording began clearly before the live call did, so it cannot be that call's. */
     fun orphanPredatesLiveCall(orphanStartedAt: Long?, liveCallBeganAt: Long?): Boolean =

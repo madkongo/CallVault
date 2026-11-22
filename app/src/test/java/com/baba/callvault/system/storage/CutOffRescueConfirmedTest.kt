@@ -144,6 +144,48 @@ class CutOffRescueConfirmedTest {
     }
 
     @Test
+    fun `after the cap hands over, the following ordinary run still makes no confirmed request`() {
+        androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        markedWaitingFile()
+        runBlocking {
+            TestListenableWorkerBuilder<CutOffRescueWorker>(context)
+                .setInputData(androidx.work.Data.Builder().putInt("attempt", CutOffRescuePolicy.CONFIRMED_MAX_RECHECKS - 1).build())
+                .build().doWork()
+        }
+        assertTrue(workStates("cut_off_rescue_confirmed").isEmpty())
+
+        run() // the ordinary request that took over
+
+        assertTrue("still no confirmed request", workStates("cut_off_rescue_confirmed").isEmpty())
+        assertEquals(1, workStates("cut_off_rescue").size)
+    }
+
+    @Test
+    fun `files waiting for a call for over an hour back the ordinary request off, and a call end resets it`() {
+        androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        markedWaitingFile()
+        context.getSharedPreferences("cut_off_rescue_state", Context.MODE_PRIVATE).edit()
+            .putLong("busy_since", System.currentTimeMillis() - 2 * 60 * 60_000L).commit()
+
+        run()
+        assertTrue(CutOffRescueWorker.isBackedOff(context))
+
+        CutOffRescueWorker.schedule(context) // a call ended
+        assertFalse(CutOffRescueWorker.isBackedOff(context))
+    }
+
+    @Test
+    fun `the call-up deferral reason is logged once when it first applies after attempt 0`() {
+        androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        markedWaitingFile()
+        val attempt1 = androidx.work.Data.Builder().putInt("attempt", 1).build()
+
+        repeat(2) { runBlocking { TestListenableWorkerBuilder<CutOffRescueWorker>(context).setInputData(attempt1).build().doWork() } }
+
+        assertTrue(context.getSharedPreferences("cut_off_rescue_state", Context.MODE_PRIVATE).getBoolean("call_reason_logged", false))
+    }
+
+    @Test
     fun `a confirmed run re-queues itself, and after the cap hands over to the ordinary request once`() {
         androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(context)
         markedWaitingFile()

@@ -47,6 +47,15 @@ object CutOffRescuePolicy {
      */
     const val QUIET_MS = 90_000L
 
+    /** A file that has waited with a call up for this long, continuously, is a stuck state, not a long call. */
+    const val BUSY_BACKOFF_AFTER_MS = 60 * 60_000L
+
+    /** The ordinary request's delay once backed off (battery); a call end returns it to normal. */
+    const val BUSY_BACKOFF_DELAY_MS = 30 * 60_000L
+
+    /** Whether the continuous "call up" wait that began at [busySince] (0 = not waiting) has lasted into back-off. */
+    fun shouldBackOff(busySince: Long, now: Long): Boolean = busySince > 0L && now - busySince >= BUSY_BACKOFF_AFTER_MS
+
     /** How many 15 s re-checks a marked file gets before the ordinary quiet-wait request takes over. */
     const val CONFIRMED_MAX_RECHECKS = 8
 

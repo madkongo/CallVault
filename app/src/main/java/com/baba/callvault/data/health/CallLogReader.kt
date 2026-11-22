@@ -29,7 +29,16 @@ object CallLogReader {
             AppLogger.i(TAG, "No call-log permission; the setup sweep claims nothing this time")
             return emptyList()
         }
+        return entriesSinceOrNull(context, watermark) ?: emptyList()
+    }
 
+    /**
+     * [entriesSince] for a caller that must tell "no calls" from "could not read": null on a missing permission, a
+     * failed query or a null cursor. A claim built on the log (the orphan's "saved in full") must not read a failure as
+     * an empty log.
+     */
+    fun entriesSinceOrNull(context: Context, watermark: Long): List<CallLogEntry>? {
+        if (!PermissionChecks.hasCallLogPermission(context)) return null
         return runCatching {
             context.contentResolver.query(
                 CallLog.Calls.CONTENT_URI,
@@ -52,10 +61,10 @@ object CallLogReader {
                         )
                     }
                 }
-            }.orEmpty()
+            }
         }.getOrElse { e ->
             AppLogger.w(TAG, "Call log unreadable (${e.message}); the setup sweep claims nothing this time")
-            emptyList()
+            null
         }
     }
 }

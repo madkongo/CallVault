@@ -188,4 +188,12 @@ class CutOffRescueTest {
     fun `a file not confirmed stopped still waits for quiet`() {
         assertEquals(RescueDecision.WAIT, decide(ageMs = 1, confirmedStopped = false))
     }
+
+    @Test
+    fun `back-off starts only after an unbroken hour of waiting for a call`() {
+        val now = 10L * 60 * 60_000L
+        assertFalse(CutOffRescuePolicy.shouldBackOff(0L, now))
+        assertFalse(CutOffRescuePolicy.shouldBackOff(now - CutOffRescuePolicy.BUSY_BACKOFF_AFTER_MS + 1, now))
+        assertTrue(CutOffRescuePolicy.shouldBackOff(now - CutOffRescuePolicy.BUSY_BACKOFF_AFTER_MS, now))
+    }
 }

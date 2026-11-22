@@ -74,24 +74,34 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                     "another run published it, or it is gone",
             )
         }
-        if (staged.isEmpty()) return Result.success()
+        if (staged.isEmpty()) {
+            clearBusy(applicationContext)
+            return Result.success()
+        }
         val callActive = isCallActive()
         var waiting = false
         var markedWaiting = false
+        var waitingForCall = false
         staged.forEach { file ->
             val result = rescue(file, callActive, logDeferral = confirmedRun && attempt == 0)
-            if (result.decision == RescueDecision.WAIT) if (result.marked) markedWaiting = true else waiting = true
+            if (result.decision == RescueDecision.WAIT) {
+                if (result.marked) markedWaiting = true else waiting = true
+                if (callActive) waitingForCall = true
+            }
             // Outside the lock: the library entry, Drive copy and transcription may be slow and need no exclusion.
             result.published?.let { p -> afterPublished(applicationContext, p.fileName, p.uri, p.mimeType, p.bytes, p.startedAt, p.cutAt, p.savedInFull) }
         }
+        // A "call up" that never ends (a stuck audio mode) must not wake the phone every two minutes for ever: after an
+        // hour the ordinary request backs off to 30 minutes, until the next call end (schedule()) resets it.
+        val delayMs = busyDelay(applicationContext, waitingForCall)
         // Something may still be in use; look again once it has had time to go quiet.
-        if (waiting) schedule(applicationContext)
+        if (waiting) requeueQuiet(applicationContext, delayMs)
         if (markedWaiting) {
             when {
-                !confirmedRun -> schedule(applicationContext) // an ordinary run only ever queues the ordinary request
+                !confirmedRun -> requeueQuiet(applicationContext, delayMs) // an ordinary run only ever queues the ordinary request
                 CutOffRescuePolicy.handOverToQuietWait(attempt) -> {
                     CallEndLog.record(applicationContext, "cut-off rescue: a stopped recording still looks busy after ${attempt + 1} re-checks; the ordinary quiet-wait rescue takes over")
-                    schedule(applicationContext)
+                    requeueQuiet(applicationContext, delayMs)
                 }
                 else -> scheduleConfirmed(applicationContext, null, attempt + 1)
             }
@@ -164,8 +174,10 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                     if (owned) "${file.name} belongs to a recording still running here (paused, or a call with no call mode); leaving it"
                     else "${file.name} may still be in use; looking again later",
                 )
-                // Once per confirmed chain: every re-check logging it would push a live call's lines out of the log.
-                if (marked && logDeferral) CallEndLog.record(
+                // Once per confirmed chain, and once more when "a call is up" first becomes the reason: every re-check
+                // logging it would push a live call's lines out of the log.
+                val firstCallReason = marked && callActive && !owned && !logDeferral && markCallDeferralLogged(applicationContext)
+                if (marked && (logDeferral || firstCallReason)) CallEndLog.record(
                     applicationContext,
                     "cut-off rescue: the stopped recording ${CallEndLog.safeName(file.name)} is deferred " + when {
                         owned -> "because a live recording here owns it"
@@ -336,6 +348,38 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
             SilentFailureNotifier.noteCallSavedAfterRestart(context, fileName)
         }
         private const val WORK_NAME = "cut_off_rescue"
+        private const val STATE_PREFS = "cut_off_rescue_state"
+        private const val KEY_BUSY_SINCE = "busy_since"
+        private const val KEY_BACKED_OFF = "backed_off"
+        private const val KEY_CALL_REASON_LOGGED = "call_reason_logged"
+
+        private fun state(context: Context) = context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
+
+        /** True the first time in a busy spell; false after. */
+        private fun markCallDeferralLogged(context: Context): Boolean = runCatching {
+            val s = state(context)
+            if (s.getBoolean(KEY_CALL_REASON_LOGGED, false)) false else { s.edit().putBoolean(KEY_CALL_REASON_LOGGED, true).apply(); true }
+        }.getOrDefault(false)
+
+        private fun clearBusy(context: Context) {
+            runCatching { state(context).edit().remove(KEY_BUSY_SINCE).remove(KEY_BACKED_OFF).remove(KEY_CALL_REASON_LOGGED).apply() }
+        }
+
+        /** The ordinary request's delay for this run, tracking how long files have waited for a call. Never throws. */
+        internal fun busyDelay(context: Context, waitingForCall: Boolean): Long = runCatching {
+            if (!waitingForCall) { clearBusy(context); return@runCatching DELAY_MS }
+            val s = state(context)
+            val now = System.currentTimeMillis()
+            val since = s.getLong(KEY_BUSY_SINCE, 0L).takeIf { it > 0L } ?: now.also { s.edit().putLong(KEY_BUSY_SINCE, it).apply() }
+            if (!CutOffRescuePolicy.shouldBackOff(since, now)) return@runCatching DELAY_MS
+            if (!s.getBoolean(KEY_BACKED_OFF, false)) {
+                s.edit().putBoolean(KEY_BACKED_OFF, true).apply()
+                CallEndLog.record(context, "cut-off rescue: files have waited for a call to end for over an hour; checking every ${CutOffRescuePolicy.BUSY_BACKOFF_DELAY_MS / 60_000} min until the next call ends")
+            }
+            CutOffRescuePolicy.BUSY_BACKOFF_DELAY_MS
+        }.getOrDefault(DELAY_MS)
+
+        internal fun isBackedOff(context: Context): Boolean = state(context).getBoolean(KEY_BACKED_OFF, false)
         private const val WORK_NAME_OBSERVE = "cut_off_rescue_observe"
         private const val KEY_ATTEMPT = "attempt"
         private const val KEY_OBSERVE_NAME = "observe_name"
@@ -379,7 +423,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                 // quiet-wait run, so this synchronous fallback is only a second line of defence. Kept simple on purpose.
                 CallEndLog.record(context, "cut-off rescue: could not queue the instant rescue ${CallEndLog.describe(it)}; the ordinary quiet-wait rescue is queued instead")
                 AppLogger.w(TAG, "Could not schedule the instant rescue: ${it.message}")
-                schedule(context)
+                requeueQuiet(context, DELAY_MS)
             }
         }
 
@@ -399,9 +443,15 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
 
         /** Looks for cut-off recordings shortly. Safe to call often: the latest request replaces earlier ones. */
         fun schedule(context: Context) {
+            clearBusy(context) // a call end, an app start or an orphan stop: back to the normal pace
+            requeueQuiet(context, DELAY_MS)
+        }
+
+        /** The worker's own re-queue: like [schedule] but keeps the busy tracking (and its back-off). */
+        private fun requeueQuiet(context: Context, delayMs: Long) {
             runCatching {
                 val request = OneTimeWorkRequestBuilder<CutOffRescueWorker>()
-                    .setInitialDelay(DELAY_MS, TimeUnit.MILLISECONDS)
+                    .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
                     .build()
                 WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request)
             }.onFailure { AppLogger.w(TAG, "Could not schedule the cut-off recording check: ${it.message}") }
