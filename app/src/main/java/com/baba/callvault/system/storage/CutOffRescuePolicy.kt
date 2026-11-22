@@ -47,9 +47,30 @@ object CutOffRescuePolicy {
      */
     const val QUIET_MS = 90_000L
 
+    /** A file that has waited with a call up for this long, continuously, is a stuck state, not a long call. */
+    const val BUSY_BACKOFF_AFTER_MS = 60 * 60_000L
+
+    /** The ordinary request's delay once backed off (battery); a call end returns it to normal. */
+    const val BUSY_BACKOFF_DELAY_MS = 30 * 60_000L
+
+    /** Whether the continuous "call up" wait that began at [busySince] (0 = not waiting) has lasted into back-off. */
+    fun shouldBackOff(busySince: Long, now: Long): Boolean = busySince > 0L && now - busySince >= BUSY_BACKOFF_AFTER_MS
+
+    /** How many 15 s re-checks a marked file gets before the ordinary quiet-wait request takes over. */
+    const val CONFIRMED_MAX_RECHECKS = 8
+
+    /** What a marked file that still waits does next: look again soon, or hand over to the ordinary quiet-wait request. */
+    fun handOverToQuietWait(attempt: Int): Boolean = attempt + 1 >= CONFIRMED_MAX_RECHECKS
+
+    /** The quiet a file the recorder confirmed stopped must still show: more than twice the recorder's 6 s stop wait. */
+    const val CONFIRMED_QUIET_MS = 15_000L
+
     /**
      * @param ownedByLiveRecording a recording in this process still owns the file ([LiveStagingFiles]): a paused
      *   recording is quiet for as long as the pause lasts, and a LINE call shows no call mode (review C12).
+     * @param confirmedStopped the recorder was asked to stop this very file and confirmed it no longer records
+     *   ([com.baba.callvault.services.recording.OrphanRecorderSession]). The 90 s quiet wait,
+     *   which only exists to guess that, does not apply; the short [CONFIRMED_QUIET_MS] does. A live recording here wins.
      */
     fun decide(
         hasNote: Boolean,
@@ -57,10 +78,15 @@ object CutOffRescuePolicy {
         ageMs: Long,
         callActive: Boolean,
         ownedByLiveRecording: Boolean = false,
+        confirmedStopped: Boolean = false,
     ): RescueDecision = when {
         ownedByLiveRecording -> RescueDecision.WAIT
+        // A call that is up holds even a stopped file back: publishing would start Whisper and the Drive copy under it.
         callActive -> RescueDecision.WAIT
-        ageMs < QUIET_MS -> RescueDecision.WAIT
+        !confirmedStopped && ageMs < QUIET_MS -> RescueDecision.WAIT
+        // The recorder answers "not recording" before the muxer's trailer is written (stopRecording returns after
+        // its 6 s wait even if teardown still runs). A short quiet guard keeps a truncated copy from being published.
+        confirmedStopped && ageMs < CONFIRMED_QUIET_MS -> RescueDecision.WAIT
         // A note is what proves this file is an interrupted recording (the publish path deletes the temp
         // on success, so a note-bearing temp that survived is genuinely a cut-off). Empty-vs-note order:
         // an empty note-bearing temp still holds no audio, so cleaning it is right.

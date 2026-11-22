@@ -49,7 +49,7 @@ object WaitingPublisher {
         /** One always-on line. */
         fun record(line: String)
         /** A cut-off was saved: what today's cut-off rescue does after its library entry (health record and notice). */
-        fun cutOffSaved(name: String, startedAt: Long, cutAt: Long)
+        fun cutOffSaved(name: String, startedAt: Long, cutAt: Long, savedInFull: Boolean)
     }
 
     /** What a document already in the folder under a candidate name is, to a waiting call about to be saved. */
@@ -218,7 +218,7 @@ object WaitingPublisher {
             // A cut-off is saved exactly as today's cut-off rescue saves one (third review 2026-11-20, F3): library entry,
             // health record and notice; no automatic Drive copy or transcription, since it never got the keep-or-delete
             // question.
-            runCatching { env.cutOffSaved(name, note.startedAtMillis, cutAt) }
+            runCatching { env.cutOffSaved(name, note.startedAtMillis, cutAt, note.orphanStop == OrphanStop.CALL_ENDED) }
                 .onFailure { env.record("cut-off steps for ${CallEndLog.safeName(name)} failed: ${CallEndLog.describe(it)}") }
             return@withContext Outcome.SAVED
         }

@@ -20,6 +20,7 @@ import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.system.storage.SafHelper
+import com.baba.callvault.system.storage.OrphanStop
 import com.baba.callvault.system.storage.StagingNote
 import com.baba.callvault.utils.AppLogger
 import java.io.File
@@ -45,10 +46,14 @@ import java.io.File
 object OrphanRecorderSession {
 
     private const val TAG = "CV:OrphanSession"
+
+    /** The trigger of the settle that follows a phone call ending. Only a name for the log: "saved in full" is decided from the call state at stop time. */
+    const val TRIGGER_PHONE_CALL_ENDED = "phone call ended"
     private const val PREFS = "orphan_session"
     private const val KEY_LAST_NO_CALL_AT = "last_no_call_at"
     private const val KEY_LIVE_CALL_BEGAN_AT = "live_call_began_at"
     private const val KEY_SESSION_STAGING = "session_staging"
+    private const val KEY_SESSION_APP_CALL = "session_app_call"
     private const val KEY_LAST_NO_SESSION_AT = "last_no_session_at"
 
     /** The recorder calls this needs; a fake in tests. */
@@ -72,6 +77,22 @@ object OrphanRecorderSession {
         /** The recorder is not recording now: no session can be orphaned from before this moment. */
         fun markNoSession()
         fun scheduleRescue()
+        /** The staged file the orphan was writing, when known; null when it cannot be told (then no instant rescue). */
+        fun orphanStagingFile(exclude: File?): File? = null
+        /**
+         * Marks [file] as stopped by the recorder ([callEnded]: and its call's end is inside it), so whichever worker
+         * publishes it knows. False when it could not be marked (no readable note).
+         */
+        fun markOrphanStopped(file: File, callEnded: Boolean): Boolean = false
+        /** Queue the short-guard rescue of the marked [file]: published once it has been quiet for a few seconds. */
+        fun scheduleRescueNow(file: File) = scheduleRescue()
+        /**
+         * Whether the call log has a call that began after [sinceMillis] (an orphan's start plus the ring slack), i.e.
+         * another call the file may span. Null when the log cannot be read. Used only to downgrade a "saved in full".
+         */
+        fun callLoggedAfter(sinceMillis: Long): Boolean? = null
+        /** The session was an app call (WhatsApp etc.): those never appear in the call log, so no log check can vouch for it. */
+        fun orphanWasAppCall(): Boolean = false
         fun record(line: String)
     }
 
@@ -100,6 +121,7 @@ object OrphanRecorderSession {
         val began = env.liveCallBeganAt()
         val ended = OrphanSessionPolicy.orphanCallEnded(startedAt, env.lastNoCallAt(), began)
         val action = OrphanSessionPolicy.decide(true, false, inCall, ended)
+        val stagingFile = if (action == Action.STOP_ORPHAN) env.orphanStagingFile(exclude) else null
         val facts = "callInProgress=$inCall orphanStartedAt=${startedAt ?: "unknown"} liveCallBeganAt=${began ?: "unknown"} orphanCallEnded=$ended"
         return when (action) {
             Action.NONE, Action.OWNED -> Outcome(action, null)
@@ -118,8 +140,37 @@ object OrphanRecorderSession {
                 } else {
                     env.markNoSession()
                     env.record("orphan session [$trigger]: stopped; its file goes to the cut-off rescue under its own call's name")
+                    // Finalised, call over: publish after a short guard (the recorder answers before the trailer is
+                    // written), not after the 2-minute quiet wait. Only the phone-call-ended stop is "saved in full".
+                    if (stagingFile != null) {
+                        // Evidence, not the trigger's name: no call at all now, and the orphan's call known to be over
+                        // (a call-free moment after it started). A new call being up (N4, ADOPT spans) leaves it STOPPED.
+                        var callEnded = !inCall && ended
+                        // Downgrade only (it can never cut a live call): a call logged after the orphan began means the file
+                        // may span two calls (call B's start went unseen); then it is not "the whole call". Unreadable log: same.
+                        // An app call's orphan is never "saved in full": the call log cannot show a second app call, so the
+                        // guard below could not see a file spanning two. It keeps the cut-off wording.
+                        if (callEnded && env.orphanWasAppCall()) {
+                            callEnded = false
+                            env.record("orphan session [$trigger]: not marked saved-in-full, the session was an app call (not in the call log)")
+                        }
+                        if (callEnded && startedAt != null) {
+                            val other = env.callLoggedAfter(startedAt + OrphanSessionPolicy.SAME_CALL_LOG_SLACK_MS)
+                            if (other != false) {
+                                callEnded = false
+                                env.record("orphan session [$trigger]: not marked saved-in-full, " +
+                                    if (other == true) "a later call is in the call log (the file may span two calls)" else "the call log could not be read")
+                            }
+                        }
+                        if (env.markOrphanStopped(stagingFile, callEnded)) {
+                            env.record("orphan session [$trigger]: instant rescue queued for ${CallEndLog.safeName(stagingFile.name)} (savedInFull=$callEnded)")
+                            env.scheduleRescueNow(stagingFile)
+                        } else {
+                            env.record("orphan session [$trigger]: could not mark ${CallEndLog.safeName(stagingFile.name)} as stopped (no readable note); it waits for the quiet-wait rescue")
+                        }
+                    }
                 }
-                // Scheduled either way: a stopped file is published once quiet, a failed stop is looked at again.
+                // Scheduled either way: the quiet-wait request is the safety net, a failed stop is looked at again.
                 env.scheduleRescue()
                 Outcome(action, still)
             }
@@ -176,11 +227,12 @@ object OrphanRecorderSession {
     }
 
     /** The app handed [staging] to the recorder for a session it now owns. */
-    fun noteSessionStarted(context: Context, staging: File?) {
+    fun noteSessionStarted(context: Context, staging: File?, isAppCall: Boolean = false) {
         synchronized(sessionRecordLock) {
             runCatching {
                 context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().apply {
                     if (staging != null) putString(KEY_SESSION_STAGING, staging.absolutePath) else remove(KEY_SESSION_STAGING)
+                    putBoolean(KEY_SESSION_APP_CALL, isAppCall && staging != null)
                 }.commit()
             }.onFailure { AppLogger.w(TAG, "Could not update the orphan-session facts: ${it.message}") }
         }
@@ -270,6 +322,31 @@ object OrphanRecorderSession {
         override fun markNoSession() = edit(context) { putLong(KEY_LAST_NO_SESSION_AT, System.currentTimeMillis()) }
 
         override fun scheduleRescue() = CutOffRescueWorker.schedule(context)
+
+        override fun orphanStagingFile(exclude: File?): File? {
+            val path = prefs.getString(KEY_SESSION_STAGING, null)
+            val file = path?.let(::File)
+            val why = when {
+                file == null -> "no session file was recorded"
+                file.absolutePath == exclude?.absolutePath -> "the recorded session file is the starting call's own"
+                !file.exists() -> "the recorded session file is gone"
+                else -> null
+            }
+            if (why != null) record("orphan session: no instant rescue, $why; the quiet-wait rescue covers it")
+            return if (why == null) file else null
+        }
+
+        override fun callLoggedAfter(sinceMillis: Long): Boolean? {
+            // Null (unknown) for a missing permission, a failed query or a null cursor: never read as "no later call".
+            return com.baba.callvault.data.health.CallLogReader.entriesSinceOrNull(context, sinceMillis)?.isNotEmpty()
+        }
+
+        override fun orphanWasAppCall(): Boolean = runCatching { prefs.getBoolean(KEY_SESSION_APP_CALL, false) }.getOrDefault(false)
+
+        override fun markOrphanStopped(file: File, callEnded: Boolean): Boolean =
+            StagingNote.markOrphanStop(file, if (callEnded) OrphanStop.CALL_ENDED else OrphanStop.STOPPED)
+
+        override fun scheduleRescueNow(file: File) = CutOffRescueWorker.scheduleConfirmed(context, file)
 
         override fun record(line: String) = CallEndLog.record(context, line)
     }

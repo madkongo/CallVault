@@ -256,7 +256,7 @@ class CallSessionManager private constructor(context: Context) {
             // noted, if no call of either kind is still up (a WhatsApp call under this IDLE is not one, Q28).
             managerScope.launch(Dispatchers.IO) {
                 delay(ORPHAN_CHECK_AFTER_IDLE_MS)
-                runCatching { OrphanRecorderSession.settle(appContext, "phone call ended") }
+                runCatching { OrphanRecorderSession.settle(appContext, OrphanRecorderSession.TRIGGER_PHONE_CALL_ENDED) }
                     .onFailure { AppLogger.e(TAG, "Orphan recorder check after the call failed: ${it.message}", it) }
             }
             // Only trigger stop logic if we were previously in an active session. Prevents redundant stop commands on possible repeated IDLE broadcasts.

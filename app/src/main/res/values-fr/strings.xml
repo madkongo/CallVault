@@ -221,6 +221,8 @@
     <string name="note_saved">Enregistré</string>
     <string name="note_saving">Enregistrement…</string>
     <string name="notif_cut_off_saved_text">Votre téléphone a fermé CallVault pendant un appel. Ce qui avait été enregistré jusque-là a été sauvegardé sous %1$s.</string>
+    <string name="notif_call_saved_after_restart_title">Appel enregistré après le redémarrage de CallVault</string>
+    <string name="notif_call_saved_after_restart_text">CallVault a été fermé pendant un appel, mais l’enregistrement a continué et a sauvegardé tout l’appel sous %1$s.</string>
     <string name="notif_cut_off_saved_title">Un appel a été interrompu</string>
     <string name="notif_health_channel">Problèmes qui vous concernent</string>
     <string name="notif_health_recorder_text">Aucun appel ne sera enregistré tant que ce téléphone ne se sera pas connecté une fois à un réseau Wi-Fi. N\'importe quel réseau convient et Internet n\'est pas nécessaire : quelques secondes suffisent, puis cela continue de fonctionner même hors Wi-Fi.</string>

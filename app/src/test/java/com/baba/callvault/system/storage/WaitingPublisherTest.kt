@@ -91,7 +91,8 @@ class WaitingPublisherTest {
         override fun afterPublish(name: String, uri: Uri, mimeType: String, held: Boolean) { after += name; this.held += held }
         override fun record(line: String) { lines += line }
         val cutOffs = mutableListOf<String>()
-        override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long) { cutOffs += name }
+        val savedInFullFlags = mutableListOf<Boolean>()
+        override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long, savedInFull: Boolean) { cutOffs += name; savedInFullFlags += savedInFull }
     }
 
     @Test
@@ -233,6 +234,19 @@ class WaitingPublisherTest {
         assertEquals(1, env.catalogued.size)
         assertTrue("no transcription, Drive or waveform", env.after.isEmpty())
         assertEquals(listOf("c.ogg"), env.cutOffs)
+    }
+
+    @Test
+    fun `a waiting file marked saved-in-full reaches the cut-off steps as saved in full`() = runBlocking {
+        val full = waiting("full.ogg", 500, finished = true)
+        WaitingNote.write(full, WaitingNote(StagingNote("none", "full.ogg", "audio/ogg", now, OrphanStop.CALL_ENDED), now, extras = null))
+        val part = waiting("part.ogg", 500, finished = true)
+        WaitingNote.write(part, WaitingNote(StagingNote("none", "part.ogg", "audio/ogg", now, OrphanStop.STOPPED), now, extras = null))
+        val env = FakeEnv(listOf(full, part), now = now)
+
+        assertEquals(2, WaitingPublisher.run(env).saved)
+
+        assertEquals(mapOf("full.ogg" to true, "part.ogg" to false), env.cutOffs.zip(env.savedInFullFlags).toMap())
     }
 
     @Test

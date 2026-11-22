@@ -68,6 +68,9 @@ object SilentFailureNotifier {
     private const val ID_RETENTION_WAITING_FOR_DRIVE = 4726
     private const val ID_DRIVE_BACKUP_BROKEN = 4727
 
+    /** A call saved in full across an app restart: its own id, so it never replaces a real cut-off notice (4723). */
+    private const val ID_CALL_SAVED_AFTER_RESTART = 4735
+
     /** R5: the one combined "Calls may not be recorded" notice. 4720 is the keep-alive's and is never touched. */
     private const val ID_RECORDING_AT_RISK = 4734
 
@@ -75,7 +78,7 @@ object SilentFailureNotifier {
     internal val ALL_IDS = listOf(
         ID_RECORDER_UNAVAILABLE, ID_SYNC_STALLED, ID_SHIZUKU_STOPPED, ID_PAIRING_LOST, ID_CUT_OFF_SAVED,
         ID_TURNED_OFF_FOR_ANDROID, ID_STOPPED_BY_USER, ID_RETENTION_WAITING_FOR_DRIVE, ID_DRIVE_BACKUP_BROKEN,
-        ID_RECORDING_AT_RISK,
+        ID_RECORDING_AT_RISK, ID_CALL_SAVED_AFTER_RESTART,
     )
 
     /**
@@ -153,6 +156,16 @@ object SilentFailureNotifier {
         title = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_title),
         text = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text, fileName),
         // The file is named after the contact; the lock screen gets the title only (R32).
+        publicText = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text_public),
+    )
+
+    /** The app was killed mid-call but the recorder kept going and the whole call was saved (not a cut-off). */
+    fun noteCallSavedAfterRestart(context: Context, fileName: String) = post(
+        context,
+        id = ID_CALL_SAVED_AFTER_RESTART,
+        info = true,
+        title = LocalizedContext.of(context).getString(R.string.notif_call_saved_after_restart_title),
+        text = LocalizedContext.of(context).getString(R.string.notif_call_saved_after_restart_text, fileName),
         publicText = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text_public),
     )
 
