@@ -108,6 +108,8 @@ class SettingDecisionsTest {
         "transcription_model_id" to Decision(Wizard(WizardStep.TRANSCRIPTION)),
         "transcription_language" to Decision(Wizard(WizardStep.TRANSCRIPTION)),
         "transcription_ask_language" to Decision(SettingsOnly("for multilingual phones, after the pin is chosen")),
+        // After each call: all SIMs or one SIM (issue #81, PR #85).
+        "transcription_after_call_sim" to Decision(SettingsOnly("all SIMs or one SIM; all by default, and only for after-each-call")),
         "summary_confirm_requirements" to Decision(SettingsOnly("asked at the first summary; BabApps item 131: no switch now, the Summaries card's ⓘ popup holds the checkbox")),
         "summary_language" to Decision(SettingsOnly("BabApps item 135: editable in Settings; default 'Same as the call' needs no choice, and the wizard has no summaries step")),
         // App (VoIP) calls

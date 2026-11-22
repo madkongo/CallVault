@@ -189,6 +189,7 @@ object SettingsGroups {
             "transcription_ask_language",
             "transcription_mode", "transcription_hour", "transcription_minute",
             "transcription_requires_charging", "transcription_batch_limit", "transcription_confirm_before_run",
+            "transcription_after_call_sim",
             "summary_confirm_requirements", "summary_language",
         )
         SettingsGroup.APP -> listOf("theme_mode", "dynamic_color", "show_toasts", "start_page", "update_check_enabled")

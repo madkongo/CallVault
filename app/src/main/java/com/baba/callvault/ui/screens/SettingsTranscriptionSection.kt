@@ -56,6 +56,12 @@ internal fun TranscriptionScheduleRows(preferences: AppPreferences, updateTrigge
 
     TranscriptionModeField(mode = mode, onModeChange = { actions.setTranscriptionMode(it) })
 
+    // Dual-SIM only, and only for "after each call": a one-SIM phone has nothing to choose, and
+    // the nightly sweep is not a per-call rule (issue #81). Hidden entirely until both are true.
+    if (mode == TranscriptionMode.AFTER_EACH_CALL) {
+        TranscriptionSimChoices(preferences, updateTrigger)
+    }
+
     // Only the scheduled sweep has a run time and a backlog size to choose. Per-call has neither:
     // it runs when a call ends, and only ever on that one call.
     if (mode == TranscriptionMode.AUTOMATIC) {

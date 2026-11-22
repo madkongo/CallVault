@@ -1095,4 +1095,9 @@
     <!-- update tap -->
     <string name="update_notif_ready_title">Update ready: v%1$s, tap to open and install</string>
     <string name="update_notif_ready_text">Your call is over. Tap to open CallVault and install.</string>
+    <!-- PR #85 (issue #81): after-call transcription for one SIM -->
+    <string name="transcription_sim_all">همه سیم‌کارت‌ها</string>
+    <string name="transcription_sim_info">پس از هر تماس، همه سیم‌کارت‌ها یا یک سیم‌کارت رونویسی شود. بقیه را از فهرست می‌توان رونویسی کرد. هیچ ضبطی حذف نمی‌شود.</string>
+    <string name="transcription_sim_label">رونویسی خودکار</string>
+    <string name="sim_choice_unavailable">سیم‌کارت ذخیره‌شده (در این گوشی نیست)</string>
 </resources>

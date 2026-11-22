@@ -1008,4 +1008,9 @@
     <!-- update tap -->
     <string name="update_notif_ready_title">Update ready: v%1$s, tap to open and install</string>
     <string name="update_notif_ready_text">Your call is over. Tap to open CallVault and install.</string>
+    <!-- PR #85 (issue #81): after-call transcription for one SIM -->
+    <string name="transcription_sim_all">Все SIM</string>
+    <string name="transcription_sim_info">После каждого звонка расшифровывать все SIM или одну SIM. Остальное можно расшифровать из списка. Записи не удаляются.</string>
+    <string name="transcription_sim_label">Авторасшифровка</string>
+    <string name="sim_choice_unavailable">Сохранённая SIM (нет в этом телефоне)</string>
 </resources>

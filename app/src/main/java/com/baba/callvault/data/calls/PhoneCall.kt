@@ -33,12 +33,34 @@ object PhoneCallMatch {
     /** How far a recording's start may sit from the call log's time and still be that call. */
     const val TOLERANCE_MS = 120_000L
 
+    /**
+     * How close a call-log start must be to count as the call that just finished.
+     *
+     * Tighter than [TOLERANCE_MS] on purpose. Two calls a minute apart are both inside two minutes,
+     * so [nearest] will claim the previous call while this call's row is not in the log yet. A
+     * keep-or-delete decision must not do that.
+     */
+    const val JUST_ENDED_START_SLOP_MS = 25_000L
+
     /** The nearest answered call within [TOLERANCE_MS] of [startedAt], or null. */
     fun nearest(calls: List<PhoneCall>, startedAt: Long): PhoneCall? =
+        closest(calls, startedAt, TOLERANCE_MS)
+
+    /**
+     * The answered call that belongs to a recording which has just ended, or null.
+     *
+     * Only a start within [JUST_ENDED_START_SLOP_MS] qualifies. A previous call a minute earlier
+     * is inside [nearest]'s window and is ignored here, so a missing new row stays "unknown"
+     * instead of inheriting the previous call's SIM.
+     */
+    fun justEnded(calls: List<PhoneCall>, recordingStartedAt: Long): PhoneCall? =
+        closest(calls, recordingStartedAt, JUST_ENDED_START_SLOP_MS)
+
+    private fun closest(calls: List<PhoneCall>, startedAt: Long, slopMs: Long): PhoneCall? =
         calls.asSequence()
             .filter { it.kind == CallKind.INCOMING || it.kind == CallKind.OUTGOING }
             .map { it to kotlin.math.abs(it.startedAt - startedAt) }
-            .filter { it.second <= TOLERANCE_MS }
+            .filter { it.second <= slopMs }
             .minByOrNull { it.second }
             ?.first
 }

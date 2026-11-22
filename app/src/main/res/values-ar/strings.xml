@@ -1044,4 +1044,9 @@
     <!-- update tap -->
     <string name="update_notif_ready_title">Update ready: v%1$s, tap to open and install</string>
     <string name="update_notif_ready_text">Your call is over. Tap to open CallVault and install.</string>
+    <!-- PR #85 (issue #81): after-call transcription for one SIM -->
+    <string name="transcription_sim_all">كل شرائح SIM</string>
+    <string name="transcription_sim_info">بعد كل مكالمة، انسخ كل الشرائح أو شريحة واحدة. يمكن نسخ الباقي من القائمة. لا يُحذف أي تسجيل.</string>
+    <string name="transcription_sim_label">نسخ تلقائي</string>
+    <string name="sim_choice_unavailable">الشريحة المحفوظة (ليست في هذا الهاتف)</string>
 </resources>

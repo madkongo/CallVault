@@ -96,6 +96,13 @@ class TranscriptionWorker(
     }
 
     private suspend fun runBatch(): Result = withContext(Dispatchers.IO) {
+        // "After each call" limited to one SIM (issue #81). Here, on the worker's thread, because finding this
+        // call's SIM waits for its call-log row; the call-end code that queued the run must not wait for it.
+        val afterCallName = inputData.getString(KEY_DISPLAY_NAME)?.takeIf { inputData.getBoolean(KEY_AFTER_CALL, false) }
+        if (afterCallName != null && AfterCallSimGate.skipTranscription(applicationContext, afterCallName)) {
+            return@withContext Result.success()
+        }
+
         // Promote out of cached-process priority before allocating anything. Best-effort: a phone that
         // refuses the foreground service should still transcribe, just more vulnerable to being killed
         // — failing the whole job here would be a worse outcome than the risk it guards against.
@@ -345,6 +352,8 @@ class TranscriptionWorker(
         const val KEY_USER_REQUESTED = "userRequested"
 
         const val KEY_DISPLAY_NAME = "displayName"
+        /** True for a run queued by [TranscriptionScheduler.transcribeAfterCallIfEnabled]; absent on every other run. */
+        const val KEY_AFTER_CALL = "afterCall"
 
         /**
          * Input key carrying the language picked for this one recording, encoded by

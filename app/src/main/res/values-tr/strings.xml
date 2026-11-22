@@ -1098,4 +1098,9 @@
     <!-- update tap -->
     <string name="update_notif_ready_title">Update ready: v%1$s, tap to open and install</string>
     <string name="update_notif_ready_text">Your call is over. Tap to open CallVault and install.</string>
+    <!-- PR #85 (issue #81): after-call transcription for one SIM -->
+    <string name="transcription_sim_all">Tüm SIM\'ler</string>
+    <string name="transcription_sim_info">Her aramadan sonra tüm SIM\'leri veya tek bir SIM\'i yazıya dök. Otomatik yazıya dökülmeyenler listeden yazıya dökülebilir. Hiçbir kayıt silinmez.</string>
+    <string name="transcription_sim_label">Otomatik yazıya dök</string>
+    <string name="sim_choice_unavailable">Kayıtlı SIM (bu telefonda yok)</string>
 </resources>

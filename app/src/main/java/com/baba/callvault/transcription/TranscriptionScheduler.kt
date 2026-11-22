@@ -192,6 +192,8 @@ object TranscriptionScheduler {
                             TranscriptionWorker.KEY_LANGUAGE to language,
                             TranscriptionWorker.KEY_USER_REQUESTED to userRequested,
                             TranscriptionWorker.KEY_SERVICE to service?.key,
+                            // Only an after-call run is subject to the one-SIM rule (issue #81), checked by the worker.
+                            TranscriptionWorker.KEY_AFTER_CALL to afterCall,
                         )
                     )
                 }

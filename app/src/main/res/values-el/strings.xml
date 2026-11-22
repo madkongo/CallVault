@@ -1156,4 +1156,9 @@
     <!-- update tap -->
     <string name="update_notif_ready_title">Update ready: v%1$s, tap to open and install</string>
     <string name="update_notif_ready_text">Your call is over. Tap to open CallVault and install.</string>
+    <!-- PR #85 (issue #81): after-call transcription for one SIM -->
+    <string name="transcription_sim_all">Όλες οι SIM</string>
+    <string name="transcription_sim_info">Μετά από κάθε κλήση, μεταγραφή όλων των SIM ή μίας SIM. Τα υπόλοιπα μεταγράφονται από τη λίστα. Δεν διαγράφει εγγραφές.</string>
+    <string name="transcription_sim_label">Αυτόματη μεταγραφή</string>
+    <string name="sim_choice_unavailable">Αποθηκευμένη SIM (δεν είναι σε αυτό το τηλέφωνο)</string>
 </resources>

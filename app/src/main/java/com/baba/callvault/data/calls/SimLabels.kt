@@ -105,4 +105,15 @@ object SimLabels {
                 ?.also { AppLogger.d(TAG, "SIM for a call: slot=${slot?.plus(1)} nameSource=$source -> '${it.label}'") }
         }.onFailure { AppLogger.d(TAG, "SIM lookup failed: ${it.message}") }.getOrNull()
     }
+
+    /**
+     * The call that just ended: its phone-account id (stable; not the SIM's display name) and slot.
+     * Null when this call has no row yet. A previous call is not used.
+     */
+    fun forJustEnded(context: Context, startedAt: Long, simWord: String): CallSim? {
+        val calls = PhoneCallReader.since(context, startedAt - PhoneCallMatch.JUST_ENDED_START_SLOP_MS)
+        val call = PhoneCallMatch.justEnded(calls, startedAt) ?: return null
+        val slot = Resolver(context, simWord).simFor(call.accountComponent, call.accountId)?.slot
+        return CallSim(call.accountId, slot)
+    }
 }
