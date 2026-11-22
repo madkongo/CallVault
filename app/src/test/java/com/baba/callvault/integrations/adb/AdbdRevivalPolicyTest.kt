@@ -9,6 +9,7 @@
 package com.baba.callvault.integrations.adb
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -233,5 +234,44 @@ class AdbdRevivalPolicyTest {
         var streak = AdbdStoppedStreak(0, 0)
         for (tick in 0..1) streak = t.observe(AdbdState.STOPPED, tick * 60_000L)
         assertEquals(AdbdRevival.CYCLE_WIRELESS_DEBUGGING, decide(usbOn = true, wdOn = true, stoppedStreak = streak))
+    }
+
+    // --- R1: a stale streak must not make a live wait give up at once ---
+
+    @Test
+    fun `the continuous stop clock restarts when looks are far apart, though the streak survives`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0)
+        // a keep-alive tick 60 s later, then the self-heal loop polls at 61 s
+        t.observe(AdbdState.STOPPED, 60_000)
+        assertEquals(0L, t.continuousStoppedMs)
+        t.observe(AdbdState.STOPPED, 61_500)
+        assertEquals(1_500L, t.continuousStoppedMs)
+        // the streak itself (for the cycle decision) is still alive
+        assertEquals(3, t.observe(AdbdState.STOPPED, 66_000).checks)
+    }
+
+    @Test
+    fun `a wait loop polling every 1500 ms reaches the give-up only after its own continuous stop`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0) // stale sighting from an earlier tick
+        var now = 90_000L
+        var gaveUpAt = -1L
+        while (gaveUpAt < 0 && now < 120_000) {
+            t.observe(AdbdState.STOPPED, now)
+            if (StoppedAdbdWaits.persistentlyStopped(AdbdState.STOPPED, t.continuousStoppedMs)) gaveUpAt = now
+            now += 1_500
+        }
+        // first poll at 90 s must not give up; it takes GIVE_UP_AFTER_MS of this loop's own looks
+        assertTrue(gaveUpAt >= 90_000 + StoppedAdbdWaits.GIVE_UP_AFTER_MS)
+    }
+
+    @Test
+    fun `a running reading clears the continuous clock`() {
+        val t = AdbdStoppedTracker()
+        t.observe(AdbdState.STOPPED, 0)
+        t.observe(AdbdState.STOPPED, 3_000)
+        t.observe(AdbdState.RUNNING, 4_000)
+        assertEquals(0L, t.continuousStoppedMs)
     }
 }

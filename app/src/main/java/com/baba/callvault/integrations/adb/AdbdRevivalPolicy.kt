@@ -80,12 +80,22 @@ class AdbdStoppedTracker {
     private var firstMs = -1L
     private var lastCountedMs = -1L
     private var lastSeenMs = -1L
+    private var continuousFirstMs = -1L
     private var checks = 0
+
+    /**
+     * How long adbd has read stopped **without a gap** of more than [CONTINUOUS_GAP_MS] between looks, as of the last
+     * [observe]. This, not the streak, is what a wait loop may give up on (R1): a stale sighting from a keep-alive tick a
+     * minute ago keeps the streak alive for the cycle decision but says nothing about the restart being waited on now.
+     */
+    @Volatile var continuousStoppedMs = 0L
+        private set
 
     @Synchronized
     fun observe(state: AdbdState, nowMs: Long): AdbdStoppedStreak {
         if (state != AdbdState.STOPPED) {
-            firstMs = -1L; lastCountedMs = -1L; lastSeenMs = -1L; checks = 0
+            firstMs = -1L; lastCountedMs = -1L; lastSeenMs = -1L; continuousFirstMs = -1L; checks = 0
+            continuousStoppedMs = 0L
             return AdbdStoppedStreak(0, 0)
         }
         if (firstMs >= 0 && nowMs - lastSeenMs > STALE_GAP_MS) {
@@ -96,12 +106,17 @@ class AdbdStoppedTracker {
         } else if (nowMs - lastCountedMs >= MIN_GAP_MS) {
             lastCountedMs = nowMs; checks++
         }
+        if (continuousFirstMs < 0 || (lastSeenMs >= 0 && nowMs - lastSeenMs > CONTINUOUS_GAP_MS)) continuousFirstMs = nowMs
+        continuousStoppedMs = nowMs - continuousFirstMs
         lastSeenMs = nowMs
         return AdbdStoppedStreak(checks, nowMs - firstMs)
     }
 
     companion object {
         const val MIN_GAP_MS = 5_000L
+
+        /** Looks closer together than this are one continuous stop, for the waits (R1). */
+        const val CONTINUOUS_GAP_MS = 10_000L
 
         /**
          * Looks further apart than this are not one streak. The keep-alive ticks every 60 s, so 60 s itself would
@@ -112,33 +127,68 @@ class AdbdStoppedTracker {
 }
 
 /**
- * Back-off after a Wireless-debugging cycle that did not bring adbd back (H2): at most one cycle per
- * [BASE_MS], doubling after each failure up to [CAP_MS], cleared the moment adbd is seen running.
- * Thread-safe.
+ * Limits on Wireless-debugging cycles (H2, R2). Thread-safe.
+ *
+ * - After a cycle that left adbd not running: at most one per [BASE_MS], doubling to [CAP_MS].
+ * - After one that worked: still [BASE_MS] before the next, so a phone whose USB rule stops adbd again seconds later
+ *   does not ping-pong every minute.
+ * - Whatever the outcome, at most [MAX_CYCLES_PER_WINDOW] per [WINDOW_MS].
+ * - The spacing and the doubling are cleared only after adbd has stayed running for [STABLE_RUNNING_MS]; a running
+ *   reading right after a cycle proves nothing. The per-window count is never cleared, only aged out.
  */
 class AdbdRevivalBackoff {
     @Volatile var nextAllowedMs = 0L
         private set
     @Volatile var lastDelayMs = 0L
         private set
+    private var runningSinceMs = -1L
+    private val cycleTimes = ArrayDeque<Long>()
 
     @Synchronized
-    fun mayCycle(nowMs: Long): Boolean = nowMs >= nextAllowedMs
+    fun mayCycle(nowMs: Long): Boolean = blockReason(nowMs) == null
+
+    /** Why no cycle may run now, or null. The text is for the log. */
+    @Synchronized
+    fun blockReason(nowMs: Long): String? {
+        prune(nowMs)
+        if (cycleTimes.size >= MAX_CYCLES_PER_WINDOW) {
+            return "already cycled $MAX_CYCLES_PER_WINDOW times in the last hour (at most $MAX_CYCLES_PER_WINDOW per hour)"
+        }
+        if (nowMs < nextAllowedMs) return "the last cycle was recently, next one allowed in ${(nextAllowedMs - nowMs) / 1000}s"
+        return null
+    }
 
     /** A cycle just finished; [adbdRunning] is what adbd read afterwards. */
     @Synchronized
     fun onCycleEnded(now: Long, adbdRunning: Boolean) {
-        if (adbdRunning) { onRunningSeen(); return }
-        lastDelayMs = if (lastDelayMs == 0L) BASE_MS else minOf(lastDelayMs * 2, CAP_MS)
-        nextAllowedMs = now + lastDelayMs
+        cycleTimes.addLast(now)
+        prune(now)
+        if (!adbdRunning) lastDelayMs = if (lastDelayMs == 0L) BASE_MS else minOf(lastDelayMs * 2, CAP_MS)
+        nextAllowedMs = now + (if (adbdRunning && lastDelayMs == 0L) BASE_MS else lastDelayMs)
+        runningSinceMs = -1L
     }
 
+    /** adbd read running at [now]. Only a long enough unbroken run clears the spacing. */
     @Synchronized
-    fun onRunningSeen() { nextAllowedMs = 0L; lastDelayMs = 0L }
+    fun onRunningSeen(now: Long) {
+        if (runningSinceMs < 0) runningSinceMs = now
+        if (now - runningSinceMs >= STABLE_RUNNING_MS) { nextAllowedMs = 0L; lastDelayMs = 0L }
+    }
+
+    /** adbd read anything but running: the unbroken run starts over. */
+    @Synchronized
+    fun onNotRunningSeen() { runningSinceMs = -1L }
+
+    private fun prune(now: Long) {
+        while (cycleTimes.isNotEmpty() && now - cycleTimes.first() >= WINDOW_MS) cycleTimes.removeFirst()
+    }
 
     companion object {
         const val BASE_MS = 10 * 60_000L
         const val CAP_MS = 2 * 60 * 60_000L
+        const val STABLE_RUNNING_MS = 5 * 60_000L
+        const val WINDOW_MS = 60 * 60_000L
+        const val MAX_CYCLES_PER_WINDOW = 3
     }
 }
 

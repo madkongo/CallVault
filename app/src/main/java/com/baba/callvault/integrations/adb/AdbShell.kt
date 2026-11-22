@@ -454,7 +454,7 @@ object AdbShell {
         // not again soon after one that did not bring adbd back (M4, H2). Asked before AND after the settle wait.
         fun vetoCycle(): Boolean {
             val blocked = AdbdCycleGuard.blockReason(
-                callInProgress = !runCatching { com.baba.callvault.system.updates.CallInProgressGate.mayInstall(context) }.getOrDefault(true),
+                callInProgress = runCatching { com.baba.callvault.system.updates.CallInProgressGate.isCallInProgress(context) }.getOrDefault(false),
                 recorderConnected = com.baba.callvault.server.RecorderConnection.isConnected,
             )
             if (blocked != null) {
@@ -462,8 +462,8 @@ object AdbShell {
                 return true
             }
             val now = SystemClock.elapsedRealtime()
-            if (!revivalBackoff.mayCycle(now)) {
-                AppLogger.i(TAG, "adbd is stopped after $reason; backing off: the last cycle did not bring it back, next one allowed in ${(revivalBackoff.nextAllowedMs - now) / 1000}s ($lastInputs)")
+            revivalBackoff.blockReason(now)?.let { why ->
+                AppLogger.i(TAG, "adbd is stopped after $reason; backing off: $why ($lastInputs)")
                 return true
             }
             return false
@@ -523,9 +523,7 @@ object AdbShell {
         val after = adbdState()
         if (decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING) {
             revivalBackoff.onCycleEnded(SystemClock.elapsedRealtime(), adbdRunning = after == AdbdState.RUNNING)
-            if (after != AdbdState.RUNNING) {
-                AppLogger.w(TAG, "adbd is still $after after the Wireless-debugging cycle; backing off, next cycle allowed in ${(revivalBackoff.nextAllowedMs - SystemClock.elapsedRealtime()) / 1000}s")
-            }
+            AppLogger.i(TAG, "Wireless-debugging cycle done, adbd reads $after; backing off, next cycle: ${revivalBackoff.blockReason(SystemClock.elapsedRealtime()) ?: "allowed"}")
         }
         AppLogger.i(TAG, "adbd after revival ($decision): $after")
         return decision
@@ -537,17 +535,24 @@ object AdbShell {
      */
     fun observeAdbd(): AdbdStoppedStreak {
         val state = adbdState()
-        if (state == AdbdState.RUNNING) revivalBackoff.onRunningSeen()
-        return adbdStoppedTracker.observe(state, SystemClock.elapsedRealtime())
+        val now = SystemClock.elapsedRealtime()
+        if (state == AdbdState.RUNNING) revivalBackoff.onRunningSeen(now) else revivalBackoff.onNotRunningSeen()
+        return adbdStoppedTracker.observe(state, now)
     }
 
-    /** How long adbd has read stopped, look after look; 0 when it does not read stopped (observes). */
-    internal fun adbdStoppedForMs(): Long = observeAdbd().stoppedForMs
+    /**
+     * How long adbd has read stopped without a gap between looks (R1), for the waits; 0 when it does not read stopped.
+     * Not the streak the cycle decision uses: that one survives gaps up to [AdbdStoppedTracker.STALE_GAP_MS].
+     */
+    internal fun adbdStoppedForMs(): Long {
+        observeAdbd()
+        return adbdStoppedTracker.continuousStoppedMs
+    }
 
     /** True when adbd has read stopped long enough that waiting for it (or its mDNS service) is pointless (M1). */
     internal fun adbdPersistentlyStopped(): Boolean {
-        val streak = observeAdbd()
-        return StoppedAdbdWaits.persistentlyStopped(adbdState(), streak.stoppedForMs)
+        val continuous = adbdStoppedForMs()
+        return StoppedAdbdWaits.persistentlyStopped(adbdState(), continuous)
     }
 
     private val revivalBackoff = AdbdRevivalBackoff()

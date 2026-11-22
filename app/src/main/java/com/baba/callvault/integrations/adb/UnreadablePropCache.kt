@@ -11,14 +11,21 @@ package com.baba.callvault.integrations.adb
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Remembers which report-only system properties read empty, so a property the app is not allowed to read
- * (each try can log an SELinux denial) is asked once per process, not on every snapshot (L4).
+ * Remembers which report-only system properties keep reading empty, so a property the app is not allowed to read
+ * (each try can log an SELinux denial) stops being asked, instead of on every snapshot (L4). Only after
+ * [EMPTY_READS_TO_GIVE_UP] empty reads in a row, so a property that is merely unset for a moment is not lost (R3).
  */
 internal class UnreadablePropCache {
-    private val unreadable = ConcurrentHashMap.newKeySet<String>()
+    private val emptyReads = ConcurrentHashMap<String, Int>()
 
     fun get(key: String, read: (String) -> String): String {
-        if (key in unreadable) return ""
-        return read(key).also { if (it.isBlank()) unreadable.add(key) }
+        if ((emptyReads[key] ?: 0) >= EMPTY_READS_TO_GIVE_UP) return ""
+        val value = read(key)
+        if (value.isBlank()) emptyReads.merge(key, 1, Int::plus) else emptyReads.remove(key)
+        return value
+    }
+
+    companion object {
+        const val EMPTY_READS_TO_GIVE_UP = 3
     }
 }
