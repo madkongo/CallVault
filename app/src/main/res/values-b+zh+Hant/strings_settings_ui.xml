@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="settings_ui_about_app">CallVault</string>
+    <string name="settings_ui_open_repo_hint">輕觸開啟上游專案</string>
+    <string name="settings_ui_recording_server_label">錄音引擎</string>
+</resources>
