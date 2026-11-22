@@ -178,7 +178,13 @@ object AdbShell {
             // up to CONNECT_BUDGET_MS per port when adbd accepts TCP and never answers the handshake, and
             // counting only the sleeps let eight such rounds run ~140 s past a "12 s" window. When connects are
             // refused at once (the normal case) the two are the same.
-            if (!ok && isLoopbackArmed(context)) {
+            val adbdNow = adbdState()
+            if (!ok && isLoopbackArmed(context) && !StoppedAdbdWaits.mayWaitForLoopbackSelfHeal(true, adbdNow)) {
+                // service.adb.tcp.port persists while adbd is stopped, so "armed" proves nothing here; nobody is
+                // restarting it. Skip the wait and let the caller take the revival decision (GH89-4, C65).
+                AppLogger.i(TAG, "Loopback armed but adbd reads stopped: not waiting ${LOOPBACK_SELFHEAL_MS}ms for a listener that cannot return; the revival decision comes next")
+            }
+            if (!ok && isLoopbackArmed(context) && StoppedAdbdWaits.mayWaitForLoopbackSelfHeal(true, adbdNow)) {
                 val startedAt = SystemClock.elapsedRealtime()
                 val deadline = startedAt + LOOPBACK_SELFHEAL_MS
                 while (!ok && SystemClock.elapsedRealtime() < deadline) {

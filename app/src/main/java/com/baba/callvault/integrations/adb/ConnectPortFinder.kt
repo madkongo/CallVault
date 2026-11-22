@@ -75,6 +75,13 @@ internal object ConnectPortFinder {
         if (lastGood != null && probe(lastGood, LAST_GOOD_CONNECT_TIMEOUT_MS, LAST_GOOD_READ_TIMEOUT_MS) == PortProbe.ADB_TLS) {
             return found(lastGood, Source.LAST_GOOD, "")
         }
+        // adbd stopped: no service is advertised and none can answer, so do not spend the mDNS window on it (C65).
+        if (!StoppedAdbdWaits.maySearchOrRearmViaMdns(adbd)) {
+            val outcome = "adbd is stopped; last good port did not answer and mDNS was not asked"
+            if (outcome != lastOutcome) AppLogger.w(TAG, outcome) // once per change, not on every retry
+            lastOutcome = outcome
+            return null
+        }
         // mDNS's port needs no second check: AdbMdns already accepts only a port something listens on at
         // 127.0.0.1 (MdnsServiceVerdict, the bind-must-fail probe), and the last good port was probed above.
         AdbMdns.discoverEndpoint(context, AdbMdns.TLS_CONNECT, mdnsTimeoutMs)?.let { (host, port) ->

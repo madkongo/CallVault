@@ -13,6 +13,7 @@ import com.baba.callvault.system.diagnostics.RecorderLogMarkers
 import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.StoppedAdbdWaits
 import com.baba.callvault.integrations.adb.TransportTimeline
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.services.recording.AppPauseWatch
@@ -253,8 +254,20 @@ object RecorderServerLauncher {
             // Wireless Debugging — WD's adbd churn is what kills the daemon. Held under heavyOperationLock
             // (this method), so armLoopbackIfNeeded's lock is re-entrant. No-op/fast when already armed.
             if (!connected && AppPreferences(context).isOfflineRecordingEnabled()) {
-                AppLogger.i(TAG, "Attempt $n: offline mode but no connection — re-arming loopback")
-                if (AdbShell.armLoopbackIfNeeded(context)) connected = AdbShell.ensureConnected(context)
+                // adbd stopped: re-arming goes through mDNS, which cannot answer, so it would only burn its
+                // timeout. Take the revival decision first (GH89-4); arm only if adbd is back (or unreadable).
+                var mayRearm = StoppedAdbdWaits.maySearchOrRearmViaMdns(AdbShell.adbdState())
+                if (!mayRearm) {
+                    AppLogger.i(TAG, "Attempt $n: offline mode, no connection and adbd reads stopped — deciding on a revival instead of re-arming through mDNS")
+                    runCatching { AdbShell.reviveAdbdIfStopped(context, "launch attempt $n (adbd stopped)") }
+                        .onFailure { AppLogger.w(TAG, "Attempt $n: could not check adbd: ${it.message}") }
+                    mayRearm = StoppedAdbdWaits.maySearchOrRearmViaMdns(AdbShell.adbdState())
+                    if (!mayRearm) AppLogger.w(TAG, "Attempt $n: adbd is still stopped after the revival decision; not re-arming")
+                }
+                if (mayRearm) {
+                    AppLogger.i(TAG, "Attempt $n: offline mode but no connection — re-arming loopback")
+                    if (AdbShell.armLoopbackIfNeeded(context)) connected = AdbShell.ensureConnected(context)
+                }
             }
             if (!connected) {
                 AppLogger.w(TAG, "Attempt $n/$MAX_LAUNCH_ATTEMPTS: ADB not connected; retrying")
