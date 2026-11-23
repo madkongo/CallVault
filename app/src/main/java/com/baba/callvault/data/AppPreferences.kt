@@ -17,6 +17,7 @@ import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioSource
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.SyncScheduleMode
+import com.baba.callvault.data.calls.SimChoice
 import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.transcription.TranscriptionLanguageChoice
 import com.baba.callvault.transcription.cloud.CloudEndpoint
@@ -257,6 +258,10 @@ class AppPreferences(context: Context) {
         // more than one language.
         const val TRANSCRIPTION_ASK_LANGUAGE = false
 
+        // Every SIM. A default that named a slot would stop transcribing half of someone's calls
+        // on the upgrade that introduced the setting (issue #81).
+        const val TRANSCRIPTION_AFTER_CALL_SIM = "all"
+
         // --- Retention (auto-delete old recordings) ---
         // Delete recordings older than N days. 0 = keep forever (OFF). Applied per copy: device copies
         // use RETENTION_LOCAL_DAYS, Drive copies use RETENTION_DRIVE_DAYS. When RETENTION_LINKED is true
@@ -389,6 +394,10 @@ class AppPreferences(context: Context) {
         TRANSCRIPTION_MODEL_ID("transcription_model_id"),
         TRANSCRIPTION_LANGUAGE("transcription_language"),
         TRANSCRIPTION_ASK_LANGUAGE("transcription_ask_language"),
+        /** "all", "sub:<id>", "icc:<id>", or a legacy slot. A stored "none" reads as all. See [getTranscriptionAutoSim]. */
+        // Device-only, deliberately NOT in EXPORTABLE_KEYS: the stored sub:/icc: id names a SIM on THIS phone, and an
+        // imported one could silently pick a different SIM on another phone.
+        TRANSCRIPTION_AFTER_CALL_SIM("transcription_after_call_sim"),
         // Where calls are written out (#48). Device-only, deliberately NOT in EXPORTABLE_KEYS: the key
         // they need is not exported, and agreeing to send call audio is this phone owner's decision.
         TRANSCRIPTION_SERVICE("transcription_service"),
@@ -937,6 +946,21 @@ class AppPreferences(context: Context) {
 
     /** Sets when calls are transcribed. */
     fun setTranscriptionMode(mode: TranscriptionMode) = setString(Key.TRANSCRIPTION_MODE, mode.key)
+
+    /** After each call: all SIMs, or one SIM (by subscription id or card id). "all" is the default (issue #81). */
+    fun getTranscriptionAutoSim(): SimChoice =
+        readSimChoice(Key.TRANSCRIPTION_AFTER_CALL_SIM, DefaultsValue.TRANSCRIPTION_AFTER_CALL_SIM)
+
+    fun setTranscriptionAutoSim(choice: SimChoice) =
+        setString(Key.TRANSCRIPTION_AFTER_CALL_SIM, choice.key)
+
+    /** Reads a SIM choice. A stored "none" is rewritten to all, which is what that option became. */
+    private fun readSimChoice(key: Key, default: String?): SimChoice {
+        val raw = getString(key, default)
+        val choice = SimChoice.fromKey(raw)
+        if (raw == "none") setString(key, choice.key)
+        return choice
+    }
 
     /** Gets the hour (0-23, device local time) of the automatic transcription run. */
     fun getTranscriptionHour() = getInt(Key.TRANSCRIPTION_HOUR, DefaultsValue.TRANSCRIPTION_HOUR)

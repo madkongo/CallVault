@@ -989,4 +989,9 @@
     <string name="storage_low_none_text">已經沒有剩餘空間。通話可能會停止錄音。請釋放一些空間。</string>
     <string name="update_notif_ready_title">更新已就緒：v%1$s，輕觸即可開啟並安裝</string>
     <string name="update_notif_ready_text">你的通話已結束。輕觸開啟 CallVault 並安裝。</string>
+    <!-- PR #85 (issue #81): after-call transcription for one SIM -->
+    <string name="transcription_sim_all">全部 SIM 卡</string>
+    <string name="transcription_sim_info">每次通話後，轉錄全部 SIM 卡或其中一張。未自動轉錄的通話可在清單中轉錄。不會刪除任何錄音。</string>
+    <string name="transcription_sim_label">自動轉錄</string>
+    <string name="sim_choice_unavailable">已儲存的 SIM 卡（不在這支手機中）</string>
 </resources>

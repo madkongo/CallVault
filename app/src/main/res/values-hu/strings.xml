@@ -1002,4 +1002,9 @@
     <!-- update tap -->
     <string name="update_notif_ready_title">Update ready: v%1$s, tap to open and install</string>
     <string name="update_notif_ready_text">Your call is over. Tap to open CallVault and install.</string>
+    <!-- PR #85 (issue #81): after-call transcription for one SIM -->
+    <string name="transcription_sim_all">Minden SIM</string>
+    <string name="transcription_sim_info">Minden hívás után minden SIM vagy egy SIM. A többit a listából lehet átírni. Felvételt nem töröl.</string>
+    <string name="transcription_sim_label">Automatikus átírás</string>
+    <string name="sim_choice_unavailable">Mentett SIM (nincs ebben a telefonban)</string>
 </resources>

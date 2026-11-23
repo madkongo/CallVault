@@ -1003,4 +1003,9 @@
     <!-- update tap -->
     <string name="update_notif_ready_title">Update ready: v%1$s, tap to open and install</string>
     <string name="update_notif_ready_text">Your call is over. Tap to open CallVault and install.</string>
+    <!-- PR #85 (issue #81): after-call transcription for one SIM -->
+    <string name="transcription_sim_all">Toutes les SIM</string>
+    <string name="transcription_sim_info">Après chaque appel, transcrire toutes les SIM ou une SIM. Le reste se transcrit depuis la liste. Aucun enregistrement n\'est supprimé.</string>
+    <string name="transcription_sim_label">Transcription automatique</string>
+    <string name="sim_choice_unavailable">SIM enregistrée (absente de ce téléphone)</string>
 </resources>

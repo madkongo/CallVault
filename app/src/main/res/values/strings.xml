@@ -631,6 +631,10 @@
     <string name="transcription_mode_manual">Manually</string>
     <string name="transcription_mode_after_each_call">After each call</string>
     <string name="transcription_mode_automatic">Scheduled</string>
+    <string name="transcription_sim_all">All SIMs</string>
+    <string name="transcription_sim_info">After each call, transcribe all SIMs or one SIM. Anything not transcribed automatically can be transcribed from the list. This never deletes a recording.</string>
+    <string name="transcription_sim_label">Auto-transcribe</string>
+    <string name="sim_choice_unavailable">Saved SIM (not in this phone)</string>
     <string name="transcription_hour_label">Hour</string>
     <string name="transcription_minute_label">Minute</string>
     <string name="transcription_time_label">Run at</string>
