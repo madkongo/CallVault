@@ -381,6 +381,36 @@ object AdbShell {
      */
     fun adbdState(): AdbdState = AdbdState.of(getSystemProperty("init.svc.adbd"))
 
+    /** The raw `init.svc.adbd` string, for logs: the enum folds "restarting", "" and an unreadable property into UNKNOWN. */
+    fun adbdRawForReport(): String = getSystemProperty("init.svc.adbd")
+
+    /** The enum and the raw string together, e.g. `STOPPED(raw=stopped)`, for the always-on lines. */
+    fun adbdDescribedForReport(): String {
+        val raw = adbdRawForReport()
+        return "${AdbdState.of(raw)}(raw=${TraceText.raw(raw)})"
+    }
+
+    private val traceGate = TraceGate(now = { SystemClock.elapsedRealtime() })
+    private val connectTraceGate = TraceGate(now = { SystemClock.elapsedRealtime() }, maxPerWindow = 10)
+    private val readFailures = OnceLog()
+
+    /** Debug-log [text] and, if the gate admits it, also write it to the always-on timeline. [key] is what makes two lines "the same". */
+    private fun trace(context: Context, key: String, text: String, always: Boolean = false, gate: TraceGate = traceGate) {
+        AppLogger.i(TAG, text)
+        if (gate.admit(key, always)) runCatching { TransportTimeline.event(context, text) }
+    }
+
+    /** A read that threw and was turned into its default: say so once, so it does not pass for a real answer. */
+    internal fun logReadFailureOnce(context: Context, what: String, e: Throwable) {
+        val cause = TraceText.failureCause(e)
+        if (readFailures.firstTime("$what|$cause")) {
+            trace(context, "read-failed:$what:$cause", "$what threw ($cause); treating it as the default", always = true)
+        }
+    }
+
+    /** What the last [enableWirelessDebugging] call's gate said, for the lines that follow a failed enable. */
+    @Volatile private var lastEnableGate: String = "not asked yet"
+
     /**
      * `init.svc.mdnsd` as Android reports it, for the debug report — "(unset)" when the ROM has no such
      * service. adbd advertises Wireless debugging's connect port through this old `mdnsd`; a ROM where it is
@@ -407,7 +437,7 @@ object AdbShell {
         // Busy means someone else is already reviving; proceed without a revival rather than queue behind it.
         reviveLock.withLockOrElse(
             onBusy = { holder ->
-                AppLogger.i(TAG, "adbd revival after $reason skipped: another revival still holds the lock after ${REVIVE_ENTRY_WAIT_MS}ms (held by ${holder ?: "a thread that has just left"})")
+                trace(context, "revival-busy", "adbd revival after $reason skipped: another revival still holds the lock after ${REVIVE_ENTRY_WAIT_MS}ms (held by ${holder ?: "a thread that has just left"})")
                 AdbdRevival.NOTHING
             },
         ) { reviveLocked(context, reason, mayEnable) }
@@ -415,6 +445,8 @@ object AdbShell {
     private fun reviveLocked(context: Context, reason: String, mayEnable: Boolean): AdbdRevival {
         var streak = AdbdStoppedStreak(checks = 1, stoppedForMs = 0)
         var lastInputs = ""
+        var lastReason = ""
+        var lastRawAdbd = ""
         fun decideNow(): AdbdRevival {
             val prefs = AppPreferences(context)
             // A switch we may borrow is not a switch that blocks revival: after a reboot the listener is
@@ -429,9 +461,12 @@ object AdbShell {
             val grant = hasWriteSecureSettings(context)
             // Asked every time, not cached: the point of the check is to catch a `init.svc.adbd`
             // reading that has gone stale in the seconds since, which a cached answer would share.
-            val shizuku = runCatching { ShizukuBackend.isRunning() }.getOrDefault(false)
+            val shizuku = runCatching { ShizukuBackend.isRunning() }
+                .onFailure { logReadFailureOnce(context, "ShizukuBackend.isRunning", it) }
+                .getOrDefault(false)
+            val rawAdbd = adbdRawForReport()
             val decision = AdbdRevivalPolicy.decideWithReason(
-                adbd = adbdState(),
+                adbd = AdbdState.of(rawAdbd),
                 usbDebuggingOn = usbOn,
                 wirelessDebuggingOn = wdOn,
                 wifi = wifi,
@@ -441,7 +476,9 @@ object AdbShell {
                 stoppedStreak = streak,
             )
             // Inputs for the log: which switch said what, and where the USB answer came from (GH89-2).
-            lastInputs = "reason=\"${decision.reason.text}\"; usbOn=$usbOn (${usbDebuggingSource(context)}), wd=$wdOn, " +
+            lastReason = decision.reason.text
+            lastRawAdbd = rawAdbd
+            lastInputs = "reason=\"${decision.reason.text}\"; adbd=${AdbdState.of(rawAdbd)} (init.svc.adbd=$rawAdbd), usbOn=$usbOn (${usbDebuggingSource(context)}), wd=$wdOn, " +
                 "wifi=$wifi, grant=$grant, mayEnable=${mayEnable && !userOff} (callerMayEnable=$mayEnable, userOff=$userOff), " +
                 "shizukuRunning=$shizuku, stoppedChecks=${streak.checks}, stoppedFor=${streak.stoppedForMs}ms"
             return decision.revival
@@ -454,16 +491,18 @@ object AdbShell {
         // not again soon after one that did not bring adbd back (M4, H2). Asked before AND after the settle wait.
         fun vetoCycle(): Boolean {
             val blocked = AdbdCycleGuard.blockReason(
-                callInProgress = runCatching { com.baba.callvault.system.updates.CallInProgressGate.isCallInProgress(context) }.getOrDefault(false),
+                callInProgress = runCatching { com.baba.callvault.system.updates.CallInProgressGate.isCallInProgress(context) }
+                    .onFailure { logReadFailureOnce(context, "CallInProgressGate.isCallInProgress", it) }
+                    .getOrDefault(false),
                 recorderConnected = com.baba.callvault.server.RecorderConnection.isConnected,
             )
             if (blocked != null) {
-                AppLogger.i(TAG, "adbd is stopped after $reason; not cycling Wireless debugging: $blocked ($lastInputs)")
+                trace(context, "veto-guard:$blocked", "revival vetoed by guard after $reason; not cycling Wireless debugging: $blocked ($lastInputs)")
                 return true
             }
             val now = SystemClock.elapsedRealtime()
             revivalBackoff.blockReason(now)?.let { why ->
-                AppLogger.i(TAG, "adbd is stopped after $reason; backing off: $why ($lastInputs)")
+                trace(context, "veto-backoff:$why", "revival vetoed by back-off after $reason: $why ($lastInputs)")
                 return true
             }
             return false
@@ -479,25 +518,33 @@ object AdbShell {
             decision = decideNow()
             if (decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING && vetoCycle()) return AdbdRevival.NOTHING
         }
+        var cycleOffWrite = "not written"
+        var cycleReadBack = TraceText.readBack(null)
+        var cycleEnabledOk = false
         when (decision) {
             AdbdRevival.NOTHING -> {
                 // Worth saying only when it looked like it needed reviving. Names the branch the policy really
                 // took and its inputs: the old line blamed a Shizuku server on phones that have none (GH89-2).
-                if (adbdState() == AdbdState.STOPPED) {
-                    AppLogger.i(TAG, "adbd reads stopped after $reason; leaving the switches alone ($lastInputs)")
+                val now = AdbdState.of(lastRawAdbd)
+                if (now == AdbdState.STOPPED) {
+                    trace(context, "nothing:stopped:$lastReason", "adbd reads stopped after $reason; leaving the switches alone ($lastInputs)")
+                } else if (now == AdbdState.UNKNOWN) {
+                    // Once per change of the raw value, not per tick: UNKNOWN is also what "restarting" and an unreadable property read as.
+                    trace(context, "nothing:unknown:$lastRawAdbd", "adbd reads UNKNOWN after $reason (init.svc.adbd=${TraceText.raw(lastRawAdbd)}); taking no action ($lastInputs)")
                 }
                 return decision
             }
             AdbdRevival.NEEDS_WIFI, AdbdRevival.NO_GRANT -> {
-                AppLogger.i(TAG, "adbd is stopped after $reason and cannot be revived now ($decision; $lastInputs)")
+                trace(context, "cannot:$decision:$lastReason", "adbd is stopped after $reason and cannot be revived now ($decision; $lastInputs)")
                 return decision
             }
             AdbdRevival.ENABLE_WIRELESS_DEBUGGING -> {
-                AppLogger.i(TAG, "adbd is stopped after $reason; switching Wireless debugging on ($lastInputs)")
-                enableWirelessDebugging(context)
+                trace(context, "enable:$lastReason", "revival decision ENABLE_WIRELESS_DEBUGGING after $reason; switching Wireless debugging on ($lastInputs)")
+                val enabledOk = enableWirelessDebugging(context)
+                trace(context, "enable-result:$enabledOk:$lastEnableGate", "revival enable result: ok=$enabledOk, enable gate=$lastEnableGate")
             }
             AdbdRevival.CYCLE_WIRELESS_DEBUGGING -> {
-                AppLogger.i(TAG, "adbd is stopped after $reason although Wireless debugging reads on; switching it off and on ($lastInputs)")
+                trace(context, "cycle-start", "revival cycle START after $reason: Wireless debugging reads on while adbd is stopped; switching it off and on ($lastInputs)", always = true)
                 val ours = AppPreferences(context).wasWirelessDebuggingEnabledByUs()
                 // It reads on right now, so a saved "the user turned it off" is stale; left set, the enable below
                 // is refused and the cycle ends with adbd stopped (C99).
@@ -507,9 +554,16 @@ object AdbShell {
                 }
                 markOwnWirelessDebuggingWrite(0)
                 runCatching { android.provider.Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 0) }
-                    .onFailure { AppLogger.w(TAG, "Could not switch Wireless debugging off to restart adbd: ${it.message}") }
+                    .onFailure {
+                        cycleOffWrite = "write threw ${TraceText.failureCause(it)}"
+                        AppLogger.w(TAG, "Could not switch Wireless debugging off to restart adbd: ${it.message}")
+                    }
+                    .onSuccess { cycleOffWrite = "write ok" }
                 Thread.sleep(WD_CYCLE_OFF_MS)
-                if (!enableWirelessDebugging(context)) {
+                // A ROM that ignores the 0 leaves it on; the enable below then answers ALREADY_ON and writes nothing.
+                cycleReadBack = TraceText.readBack(runCatching { android.provider.Settings.Global.getInt(context.contentResolver, "adb_wifi_enabled") }.getOrNull())
+                cycleEnabledOk = enableWirelessDebugging(context)
+                if (!cycleEnabledOk) {
                     AppLogger.w(TAG, "The Wireless-debugging cycle could not switch it back on after $reason; adbd stays stopped")
                 }
                 // enableWirelessDebugging records the switch as ours; it was not necessarily.
@@ -520,12 +574,20 @@ object AdbShell {
         while (adbdState() != AdbdState.RUNNING && android.os.SystemClock.elapsedRealtime() < deadline) {
             Thread.sleep(250)
         }
-        val after = adbdState()
+        val rawAfter = adbdRawForReport()
+        val after = AdbdState.of(rawAfter)
         if (decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING) {
             revivalBackoff.onCycleEnded(SystemClock.elapsedRealtime(), adbdRunning = after == AdbdState.RUNNING)
-            AppLogger.i(TAG, "Wireless-debugging cycle done, adbd reads $after; backing off, next cycle: ${revivalBackoff.blockReason(SystemClock.elapsedRealtime()) ?: "allowed"}")
+            trace(
+                context, "cycle-end",
+                "revival cycle END: adbd reads $after (init.svc.adbd=${TraceText.raw(rawAfter)}); off-write: $cycleOffWrite; $cycleReadBack; " +
+                    "enable gate=$lastEnableGate, enable returned $cycleEnabledOk; " +
+                    "backing off, next cycle: ${revivalBackoff.blockReason(SystemClock.elapsedRealtime()) ?: "allowed"}",
+                always = true,
+            )
+        } else {
+            AppLogger.i(TAG, "adbd after revival ($decision): $after")
         }
-        AppLogger.i(TAG, "adbd after revival ($decision): $after")
         return decision
     }
 
@@ -626,7 +688,8 @@ object AdbShell {
             if (connectWithoutEnabling(context, mgr)) return BaseConnect.CONNECTED
             if (!enableWirelessDebugging(context)) {
                 if (WifiState.of(context) == WifiState.NOT_CONNECTED) return BaseConnect.NO_WIFI
-                AppLogger.w(TAG, "Wireless debugging is off and could not be switched on")
+                trace(context, "enable-failed-after-look:$lastEnableGate",
+                    "Wireless debugging is off and could not be switched on: enable gate=$lastEnableGate, WRITE_SECURE_SETTINGS held=${hasWriteSecureSettings(context)}")
                 return BaseConnect.NEEDS_WIRELESS_DEBUGGING
             }
             AppLogger.i(TAG, "Re-enabled Wireless debugging; waiting for adbd to advertise…")
@@ -691,17 +754,21 @@ object AdbShell {
         val adbd = adbdState()
         val wifi = WifiState.of(context)
         if (!ConnectBeforeEnable.shouldLook(adbd, wifi)) {
-            AppLogger.i(TAG, "adb_wifi_enabled reads off; adbd=$adbd wifi=$wifi: no connect port to look for")
+            trace(context, "look-skipped:$adbd:$wifi", "adb_wifi_enabled reads off; adbd=$adbd wifi=$wifi: no connect port to look for")
             return@runCatching false
         }
         val excluded = setOfNotNull(AppPreferences(context).getLoopbackAdbPort(), adbdTcpPort())
         // The cheap last-good-port probe always runs; the mDNS window only if it did not just come up empty (M2).
         val found = ConnectPortFinder.lookForConnectPort(context, ConnectBeforeEnable.LOOK_MDNS_MS, excluded, adbd)
         if (found == null) {
-            AppLogger.i(TAG, "adb_wifi_enabled reads off; no connect port answered (last good port, mDNS up to ${ConnectBeforeEnable.LOOK_MDNS_MS}ms) — going on to the enable rules")
+            trace(
+                context, "look-miss:${ConnectPortFinder.lastOutcome}",
+                "adb_wifi_enabled reads off; no connect port answered (search: ${ConnectPortFinder.lastOutcome}; " +
+                    "last good port: ${AppPreferences(context).getLastAdbConnectPort() ?: "none"}) — going on to the enable rules",
+            )
             return@runCatching false
         }
-        AppLogger.i(TAG, "adb_wifi_enabled reads off but a connect port answers (:${found.port} from ${found.source.label}); trying it without writing the switch")
+        trace(context, "look-found:${found.port}", "adb_wifi_enabled reads off but a connect port answers (:${found.port} from ${found.source.label}); trying it without writing the switch")
         val host = ConnectBeforeEnable.tryHosts(
             mdnsHost = found.host,
             port = found.port,
@@ -711,9 +778,13 @@ object AdbShell {
                 AppLogger.i(TAG, "Trying $h:${found.port} (budget ${budget}ms)")
                 connectBounded(context, "Wireless debugging $h:${found.port} (switch read off)", budgetMs = budget) { mgr.connect(h, found.port) }
             },
-            log = { AppLogger.i(TAG, it) },
+            log = { line ->
+                // The cause is the one connectBounded just recorded for the attempt this line is about.
+                val text = if (line.endsWith("did not complete")) "$line: $lastConnectFailure" else line
+                trace(context, "look-connect:$text", text, gate = connectTraceGate)
+            },
         ) ?: return@runCatching false
-        AppLogger.i(TAG, "Connected to $host:${found.port} although adb_wifi_enabled reads off — the read is not trusted; nothing was written")
+        trace(context, "look-connected:${found.port}", "Connected to $host:${found.port} although adb_wifi_enabled reads off — the read is not trusted; nothing was written", always = true)
         ConnectPortFinder.recordSuccess(context, found.port)
         Thread.sleep(CONNECT_SETTLE_MS)
         PairingLoss.recordConnected(context)
@@ -722,7 +793,7 @@ object AdbShell {
         true
     }.onFailure {
         // Any failure here falls through to the enable rules, exactly as if nothing had answered.
-        AppLogger.w(TAG, "Looking for a connect port before enabling failed (${it.javaClass.simpleName}: ${it.message}); going on to the enable rules")
+        trace(context, "look-threw:${TraceText.failureCause(it)}", "Looking for a connect port before enabling failed (${TraceText.failureCause(it)}); going on to the enable rules")
     }.getOrDefault(false)
 
     /**
@@ -922,20 +993,34 @@ object AdbShell {
         connect: () -> Boolean,
     ): Boolean {
         val ok = java.util.concurrent.atomic.AtomicBoolean(false)
+        val thrown = java.util.concurrent.atomic.AtomicReference<Throwable?>(null)
         val worker = Thread {
             runCatching { ok.set(connect()) }
-                .onFailure { AppLogger.d(TAG, "$what unavailable (unarmed/refused): ${it.message}"); onFailure(it) }
+                .onFailure { thrown.set(it); AppLogger.d(TAG, "$what unavailable (unarmed/refused): ${it.message}"); onFailure(it) }
         }.apply { isDaemon = true; name = "cv-adb-connect" }
         worker.start()
         runCatching { worker.join(budgetMs) }
         if (worker.isAlive) {
+            lastConnectFailure = "no handshake reply within ${budgetMs}ms (attempt abandoned)"
             AppLogger.w(TAG, "$what did not complete the ADB handshake within ${budgetMs}ms (adbd restarting?) — abandoning this attempt")
+            if (connectTraceGate.admit("connect-timeout:$what")) runCatching { TransportTimeline.event(context, "$what: $lastConnectFailure") }
             worker.interrupt() // the handshake waits interruptibly; out of it, the thread frees libadb's lock
             runCatching { AdbConnectionManager.getInstance(context).disconnect() }
             return false
         }
+        if (ok.get()) {
+            lastConnectFailure = "none"
+        } else {
+            lastConnectFailure = TraceText.failureCause(thrown.get())
+            if (connectTraceGate.admit("connect-failed:$what:$lastConnectFailure")) {
+                runCatching { TransportTimeline.event(context, "$what failed: $lastConnectFailure") }
+            }
+        }
         return ok.get()
     }
+
+    /** Why the most recent [connectBounded] did not connect; "none" when it did. Diagnostic only. */
+    @Volatile private var lastConnectFailure: String = "none"
 
     /**
      * Arms the persistent classic-tcpip loopback listener so future connects work OFF-WiFi.
@@ -1107,6 +1192,7 @@ object AdbShell {
         // A path that exists only because the user turned the switch off (the keep-alive's open-port relaunch)
         // must not enable it even when the "override my Wireless-debugging-off" setting is on.
         if (!wirelessDebuggingEnableAllowed()) {
+            lastEnableGate = "NOT_ALLOWED (this path runs because the user turned it off)"
             AppLogger.i(TAG, "Not switching Wireless debugging on: this path runs because the user turned it off")
             return false
         }
@@ -1115,7 +1201,9 @@ object AdbShell {
         // user's preference below is deliberately left standing, so the next boot borrows again rather
         // than deciding the switch is now ours. See [LoopbackBorrowPolicy].
         val borrowing = mayBorrowWirelessDebugging(context)
-        when (enableGate(context, prefs, borrowing)) {
+        val verdict = enableGate(context, prefs, borrowing)
+        lastEnableGate = verdict.name
+        when (verdict) {
             // Already on means it is the user's, not ours — recorded so nothing later mistakes it for a
             // switch we are entitled to undo (#30).
             WirelessDebuggingEnable.ALREADY_ON -> return true
@@ -1143,7 +1231,7 @@ object AdbShell {
         val enabled = approveNetworkViaRecorder(context, prefs, WirelessDebuggingEnable.WRITE) || runCatching {
             android.provider.Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 1)
         }.onFailure { AppLogger.e(TAG, "Failed to enable Wireless debugging", it) }.isSuccess
-        if (enabled) recordOurEnable(prefs, borrowing)
+        if (enabled) recordOurEnable(prefs, borrowing) else lastEnableGate = "WRITE (the write or the recorder's approval failed)"
         return enabled
     }
 

@@ -78,3 +78,16 @@ class OncePerDownPeriod {
         return first
     }
 }
+
+/** Says yes the first time it sees each key (bounded), so a read that keeps throwing is logged once, not every tick. */
+class OnceLog(private val maxKeys: Int = 32) {
+    private val seen = LinkedHashSet<String>()
+
+    @Synchronized
+    fun firstTime(key: String): Boolean {
+        if (key in seen) return false
+        if (seen.size >= maxKeys) seen.remove(seen.first())
+        seen.add(key)
+        return true
+    }
+}

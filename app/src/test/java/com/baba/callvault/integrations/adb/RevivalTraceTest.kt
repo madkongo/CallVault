@@ -76,4 +76,13 @@ class RevivalTraceTest {
         )
         for (l in lines) assertEquals(l, LogRedaction.redact(l, "salt"))
     }
+
+    @Test fun `once log says yes once per key and stays bounded`() {
+        val once = OnceLog(maxKeys = 2)
+        assertTrue(once.firstTime("a"))
+        assertFalse(once.firstTime("a"))
+        assertTrue(once.firstTime("b"))
+        assertTrue(once.firstTime("c")) // evicts a
+        assertTrue(once.firstTime("a"))
+    }
 }

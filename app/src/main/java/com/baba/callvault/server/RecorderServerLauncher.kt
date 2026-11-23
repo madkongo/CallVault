@@ -258,10 +258,20 @@ object RecorderServerLauncher {
                 var mayRearm = !AdbShell.adbdPersistentlyStopped()
                 if (!mayRearm) {
                     AppLogger.i(TAG, "Attempt $n: offline mode, no connection and adbd has read stopped for a while — deciding on a revival instead of re-arming through mDNS")
-                    runCatching { AdbShell.reviveAdbdIfStopped(context, "launch attempt $n (adbd stopped)") }
-                        .onFailure { AppLogger.w(TAG, "Attempt $n: could not check adbd: ${it.message}") }
+                    val revival = runCatching { AdbShell.reviveAdbdIfStopped(context, "launch attempt $n (adbd stopped)") }
+                        .onFailure { AppLogger.w(TAG, "Attempt $n: could not check adbd: ${it.javaClass.simpleName}: ${it.message}") }
+                        .getOrNull()
                     mayRearm = !AdbShell.adbdPersistentlyStopped()
-                    if (!mayRearm) AppLogger.w(TAG, "Attempt $n: adbd is still stopped after the revival decision; not re-arming")
+                    if (!mayRearm) {
+                        AppLogger.w(TAG, "Attempt $n: adbd is still stopped after the revival decision; not re-arming")
+                        // Always on: the decision itself is traced by AdbShell; this says what the launcher did with it.
+                        runCatching {
+                            com.baba.callvault.integrations.adb.TransportTimeline.event(
+                                context,
+                                "launch attempt $n: revival decision ${revival ?: "(threw)"}; adbd ${AdbShell.adbdDescribedForReport()}; not re-arming through mDNS",
+                            )
+                        }
+                    }
                 }
                 if (mayRearm) {
                     AppLogger.i(TAG, "Attempt $n: offline mode but no connection — re-arming loopback")

@@ -69,15 +69,17 @@ object TransportTimeline {
      * What the phone says about the transport at the moment the recorder died (GH #89): `init.svc.adbd`,
      * `sys.usb.config` and `sys.usb.state`, each "(unreadable)" when an app cannot read it.
      */
-    fun deathLine(adbd: String, usbConfig: String, usbState: String): String =
-        "recorder died: init.svc.adbd=${adbd.ifBlank { UNREADABLE }} " +
+    fun deathLine(adbd: String, usbConfig: String, usbState: String, label: String = "recorder died"): String =
+        "$label: init.svc.adbd=${adbd.ifBlank { UNREADABLE }} " +
             "sys.usb.config=${usbConfig.ifBlank { UNREADABLE }} sys.usb.state=${usbState.ifBlank { UNREADABLE }}"
 
     /** Writes [deathLine] from the live properties. Reads three properties; cheap. */
-    fun recorderDied(context: Context) = event(
+    fun recorderDied(context: Context, label: String = "recorder died") = event(
         context,
         deathLine(
-            adbd = AdbShell.adbdState().toString(),
+            label = label,
+            // The enum plus the raw string: "restarting", "" and an unreadable property all fold into UNKNOWN.
+            adbd = AdbShell.adbdDescribedForReport(),
             usbConfig = AdbShell.systemPropertyForReport("sys.usb.config"),
             usbState = AdbShell.systemPropertyForReport("sys.usb.state"),
         ),
@@ -120,7 +122,7 @@ object TransportTimeline {
         }
         return Facts(
             recorderAlive = alive,
-            adbd = AdbShell.adbdState().toString(),
+            adbd = AdbShell.adbdDescribedForReport(),
             usb = AdbShell.usbDebuggingState(context).toString(),
             usbShell = UsbDebuggingShellRead.describe(recorderAlive = alive),
             wirelessDebugging = AdbShell.isWirelessDebuggingEnabled(context),
