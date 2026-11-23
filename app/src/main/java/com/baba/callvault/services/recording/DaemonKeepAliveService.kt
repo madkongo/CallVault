@@ -130,7 +130,8 @@ class DaemonKeepAliveService : Service() {
             val alive = isDaemonAlive()
             // A recorder that went down without a binder-death signal (killed with its process group, or never
             // came up) used to leave no death line at all. Once per down period; the death path marks it too.
-            if (downPeriodLogged.shouldWrite(down = !alive)) {
+            // Only where the ADB transport is in use: in Shizuku mode the adbd props say nothing about why it is down.
+            if (usesAdb() && downPeriodLogged.shouldWrite(down = !alive)) {
                 runCatching { TransportTimeline.recorderDied(applicationContext, "recorder down (first seen by the keep-alive tick)") }
                     .onFailure { AppLogger.w(TAG, "keep-alive: could not write the recorder-down line: ${it.message}") }
             }

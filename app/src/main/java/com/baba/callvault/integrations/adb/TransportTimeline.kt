@@ -86,7 +86,7 @@ object TransportTimeline {
     )
 
     /** A one-off event: a death, a relaunch and its outcome, a decision not to try. */
-    fun event(context: Context, text: String) = UsbDebuggingEvents.record(context, "event: $text")
+    fun event(context: Context, text: String) = UsbDebuggingEvents.record(context, "event: ${TraceText.scrubHosts(text)}")
 
     /**
      * What decides whether a new line is written. The screen is left out (review R51): each lock or unlock used to add

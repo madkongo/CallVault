@@ -18,12 +18,32 @@ object TraceText {
     /** Why a connect did not work: `Class: message`, or an explicit "no exception" when it simply returned false. */
     fun failureCause(e: Throwable?): String {
         if (e == null) return "returned false (no exception)"
-        val message = e.message?.takeIf { it.isNotBlank() }?.take(MAX_MESSAGE) ?: "(no message)"
+        val message = e.message?.takeIf { it.isNotBlank() }?.let { scrubHosts(it).take(MAX_MESSAGE) } ?: "(no message)"
         return "${e.javaClass.simpleName}: $message"
     }
 
     /** What `adb_wifi_enabled` read as right after we wrote 0; null when the read threw. */
     fun readBack(value: Int?): String = "adb_wifi_enabled read-back=${value ?: "unreadable"}"
+
+    /** Placeholder for a LAN address in an always-on line (these lines end up in reports people attach to public issues). */
+    const val LAN_PLACEHOLDER = "<lan-ip>"
+
+    private val IPV4 = Regex("(?<![0-9A-Za-z.])(?:\\d{1,3}\\.){3}\\d{1,3}(?![0-9A-Za-z])")
+    private val IPV6 = Regex("(?<![0-9A-Za-z:])(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}(?![0-9A-Za-z:])")
+
+    /**
+     * Replaces IPv4 and IPv6 literals with [LAN_PLACEHOLDER]; loopback (127.0.0.1, ::1) is kept because "loopback or
+     * not" is exactly what a connect trace needs. Ports and everything else stay. A colon group counts as IPv6 only
+     * with "::" or all eight groups, so clock times such as 12:34:56 are left alone.
+     */
+    fun scrubHosts(text: String): String {
+        val v4 = IPV4.replace(text) { if (it.value == "127.0.0.1") it.value else LAN_PLACEHOLDER }
+        return IPV6.replace(v4) {
+            val v = it.value
+            val looksV6 = v.contains("::") || v.count { c -> c == ':' } == 7
+            if (!looksV6 || v == "::1") v else LAN_PLACEHOLDER
+        }
+    }
 
     /** A raw system-property value, with blank made visible. */
     fun raw(value: String): String = value.trim().ifEmpty { "(empty)" }
@@ -42,10 +62,25 @@ class TraceGate(
     private var lastKey: String? = null
     private var windowStart = Long.MIN_VALUE
     private var inWindow = 0
+    private var alwaysWindowStart = Long.MIN_VALUE
+    private var alwaysInWindow = 0
 
+    /**
+     * Keys are compared with every run of digits folded to `#`, so a countdown, a port or a duration in the key can
+     * never defeat the de-duplication. The line text may carry the numbers; only the key is normalised.
+     */
     @Synchronized
-    fun admit(key: String, always: Boolean = false): Boolean {
+    fun admit(rawKey: String, always: Boolean = false): Boolean {
+        val key = DIGITS.replace(rawKey, "#")
         if (always) {
+            // Not de-duplicated, but still bounded: a stuck phone must not be able to flood through these either.
+            val t = now()
+            if (alwaysWindowStart == Long.MIN_VALUE || t - alwaysWindowStart > ALWAYS_WINDOW_MS) {
+                alwaysWindowStart = t
+                alwaysInWindow = 0
+            }
+            if (alwaysInWindow >= ALWAYS_MAX_PER_WINDOW) return false
+            alwaysInWindow++
             lastKey = key
             return true
         }
@@ -62,6 +97,9 @@ class TraceGate(
     }
 
     companion object {
+        private val DIGITS = Regex("\\d+")
+        const val ALWAYS_MAX_PER_WINDOW = 30
+        const val ALWAYS_WINDOW_MS = 60 * 60_000L
         const val DEFAULT_MAX_PER_WINDOW = 20
         const val DEFAULT_WINDOW_MS = 10 * 60_000L
     }

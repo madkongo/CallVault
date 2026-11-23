@@ -1020,6 +1020,7 @@ object AdbShell {
     }
 
     /** Why the most recent [connectBounded] did not connect; "none" when it did. Diagnostic only. */
+    // Best-effort under concurrency: another connectBounded on another thread can overwrite it between the failure and the read.
     @Volatile private var lastConnectFailure: String = "none"
 
     /**

@@ -20,12 +20,12 @@ class RevivalTraceTest {
     @Test fun `a flood of different lines is capped per window then resumes`() {
         var t = 0L
         val gate = TraceGate(now = { t }, maxPerWindow = 3, windowMs = 1_000)
-        assertTrue(gate.admit("1"))
-        assertTrue(gate.admit("2"))
-        assertTrue(gate.admit("3"))
-        assertFalse(gate.admit("4"))
+        assertTrue(gate.admit("a"))
+        assertTrue(gate.admit("b"))
+        assertTrue(gate.admit("c"))
+        assertFalse(gate.admit("d"))
         t = 1_001
-        assertTrue(gate.admit("5"))
+        assertTrue(gate.admit("e"))
     }
 
     @Test fun `an always line bypasses dedupe and the cap`() {
@@ -84,5 +84,34 @@ class RevivalTraceTest {
         assertTrue(once.firstTime("b"))
         assertTrue(once.firstTime("c")) // evicts a
         assertTrue(once.firstTime("a"))
+    }
+
+    @Test fun `two back-off vetoes with different countdowns dedupe to one line`() {
+        val gate = TraceGate(now = { 0L })
+        assertTrue(gate.admit("veto-backoff:the last cycle was recently, next one allowed in 118s"))
+        assertFalse(gate.admit("veto-backoff:the last cycle was recently, next one allowed in 87s"))
+    }
+
+    @Test fun `always lines are bounded too`() {
+        val gate = TraceGate(now = { 0L })
+        repeat(TraceGate.ALWAYS_MAX_PER_WINDOW) { assertTrue(gate.admit("c", always = true)) }
+        assertFalse(gate.admit("c", always = true))
+    }
+
+    @Test fun `lan ipv4 is replaced, loopback and port kept`() {
+        assertEquals("Wireless debugging <lan-ip>:37215 failed", TraceText.scrubHosts("Wireless debugging 192.168.1.23:37215 failed"))
+        assertEquals("connect 127.0.0.1:5555", TraceText.scrubHosts("connect 127.0.0.1:5555"))
+    }
+
+    @Test fun `ipv6 is replaced, loopback and clock times kept`() {
+        assertEquals("to <lan-ip> port 5", TraceText.scrubHosts("to fe80::1c2:3dff:fe4a:5b6c port 5"))
+        assertEquals("to <lan-ip>", TraceText.scrubHosts("to 2001:db8:0:0:0:0:0:1"))
+        assertEquals("via ::1", TraceText.scrubHosts("via ::1"))
+        assertEquals("at 12:34:56", TraceText.scrubHosts("at 12:34:56"))
+    }
+
+    @Test fun `failure cause scrubs addresses inside the message`() {
+        val c = TraceText.failureCause(IOException("failed to connect to /192.168.0.7 (port 41234) after 8000ms"))
+        assertEquals("IOException: failed to connect to /<lan-ip> (port 41234) after 8000ms", c)
     }
 }
