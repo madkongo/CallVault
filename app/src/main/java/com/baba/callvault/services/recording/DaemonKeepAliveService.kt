@@ -40,6 +40,7 @@ import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.UsbDebuggingRestorer
 import com.baba.callvault.integrations.adb.ShellReadNeed
 import com.baba.callvault.integrations.adb.UsbDebuggingShellRead
+import com.baba.callvault.integrations.adb.OncePerDownPeriod
 import com.baba.callvault.integrations.adb.TransportTimeline
 import com.baba.callvault.integrations.adb.WifiState
 import com.baba.callvault.integrations.adb.WifiIdentity
@@ -115,12 +116,25 @@ class DaemonKeepAliveService : Service() {
     /** Consecutive "daemon down" readings — we only relaunch after a couple, to not churn on a blip. */
     private var downStreak = 0
 
+    /** Writes the transport-properties line once per period the recorder is down, whichever path sees it first. */
+    private val downPeriodLogged = OncePerDownPeriod()
+
     private val watchdog = object : Runnable {
         override fun run() {
             reconcileAdbWatchers("tick")
             // One look at adbd per tick, so a running adbd clears a stopped streak and a real one accumulates (H1).
-            if (usesAdb()) runCatching { AdbShell.observeAdbd() }
+            if (usesAdb()) {
+                runCatching { AdbShell.observeAdbd() }
+                    .onFailure { AdbShell.logReadFailureOnce(applicationContext, "observeAdbd", it) }
+            }
             val alive = isDaemonAlive()
+            // A recorder that went down without a binder-death signal (killed with its process group, or never
+            // came up) used to leave no death line at all. Once per down period; the death path marks it too.
+            // Only where the ADB transport is in use: in Shizuku mode the adbd props say nothing about why it is down.
+            if (usesAdb() && downPeriodLogged.shouldWrite(down = !alive)) {
+                runCatching { TransportTimeline.recorderDied(applicationContext, "recorder down (first seen by the keep-alive tick)") }
+                    .onFailure { AppLogger.w(TAG, "keep-alive: could not write the recorder-down line: ${it.message}") }
+            }
             if (alive != (lastReady == true)) {
                 lastReady = alive
                 updateNotification(alive)
@@ -890,6 +904,8 @@ class DaemonKeepAliveService : Service() {
             AppLogger.i(TAG, "keep-alive: binder-death signal — ${RecorderLogMarkers.RELAUNCH} immediately")
             // In every mode, and always on: what the phone says about adbd and the USB gadget right now (GH #89).
             runCatching { TransportTimeline.recorderDied(applicationContext) }
+                .onFailure { AppLogger.w(TAG, "keep-alive: could not write the death line: ${it.message}") }
+            downPeriodLogged.shouldWrite(down = true) // the tick must not repeat this period's line
             if (usesAdb()) {
                 TransportTimeline.event(applicationContext, "recorder died")
                 timelineSnapshot(false, "death")

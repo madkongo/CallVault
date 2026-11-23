@@ -43,7 +43,9 @@ class StoppedAdbdWaitsTest {
         val s = source("server/RecorderServerLauncher.kt")
         val a = s.indexOf("offline mode but no connection")
         assertTrue(a > 0)
-        val window = s.substring(maxOf(0, a - 900), a + 900)
+        val call = s.lastIndexOf("reviveAdbdIfStopped(", a)
+        assertTrue(call > 0)
+        val window = s.substring(maxOf(0, call - 900), a + 900)
         assertTrue(window.contains("adbdPersistentlyStopped()"))
         assertTrue(window.contains("reviveAdbdIfStopped("))
     }
