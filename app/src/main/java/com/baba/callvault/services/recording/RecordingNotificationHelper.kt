@@ -22,7 +22,10 @@ import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.os.VibratorManager
+// import android.os.VibratorManager
+import android.media.AudioAttributes
+import android.os.VibrationAttributes
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.baba.callvault.R
@@ -39,6 +42,7 @@ class RecordingNotificationHelper(private val context: Context) {
 
         const val SERVICE_NOTIFICATION_ID = 1
         const val ERROR_NOTIFICATION_ID = 2
+        private const val TAG = "RecordingNotificationHelper"
 
         /**
          * The two-pulse buzz every recording state change uses: started, paused, resumed, ended.
@@ -326,26 +330,120 @@ class RecordingNotificationHelper(private val context: Context) {
             .setCategory(NotificationCompat.CATEGORY_ERROR)
             .build()
         context.getSystemService(NotificationManager::class.java).notify(ERROR_NOTIFICATION_ID, notification)
-        vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
+        // vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
+        vibrate(
+            VibrationEffect.createWaveform(
+                longArrayOf(0, 100, 800),
+                intArrayOf(0, 46, 184),
+                -1
+            ),
+            VibrationAttributes.USAGE_NOTIFICATION
+        )
     }
 
     /**
      * Triggers a vibration if enabled in settings.
      */
+    // fun vibrate(effect: VibrationEffect) {
+    //     if (!AppPreferences(context).isVibrationEnabled()) return
+
+    //     if (Build.VERSION.SDK_INT >= 31) {
+    //         val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+    //         if (manager.defaultVibrator.hasVibrator()) {
+    //             manager.defaultVibrator.vibrate(effect)
+    //         }
+    //     } else {
+    //         @Suppress("DEPRECATION")
+    //         val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    //         if (vibrator.hasVibrator()) {
+    //             vibrator.vibrate(effect)
+    //         }
+    //     }
+    // }
+
+    /**
+     * Standard recording-state vibration.
+     *
+     * Recording start, stop, pause and resume are classified as
+     * communication-request feedback rather than UNKNOWN.
+     */
     fun vibrate(effect: VibrationEffect) {
+        vibrate(
+            effect,
+            VibrationAttributes.USAGE_COMMUNICATION_REQUEST
+        )
+    }
+
+    /**
+     * Plays a vibration using an explicitly specified Android usage.
+     *
+     * Android 13+:
+     * Uses the public VibrationAttributes API.
+     *
+     * Android 11–12L:
+     * Uses AudioAttributes as the backward-compatible API.
+     * USAGE_VOICE_COMMUNICATION maps to
+     * VibrationAttributes.USAGE_COMMUNICATION_REQUEST.
+     */
+    private fun vibrate(
+        effect: VibrationEffect,
+        usage: Int
+    ) {
+        // Preserve the existing CallVault vibration preference.
         if (!AppPreferences(context).isVibrationEnabled()) return
 
-        if (Build.VERSION.SDK_INT >= 31) {
-            val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            if (manager.defaultVibrator.hasVibrator()) {
-                manager.defaultVibrator.vibrate(effect)
+        try {
+            val vibrator = context.getSystemService(
+                Context.VIBRATOR_SERVICE
+            ) as? Vibrator
+
+            if (vibrator == null || !vibrator.hasVibrator()) {
+                return
             }
-        } else {
-            @Suppress("DEPRECATION")
-            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-            if (vibrator.hasVibrator()) {
-                vibrator.vibrate(effect)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+                // Android 13 and newer.
+                val attributes = VibrationAttributes.Builder()
+                    .setUsage(usage)
+                    .build()
+
+                vibrator.vibrate(effect, attributes)
+
+            } else {
+
+                // Android 11 through Android 12L.
+                // Use the legacy public API with explicit audio usage.
+                val audioUsage = when (usage) {
+
+                    VibrationAttributes.USAGE_COMMUNICATION_REQUEST ->
+                        AudioAttributes.USAGE_VOICE_COMMUNICATION
+
+                    VibrationAttributes.USAGE_NOTIFICATION ->
+                        AudioAttributes.USAGE_NOTIFICATION
+
+                    else -> {
+                        Log.w(
+                            TAG,
+                            "Unsupported vibration usage on legacy Android: $usage"
+                        )
+                        return
+                    }
+                }
+
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(audioUsage)
+                    .build()
+
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(effect, audioAttributes)
             }
+
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Vibration permission denied (usage=$usage)", e)
+
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Vibration request failed (usage=$usage)", e)
         }
     }
 }
